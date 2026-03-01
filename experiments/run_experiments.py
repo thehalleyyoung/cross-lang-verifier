@@ -23,7 +23,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional, Tuple, Dict, List, Any
 
 # Add implementation src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "implementation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.ir.types import IntType, FloatType, Signedness, FloatKind, OverflowBehavior
 from src.ir.instructions import (

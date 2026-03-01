@@ -28,7 +28,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Any, Tuple
 
 # Setup paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "implementation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from real_benchmarks.benchmark_suite import ALL_BENCHMARKS, Benchmark, suite_summary
 

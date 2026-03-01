@@ -14,7 +14,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Any, Tuple
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "implementation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import z3
 

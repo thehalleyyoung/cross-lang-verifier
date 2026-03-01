@@ -22,7 +22,7 @@ import traceback
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Any
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "implementation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from openai import OpenAI
 import z3

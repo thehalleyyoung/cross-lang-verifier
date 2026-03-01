@@ -20,11 +20,9 @@ Time: 151.2ms
 ```bash
 git clone <repo-url> && cd cross-language-equivalence-verifier
 pip install z3-solver
-cd implementation
 
 # Verify a single pair
 python3 -c "
-import sys; sys.path.insert(0, '.')
 from src.semrec_cli import main
 main(['verify', '--c-code', 'int f(int x){return x+1;}',
       '--rs-code', 'pub fn f(x:i32)->i32{x.wrapping_add(1)}', '--format', 'text'])
@@ -34,7 +32,6 @@ main(['verify', '--c-code', 'int f(int x){return x+1;}',
 
 # CEGAR loop: auto-translate C→Rust with LLM + verification (requires OPENAI_API_KEY)
 python3 -c "
-import sys; sys.path.insert(0, '.')
 from src.semrec_cli import main
 main(['cegar', '--source-code', 'int max2(int a, int b){return a>b?a:b;}'])
 "
@@ -93,10 +90,10 @@ Rust source → RustParser → SSA IR ┘           ↑
 ```
 
 **Key components:**
-- **σ-bridge** (`implementation/src/semantics/`): Encodes the C11 vs Rust semantic gap. C signed overflow is UB; Rust wraps. C shift ≥ width is UB; Rust masks. Parameterized via `SemanticConfig.c11()` / `SemanticConfig.rust_release()`.
-- **Product program** (`implementation/src/product_program/`): Aligns C and Rust IR into a single program, adds coercion points where semantics diverge.
-- **SMT encoder** (`implementation/src/smt/`): Lowers the product program to QF_BV (quantifier-free bitvectors). Decidable and complete within the supported fragment.
-- **CEGAR engine** (`implementation/src/cegar_engine.py`): Iteratively calls LLM to translate, verifies with oracle, feeds counterexamples back as repair hints.
+- **σ-bridge** (`src/semantics/`): Encodes the C11 vs Rust semantic gap. C signed overflow is UB; Rust wraps. C shift ≥ width is UB; Rust masks. Parameterized via `SemanticConfig.c11()` / `SemanticConfig.rust_release()`.
+- **Product program** (`src/product_program/`): Aligns C and Rust IR into a single program, adds coercion points where semantics diverge.
+- **SMT encoder** (`src/smt/`): Lowers the product program to QF_BV (quantifier-free bitvectors). Decidable and complete within the supported fragment.
+- **CEGAR engine** (`src/cegar_engine.py`): Iteratively calls LLM to translate, verifies with oracle, feeds counterexamples back as repair hints.
 
 ## CLI Reference
 
@@ -166,26 +163,30 @@ Hand-written recursive descent parsers for C and Rust are a known limitation. Th
 ## Repository Structure
 
 ```
-implementation/
-  src/
-    oracle/            # VerificationOracle API
-    cegar_engine.py    # CEGAR loop engine
-    semrec_cli.py      # CLI entry point
-    smt/               # SMT encoder, solver, decoder
-    semantics/         # σ-bridge (SemanticConfig)
-    product_program/   # Product program construction + alignment
-    frontend_c/        # C parser and IR lowering
-    frontend_rust/     # Rust parser and IR lowering
-    ir/                # Shared typed SSA IR
-  benchmarks/
-    pairs/             # 202 benchmark pairs (C + Rust + ground truth)
-  tests/               # Unit tests
+src/
+  oracle/            # VerificationOracle API
+  cegar_engine.py    # CEGAR loop engine
+  semrec_cli.py      # CLI entry point
+  smt/               # SMT encoder, solver, decoder
+  semantics/         # σ-bridge (SemanticConfig)
+  product_program/   # Product program construction + alignment
+  frontend_c/        # C parser and IR lowering
+  frontend_rust/     # Rust parser and IR lowering
+  ir/                # Shared typed SSA IR
+benchmarks/
+  pairs/             # 202 benchmark pairs (C + Rust + ground truth)
+tests/               # Unit tests
+examples/            # Example scripts
 experiments/
   results/             # All experiment results (JSON)
     full_benchmark_v2.json    # 202-pair benchmark (86.6% accuracy)
     ablation_results.json     # σ-bridge ablation study
     cegar_final.json          # CEGAR convergence results
     scaled_cegar_results.json # Scaled CEGAR on 215 functions
+docs/
+  architecture.md    # Detailed architecture and module map
+  reviews/           # Peer review documents
+  research/          # Research process artifacts
 theory/
   paper.tex            # Paper with proofs (pdflatex-compilable)
 ```

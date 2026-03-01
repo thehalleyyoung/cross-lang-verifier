@@ -101,7 +101,7 @@ PAIRS = [
 
 WORKER_SCRIPT = textwrap.dedent(r'''
 import sys, json, time
-sys.path.insert(0, 'implementation')
+sys.path.insert(0, '.')
 from src.smt.encoder import SMTEncoder
 from src.frontend_c.parser import CParser
 from src.frontend_c.ir_lowering import CIRLowering

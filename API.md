@@ -1,10 +1,10 @@
 # SemRec API Reference
 
-Documents only features that are implemented in `implementation/src/`.
+Documents only features that are implemented in `src/`.
 
 ---
 
-## Verification Oracle (`implementation/src/oracle/oracle.py`)
+## Verification Oracle (`src/oracle/oracle.py`)
 
 The primary API. Returns structured (verdict, counterexample, repair_hint) triples.
 
@@ -30,7 +30,7 @@ Verify semantic equivalence of a C/Rust function pair.
 **Returns:** `OracleResult`
 
 ```python
-from implementation.src.oracle.oracle import VerificationOracle
+from src.oracle.oracle import VerificationOracle
 
 oracle = VerificationOracle()
 result = oracle.verify(
@@ -55,7 +55,7 @@ Batch verification of multiple pairs.
 
 ---
 
-## CEGAR Engine (`implementation/src/cegar_engine.py`)
+## CEGAR Engine (`src/cegar_engine.py`)
 
 Iterative LLM translation with verification feedback.
 
@@ -80,7 +80,7 @@ Run the full CEGAR loop: LLM translates C→Rust, oracle verifies, counterexampl
 | `func_name` | `str` | `"func"` | Function name |
 
 ```python
-from implementation.src.cegar_engine import CEGAREngine
+from src.cegar_engine import CEGAREngine
 
 engine = CEGAREngine(model="gpt-4.1-nano", max_iterations=5)
 result = engine.run("int max2(int a, int b) { return a > b ? a : b; }", "max2")
@@ -176,7 +176,7 @@ class CEGARIteration:
 
 ---
 
-## CLI Commands (`implementation/src/semrec_cli.py`)
+## CLI Commands (`src/semrec_cli.py`)
 
 Entry point: `main(argv: Optional[List[str]] = None) -> int`
 

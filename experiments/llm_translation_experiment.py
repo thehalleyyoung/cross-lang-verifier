@@ -19,7 +19,7 @@ import sys
 import time
 from openai import OpenAI
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "implementation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import z3
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")

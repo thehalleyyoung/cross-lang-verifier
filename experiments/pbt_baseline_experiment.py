@@ -26,7 +26,7 @@ from dataclasses import asdict
 from typing import List, Dict, Any, Tuple
 
 sys.path.insert(0, os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "implementation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pipeline_verify import run_pipeline
 

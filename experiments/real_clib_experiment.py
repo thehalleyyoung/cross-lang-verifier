@@ -18,7 +18,7 @@ import hashlib
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Any, Tuple
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "implementation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.semantics.semantic_config import SemanticConfig
 from src.frontend_c.parser import CParser
