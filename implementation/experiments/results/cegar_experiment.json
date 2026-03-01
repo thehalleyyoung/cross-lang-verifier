@@ -1,0 +1,1143 @@
+{
+  "experiment": "CEGAR Evaluation Framework",
+  "model": "gpt-4.1-nano",
+  "max_iterations": 5,
+  "num_functions": 40,
+  "timestamp": "2026-02-24 00:43:55",
+  "analysis": {
+    "total_pairs": 40,
+    "converged": 17,
+    "convergence_rate": 42.5,
+    "equivalent_on_first_try": 14,
+    "remained_divergent": 16,
+    "errors": 1,
+    "avg_iterations": 2.73,
+    "avg_time_ms": 2959.1,
+    "bug_classification": {
+      "undefined_behavior": 11,
+      "other": 9
+    },
+    "repairability_breakdown": {
+      "easy": {},
+      "medium": {},
+      "hard": {
+        "undefined_behavior": 11,
+        "other": 9
+      }
+    },
+    "convergence_curve": {
+      "1": 14,
+      "2": 3
+    },
+    "repair_by_class": {
+      "undefined_behavior": {
+        "total": 11,
+        "repaired": 0
+      },
+      "none": {
+        "total": 20,
+        "repaired": 14
+      },
+      "other": {
+        "total": 9,
+        "repaired": 3
+      }
+    }
+  },
+  "detailed_results": [
+    {
+      "func_name": "abs_val",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 20687.1,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn abs_val(x: i32) -> i32 {\n    if x < 0 {\n        x.wrapping_neg()\n    } else {\n        x\n    }\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn abs_val(x: i32) -> i32 {\n    if x == i32::MIN {\n        x\n    } else if x < 0 {\n        -x\n    } else {\n        x\n    }\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn abs_val(x: i32) -> i32 {\n    if x == i32::MIN {\n        // In C, -x with x == INT_MIN results in undefined behavior,\n        // but in most implementations, it wraps around and returns INT_MIN.\n   "
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn abs_val(x: i32) -> i32 {\n    if x == i32::MIN {\n        // In C, -x with x == INT_MIN results in undefined behavior.\n        // To match C semantics exactly, we must return x directly.\n        x\n  "
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn abs_val(x: i32) -> i32 {\n    if x == i32::MIN {\n        // In C, -x with x == INT_MIN results in undefined behavior.\n        // To match C semantics exactly, we must return x directly.\n        x\n  "
+        }
+      ]
+    },
+    {
+      "func_name": "max2",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 705.8,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn max2(a: i32, b: i32) -> i32 {\n    if a > b { a } else { b }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "min2",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 459.7,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn min2(a: i32, b: i32) -> i32 {\n    if a < b { a } else { b }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "clamp",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 524.1,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn clamp(x: i32, lo: i32, hi: i32) -> i32 {\n    if x < lo {\n        lo\n    } else if x > hi {\n        hi\n    } else {\n        x\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "sign",
+      "converged": false,
+      "final_verdict": "error",
+      "total_iterations": 1,
+      "total_time_ms": 632.9,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "error",
+          "divergence_class": "",
+          "rust_code": "fn sign(x: i32) -> i32 {\n    ((x > 0) as i32) - ((x < 0) as i32)\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "is_positive",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 422.1,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn is_positive(x: i32) -> bool {\n    x > 0\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "is_even",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 580.5,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn is_even(x: i32) -> bool {\n    (x & 1) == 0\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "add_ints",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 2843.8,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn add_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn add_ints(a: i32, b: i32) -> i32 {\n    a + b\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn add_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn add_ints(a: i32, b: i32) -> i32 {\n    a + b\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn add_ints(a: i32, b: i32) -> i32 {\n    // To match C semantics exactly, perform addition in i64 and cast back,\n    // ensuring behavior matches for all inputs, including overflow.\n    (a as i64 + b "
+        }
+      ]
+    },
+    {
+      "func_name": "sub_ints",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 2763.7,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn sub_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn sub_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn sub_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn sub_ints(a: i32, b: i32) -> i32 {\n    a - b\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn sub_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "mul_ints",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 4041.8,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn mul_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn mul_ints(a: i32, b: i32) -> i32 {\n    a * b\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn mul_ints(a: i32, b: i32) -> i32 {\n    // To match C semantics exactly, perform multiplication with wrapping to handle overflow\n    a.wrapping_mul(b)\n}"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn mul_ints(a: i32, b: i32) -> i32 {\n    // To match C semantics exactly, perform multiplication with wrapping to handle overflow\n    // and ensure behavior matches C's signed integer overflow (which "
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn mul_ints(a: i32, b: i32) -> i32 {\n    // To match C semantics exactly, perform multiplication with wrapping to handle overflow\n    // and ensure behavior matches C's signed integer overflow (which "
+        }
+      ]
+    },
+    {
+      "func_name": "negate",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 3501.6,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn negate(x: i32) -> i32 {\n    x.wrapping_neg()\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn negate(x: i32) -> i32 {\n    -x\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn negate(x: i32) -> i32 {\n    // Handle the special case where x is i32::MIN to match C behavior\n    if x == i32::MIN {\n        // In C, negating INT_MIN causes undefined behavior, but in Rust, we ex"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn negate(x: i32) -> i32 {\n    // In C, negating INT_MIN results in undefined behavior, which often wraps around\n    // to INT_MIN itself due to overflow. To match C semantics exactly, perform wrappin"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn negate(x: i32) -> i32 {\n    // To match C semantics exactly, handle the special case of INT_MIN (-2147483648)\n    if x == i32::MIN {\n        i32::MIN\n    } else {\n        -x\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "double_val",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 3500.8,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn double_val(x: i32) -> i32 {\n    x.wrapping_add(x)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn double_val(x: i32) -> i32 {\n    x + x\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn double_val(x: i32) -> i32 {\n    // To match C semantics exactly, handle potential undefined behavior\n    // in C when adding certain values (like overflow). In C, signed integer overflow\n    // is "
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn double_val(x: i32) -> i32 {\n    // Use wrapping_add to exactly match C's behavior, including overflow\n    x.wrapping_add(x)\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn double_val(x: i32) -> i32 {\n    x + x\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "square",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 3323.2,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn square(x: i32) -> i32 {\n    x.wrapping_mul(x)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn square(x: i32) -> i32 {\n    x * x\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn square(x: i32) -> i32 {\n    // To match C semantics exactly, explicitly cast to i64 to prevent overflow issues\n    // and then cast back to i32, mimicking C's behavior which is undefined on overflo"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn square(x: i32) -> i32 {\n    x.wrapping_mul(x)\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn square(x: i32) -> i32 {\n    x * x\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "inc",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 3306.4,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn inc(x: i32) -> i32 {\n    x.wrapping_add(1)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn inc(x: i32) -> i32 {\n    x + 1\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn inc(x: i32) -> i32 {\n    // To match C semantics exactly, handle potential overflow explicitly.\n    // In C, signed integer overflow is undefined behavior.\n    // In Rust, wrapping addition can be "
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn inc(x: i32) -> i32 {\n    // To match C semantics exactly, handle potential overflow explicitly.\n    // In C, signed integer overflow is undefined behavior.\n    // To replicate C's behavior, perform"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn inc(x: i32) -> i32 {\n    // To match C semantics exactly, handle potential overflow explicitly.\n    // In C, signed integer overflow is undefined behavior.\n    // To replicate C's behavior, perform"
+        }
+      ]
+    },
+    {
+      "func_name": "dec",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 3626.0,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dec(x: i32) -> i32 {\n    x.wrapping_sub(1)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dec(x: i32) -> i32 {\n    x - 1\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn dec(x: i32) -> i32 {\n    // To match C semantics exactly, handle the edge case where x == i32::MIN\n    if x == i32::MIN {\n        // In C, subtracting 1 from INT_MIN causes undefined behavior.\n    "
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dec(x: i32) -> i32 {\n    x - 1\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn dec(x: i32) -> i32 {\n    // To match C semantics exactly, handle the edge case of i32::MIN\n    if x == i32::MIN {\n        // In C, subtracting 1 from INT_MIN causes undefined behavior,\n        // b"
+        }
+      ]
+    },
+    {
+      "func_name": "safe_div",
+      "converged": false,
+      "final_verdict": "unknown",
+      "total_iterations": 1,
+      "total_time_ms": 502.2,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "unknown",
+          "divergence_class": "",
+          "rust_code": "fn safe_div(a: i32, b: i32) -> i32 {\n    if b != 0 {\n        a.wrapping_div(b)\n    } else {\n        0\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "safe_mod",
+      "converged": false,
+      "final_verdict": "unknown",
+      "total_iterations": 1,
+      "total_time_ms": 556.5,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "unknown",
+          "divergence_class": "",
+          "rust_code": "fn safe_mod(a: i32, b: i32) -> i32 {\n    if b != 0 {\n        a.wrapping_rem(b)\n    } else {\n        0\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "div_ints",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 2,
+      "total_time_ms": 1312.1,
+      "bug_class": "other",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn div_ints(a: i32, b: i32) -> i32 {\n    a.wrapping_div(b)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn div_ints(a: i32, b: i32) -> i32 {\n    a / b\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "shl",
+      "converged": false,
+      "final_verdict": "unknown",
+      "total_iterations": 3,
+      "total_time_ms": 5727.8,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn shl(x: i32, n: i32) -> i32 {\n    // In C, shifting by >= bit width or negative shifts is undefined behavior.\n    // To match C's behavior, we handle these cases explicitly.\n    if n < 0 {\n        /"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn shl(x: i32, n: i32) -> i32 {\n    if n <= 0 {\n        // In C, shifting by negative or zero bits is well-defined.\n        // Shifting by zero returns x.\n        // Shifting by negative is undefined,"
+        },
+        {
+          "iteration": 2,
+          "verdict": "unknown",
+          "divergence_class": "",
+          "rust_code": "fn shl(x: i32, n: i32) -> i32 {\n    if n == 0 {\n        x\n    } else if n >= 32 {\n        0\n    } else if n < 0 {\n        // In C, shifting by negative bits is undefined.\n        // To match C's behav"
+        }
+      ]
+    },
+    {
+      "func_name": "shr",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 4939.5,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn shr(x: i32, n: i32) -> i32 {\n    // In C, right shift of signed integers is implementation-defined.\n    // To match typical behavior (arithmetic shift), use Rust's right shift on i32.\n    // Handle"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn shr(x: i32, n: i32) -> i32 {\n    if n >= 0 {\n        // Perform arithmetic right shift, which is the default for i32 in Rust\n        x >> n\n    } else {\n        // For negative n, shift left by -n\n"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn shr(x: i32, n: i32) -> i32 {\n    if n >= 0 {\n        // Perform arithmetic right shift\n        x >> n\n    } else {\n        // For negative n, shift left by -n\n        // Use wrapping_shl to handle "
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn shr(x: i32, n: i32) -> i32 {\n    if n >= 0 {\n        // Perform arithmetic right shift\n        x >> n\n    } else {\n        // For negative n, shift left by -n\n        // Use wrapping_shl to handle "
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn shr(x: i32, n: i32) -> i32 {\n    if n >= 0 {\n        // Perform arithmetic right shift\n        x >> n\n    } else {\n        // For negative n, shift left by -n\n        // Use wrapping_shl to handle "
+        }
+      ]
+    },
+    {
+      "func_name": "bit_set",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 2788.1,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn bit_set(x: i32, n: i32) -> i32 {\n    let shift_amount = (n & 31) as u32;\n    x | (1 << shift_amount)\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn bit_set(x: i32, n: i32) -> i32 {\n    let shift_amount = (n & 31) as u32;\n    x | (1 << shift_amount)\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn bit_set(x: i32, n: i32) -> i32 {\n    let shift_amount = (n & 31) as u32;\n    x | (1 << shift_amount)\n}"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn bit_set(x: i32, n: i32) -> i32 {\n    let shift_amount = (n & 31) as u32;\n    x | (1 << shift_amount)\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn bit_set(x: i32, n: i32) -> i32 {\n    let shift_amount = (n & 31) as u32;\n    x | (1 << shift_amount)\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "bit_and",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 415.0,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn bit_and(a: i32, b: i32) -> i32 {\n    a & b\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "bit_or",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 470.8,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn bit_or(a: i32, b: i32) -> i32 {\n    a | b\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "bit_xor",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 442.6,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn bit_xor(a: i32, b: i32) -> i32 {\n    a ^ b\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "bit_not",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 340.1,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn bit_not(x: i32) -> i32 {\n    !x\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "poly2",
+      "converged": false,
+      "final_verdict": "unknown",
+      "total_iterations": 1,
+      "total_time_ms": 10824.5,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "unknown",
+          "divergence_class": "",
+          "rust_code": "fn poly2(x: i32) -> i32 {\n    let two_x = (2i32).wrapping_mul(x);\n    let two_x_x = (two_x).wrapping_mul(x);\n    let three_x = (3i32).wrapping_mul(x);\n    let result = two_x_x.wrapping_add(three_x).wr"
+        }
+      ]
+    },
+    {
+      "func_name": "dist_sq",
+      "converged": false,
+      "final_verdict": "unknown",
+      "total_iterations": 1,
+      "total_time_ms": 11118.6,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "unknown",
+          "divergence_class": "",
+          "rust_code": "fn dist_sq(x1: i32, y1: i32, x2: i32, y2: i32) -> i32 {\n    let dx = x2.wrapping_sub(x1);\n    let dy = y2.wrapping_sub(y1);\n    dx.wrapping_mul(dx).wrapping_add(dy.wrapping_mul(dy))\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "midpoint",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 2891.9,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    let sum = a.wrapping_add(b);\n    sum / 2\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    (a + b) / 2\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b) / 2\n}"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    (a + b) / 2\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    // To match C's behavior, perform addition in i64 to avoid overflow,\n    // then divide and cast back to i32.\n    ((a as i64 + b as i64) / 2) as i32\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "avg3",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 4362.1,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn avg3(a: i32, b: i32, c: i32) -> i32 {\n    let sum = a.wrapping_add(b).wrapping_add(c);\n    sum / 3\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn avg3(a: i32, b: i32, c: i32) -> i32 {\n    let sum = a.wrapping_add(b).wrapping_add(c);\n    sum / 3\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn avg3(a: i32, b: i32, c: i32) -> i32 {\n    let sum = a.wrapping_add(b).wrapping_add(c);\n    // To match C's integer division behavior, perform division on the sum directly.\n    sum / 3\n}"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn avg3(a: i32, b: i32, c: i32) -> i32 {\n    let sum = a.wrapping_add(b).wrapping_add(c);\n    // Perform division with truncation towards zero, matching C's behavior.\n    // For negative sums, ensure "
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn avg3(a: i32, b: i32, c: i32) -> i32 {\n    let sum = a.wrapping_add(b).wrapping_add(c);\n    // In C, integer division truncates toward zero.\n    // Rust's '/' operator for i32 also truncates toward "
+        }
+      ]
+    },
+    {
+      "func_name": "dot2d",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 4876.9,
+      "bug_class": "undefined_behavior",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dot2d(ax: i32, ay: i32, bx: i32, by: i32) -> i32 {\n    ax.wrapping_mul(bx).wrapping_add(ay.wrapping_mul(by))\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dot2d(ax: i32, ay: i32, bx: i32, by: i32) -> i32 {\n    ax * bx + ay * by\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dot2d(ax: i32, ay: i32, bx: i32, by: i32) -> i32 {\n    // To match C semantics exactly, ensure no undefined behavior occurs.\n    // In C, integer overflow is undefined behavior, but in Rust, wrappi"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dot2d(ax: i32, ay: i32, bx: i32, by: i32) -> i32 {\n    // To match C semantics exactly, perform wrapping multiplication and addition.\n    // This ensures behavior is identical to C, where overflow "
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "undefined_behavior",
+          "rust_code": "fn dot2d(ax: i32, ay: i32, bx: i32, by: i32) -> i32 {\n    // To match C semantics exactly, perform wrapping multiplication and addition.\n    // This ensures behavior is identical to C, where overflow "
+        }
+      ]
+    },
+    {
+      "func_name": "classify",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 837.9,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn classify(x: i32) -> i32 {\n    if x > 100 {\n        3\n    } else if x > 10 {\n        2\n    } else if x > 0 {\n        1\n    } else {\n        0\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "fizzbuzz_val",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 2,
+      "total_time_ms": 1658.5,
+      "bug_class": "other",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn fizzbuzz(x: i32) -> i32 {\n    if (x.wrapping_rem(15)) == 0 {\n        3\n    } else if (x.wrapping_rem(5)) == 0 {\n        2\n    } else if (x.wrapping_rem(3)) == 0 {\n        1\n    } else {\n        0\n "
+        },
+        {
+          "iteration": 1,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn fizzbuzz(x: i32) -> i32 {\n    if x % 15 == 0 {\n        3\n    } else if x % 5 == 0 {\n        2\n    } else if x % 3 == 0 {\n        1\n    } else {\n        0\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "align_up",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 2,
+      "total_time_ms": 1429.1,
+      "bug_class": "other",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn align_up(x: u32, a: u32) -> u32 {\n    // Perform wrapping addition to handle potential overflow\n    let sum = x.wrapping_add(a.wrapping_sub(1));\n    // Compute mask for alignment\n    let mask = !(a"
+        },
+        {
+          "iteration": 1,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn align_up(x: u32, a: u32) -> u32 {\n    (x + a - 1) & !(a - 1)\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "djb2_step",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 745.7,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn djb2_step(h: u32, c: u32) -> u32 {\n    h.wrapping_mul(33).wrapping_add(c)\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "fnv1a_step",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 5047.6,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn fnv1a_step(h: u32, b: u8) -> u32 {\n    // Perform XOR between h and b (promoted to u32)\n    let xor_result = h ^ (b as u32);\n    // Multiply by the FNV offset basis, wrapping on overflow\n    xor_re"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn fnv1a_step(h: u32, b: u8) -> u32 {\n    // Perform XOR between h and b (promoted to u32)\n    let xor_result = h ^ (b as u32);\n    // Multiply by 16777619, wrapping on overflow\n    xor_result.wrappin"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn fnv1a_step(h: u32, b: u8) -> u32 {\n    // Perform XOR between h and b (promoted to u32)\n    let xor_result = h ^ (b as u32);\n    // Multiply by 16777619, wrapping on overflow\n    // In C, unsigned "
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn fnv1a_step(h: u32, b: u8) -> u32 {\n    // Perform XOR between h and b (promoted to u32)\n    let xor_result = h ^ (b as u32);\n    // Multiply by 16777619, wrapping on overflow\n    // In C, unsigned "
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn fnv1a_step(h: u32, b: u8) -> u32 {\n    // Perform XOR between h and b (promoted to u32)\n    let xor_result = h ^ (b as u32);\n    // Multiply by 16777619, wrapping on overflow\n    // In C, unsigned "
+        }
+      ]
+    },
+    {
+      "func_name": "pack_rgb",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 733.3,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn pack_rgb(r: u32, g: u32, b: u32) -> u32 {\n    ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF)\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "clamp_u8",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 1047.2,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn clamp_u8(x: i32) -> u8 {\n    // Use wrapping arithmetic to handle potential overflow\n    let x = x.wrapping_sub(0); // no change, just for clarity\n    if x < 0 {\n        0\n    } else if x > 255 {\n "
+        }
+      ]
+    },
+    {
+      "func_name": "sat_sub",
+      "converged": false,
+      "final_verdict": "divergent",
+      "total_iterations": 5,
+      "total_time_ms": 2908.9,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn sat_sub(a: u32, b: u32) -> u32 {\n    if a > b {\n        a.wrapping_sub(b)\n    } else {\n        0\n    }\n}"
+        },
+        {
+          "iteration": 1,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn sat_sub(a: u32, b: u32) -> u32 {\n    if a > b {\n        a - b\n    } else {\n        0\n    }\n}"
+        },
+        {
+          "iteration": 2,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn sat_sub(a: u32, b: u32) -> u32 {\n    if a > b {\n        a - b\n    } else {\n        0\n    }\n}"
+        },
+        {
+          "iteration": 3,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn sat_sub(a: u32, b: u32) -> u32 {\n    if a > b {\n        a - b\n    } else {\n        0\n    }\n}"
+        },
+        {
+          "iteration": 4,
+          "verdict": "divergent",
+          "divergence_class": "other",
+          "rust_code": "fn sat_sub(a: u32, b: u32) -> u32 {\n    if a > b {\n        a - b\n    } else {\n        0\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "map_err",
+      "converged": false,
+      "final_verdict": "unknown",
+      "total_iterations": 1,
+      "total_time_ms": 772.7,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "unknown",
+          "divergence_class": "",
+          "rust_code": "fn map_err(code: i32) -> i32 {\n    match code {\n        0 => 0,\n        -1 => 1,\n        -2 => 2,\n        _ => 255,\n    }\n}"
+        }
+      ]
+    },
+    {
+      "func_name": "validate",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "total_iterations": 1,
+      "total_time_ms": 695.1,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "iterations": [
+        {
+          "iteration": 0,
+          "verdict": "equivalent",
+          "divergence_class": "",
+          "rust_code": "fn validate(x: i32) -> i32 {\n    if x < 0 {\n        -1\n    } else if x > 100 {\n        -2\n    } else if x == 42 {\n        1\n    } else {\n        0\n    }\n}"
+        }
+      ]
+    }
+  ]
+}

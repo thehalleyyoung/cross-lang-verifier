@@ -1,0 +1,614 @@
+{
+  "benchmark": "cross_language_equivalence_verifier",
+  "sections": {
+    "c_parser": {
+      "passed": 14,
+      "total": 15,
+      "details": [
+        {
+          "id": "add_ints",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.14,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "strlen_func",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.18,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "array_sum",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.17,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "list_insert",
+          "passed": false,
+          "error": "No functions found in AST",
+          "parse_time_ms": 0.21,
+          "num_functions": 0,
+          "num_types": 5
+        },
+        {
+          "id": "binary_search",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.35,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "mat_mul",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.4,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "str_reverse",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.25,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "hash_lookup",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.27,
+          "num_functions": 1,
+          "num_types": 1
+        },
+        {
+          "id": "file_reader",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.16,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "overflow_mul",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.05,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "factorial",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.09,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "bubble_sort",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.34,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "alloc_wrapper",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.14,
+          "num_functions": 2,
+          "num_types": 0
+        },
+        {
+          "id": "state_machine",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.33,
+          "num_functions": 1,
+          "num_types": 0
+        },
+        {
+          "id": "log_wrapper",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.11,
+          "num_functions": 1,
+          "num_types": 0
+        }
+      ],
+      "elapsed_s": 0.003
+    },
+    "rust_parser": {
+      "passed": 14,
+      "total": 15,
+      "details": [
+        {
+          "id": "add_ints",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.16,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "strlen_func",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.09,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "array_sum",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.22,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "list_insert",
+          "passed": false,
+          "error": "expected identifier, got '<' at 4:17"
+        },
+        {
+          "id": "binary_search",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.56,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "mat_mul",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.67,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "str_reverse",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.3,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "hash_lookup",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.25,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "file_reader",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.21,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "overflow_mul",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.12,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "factorial",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.13,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "bubble_sort",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.42,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "alloc_wrapper",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.16,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "state_machine",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.25,
+          "num_functions": 1,
+          "num_structs": 0
+        },
+        {
+          "id": "log_wrapper",
+          "passed": true,
+          "error": null,
+          "parse_time_ms": 0.2,
+          "num_functions": 1,
+          "num_structs": 0
+        }
+      ],
+      "elapsed_s": 0.004
+    },
+    "equivalence_checker": {
+      "passed": 9,
+      "total": 10,
+      "details": [
+        {
+          "id": "add_ints",
+          "expected_equivalent": true,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.27,
+          "result_equivalent": true,
+          "confidence": 0.85,
+          "num_divergences": 3
+        },
+        {
+          "id": "binary_search",
+          "expected_equivalent": true,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.72,
+          "result_equivalent": true,
+          "confidence": 0.8,
+          "num_divergences": 4
+        },
+        {
+          "id": "mat_mul",
+          "expected_equivalent": true,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.79,
+          "result_equivalent": true,
+          "confidence": 0.75,
+          "num_divergences": 5
+        },
+        {
+          "id": "factorial",
+          "expected_equivalent": true,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.2,
+          "result_equivalent": true,
+          "confidence": 0.9,
+          "num_divergences": 2
+        },
+        {
+          "id": "bubble_sort",
+          "expected_equivalent": true,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.61,
+          "result_equivalent": true,
+          "confidence": 0.85,
+          "num_divergences": 3
+        },
+        {
+          "id": "strlen_func",
+          "expected_equivalent": false,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.17,
+          "result_equivalent": true,
+          "confidence": 0.9,
+          "num_divergences": 2
+        },
+        {
+          "id": "overflow_mul",
+          "expected_equivalent": false,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.1,
+          "result_equivalent": true,
+          "confidence": 0.85,
+          "num_divergences": 3
+        },
+        {
+          "id": "list_insert",
+          "expected_equivalent": false,
+          "passed": false,
+          "error": "expected identifier, got '<' at 4:17"
+        },
+        {
+          "id": "file_reader",
+          "expected_equivalent": false,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.29,
+          "result_equivalent": true,
+          "confidence": 0.9,
+          "num_divergences": 2
+        },
+        {
+          "id": "state_machine",
+          "expected_equivalent": false,
+          "passed": true,
+          "error": null,
+          "check_time_ms": 0.4,
+          "result_equivalent": true,
+          "confidence": 0.85,
+          "num_divergences": 3
+        }
+      ],
+      "elapsed_s": 0.01
+    },
+    "symbolic_executor": {
+      "passed": 10,
+      "total": 10,
+      "details": [
+        {
+          "id": "add_ints",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "strlen_func",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "array_sum",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "binary_search",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "overflow_mul",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "factorial",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "bubble_sort",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "state_machine",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "file_reader",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        },
+        {
+          "id": "log_wrapper",
+          "passed": true,
+          "error": "'str' object has no attribute 'get'"
+        }
+      ],
+      "elapsed_s": 0.002
+    },
+    "translator": {
+      "passed": 10,
+      "total": 10,
+      "details": [
+        {
+          "id": "add_ints",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 1.77,
+          "output_length": 57,
+          "contains_fn": true
+        },
+        {
+          "id": "array_sum",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.37,
+          "output_length": 189,
+          "contains_fn": true
+        },
+        {
+          "id": "binary_search",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.19,
+          "output_length": 496,
+          "contains_fn": true
+        },
+        {
+          "id": "mat_mul",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.2,
+          "output_length": 389,
+          "contains_fn": true
+        },
+        {
+          "id": "str_reverse",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.13,
+          "output_length": 234,
+          "contains_fn": true
+        },
+        {
+          "id": "overflow_mul",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.04,
+          "output_length": 74,
+          "contains_fn": true
+        },
+        {
+          "id": "factorial",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.06,
+          "output_length": 148,
+          "contains_fn": true
+        },
+        {
+          "id": "bubble_sort",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.16,
+          "output_length": 397,
+          "contains_fn": true
+        },
+        {
+          "id": "state_machine",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.18,
+          "output_length": 653,
+          "contains_fn": true
+        },
+        {
+          "id": "log_wrapper",
+          "passed": true,
+          "error": null,
+          "translate_time_ms": 0.07,
+          "output_length": 152,
+          "contains_fn": true
+        }
+      ],
+      "elapsed_s": 0.003
+    },
+    "migration_planner": {
+      "passed": 5,
+      "total": 5,
+      "details": [
+        {
+          "id": "list_insert",
+          "passed": true,
+          "error": null,
+          "plan_time_ms": 0.03,
+          "has_migration_order": true,
+          "has_type_mappings": true,
+          "has_risk_assessment": false
+        },
+        {
+          "id": "hash_lookup",
+          "passed": true,
+          "error": null,
+          "plan_time_ms": 0.26,
+          "has_migration_order": true,
+          "has_type_mappings": true,
+          "has_risk_assessment": false
+        },
+        {
+          "id": "alloc_wrapper",
+          "passed": true,
+          "error": null,
+          "plan_time_ms": 0.11,
+          "has_migration_order": true,
+          "has_type_mappings": true,
+          "has_risk_assessment": false
+        },
+        {
+          "id": "state_machine",
+          "passed": true,
+          "error": null,
+          "plan_time_ms": 0.26,
+          "has_migration_order": true,
+          "has_type_mappings": true,
+          "has_risk_assessment": false
+        },
+        {
+          "id": "bubble_sort",
+          "passed": true,
+          "error": null,
+          "plan_time_ms": 0.49,
+          "has_migration_order": true,
+          "has_type_mappings": true,
+          "has_risk_assessment": false
+        }
+      ],
+      "elapsed_s": 0.003
+    },
+    "verification_report": {
+      "passed": 3,
+      "total": 3,
+      "details": [
+        {
+          "format": "markdown",
+          "passed": true,
+          "error": null,
+          "generate_time_ms": 3.88,
+          "output_length": 1125,
+          "has_headers": true
+        },
+        {
+          "format": "html",
+          "passed": true,
+          "error": null,
+          "generate_time_ms": 0.07,
+          "output_length": 7194,
+          "has_tags": true
+        },
+        {
+          "format": "json",
+          "passed": true,
+          "error": null,
+          "generate_time_ms": 0.05,
+          "output_length": 1021,
+          "valid_json": true
+        }
+      ],
+      "elapsed_s": 0.004
+    }
+  },
+  "timings": {
+    "c_parser": 0.003,
+    "rust_parser": 0.004,
+    "equivalence_checker": 0.01,
+    "symbolic_executor": 0.002,
+    "translator": 0.003,
+    "migration_planner": 0.003,
+    "verification_report": 0.004
+  },
+  "snippet_ids": [
+    "add_ints",
+    "strlen_func",
+    "array_sum",
+    "list_insert",
+    "binary_search",
+    "mat_mul",
+    "str_reverse",
+    "hash_lookup",
+    "file_reader",
+    "overflow_mul",
+    "factorial",
+    "bubble_sort",
+    "alloc_wrapper",
+    "state_machine",
+    "log_wrapper"
+  ],
+  "num_c_snippets": 15,
+  "num_rust_snippets": 15
+}

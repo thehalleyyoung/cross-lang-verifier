@@ -1,0 +1,304 @@
+{
+  "n_pairs": 44,
+  "overall_accuracy": {
+    "mean": 0.6098,
+    "ci_95_lower": 0.4634,
+    "ci_95_upper": 0.7561,
+    "n_evaluated": 41
+  },
+  "confusion_matrix": {
+    "true_positive": 12,
+    "true_negative": 13,
+    "false_positive": 7,
+    "false_negative": 9,
+    "accuracy": 0.6098,
+    "precision": 0.6316,
+    "recall": 0.5714,
+    "f1": 0.6,
+    "false_positive_rate": 0.1707,
+    "false_negative_rate": 0.2195
+  },
+  "fp_fn_decomposition": {
+    "total_pairs": 41,
+    "total_errors": 16,
+    "error_rate": 0.3902,
+    "false_positive_count": 7,
+    "false_positive_rate": 0.1707,
+    "false_positive_description": "Said divergent, actually equivalent (conservative, safe)",
+    "false_negative_count": 9,
+    "false_negative_rate": 0.2195,
+    "false_negative_description": "Said equivalent, actually divergent (DANGEROUS)",
+    "safety_assessment": "WARNING: 9 false negative(s) \u2014 tool missed real divergences",
+    "confusion_matrix": {
+      "true_positive": 12,
+      "true_negative": 13,
+      "false_positive": 7,
+      "false_negative": 9,
+      "accuracy": 0.6098,
+      "precision": 0.6316,
+      "recall": 0.5714,
+      "f1": 0.6,
+      "false_positive_rate": 0.1707,
+      "false_negative_rate": 0.2195
+    }
+  },
+  "stratified_by_category": {
+    "arithmetic": {
+      "total": 2,
+      "accuracy": 1.0,
+      "ci_95_lower": 1.0,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 1,
+        "true_negative": 1,
+        "false_positive": 0,
+        "false_negative": 0,
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0
+      }
+    },
+    "bitwise": {
+      "total": 6,
+      "accuracy": 0.6667,
+      "ci_95_lower": 0.3333,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 1,
+        "true_negative": 3,
+        "false_positive": 2,
+        "false_negative": 0,
+        "accuracy": 0.6667,
+        "precision": 0.3333,
+        "recall": 1.0,
+        "f1": 0.5,
+        "false_positive_rate": 0.3333,
+        "false_negative_rate": 0.0
+      }
+    },
+    "c2rust_pattern": {
+      "total": 4,
+      "accuracy": 0.6667,
+      "ci_95_lower": 0.0,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 2,
+        "true_negative": 0,
+        "false_positive": 0,
+        "false_negative": 1,
+        "accuracy": 0.6667,
+        "precision": 1.0,
+        "recall": 0.6667,
+        "f1": 0.8,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.3333
+      }
+    },
+    "cast": {
+      "total": 4,
+      "accuracy": 1.0,
+      "ci_95_lower": 1.0,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 4,
+        "false_positive": 0,
+        "false_negative": 0,
+        "accuracy": 1.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0
+      }
+    },
+    "control_flow": {
+      "total": 4,
+      "accuracy": 0.75,
+      "ci_95_lower": 0.25,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 1,
+        "true_negative": 2,
+        "false_positive": 1,
+        "false_negative": 0,
+        "accuracy": 0.75,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6667,
+        "false_positive_rate": 0.25,
+        "false_negative_rate": 0.0
+      }
+    },
+    "dynamic_memory": {
+      "total": 2,
+      "accuracy": 1.0,
+      "ci_95_lower": 1.0,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 2,
+        "false_positive": 0,
+        "false_negative": 0,
+        "accuracy": 1.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0
+      }
+    },
+    "error_handling": {
+      "total": 1,
+      "accuracy": 0.0,
+      "ci_95_lower": 0.0,
+      "ci_95_upper": 0.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 0,
+        "false_positive": 0,
+        "false_negative": 1,
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 1.0
+      }
+    },
+    "floating_point": {
+      "total": 2,
+      "accuracy": 0.0,
+      "ci_95_lower": 0.0,
+      "ci_95_upper": 0.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 0,
+        "false_positive": 0,
+        "false_negative": 2,
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 1.0
+      }
+    },
+    "loop": {
+      "total": 2,
+      "accuracy": 0.0,
+      "ci_95_lower": 0.0,
+      "ci_95_upper": 0.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 0,
+        "false_positive": 0,
+        "false_negative": 2,
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 1.0
+      }
+    },
+    "memory": {
+      "total": 1,
+      "accuracy": 0.0,
+      "ci_95_lower": 0.0,
+      "ci_95_upper": 0.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 0,
+        "false_positive": 0,
+        "false_negative": 1,
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 1.0
+      }
+    },
+    "overflow": {
+      "total": 9,
+      "accuracy": 0.7778,
+      "ci_95_lower": 0.4444,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 7,
+        "true_negative": 0,
+        "false_positive": 2,
+        "false_negative": 0,
+        "accuracy": 0.7778,
+        "precision": 0.7778,
+        "recall": 1.0,
+        "f1": 0.875,
+        "false_positive_rate": 0.2222,
+        "false_negative_rate": 0.0
+      }
+    },
+    "pointer_arithmetic": {
+      "total": 3,
+      "accuracy": 0.0,
+      "ci_95_lower": 0.0,
+      "ci_95_upper": 0.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 0,
+        "false_positive": 1,
+        "false_negative": 2,
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.3333,
+        "false_negative_rate": 0.6667
+      }
+    },
+    "string": {
+      "total": 1,
+      "accuracy": 0.0,
+      "ci_95_lower": 0.0,
+      "ci_95_upper": 0.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 0,
+        "false_positive": 1,
+        "false_negative": 0,
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 1.0,
+        "false_negative_rate": 0.0
+      }
+    },
+    "struct": {
+      "total": 3,
+      "accuracy": 1.0,
+      "ci_95_lower": 1.0,
+      "ci_95_upper": 1.0,
+      "confusion_matrix": {
+        "true_positive": 0,
+        "true_negative": 1,
+        "false_positive": 0,
+        "false_negative": 0,
+        "accuracy": 1.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0
+      }
+    }
+  },
+  "timing_ms": {
+    "mean": 241.2585,
+    "ci_95_lower": 7.8627,
+    "ci_95_upper": 704.5349
+  }
+}

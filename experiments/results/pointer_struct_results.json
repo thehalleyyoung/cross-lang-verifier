@@ -1,0 +1,153 @@
+{
+  "experiment": "pointer_struct_verification",
+  "n_pairs": 8,
+  "summary": {
+    "divergent": 8,
+    "equivalent": 0,
+    "total_smt_queries": 8,
+    "total_time_ms": 44.94357109069824,
+    "categories": {
+      "array_access": {
+        "total": 2,
+        "div": 2,
+        "equiv": 0
+      },
+      "struct": {
+        "total": 2,
+        "div": 2,
+        "equiv": 0
+      },
+      "buffer": {
+        "total": 1,
+        "div": 1,
+        "equiv": 0
+      },
+      "null_ptr": {
+        "total": 1,
+        "div": 1,
+        "equiv": 0
+      },
+      "ptr_arith": {
+        "total": 1,
+        "div": 1,
+        "equiv": 0
+      },
+      "string": {
+        "total": 1,
+        "div": 1,
+        "equiv": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "name": "array_sum_bounded",
+      "category": "array_access",
+      "verdict": "divergent",
+      "counterexample": {
+        "idx": 12,
+        "arr_len": 10,
+        "reason": "out_of_bounds: C UB, Rust panics"
+      },
+      "description": "Sum elements of a bounded array. C: no bounds check, UB on out-of-bounds. Rust: slice with bounds checking.",
+      "smt_queries": 1,
+      "time_ms": 18.81122589111328
+    },
+    {
+      "name": "struct_field_access",
+      "category": "struct",
+      "verdict": "divergent",
+      "counterexample": {
+        "ptr": 0,
+        "reason": "null_pointer_dereference: C UB, Rust disallows null references"
+      },
+      "description": "Access fields of a point struct. C: direct memory offset. Rust: safe field access.",
+      "smt_queries": 1,
+      "time_ms": 1.56402587890625
+    },
+    {
+      "name": "buffer_copy",
+      "category": "buffer",
+      "verdict": "divergent",
+      "counterexample": {
+        "n": 24,
+        "dst_size": 16,
+        "reason": "buffer_overflow: C UB (writes past end), Rust panics (length mismatch)"
+      },
+      "description": "Copy n bytes between buffers. C: memcpy with no overlap check. Rust: copy_from_slice with length check.",
+      "smt_queries": 1,
+      "time_ms": 2.1538734436035156
+    },
+    {
+      "name": "linked_node_value",
+      "category": "null_ptr",
+      "verdict": "divergent",
+      "counterexample": {
+        "node_ptr": 0,
+        "reason": "null_dereference: C UB, Rust Option::unwrap panics"
+      },
+      "description": "Access value from a node pointer. C: direct dereference, UB if null. Rust: Option unwrap, panic if None.",
+      "smt_queries": 1,
+      "time_ms": 0.5648136138916016
+    },
+    {
+      "name": "array_index_negative",
+      "category": "array_access",
+      "verdict": "divergent",
+      "counterexample": {
+        "idx": -1,
+        "reason": "negative_index: C UB (ptr arith underflow), Rust usize wraps to huge value -> panic"
+      },
+      "description": "Array access with potentially negative index. C: UB. Rust: panic (usize wraps).",
+      "smt_queries": 1,
+      "time_ms": 0.8997917175292969
+    },
+    {
+      "name": "pointer_arithmetic_offset",
+      "category": "ptr_arith",
+      "verdict": "divergent",
+      "counterexample": {
+        "offset": 3,
+        "alloc_size": 2,
+        "reason": "ptr_past_allocation: C UB, Rust checked pointer arithmetic"
+      },
+      "description": "Compute p + offset. C: UB if result outside allocation. Rust: checked pointer arithmetic.",
+      "smt_queries": 1,
+      "time_ms": 2.087831497192383
+    },
+    {
+      "name": "string_length_scan",
+      "category": "string",
+      "verdict": "divergent",
+      "counterexample": {
+        "reason": "unterminated_string: C strlen reads past allocation (UB), Rust &str has known length"
+      },
+      "description": "Scan for null terminator. C: reads until \\0, UB if unterminated. Rust: slice len() is O(1).",
+      "smt_queries": 1,
+      "time_ms": 18.511056900024414
+    },
+    {
+      "name": "struct_padding_layout",
+      "category": "struct",
+      "verdict": "divergent",
+      "counterexample": {
+        "c_layout": {
+          "a": 0,
+          "b": 4,
+          "c": 8,
+          "sizeof": 12
+        },
+        "rust_layout": {
+          "a": 4,
+          "b": 0,
+          "c": 5,
+          "sizeof": 8
+        },
+        "reason": "struct_layout_divergence: C padding vs Rust repr(Rust) layout differs"
+      },
+      "description": "Struct with different padding in C vs Rust. C: implementation-defined padding. Rust: repr(C) matches, default repr may differ.",
+      "smt_queries": 1,
+      "time_ms": 0.3509521484375
+    }
+  ]
+}

@@ -1,0 +1,548 @@
+{
+  "title": "Semantic Reconciliation for C↔Rust Equivalence Verification",
+  "version": "1.0",
+  "core_thesis": "LLVM IR erases source-level semantic distinctions that cause cross-language divergences; source-level semantic reconciliation is necessary and sufficient for detecting migration bugs in structurally similar C↔Rust translations. Existing IR-level tools (LLREVE, Alive2, UC-KLEE) operate on LLVM IR where signed overflow, float precision, and error-handling semantics are compiled to identical or near-identical instructions, making them fundamentally blind to the most important class of migration bugs. Our tool operates at the source level, preserving semantic distinctions that IR-level analysis destroys, and produces either bounded equivalence proofs, concrete divergence witnesses, or honestly-quantified unknown verdicts.",
+
+  "mathematical_foundations": {
+    "semantic_configuration_space": {
+      "definition": "A semantic configuration is a triple σ = (ω, φ, ε) drawn from the product domain Σ = Ω × Φ × E, where Ω is the overflow mode domain, Φ is the floating-point precision model domain, and E is the error model domain. The C configuration is σ_C = (ub, extended, ub-silent). The Rust configuration is σ_Rust = (wrap|panic, strict, trap|result), depending on build mode and coding style. The divergence set Δ(σ_C, σ_Rust) = {overflow, float, error} — all three components diverge for the canonical C↔Rust pair.",
+      "components": {
+        "overflow_mode": {
+          "domain": "Ω = { ub, wrap, panic, sat }",
+          "formal_definition": "ub (undefined behavior): The operation has no defined result; the program's entire subsequent execution is unconstrained. This is C's model for signed integer overflow per ISO C11 §6.5/5.\nwrap (two's complement wrapping): The result is computed modulo 2^w where w is the bit-width. This is Rust's release-mode semantics and C's unsigned arithmetic.\npanic (checked trap): The operation checks for overflow and halts execution with a trap if overflow occurs. This is Rust's debug-mode semantics.\nsat (saturating): The result is clamped to [MIN_w, MAX_w]. This is Rust's explicit saturating_add family.\nThe C configuration uses ω_C = ub for signed arithmetic and ω_C = wrap for unsigned. The Rust configuration uses ω_Rust ∈ {wrap, panic} depending on compilation mode, with sat available via explicit API."
+        },
+        "float_model": {
+          "domain": "Φ = { extended, strict }",
+          "formal_definition": "extended: The implementation may evaluate floating-point expressions at higher precision than the declared type (e.g., 80-bit x87 extended precision for double operations). Intermediate results may retain extra precision across expression boundaries. This is permitted by ISO C11 §5.2.4.2.2 with FLT_EVAL_METHOD ∈ {1, 2}. The result of an expression e of type τ is some value v such that v = round_τ(eval_{τ'}(e)) for some τ' ⊇ τ, where the choice of τ' is implementation-defined.\nstrict: Every floating-point operation produces a result rounded to the declared type's precision at every operation boundary, per IEEE 754-2019. This is Rust's model: f32 operations produce f32 results, f64 operations produce f64 results, with no implicit promotion."
+        },
+        "error_model": {
+          "domain": "E = { ub-silent, trap, result }",
+          "formal_definition": "ub-silent: Erroneous conditions (null dereference, division by zero, out-of-bounds access) yield undefined behavior — the program has no defined semantics from that point forward. This is C's model.\ntrap: Erroneous conditions cause an immediate, observable program halt (panic). This is Rust's model for array bounds checks, integer overflow in debug mode, and unwrap() on None/Err.\nresult: Erroneous conditions are encoded in the return type as Result<T, E> or Option<T>. Execution continues with the error value propagated. This is idiomatic Rust's model for recoverable errors."
+        }
+      },
+      "load_bearing_justification": "The semantic configuration space σ is load-bearing because it parameterizes the operational semantics of every arithmetic instruction in the shared IR. Without σ, the IR cannot distinguish between C's undefined-behavior-on-overflow and Rust's wrapping-on-overflow — the exact distinction that LLVM IR erases and that our tool must preserve. Every coercion point insertion, every SMT encoding, and every divergence verdict depends on comparing operations under different σ values. The configuration space directly drives the implementation: it becomes enum SemConfig in ir/semantics.rs, and every BinOp IR instruction carries an overflow mode tag derived from σ."
+    },
+    "reconciliation_relation": {
+      "definition": "Two functions f_C (under σ_C) and f_R (under σ_R) are equivalent modulo semantic configuration, written f_C ≈_{σ_C, σ_R} f_R, if and only if: ∀ī ∈ D_{σ_R}(f_R). ∃ub_choices. obs(f_C, ī, ub_choices) ∼_τ obs(f_R, ī). Where D_{σ_R}(f_R) is the well-defined domain of f_R under σ_R, ub_choices represents angelic nondeterminism for C's undefined behavior, and ∼_τ is type-indexed output equivalence: for int_{w,s}, v₁ ∼ v₂ iff v₁ = v₂; for float_p, v₁ ∼ v₂ iff |v₁ − v₂| ≤ max(ε · |v₁|, δ); for ptr(τ), structural equality of pointed-to values; for struct types, component-wise ∼.",
+      "key_properties": [
+        "Not a standard equivalence relation — it is a directed approximation relation, not symmetric in the UB treatment",
+        "Quantification is over Rust's well-defined domain (since Rust has no UB in safe code, D_{σ_R} is typically the full input space)",
+        "For each input, we ask whether some resolution of C's UB agrees with Rust — angelic nondeterminism",
+        "A divergence witness is an input ī such that NO angelic choice of UB outcomes makes C agree with Rust",
+        "The relation is parameterized by the semantic gap between σ_C and σ_R, not by a shared semantics",
+        "Float tolerance uses directed ε-approximation with accumulated error tracking, not symmetric ε-equivalence"
+      ],
+      "angelic_ub_treatment": "When a C operation triggers UB, the C program transitions to a chaotic state where the result is chosen by an angelic oracle — i.e., the result is existentially quantified over all possible bitvector values of the appropriate type. Formally: ⟦e⟧^{angelic}_{σ_C}(ī) = {v | ∃ub_choices. eval(e, ī, ub_choices) = v}. Under angelic nondeterminism, the C program can produce any value at a UB point. Equivalence then asks: is there some choice of UB outcomes that makes C agree with Rust? This is the correct formalization because: (1) it models what a conforming C compiler could do (any behavior is permitted at UB), (2) it makes equivalence easier to achieve (angelic = best-case for C), so a failure of equivalence under angelic semantics is a strong result: even the most favorable interpretation of C's UB cannot make the programs agree, and (3) divergence witnesses become inputs where no angelic choice makes C agree with Rust — these are genuine bugs. This framework follows the standard PL technique for handling UB in verification (cf. Regehr et al., Alive2). We explicitly model the C abstract machine, not any compiled binary, and validate witnesses with clang -O0 -fwrapv."
+    },
+    "integer_reconciliation": {
+      "bitvector_algebra": "BV(w, s) denotes the bitvector type of width w ∈ ℕ⁺ and signedness s ∈ {u, s}. Value domains: Val(BV(w, u)) = {0, 1, ..., 2^w - 1}, Val(BV(w, s)) = {-2^{w-1}, ..., 2^{w-1} - 1}. The bitvector algebra provides the foundation for all integer-related SMT encodings, modeling fixed-width arithmetic exactly as hardware and language specifications define it. All operations are closed over the bitvector domain, and overflow behavior is determined by the semantic configuration σ, not by the algebra itself.",
+      "embedding_maps": "embed: BV(w, s) → ℤ maps bitvector values to their mathematical integer interpretation: embed(v, w, u) = v; embed(v, w, s) = v if v < 2^{w-1}, v - 2^w if v ≥ 2^{w-1} (interpreting the raw bit pattern as unsigned, then adjusting for two's complement). trunc: ℤ → BV(w, s) maps mathematical integers to bitvector values: trunc(z, w, u) = z mod 2^w; trunc(z, w, s) = z if z ∈ Val(BV(w, s)), ((z + 2^{w-1}) mod 2^w) - 2^{w-1} otherwise. Lemma (Roundtrip): For all v ∈ Val(BV(w, s)): trunc(embed(v, w, s), w, s) = v. Lemma (Truncation is wrapping): For all z ∈ ℤ: trunc(z, w, s) is the unique value v ∈ Val(BV(w, s)) such that v ≡ z (mod 2^w).",
+      "overflow_alignment_contracts": {
+        "ub_x_wrap": "OAC_{ub,wrap}(a, b, r_C, r_R) ≡ (z ∈ Val(BV(w,s))) → (r_C = r_R), where z = embed(a) ⊕_ℤ embed(b). When z is in range, both must agree (C computes z; Rust wrapping also computes z when no actual wrap occurs). When z is out of range, C has UB, so no obligation exists — but the system reports a definedness divergence as a diagnostic. The Rust result trunc(z) is well-defined but the C result is unconstrained. SMT encoding: sign-extend both operands to 2×width, compute exact result, check if in-range, assert conditional equality. This is the most frequently triggered contract in practice, accounting for an estimated 40-50% of all divergences in C2Rust output.",
+        "ub_x_panic": "OAC_{ub,panic}(a, b, r_C, r_R) ≡ (z ∈ R_w) → (r_C = r_R). When z ∈ R_w, both produce z and must agree. When z ∉ R_w, C has UB and Rust panics — this is a definedness divergence, reported with classification 'C-UB, Rust-panic'. The system generates a secondary witness for this case by asserting ¬inRange and checking SAT. This contract applies to Rust debug-mode compilation where overflow checks are enabled.",
+        "ub_x_saturate": "OAC_{ub,sat}(a, b, r_C, r_R) ≡ (z ∈ R_w) → (r_C = r_R). When z ∉ R_w, C has UB while Rust saturates to the boundary value (MIN_w or MAX_w). This is always a divergence on overflow inputs since saturation produces a specific value and C is unconstrained. This contract applies to Rust's explicit saturating_add/saturating_sub family of methods. Additional contracts: OAC_{wrap,panic} for Rust release×debug comparison, and OAC_{wrap,wrap} for unsigned types where both C and Rust wrap identically (unconditional equality, no coercion needed)."
+      },
+      "smt_encodings": "Integer overflow SMT encoding (signed add, width 32): (1) Declare a, b as BitVec(32). (2) Sign-extend both to BitVec(64): a_ext = sign_extend(32, a), b_ext = sign_extend(32, b). (3) Compute exact result: exact = bvadd(a_ext, b_ext). (4) Define in_range: bvsle(0xFFFFFFFF80000000, exact) ∧ bvsle(exact, 0x000000007FFFFFFF). (5) C result: extract(31, 0, exact). (6) Rust result: bvadd(a, b) (wrapping). (7) Coercion assertion: ¬(in_range → (r_C = r_R)). If UNSAT, equivalent on defined inputs. If SAT, divergence witness.\nDivision encoding: div_defined ≡ (b ≠ 0) ∧ ¬(a = MIN_w ∧ b = -1). Assert ¬(div_defined → (bvsdiv(a, b) = r_R)).\nShift encoding: OAC_{shl}(a, b, r_C, r_R) ≡ (0 ≤ b < w) → (r_C = r_R). C has UB when shifting by ≥ width; Rust masks the shift amount (b mod w in wrapping mode) or panics.\nInteger promotion encoding: C promotes char/short to int before arithmetic. For BV(8,s): r_C = trunc_8(sext_32(a) ⊕_32 sext_32(b)), r_R = a ⊕_8 b. Assert ¬(r_C = r_R) to find promotion divergences.\nNegative right-shift: C is implementation-defined (arithmetic or logical); Rust always arithmetic. Encode both and assert divergence when input is negative and the two differ."
+    },
+    "float_reconciliation": {
+      "directed_epsilon_approximation": "Definition (Directed ε-Approximation): Given a reference computation f_ref (C under abstract machine semantics) and an approximation f_approx (Rust under strict IEEE 754), f_approx is an ε-approximation of f_ref, written f_ref ⊑_{ε,δ} f_approx, if for all inputs ī ∈ D(f_ref): |obs(f_ref, ī) − obs(f_approx, ī)| ≤ max(ε · |obs(f_ref, ī)|, δ). This is NOT an equivalence relation and we do not claim it is. It is a directed approximation bound. Transitivity is replaced by the triangle inequality: if f₁ ⊑_{ε₁} f₂ and f₂ ⊑_{ε₂} f₃, then f₁ ⊑_{ε₁+ε₂+ε₁ε₂} f₃. Error compounds — we track it explicitly.\nError accumulation tracking: At each coercion point k in the product program, the accumulated tolerance bound is ε_k = ε_{k-1} + ε_op + ε_{k-1} · ε_op, where ε_op is the single-operation tolerance. The final output comparison uses ε_final, not ε per-operation.\nDefault parameters: ε = 2^{-50} (approximately 1 ULP for double-precision results computed via extended precision), δ = 2^{-1074} (the smallest positive denormalized double).\nA floating-point divergence is benign if within tolerance (expected from extended-precision non-determinism) or genuine if exceeding tolerance (indicating a semantic bug such as incorrect operation order or missing cast).\nScope: ε-approximation is not transitive. Our tool verifies a single translation step (C → Rust), not a chain. Multi-step migration (C → Rust₁ → Rust₂) requires independent verification of each step, with accumulated error bounds.",
+      "smt_encoding": "SMT theory QF_FP provides IEEE 754 operations directly. For the strict model: r_strict = fp.add(RNE, a, b). For the extended model, we overapproximate: compute both the strict result and assert the tolerance: diff = fp.abs(fp.sub(RNE, r_strict, r_ext)), tol = fp.max(fp.mul(RNE, epsilon, fp.abs(r_strict)), delta), assert ¬(fp.leq(diff, tol)).\nCompleteness gap (honest disclosure): The extended model is inherently non-deterministic. Our SMT encoding uses the strict result as a proxy for the extended result, which is sound (if strict results agree, extended results may still diverge) but incomplete. When the tolerance check fails, we report a potential FP divergence that requires concrete validation.\nQF_FP performance consideration: Z3's floating-point solver is 10-100× slower than QF_BV. Per-query timeout for QF_FP coercions is set to 30s (vs 10s for QF_BV). For functions with >5 floating-point coercion points, we use interval arithmetic overapproximation instead of exact QF_FP reasoning. If the interval includes zero error, the operations are equivalent; otherwise, fall back to fuzzing."
+    },
+    "error_reconciliation": {
+      "ub_panic_mapping": "The error outcome domain for a single operation is: Outcome = Val(v) | UB | Panic(msg) | Err(e) | Undef. The reconciliation maps every (Outcome_C, Outcome_Rust) pair to a verdict:\n- (Val(v₁), Val(v₂)): Check v₁ ∼_τ v₂ — standard output equality\n- (UB, Panic(msg)): Definedness divergence — report 'C UB, Rust panics'\n- (UB, Err(e)): Definedness divergence — report 'C UB, Rust returns error'\n- (UB, Val(v)): Definedness divergence — report 'C UB, Rust succeeds — C behavior unconstrained'\n- (Val(v), Panic(msg)): Definedness divergence — report 'C succeeds, Rust panics — likely missing validation in C'\n- (Val(v), Err(e)): Error handling divergence — C silently succeeds where Rust signals error\n- (Undef, Val(v)): Benign (conditional) — C yields some value; if all possible C values agree with v, benign\n- (Undef, Panic(msg)): Definedness divergence\nThe most subtle case is UB × Defined: when C has UB and Rust has a defined value (e.g., signed overflow wrapping). The system reports a divergence witness with classification 'C-UB/Rust-defined' because the C program has no defined behavior on this input.",
+      "result_encoding": "Error coercion assertion at a program point where C may have UB and Rust may panic: A_err ≡ defined_C(ī) → defined_R(ī) → (val_C = val_R), where defined_C(ī) encodes the precondition for C's operation to be defined (e.g., pointer is non-null, index is in bounds, divisor is non-zero), and defined_R(ī) encodes the precondition for Rust's operation to not panic.\nFor the common case where definedness conditions are identical: A_err ≡ defined(ī) → (val_C = val_R).\nFor the case where Rust has stricter definedness (e.g., bounds checking): A_err ≡ defined_C(ī) → (defined_R(ī) ∧ val_C = val_R).\nUnspecified value reconciliation: When C's semantics yield an unspecified value (e.g., evaluation order of function arguments), the C result is modeled as an existentially quantified value: obs_C = ∃v ∈ S. Val(v). The coercion assertion becomes A_unspec ≡ ∃v ∈ S. (v = val_R). In SMT, the existential is Skolemized: the C result variable is unconstrained within S."
+    }
+  },
+
+  "theorems": [
+    {
+      "name": "σ-Invariance of Non-Diverging Operations (Lemma 2.0)",
+      "statement": "For all IR instruction kinds op such that op ∉ π₁(T), and for all configurations σ₁, σ₂ ∈ Σ: ⟦op⟧_{σ₁}(S) = ⟦op⟧_{σ₂}(S) for all states S.",
+      "proof_sketch": "By exhaustive case analysis over Definition 1.7's instruction set. Bitwise operations (and, or, xor) operate on bit-patterns with no semantic configuration dependence. Comparisons (icmp, fcmp) produce boolean results determined solely by operand values. Control flow (br, jmp, ret) is configuration-independent. Memory operations (load, store) depend on the memory model but not on σ's overflow/float/error components — memory model differences are captured separately by provenance tags, which are in T. Type conversions between same-width types (bitcast) are identity on bit-patterns. Zero-extension and sign-extension are determined by source/target types, not σ. Total: 15 IR operations not in T, each shown σ-invariant. ~2 pages of case analysis.",
+      "assumptions": [
+        "IR instruction set is complete (Definition 1.7 enumerates all instruction kinds)",
+        "Divergence table T is complete for the C2Rust subset (Assumption A6)"
+      ],
+      "drives_module": "This lemma closes the induction gap in Theorem 2.1. Without it, the base case of the product program soundness proof asserts without justification that non-diverging instructions have identical semantics. The case analysis also forces verification of T's coverage — if an operation is σ-dependent but missing from T, the lemma proof fails, revealing the gap."
+    },
+    {
+      "name": "Product Program Soundness (Theorem 2.1')",
+      "statement": "Let f_C and f_R be two functions lowered to IR programs P_C and P_R under configurations σ_C and σ_R respectively, under platform P = (LP64, signed-char, arithmetic-right-shift). Let P× = InsertCoercions(P_C, P_R, T) be the product program. Let k be the loop unrolling bound. If for all inputs ī, the bounded symbolic execution of P× to depth k satisfies all coercion assertions, then: ∀ī ∈ D^k_{σ_C}(f_C) ∩ D^k_{σ_R}(f_R) : obs_{σ_C}(f_C, ī) ∼_τ obs_{σ_R}(f_R, ī), where D^k_σ(f) restricts the well-defined domain to executions completing within k loop iterations. The equivalence conclusion uses the angelic UB formalization (Definition 1.12').",
+      "proof_sketch": "By induction on the length of the execution trace of P×.\nBase case: For straight-line code, every instruction pair (I_C^i, I_R^i) is executed exactly once. At each non-diverging instruction (opkind ∉ π₁(T)), the IR semantics under both σ_C and σ_R coincide by Lemma 2.0. At each diverging instruction, the coercion assertion A_i holds by hypothesis. Consider a diverging signed add: x_C := add_{σ_C}(y₁, y₂) and x_R := add_{σ_R}(y₁, y₂). Sub-case (i) y₁+y₂ ∈ R_w: both yield y₁+y₂, assertion holds. Sub-case (ii) y₁+y₂ ∉ R_w: input excluded from D_{σ_C}, conclusion vacuously satisfied. Since symbolic inputs are shared, intermediate values after each step are constrained by assertions, and by induction, output values satisfy the reconciliation relation.\nInductive case: For loops unrolled to depth k, each iteration is straight-line code handled by the base case. Executions requiring more than k iterations are not represented in P×, hence the restriction to D^k. ~1 page.",
+      "assumptions": [
+        "A1: Frontend correctness — lowering from source to IR preserves source-level semantics",
+        "A2: Loop bound — result holds only for executions within k iterations",
+        "A3: Structural alignment — product program construction correctly aligns corresponding instructions (verified by alignment certificate)",
+        "A6: Divergence table completeness — T captures all diverging operation kinds for the target subset",
+        "Platform P is fixed (LP64, signed-char, arithmetic-right-shift)"
+      ],
+      "drives_module": "Justifies the entire product program architecture. This theorem is the central soundness argument: it tells us that if SMT says all coercion assertions hold, then the two functions agree on all well-defined inputs within the loop bound. Drives product/construction.rs and verdict/synthesize.rs."
+    },
+    {
+      "name": "IR-Level Witness Correctness (Theorem 2.2a)",
+      "statement": "If the SMT solver returns SAT on the query ∃ī.¬Aⱼ for some coercion assertion Aⱼ, with satisfying assignment ī*, then ī* is a divergence witness for the IR programs P_C, P_R (under assumptions A4, A5).",
+      "proof_sketch": "Case split on coercion assertion type. Case 1 (Overflow, ub×wrap): ¬A ≡ inRange(y₁+y₂) ∧ (x_C ≠ x_R). Under ī*, sum is in range (both defined), but results differ — value divergence per Definition 1.13. Case 2 (Overflow, ub×panic): Same negation structure; additionally check for definedness divergence when ¬inRange. Case 3 (Float): ¬A yields input where float results differ by more than tolerance — value divergence since both operations are defined for finite inputs. Case 4 (Error): ¬A yields in-bounds access with differing values or definedness divergence. In all cases, ī* consists of concrete bitvector values that witness the divergence. ~1 page.",
+      "assumptions": [
+        "A4: SMT encoding correctness — the SMT formula faithfully represents the IR semantics",
+        "A5: SMT solver soundness — Z3 correctly reports SAT/UNSAT"
+      ],
+      "drives_module": "Justifies witness extraction from SMT models. Drives verdict/synthesize.rs: when Z3 returns SAT, the tool can confidently extract and report a divergence witness at the IR level."
+    },
+    {
+      "name": "Source-Level Witness Lifting (Theorem 2.2b)",
+      "statement": "Under assumption A1 (frontend correctness), an IR-level witness ī* lifts to a source-level divergence witness. This lifting is independently validated by concrete execution: compiling both source programs and executing them on ī*. If concrete execution confirms the divergence, the witness is source-level sound regardless of A1.",
+      "proof_sketch": "A1 guarantees IR-source correspondence: if the frontends correctly lower both source programs to IR, then the IR-level divergence reflects a source-level divergence. However, the formal proof only establishes IR-level soundness. The source-level claim is strengthened by concrete validation: compile C with gcc -O0 -fsanitize=undefined, compile Rust with rustc -C opt-level=0, execute both on ī* via FFI harness, compare outputs byte-for-byte. If outputs differ or one traps/panics, the divergence is confirmed independently of A1. This is a 'belts and suspenders' argument: formal proof gives us the witness, concrete execution gives us source-level confidence. ~0.5 pages.",
+      "assumptions": [
+        "A1: Frontend correctness (for the formal lifting argument)",
+        "Concrete validation is empirical, not formal — it checks one input, not all inputs"
+      ],
+      "drives_module": "Justifies the tool's end-to-end claim that divergence witnesses are reproducible and meaningful at the source level. Drives the FFI test harness generation and witness replay infrastructure."
+    },
+    {
+      "name": "Three-Output Exhaustiveness and Mutual Exclusivity (Theorem 2.3)",
+      "statement": "The tool's output space O = {Equivalent(k), Divergent(ī*), Unknown(cov)} is: (1) Exhaustive: every terminating analysis produces exactly one output. (2) Mutually exclusive: no analysis can produce two distinct outputs. (3) Sound (for Equivalent): Equivalent(k) implies f_C ≈^k_{σ_C, σ_R} f_R (bounded equivalence, modulo assumptions A1-A5).",
+      "proof_sketch": "Exhaustiveness: The analysis pipeline is a decision procedure with three branches. Phase 1 (bounded symbolic verification): construct P× and submit coercion assertions to SMT with timeout T. If all assertions verified UNSAT: output Equivalent(k). If any assertion yields SAT with witness ī*: output Divergent(ī*). If any assertion yields UNKNOWN: proceed to Phase 2. Phase 2 (differential fuzzing): execute for N iterations. If divergence found: output Divergent(ī*). If no divergence found: output Unknown(cov). Every code path terminates (finite timeout + finite iteration bound) and produces exactly one output.\nMutual exclusivity: Three syntactically distinct constructors; decision tree has no path reaching two output nodes.\nSoundness of Equivalent: All coercion assertions verified UNSAT → Theorem 2.1 gives bounded equivalence. Divergent verdicts do not depend on A1-A3: witness ī* is independently validated by concrete execution. ~0.5 pages.",
+      "assumptions": [
+        "Termination of both phases (guaranteed by finite timeouts and iteration bounds)",
+        "For soundness of Equivalent: A1 through A5"
+      ],
+      "drives_module": "Justifies the tool's three-output API contract. Ensures every function pair receives a verdict. Drives verdict/synthesize.rs."
+    },
+    {
+      "name": "Coercion Insertion Completeness (Theorem 2.4')",
+      "statement": "Let T' be the extended semantic divergence table (including transmute/union). The InsertCoercions function inserts a coercion assertion at every instruction pair (I_C, I_R) in the product program where the C and Rust semantics can diverge. Formally: ∀(I_C, I_R) aligned in P× : (∃ī. ⟦I_C⟧_{σ_C}(ī) ≠ ⟦I_R⟧_{σ_R}(ī)) ⟹ (opkind(I_C) ∈ π₁(T')). Functions containing inline assembly or compiler intrinsics are rejected, not silently accepted.",
+      "proof_sketch": "By exhaustive case analysis over the IR instruction set. Operations not in T' (bitwise, comparisons, control flow, same-width conversions) have identical semantics under all σ ∈ Σ — proven by Lemma 2.0. Operations in T' are verified to genuinely diverge: signed add/sub/mul (UB vs wrap/panic), signed div/rem (INT_MIN/-1), shifts (≥width), float ops (extended vs strict), array indexing (no check vs panic), pointer deref (UB vs panic), transmute/union (representation divergence). Inline assembly and unsupported intrinsics trigger explicit rejection. Proof is relative to T': if T' is incomplete, coercion insertion is incomplete. T' completeness is assumption A6, validated by systematic enumeration against ISO C11 and Rust Reference. ~1 page.",
+      "assumptions": [
+        "A6: Divergence table T' completeness for the C2Rust subset (validated empirically, not proven)",
+        "C2Rust output uses a restricted set of Rust features (primarily unsafe Rust with Wrapping types)"
+      ],
+      "drives_module": "Drives product/coercion.rs: the coercion insertion implementation is a direct translation of T' entries to assertion-generation code. Ensures no divergence class is silently missed."
+    }
+  ],
+
+  "algorithms": [
+    {
+      "name": "C AST-to-IR Lowering (libclang → Shared IR)",
+      "pseudocode_summary": "LowerC(clang_ast, target_info): (1) Set fn.σ = SemConfig(overflow=UB, error=Silent, float=Extended80Allowed). (2) Compute integer promotion map for target platform via libclang's resolved type APIs. (3) For each parameter, map C type to IR type encoding platform-specific widths (int→i32, long→i32|i64). (4) For each statement, recursively lower: BinaryExpr applies integer promotion rules (§6.3.1.1) and usual arithmetic conversions (§6.3.1.8) using libclang's pre-resolved types, then emits BinOp with overflow mode (UB for signed, Wrap for unsigned). IfStmt/ForStmt create basic blocks with conditional/unconditional branches. ReturnStmt emits Ret. DeclStmt emits Alloca+Store. Key design: read from libclang's semantic analysis results (resolved types, implicit conversions, promotion results), NOT from raw AST — delegates C semantics to libclang, reducing trusted code from ~3000 LoC to ~1500 LoC.",
+      "time_complexity": "O(n) where n = AST node count. Each AST node visited exactly once. MapCType, ApplyIntPromotion, UsualArithConv are O(1) table lookups.",
+      "space_complexity": "O(n) — IR is at most a constant factor larger than AST (each AST node produces ≤3 IR instructions for promotions + operation + demotion).",
+      "drives_module": "frontend/c_lowering.rs",
+      "estimated_loc": "5000-6000",
+      "key_challenges": [
+        "Faithfully encoding C's integer promotion rules — even scoped to C2Rust output, implicit promotions (unsigned short + int → int or unsigned int depending on platform widths) must be correct",
+        "Platform-dependent type widths: sizeof(int)=4, sizeof(long)=4|8 depending on LP64 vs LLP64",
+        "Fail loudly on unrecognized patterns: if the frontend encounters a C construct it doesn't handle, emit 'unsupported construct' error rather than silently misencoding",
+        "Differential testing against Clang/GCC on ~500 edge cases covering all promotion/conversion rules"
+      ]
+    },
+    {
+      "name": "Rust AST-to-IR Lowering (syn → Shared IR)",
+      "pseudocode_summary": "LowerRust(syn_ast, release_mode): (1) Set fn.σ = SemConfig(overflow=Wrap|Panic depending on release_mode, error=Panic, float=StrictIEEE754). (2) Rust types have fixed widths — no platform ambiguity for i32, u64, etc. (3) For each statement, recursively lower: BinaryExpr asserts type equality (no promotion in Rust), sets overflow mode to Wrap (release) or Panic (debug). MethodCall on wrapping_add/checked_add/saturating_add emits BinOp with explicit overflow mode. LetStmt emits Alloca+Store. UnsafeBlock lowers contents identically but tags provenance as Raw. IfExpr creates basic blocks. No trait resolution or monomorphization needed (C2Rust output doesn't use generics). Preserves overflow mode annotations.",
+      "time_complexity": "O(n) where n = AST node count.",
+      "space_complexity": "O(n)",
+      "drives_module": "frontend/rust_lowering.rs",
+      "estimated_loc": "5000-6000",
+      "key_challenges": [
+        "Scoped to unsafe C2Rust-style Rust — no trait resolution, no generics, no iterators, no closures",
+        "Preserving overflow mode annotations from wrapping vs checked vs saturating method calls",
+        "Handling C2Rust-specific patterns: Wrapping<T> types, explicit unsafe blocks, raw pointer operations",
+        "LLM translations may use more idiomatic Rust — handled on best-effort basis with structural mismatch verdicts for unsupported patterns"
+      ]
+    },
+    {
+      "name": "Structural Alignment via Greedy LCS",
+      "pseudocode_summary": "AlignPrograms(ir_c, ir_rust): (1) Compute basic block signatures by hashing semantic shape (opkind, result_ty for BinOps; cast_kind, from/to for Casts; skip identity casts and allocas as C2Rust artifacts). (2) Run standard LCS dynamic programming on signature sequences ordered by dominance tree pre-order. (3) Backtrack to extract alignment pairs and unmatched blocks. (4) Absorb C2Rust boilerplate (identity casts, empty pass-throughs, temporary assignments) into nearest aligned predecessor. (5) Rejection check: if alignment_ratio < 50% or unmatched excess > 40%, reject as StructuralMismatch with diagnostic diff. (6) Emit structural alignment certificate: for each aligned pair, assert opkind(I_C) = opkind(I_R) and TypeCompatible(I_C.result_ty, I_R.result_ty). Any assertion failure → reject pair.",
+      "time_complexity": "O(n·m) where n, m are basic block counts. DP table fill is Θ(n·m). For C2Rust output where n ≈ m, effectively O(n²).",
+      "space_complexity": "O(n·m) for DP table. Reducible to O(min(n,m)) with Hirschberg's optimization.",
+      "drives_module": "alignment/structural.rs",
+      "estimated_loc": "2000-3000",
+      "key_challenges": [
+        "Hash collision: two blocks with same signature but semantically different operations → prevented by alignment certificate post-check",
+        "C2Rust introduces extra let-bindings, temporaries, explicit casts, and unsafe blocks not in C source — must normalize these",
+        "LLM translations cause massive structural differences (iterators vs for-loops, match vs if-else) → expect >60% rejection rate for LLM pairs",
+        "Never the bottleneck: for 50 basic blocks per program, DP table is 2500 entries, completed in <1ms"
+      ]
+    },
+    {
+      "name": "Product Program Construction with Coercion Insertion",
+      "pseudocode_summary": "ConstructProductProgram(alignment, ir_c, ir_rust): (1) Create shared symbolic inputs by reconciling parameter types (e.g., C int vs Rust i32 — insert casts if widths differ). (2) For each aligned block pair, zip instructions positionally. (3) Emit both instructions with prefixed names (c_, r_). (4) At each pair, call NeedsCoercion (checks overflow, cast_kind, bounds_check, error_model divergence). If divergent: BuildCoercion generates a conditional assertion — if both well-defined, assert output equality; else record SemanticGap with classification. If not divergent: insert direct equality assertion. (5) Handle unmatched instructions: if semantic (not just temp/cast), assert equivalent effect. (6) Synchronize terminators. (7) Tag unmatched blocks (c_only, r_only) with side-effect assertions.",
+      "time_complexity": "O(n) where n = total aligned instruction count. Each pair produces O(1) product instructions + at most one coercion point.",
+      "space_complexity": "O(n) — product program is at most 3× the size of the larger input (2× for dual instructions + coercion points). In practice, coercion points are sparse: ~5-15% of instructions have divergent semantics.",
+      "drives_module": "product/construction.rs",
+      "estimated_loc": "5000",
+      "key_challenges": [
+        "Type reconciliation when C and Rust parameter types differ in width",
+        "Correctly identifying which instruction pairs need coercion vs direct equality",
+        "Handling unmatched instructions from C2Rust boilerplate without generating false alarms",
+        "Ensuring coercion assertions exactly encode the overflow alignment contracts from §4"
+      ]
+    },
+    {
+      "name": "Bounded Symbolic Execution with Incremental SMT",
+      "pseudocode_summary": "BoundedSymExec(product_program, k=32, timeout=10s): (1) Initialize Z3 incremental context with shared symbolic inputs. (2) DFS worklist exploration. (3) For each basic block: execute instructions symbolically, check coercion points via incremental Z3 push/pop. (4) At coercion points: push scope, assert path_cond ∧ guard ∧ ¬eq_assert, check-sat with timeout. SAT → extract witness, report Divergence. UNSAT → Equivalent for this path. UNKNOWN → record Timeout. (5) At conditional branches: check feasibility of both branches (1s timeout), fork state for feasible branches. (6) State merging at join points: selective merging — ITE merge for fan-in ≤ 4, independent path analysis for higher fan-in up to configurable path budget (default 128). (7) Loop detection via back-edge tracking: increment loop counter, terminate path if counter > k. (8) At return: final output equivalence check with accumulated path condition.",
+      "time_complexity": "O(2^p · k · T_SMT(n,k)) worst case, where p = conditional branches, k = loop bound, T_SMT is SMT solving time (worst-case NEXPTIME for QF_BV). Empirically: Z3 solves individual coercion queries in median 0.3s (p95: 2.1s) for formulas of ≤500 bitvector terms.",
+      "space_complexity": "O(2^p · n) worst case for worklist; O(p · n) with effective merging.",
+      "drives_module": "symexec/engine.rs, symexec/merge.rs, symexec/loops.rs",
+      "estimated_loc": "8000",
+      "key_challenges": [
+        "State merging precision loss at high fan-out (switch statements with >4 cases) — mitigated by selective merging",
+        "ITE tree depth from nested branches degrading Z3 performance — empirically manageable for C2Rust output (typically <15 branches)",
+        "Adaptive loop bound selection: compile-time-constant bounds use exact N, input-dependent loops use configurable default (32-64), hard cap at 256",
+        "QF_FP queries are 10-100× slower than QF_BV — separate timeout (30s for FP, 10s for BV, 2s for path feasibility, 15s for final output equivalence)"
+      ]
+    },
+    {
+      "name": "SMT Encoding per Divergence Class",
+      "pseudocode_summary": "Per-class encoding functions: (1) EncodeSignedOverflow: sign-extend to 2×width, compute exact result, define overflow predicate, assert conditional equality. (2) EncodeDivByZero: check b=0 or (a=MIN ∧ b=-1). (3) EncodeShift: check shift_amount ≥ width. (4) EncodePromotionDivergence: compare C's promoted-then-truncated result vs Rust's direct narrow computation. (5) EncodeNegativeShift: compare arithmetic vs logical shift for negative inputs. (6) EncodeFloatToInt: check NaN, out-of-range; C is UB, Rust saturates. (7) EncodeNullDeref: check ptr=0. (8) EncodeOOB: check index < 0 or index ≥ length using array theory. (9) EncodeProvenanceDivergence: uninterpreted sort for provenance, check cross-allocation pointer operations. (10) HandleTransmute: bitcast both sides, assert bit-level equality. Theory selection: QF_BV for integers, QF_FP + QF_BV for floats, QF_ABV for memory, QF_BV + uninterpreted functions for provenance.",
+      "time_complexity": "O(1) per coercion point — each encoding is a fixed-size formula template instantiated with symbolic variables.",
+      "space_complexity": "O(1) per encoding — formula size is bounded by the operation complexity.",
+      "drives_module": "smt/overflow.rs, smt/division.rs, smt/shift.rs, smt/float.rs, smt/memory.rs, smt/bitvector.rs",
+      "estimated_loc": "3000-4000",
+      "key_challenges": [
+        "Correctly modeling two's complement wrap-around in SMT bitvector theory",
+        "Z3 QF_FP performance: floating-point solver is dramatically slower, requiring larger timeouts and interval arithmetic fallback",
+        "Provenance modeling via uninterpreted functions — sound overapproximation but may miss some divergences",
+        "Round-trip validation: SMT solutions are checked against concrete execution to detect encoding bugs"
+      ]
+    },
+    {
+      "name": "Semantic-Aware Differential Fuzzing",
+      "pseudocode_summary": "Three sub-algorithms: (1) TypeAwareGenerator: generates boundary values per type — integers: 0, 1, -1, INT_MAX, INT_MIN, INT_MAX+1, powers of 2; floats: 0.0, -0.0, INF, -INF, NaN, DBL_MIN, DBL_MAX, DBL_EPSILON, float-to-int boundaries (2^31-1, 2^31, -2^31, -2^31-1); pointers: null, valid, max_alloc. (2) SeedFromDivergenceTable: for each parameter type, generate seeds targeting the specific divergence class — overflow boundaries, zero divisors, out-of-range floats, empty buffers, null pointers. (3) FuzzLoop: seeded with boundary values + symbolic engine's partial path exploration. Coverage-guided (libFuzzer/AFL++) with weighted mutation strategy (25% bit-flip, 25% arithmetic ±1/±MAX, 25% boundary substitution, 20% havoc, 5% crossover). Input minimization via delta debugging for counterexamples. (4) GenerateFFIHarness: auto-generates Rust FFI harness calling both C and Rust functions with identical inputs, comparing outputs with semantic awareness (respecting ε-tolerance for floats).",
+      "time_complexity": "O(iterations) — each iteration is O(1) for mutation + O(function_execution) for differential testing. At ~5000 exec/sec, 10 seconds explores 50,000 inputs.",
+      "space_complexity": "O(corpus_size) for the prioritized corpus + O(coverage_map) for branch coverage tracking.",
+      "drives_module": "fuzz/engine.rs, fuzz/harness.rs, fuzz/seeds.rs",
+      "estimated_loc": "5000",
+      "key_challenges": [
+        "Generating meaningful inputs for pointer/array parameters (allocation sizes, null handling)",
+        "Semantic-aware comparison in the harness (floating-point tolerance, error code mapping)",
+        "Integration with symbolic engine: partial path exploration produces concrete seeds at path exploration boundaries",
+        "Input minimization: delta debugging to produce minimal reproducing witness from fuzzer-discovered divergence"
+      ]
+    },
+    {
+      "name": "Adaptive Loop Bound Selection",
+      "pseudocode_summary": "SelectLoopBound(fn, default_k=32): For each loop L in fn: if L has a compile-time-constant bound N, set k_L = N (use exact bound). If L iterates over an input-length parameter, set k_L = configurable_default (CLI --max-k, default 64). Otherwise, k_L = 32 (default heuristic). Return min(max(k_L for all L), 256) — hard cap prevents resource exhaustion. Default: k=32 for general code, k=64 for crypto libraries (auto-detected via loop iteration count profiling). CLI override: --loop-bound <k>.",
+      "time_complexity": "O(|loops|) — linear scan of loop headers, <1ms.",
+      "space_complexity": "O(|loops|)",
+      "drives_module": "symexec/loops.rs",
+      "estimated_loc": "500",
+      "key_challenges": [
+        "Detecting compile-time-constant loop bounds from IR (pattern matching on comparison with constant)",
+        "Crypto code has deep loops: SHA-256 has 64 rounds, SHA-512 has 80 rounds — must handle these without globally raising k",
+        "Input-dependent loops cannot be bounded statically — default to configurable k with user override"
+      ]
+    },
+    {
+      "name": "Verdict Synthesis",
+      "pseudocode_summary": "SynthesizeVerdict(sym_results, fuzz_results): (1) If all coercion assertions verified UNSAT → Equivalent(k) with confidence qualifiers (bounded to k iterations, modulo A1-A5). (2) If any assertion SAT or fuzzer found divergence → Divergent(witness) with: concrete witness ī*, divergence class (from coercion tag), severity (Critical/Latent/Benign determined by concrete execution), and minimized input. (3) If some assertions timed out and fuzzing found no divergence → Unknown(coverage) with: branch coverage percentage, number of fuzz iterations, list of timed-out coercion points, estimated confidence. Validate all divergence witnesses by concrete execution via FFI harness before reporting.",
+      "time_complexity": "O(d) where d = number of divergences found, <10ms.",
+      "space_complexity": "O(d)",
+      "drives_module": "verdict/synthesize.rs",
+      "estimated_loc": "2000",
+      "key_challenges": [
+        "Correctly prioritizing and deduplicating divergences (multiple coercion points may trigger on same root cause)",
+        "Witness validation via concrete execution — must handle compilation, FFI marshaling, and output comparison",
+        "Coverage reporting for Unknown verdicts — must distinguish 'genuinely hard' from 'insufficient fuzzing effort'"
+      ]
+    },
+    {
+      "name": "Standard Library Stub Modeling",
+      "pseudocode_summary": "Model ~30-50 high-frequency C↔Rust stdlib function pairs scoped to functions that appear in C2Rust output of libsodium and zlib. Categories: (1) Memory allocation: malloc/free ↔ Box::new/drop, calloc ↔ vec![0; n] — model as abstract allocation with size tracking, NULL return on failure for C vs panic for Rust. (2) String operations: strlen/strcmp ↔ str::len/str::eq — encode UTF-8 validity constraint for Rust but not C. (3) Memory operations: memcpy/memset ↔ slice::copy_from_slice/slice::fill — encode overlap UB for C's memcpy vs Rust's guaranteed non-overlap. (4) I/O abstractions: simplified models returning symbolic values. Each stub pair encodes the semantic equivalence contract including edge cases (null pointer, empty string, allocation failure, zero-length operations).",
+      "time_complexity": "N/A — stubs are instantiated at call sites during IR lowering.",
+      "space_complexity": "O(stub_count) for the stub library.",
+      "drives_module": "stubs/c_stdlib.rs, stubs/rust_stdlib.rs",
+      "estimated_loc": "6000",
+      "key_challenges": [
+        "Correctly modeling edge cases: null pointer behavior, empty string handling, allocation failure semantics",
+        "memcpy overlap: C has UB on overlapping regions (use memmove instead), Rust's copy_from_slice panics on wrong length but handles overlap differently",
+        "Scoping to functions that actually appear in C2Rust output — avoid modeling unused functions"
+      ]
+    }
+  ],
+
+  "complexity_analysis": {
+    "per_function_pair": {
+      "worst_case": "O(2^p · k · T_SMT(n, k)) where p = number of conditional branches (path count), k = loop unrolling bound (default 32-64), n = program size (instruction count), and T_SMT is the SMT solving time which is worst-case NEXPTIME for QF_BV. For a function with 20 branches and k=32: 2^20 · 32 · T_SMT ≈ 33 million path-steps. State merging reduces this dramatically: for structured programs, ITE merging at join points reduces 2^p to O(p) merged states.",
+      "expected_case": "C2Rust output is structurally simple: few nested branches (p ≤ 15), few loops. With merging, this means ~15-50 SMT queries per function, each with bitvector formulas of ~200 terms. Z3 solves QF_BV queries of this size in median 0.3s (p95: 2.1s). Total per-function: 5-30 seconds (median), with <5% of functions exceeding 60 seconds. The 10-second per-query timeout ensures no single query blocks progress.",
+      "bottleneck": "SMT solving time dominates. Parsing (<50ms), IR lowering (<5ms), alignment (<1ms), and product program construction (<1ms) are negligible. For integer-heavy functions, QF_BV queries are fast. For floating-point-heavy functions, QF_FP queries are 10-100× slower and are the primary bottleneck — mitigated by 30s FP timeout and interval arithmetic fallback. For pointer-heavy functions, QF_ABV (array theory) queries can be expensive — mitigated by routing to fuzzing on timeout."
+    },
+    "full_benchmark": {
+      "estimated_time": "2-4 hours on an 8-core laptop for the full benchmark suite (400+ function pairs across libsodium + zlib + LLM translations). Breakdown: libsodium (~300 functions × median 15s = ~75 min with 8-core parallelism), zlib (~100 functions × median 20s = ~4 min parallel), LLM translations (~720 pairs but many rejected structurally, ~200 analyzable × median 10s = ~4 min parallel), synthetic (50 templates × 5s = <1 min). Total wall-clock with work-stealing parallelism: ~90-120 minutes.",
+      "parallelization": "Embarrassingly parallel at the function-pair level. Each function pair is analyzed independently with no shared state. Work-stealing executor distributes pairs across CPU cores. Memory footprint per core: ~200MB (Z3 context + symbolic state). 8-core machine with 64GB RAM can run 8 simultaneous analyses. No GPU required. Resource isolation: each Z3 context is independent, no inter-query dependencies."
+    }
+  },
+
+  "implementation_strategy": {
+    "phase_1_fuzzing": {
+      "modules": [
+        "fuzz/engine.rs — Coverage-guided differential fuzzing wrapping libFuzzer/AFL++",
+        "fuzz/harness.rs — Auto-generated FFI test harness calling both C and Rust functions",
+        "fuzz/seeds.rs — Semantic-aware seed generation from divergence table boundary values",
+        "frontend/c_sig.rs — C function signature extraction via libclang (types, names, calling convention)",
+        "frontend/rust_sig.rs — Rust function signature extraction via syn (types, names)",
+        "fuzz/minimize.rs — Delta debugging for input minimization of counterexamples",
+        "cli/main.rs — CLI accepting two source files, producing JSON verdict"
+      ],
+      "estimated_loc": "8000-12000",
+      "timeline": "Months 1-4. Produces independently useful tool that finds real bugs immediately, validating the problem's importance. Deliverable: working differential fuzzer with semantic seed generation that can analyze C↔Rust function pairs and report concrete divergences."
+    },
+    "phase_2_verification": {
+      "modules": [
+        "ir/types.rs — Type system: fixed-width integers (i8-i128), IEEE 754 floats, pointers with provenance, tagged unions",
+        "ir/instructions.rs — ~40 instruction types with semantic configuration tags",
+        "ir/semantics.rs — Operational semantics parameterized by σ = (overflow_mode, float_model, error_model)",
+        "frontend/c_lowering.rs — libclang AST → shared IR lowering with platform-aware type mapping",
+        "frontend/rust_lowering.rs — syn AST → shared IR lowering with overflow mode preservation",
+        "alignment/structural.rs — Greedy LCS alignment on basic block signatures with certificate emission",
+        "product/construction.rs — Product program construction with coercion point insertion",
+        "product/coercion.rs — Divergence table T lookup and coercion assertion generation",
+        "symexec/engine.rs — Bounded symbolic execution with DFS worklist and incremental Z3",
+        "symexec/merge.rs — Selective state merging (ITE for fan-in ≤ 4, independent analysis otherwise)",
+        "symexec/loops.rs — Adaptive loop bound selection",
+        "smt/overflow.rs — Signed overflow SMT encoding with angelic UB treatment",
+        "smt/division.rs — Division-by-zero and INT_MIN/-1 encoding",
+        "smt/shift.rs — Shift-by-≥-width encoding",
+        "smt/float.rs — Float tolerance encoding with accumulated ε tracking",
+        "smt/memory.rs — Array theory encoding for bounds checking and pointer operations",
+        "smt/bitvector.rs — embed/trunc helper functions for type conversions",
+        "stubs/c_stdlib.rs — C standard library function models",
+        "stubs/rust_stdlib.rs — Rust standard library function models",
+        "verdict/synthesize.rs — Three-output verdict synthesis with witness validation"
+      ],
+      "estimated_loc": "25000-35000",
+      "timeline": "Months 4-10. Layers bounded symbolic verification on top of Phase 1 fuzzing foundation. Deliverable: full verification pipeline upgrading the tool from 'bug finder' to 'verifier' with bounded equivalence proofs."
+    },
+    "critical_path": "The C frontend (even scoped to C2Rust output) is the critical path. C2Rust emits code using C's full integer promotion and conversion rules. A single missed implicit conversion (e.g., unsigned short + int promoting to int vs unsigned int depending on platform widths) produces a silent false equivalence report. Mitigation: use libclang's semantic APIs (clang_getCursorType, clang_getCanonicalType, clang_Type_getSizeOf) to extract the compiler's actual type decisions, not reimplement them. Build a C2Rust output corpus, catalog exact C patterns emitted, scope frontend to handle only these patterns. Differential test against Clang/GCC on ~500 edge cases. Fail loudly on unrecognized patterns.",
+    "risk_mitigation": "Phase 1 produces a useful tool regardless of Phase 2's outcome. If symbolic verification proves infeasible on the target timeline, the paper can lead with the fuzzing tool + divergence taxonomy (FSE/ISSTA-caliber) while continuing Phase 2 for a follow-up paper. If the C frontend proves harder than expected, narrow scope further to a specific C2Rust version's output patterns. If Z3 QF_FP performance is poor (>30% timeout at 30s), use interval arithmetic overapproximation for float-heavy functions and document symbolic float verification as best-effort. If structural alignment rejects >60% of LLM translations, report this honestly as a limitation and run fuzzing-only on rejected pairs."
+  },
+
+  "evaluation_design": {
+    "research_questions": [
+      "RQ1: Does LLVM IR erasure cause real missed divergences? Confirmation: ≥15 divergences across libsodium+zlib missed by IR-level tools but found by our tool, ≥80% validated by concrete execution. Falsification: IR-level tools detect all divergences, or our tool finds <5 missed divergences.",
+      "RQ2: Does bounded symbolic verification find divergences that fuzzing alone misses? Confirmation: symbolic verification exclusively discovers ≥10% of total divergences. Falsification: fuzzing alone (30 min/function) finds every divergence, or symbolic-exclusive set is <3%.",
+      "RQ3: What is the prevalence and taxonomy of semantic divergences in C2Rust output? Confirmation: ≥5% divergence rate (≥20 functions) with ≥4 of 9 divergence classes represented. Falsification: <1% divergence rate, or all divergences in single class.",
+      "RQ4: Can the tool scale to real library-sized codebases? Confirmation: ≥95% of functions receive verdict within 60 min/function, median ≤5 min. Falsification: >20% hard-timeout, or median >30 min.",
+      "RQ5: Does semantic-aware fuzzing outperform naive differential fuzzing? Confirmation: ≥30% more divergences than naive fuzzing in equal time, ≥2× faster time-to-first-divergence. Falsification: naive achieves ≥90% of detection rate (p<0.05, Wilcoxon).",
+      "RQ6: How does loop bound k affect the soundness-completeness tradeoff? Confirmation: k=8→32 increases verified set by ≥10pp; k=32→64 yields <2pp increase. Falsification: k=8 suffices for ≥95% of k=32 verdicts, or k=64 discovers ≥10 divergences missed at k=32.",
+      "RQ7: Does the tool outperform LLM-based equivalence review? Confirmation: tool achieves ≥90% precision and ≥80% recall; GPT-4 achieves <60% recall or <70% precision. Falsification: GPT-4 achieves ≥80% recall and ≥85% precision."
+    ],
+    "benchmarks": {
+      "c2rust_libsodium": {
+        "description": "All functions with external linkage in libsodium 1.0.19 (pinned version). No filtering by size, complexity, or expected outcome. ~300 exportable functions.",
+        "characteristics": "Heavy fixed-width integer arithmetic (uint32_t, uint64_t), bit manipulation, constant-time operations. Median ~40 LoC, p95 ~200 LoC. Loops with cryptographic iteration counts (often compile-time constants). Minimal floating-point, substantial pointer arithmetic.",
+        "expected_divergence_classes": "Signed overflow (intermediate computations), integer promotion (comparison chains), pointer arithmetic (buffer manipulation).",
+        "why_representative": "Cryptographic code is a primary target for C-to-Rust migration. libsodium is widely used, well-tested, and has been a C2Rust benchmark in prior work."
+      },
+      "c2rust_zlib": {
+        "description": "All functions with external linkage in zlib 1.3.1 (pinned version). Same exhaustive extraction protocol. ~100 exportable functions.",
+        "characteristics": "Compression/decompression with complex control flow and state machines. Significant unsigned char* buffer manipulation. Median ~80 LoC, p95 ~500 LoC, outliers like inflate() at ~1200 LoC. Extensive macro use with implicit integer promotion.",
+        "expected_divergence_classes": "Integer promotion (Huffman table construction), array bounds (sliding window access), signed/unsigned comparison.",
+        "why_representative": "Systems-level compression code exercises different patterns than cryptography: state machines, variable-length data, complex control flow."
+      },
+      "llm_translations": {
+        "description": "120 functions from Rosetta Code (40), libsodium public API (40), and SPEC CPU 2017 integer benchmarks (40). Translated by GPT-4 and Claude, 3 independent translations each, temperature 0.0. Total: 720 function pairs.",
+        "translation_prompt": "Translate the following C function to idiomatic, safe Rust. Preserve the function's input/output behavior exactly. Do not use unsafe blocks unless absolutely necessary.",
+        "expected_characteristics": "Higher divergence rate than C2Rust (LLMs may 'improve' semantics). Structural differences (iterators, match, Result/Option). Divergence classes: float precision, error handling, integer semantics.",
+        "structural_analyzability_expectation": "30-60% of LLM translations expected to pass structural alignment. Rejected pairs receive fuzzing-only analysis."
+      },
+      "synthetic_stress_tests": {
+        "description": "50 parameterized function templates with controlled semantic gaps. 10 overflow boundary (distance from INT_MAX), 8 float precision (ULP distance from zero), 6 division by zero (nesting depth), 8 integer promotion (width chain), 6 array bounds (offset from bounds), 6 error code mapping (error path count), 6 loop-dependent (minimum iterations: 8-256).",
+        "purpose": "Controlled experiments isolating tool capabilities. Not part of headline metrics — support ablation studies and calibrate detection limits."
+      }
+    },
+    "baselines": {
+      "alive2": {
+        "description": "Primary IR-level baseline. Alive2 is actively maintained, operates on LLVM IR, and encodes relational properties via SMT. Adapted for cross-language equivalence by feeding LLVM IR from both C (clang -O0 -emit-llvm) and Rust (rustc --emit=llvm-ir -C opt-level=0) compilations. Same per-function time budget and Z3 version as our tool.",
+        "purpose": "Proves the LLVM-IR-erasure thesis. If Alive2 misses divergences our tool finds, source-level verification is fundamentally necessary.",
+        "expected_outcome": "Alive2 will classify as 'equivalent' many pairs where signed overflow, float-to-int conversion, and integer promotion have been erased to identical IR. Expected miss rate: 30-60% of divergences, concentrated in overflow and float-precision classes."
+      },
+      "llreve": {
+        "description": "Secondary IR-level baseline. LLREVE v0.1 (~2017), targets LLVM IR equivalence. Retained for historical comparison despite staleness.",
+        "purpose": "Historical comparison with the tool most directly comparable to our goal."
+      },
+      "afl_plus_plus": {
+        "description": "Differential fuzzing alone in three configurations: (a) identical seeds + identical total time, (b) identical seeds + analysis-time-only (excluding parsing/lowering overhead), (c) AFL++ with its own heuristic seeding (no domain knowledge).",
+        "purpose": "Proves bounded symbolic verification adds value (RQ2). The interesting comparison is (c) — how does a well-configured off-the-shelf tool compare?",
+        "expected_outcome": "AFL++ finds 60-80% of divergences from the full pipeline. Misses divergences requiring specific input combinations satisfying complex path conditions."
+      },
+      "gpt4_single_shot": {
+        "description": "GPT-4 with structured equivalence-analysis prompt, single shot, temperature 0.0. Prompt includes divergence checklist (overflow, division, float, bounds, promotion, pointer).",
+        "purpose": "Lower bound on LLM review capability.",
+        "expected_outcome": "30-50% recall, 60-80% precision. Identifies obvious divergences but misses integer promotion in subexpressions and implementation-defined shift behavior."
+      },
+      "gpt4_chain_of_thought": {
+        "description": "GPT-4 with chain-of-thought prompting: Round 1 — analyze operations and type differences. Round 2 — construct concrete divergence-triggering inputs. Round 3 — self-review checking for missed promotions, conversions, division edge cases. Three-round structured prompt.",
+        "purpose": "Upper bound on LLM review capability. Pre-empts the straw-man objection. If GPT-4-CoT achieves >70% recall, reframe contribution as 'guarantees vs heuristics'.",
+        "expected_outcome": "Better than single-shot but still misses subtle cases. Predicted: 45-65% recall, 70-85% precision."
+      },
+      "test_suite_only": {
+        "description": "Run each library's existing test suite against both C and Rust builds via FFI. Count test failures from behavioral divergences.",
+        "purpose": "Status quo baseline. Expected: <10% of divergences caught, since tests are designed for correctness, not cross-language equivalence."
+      }
+    },
+    "metrics": {
+      "equivalence_rate": "Fraction of pairs receiving 'equivalent (bounded)' verdict. Wilson score interval at 95% confidence. For libsodium (n≈300): margin ≈ ±5.5% at worst case.",
+      "detection_rate": "Fraction of pairs with 'divergent' verdict AND execution-validated witness. Validation: compile C with gcc -O0 -fsanitize=undefined, Rust with rustc -C opt-level=0, execute via FFI, compare byte-for-byte.",
+      "false_positive_rate": "Fraction of 'divergent' verdicts where witness does not reproduce under execution. Target: zero by construction. Any non-zero FPR investigated as tool bug. 100% of divergences validated (not sampled).",
+      "time_to_verdict": "Wall-clock time per function pair. Report median, p25, p75, p90, p99, max. Separately for each verdict class. Hardware-normalized (single documented machine config).",
+      "coverage": "For 'unknown' verdicts: branch coverage achieved by fuzzing phase over product program. Instrumented via LLVM SanitizerCoverage. >90% coverage provides high confidence despite lack of formal proof.",
+      "structural_analyzability_rate": "Fraction of pairs passing structural alignment. Reported prominently for both C2Rust (expected >90%) and LLM (expected 30-60%) benchmarks.",
+      "potential_missed_divergences": "Divergences found by fuzzing in structurally-rejected pairs. Reported alongside main detection rate.",
+      "fp_accumulation_error": "Maximum accumulated ε at function output for float-heavy functions.",
+      "scalability": "Regression of log(time) ~ β₀ + β₁·log(complexity). Report β₁ (scaling exponent), R², residual plots. β₁ < 2 indicates sub-quadratic scaling."
+    },
+    "ablations": [
+      "Without coercion insertion (disable semantic bridge): Measures value of semantic awareness. Expected: detection rate drops 30-60%, losing overflow, promotion, and float-cast divergences.",
+      "Without fuzzing fallback: All functions go directly to symbolic verification. Expected: unknown rate increases, detection rate drops 10-20%.",
+      "Without signed overflow coercions: Measures contribution of the dominant divergence class. Expected: largest single-class impact.",
+      "Without float precision coercions: Isolates float-specific contribution.",
+      "Without error handling coercions (div-by-zero, null deref): Isolates error semantics contribution.",
+      "Without memory/bounds coercions (array OOB, pointer arithmetic): Isolates memory safety contribution.",
+      "Loop bound sweep k ∈ {8, 16, 32, 64, 128}: Calibrates default bound. Report incremental divergences Δ(k) = divergences(k) \\ divergences(k/2).",
+      "SMT timeout sweep ∈ {1s, 5s, 10s, 30s}: Calibrates default timeout. Report marginal verification yield."
+    ],
+    "falsification_conditions": [
+      "If LLREVE/Alive2 on LLVM IR detect all divergences our tool detects (miss rate <5%), the erasure thesis is insufficiently supported and the paper reduces to an engineering contribution.",
+      "If fuzzing alone (30 min/function) finds every divergence the full pipeline finds (symbolic-exclusive <3%), the symbolic phase is engineering overhead.",
+      "If C2Rust output is divergence-free (<1% rate), the tool has no practical value for this use case.",
+      "If >20% of functions hard-timeout with no verdict, the tool is not practical for library-scale analysis.",
+      "If GPT-4 chain-of-thought achieves ≥80% recall and ≥85% precision, formal verification adds insufficient value over LLM review.",
+      "If k=8 suffices for ≥95% of verdicts achievable at k=32, the bounded verification's cost is unjustified."
+    ]
+  },
+
+  "semantic_divergence_table": [
+    {
+      "operation": "Signed integer addition/subtraction/multiplication",
+      "c_semantics": "Undefined behavior on overflow (ISO C11 §6.5/5). Compiler may assume overflow never happens and optimize accordingly. Abstract machine: result is defined only when mathematical result fits in [INT_MIN, INT_MAX].",
+      "rust_semantics": "Release mode: two's complement wrapping (result = trunc_w(a ⊕ b)). Debug mode: checked — panics on overflow. Explicit API: wrapping_add (always wraps), saturating_add (clamps), checked_add (returns Option).",
+      "divergence_type": "Critical — value divergence on overflow inputs (C UB, Rust wraps to a specific value) or definedness divergence (C UB, Rust panics). Most frequent divergence class, estimated 40-50% of all divergences in C2Rust output.",
+      "smt_encoding_approach": "Sign-extend both operands to 2×width, compute exact mathematical result, define in_range predicate, assert: ¬(in_range → (extract(result_C) = bvadd(a, b))). UNSAT means equivalent on defined inputs; SAT provides divergence witness.",
+      "fuzzing_seed_strategy": "Seed with values near overflow boundaries: INT_MAX, INT_MIN, INT_MAX-1, INT_MIN+1, INT_MAX/2, and pairs that sum to exactly INT_MAX+1 or INT_MIN-1."
+    },
+    {
+      "operation": "Signed integer division and remainder",
+      "c_semantics": "Division by zero is UB. INT_MIN / -1 is UB (signed overflow). Otherwise, truncation-toward-zero division (ISO C11 §6.5.5).",
+      "rust_semantics": "Division by zero panics. INT_MIN / -1 panics (overflow). Otherwise, truncation-toward-zero division identical to C.",
+      "divergence_type": "Critical — definedness divergence. C has UB on zero divisor and INT_MIN/-1; Rust panics. Three divergence cases: b=0, (a=MIN ∧ b=-1), and all other cases where both agree.",
+      "smt_encoding_approach": "Define div_defined ≡ (b ≠ 0) ∧ ¬(a = MIN_w ∧ b = -1). Assert ¬(div_defined → (bvsdiv(a, b) = r_R)). Also: assert ¬div_defined to find definedness divergence witnesses.",
+      "fuzzing_seed_strategy": "Seed with zero divisor, INT_MIN as dividend with -1 as divisor, and values near zero (1, -1, 2, -2)."
+    },
+    {
+      "operation": "Left/right shift operations",
+      "c_semantics": "Shift by amount ≥ bit-width is UB. Left shift of negative value is UB. Right shift of negative value is implementation-defined (arithmetic or logical).",
+      "rust_semantics": "Release mode: wraps shift amount (effective shift = amount mod width). Debug mode: panics if shift ≥ width. Right shift of signed negative is always arithmetic.",
+      "divergence_type": "Moderate — value divergence on shift ≥ width (C UB, Rust wraps/panics). Implementation-defined divergence on negative right-shift (C may do logical, Rust always arithmetic).",
+      "smt_encoding_approach": "OAC_shl: (0 ≤ b < w) → (r_C = r_R). For negative right-shift: encode both BVAShr and BVLShr for C, compare with Rust's BVAShr. Divergence when input is negative and C uses logical shift.",
+      "fuzzing_seed_strategy": "Seed with shift amounts at width boundary (31, 32, 33 for i32), negative values for right-shift testing, and powers of 2."
+    },
+    {
+      "operation": "Integer promotion (implicit widening)",
+      "c_semantics": "C promotes char/short to int before arithmetic (§6.3.1.1). Usual arithmetic conversions (§6.3.1.8) determine result type. Platform-dependent: unsigned short + int may promote to int or unsigned int depending on sizeof(int) vs sizeof(short).",
+      "rust_semantics": "No implicit promotion. Operations require matching types. C2Rust inserts explicit casts, but the widths may differ if platform assumptions change.",
+      "divergence_type": "Moderate — value divergence when promoted computation produces different result than narrow computation. Example: i8(100) + i8(100) → C: 200 (in i32 after promotion), truncate to i8 = -56. Rust: wrapping i8 add = -56. Usually equivalent for addition, may differ for division/remainder due to intermediate width differences.",
+      "smt_encoding_approach": "r_C = trunc_w(sext_32(a) ⊕_32 sext_32(b)), r_R = a ⊕_w b. Assert ¬(r_C = r_R). Direct equality check since promotion is part of C's defined semantics.",
+      "fuzzing_seed_strategy": "Seed with values near type boundaries: 127/128 for i8, 32767/32768 for i16, and values where promoted width affects result."
+    },
+    {
+      "operation": "Floating-point arithmetic (add/sub/mul/div)",
+      "c_semantics": "Extended precision allowed: implementation may evaluate at higher precision than declared type (80-bit x87 for double). FLT_EVAL_METHOD ∈ {1, 2} permits intermediate results to retain extra precision across expression boundaries. Result is non-deterministic across platforms/compilers.",
+      "rust_semantics": "Strict IEEE 754: every operation produces result rounded to declared type's precision. f32 operations produce f32 results, f64 produces f64. No implicit promotion. Deterministic across platforms (modulo NaN payload).",
+      "divergence_type": "Moderate — precision divergence. Benign if within ε-tolerance (expected from extended-precision non-determinism). Genuine if exceeding tolerance (wrong operation order, missing cast). Accumulated error across multiple operations may exceed per-operation tolerance.",
+      "smt_encoding_approach": "QF_FP theory: r_strict = fp.add(RNE, a, b). Tolerance: |r_C - r_R| ≤ max(ε·|r_C|, δ). With accumulated ε tracking: ε_k = ε_{k-1} + ε_op + ε_{k-1}·ε_op. 30s timeout for QF_FP queries. Interval arithmetic fallback for functions with >5 FP coercion points.",
+      "fuzzing_seed_strategy": "Seed with 0.0, -0.0, INF, -INF, NaN, DBL_MIN, DBL_MAX, DBL_EPSILON, subnormals, and values where extended precision causes different rounding (e.g., sums of many small values)."
+    },
+    {
+      "operation": "Float-to-integer conversion",
+      "c_semantics": "Undefined behavior when float value is out of integer range or is NaN. No defined result for out-of-range inputs.",
+      "rust_semantics": "Saturating cast (since Rust 1.45): out-of-range positive → INT_MAX, out-of-range negative → INT_MIN, NaN → 0. Always produces a defined result.",
+      "divergence_type": "Critical — definedness divergence on out-of-range inputs. C has UB; Rust produces a specific saturated value. Common in code converting between numeric types.",
+      "smt_encoding_approach": "out_of_range = fp.isNaN(f) ∨ fp.lt(f, fp(-2^31)) ∨ fp.gt(f, fp(2^31-1)). Rust result: ITE(isNaN, 0, ITE(lt_min, INT_MIN, ITE(gt_max, INT_MAX, fpToSBV(f)))). Assert out_of_range to find witnesses.",
+      "fuzzing_seed_strategy": "Seed with float values at int boundaries: 2^31-1, 2^31, -2^31, -2^31-1, 2^63-1, 2^63, NaN, ±INF."
+    },
+    {
+      "operation": "Array/buffer indexing",
+      "c_semantics": "No bounds checking. Out-of-bounds access is undefined behavior. Program may read/write arbitrary memory, crash, or appear to work correctly.",
+      "rust_semantics": "Safe Rust: bounds check on every index operation, panic on out-of-bounds. Unsafe Rust (C2Rust output): get_unchecked bypasses check, UB on OOB like C.",
+      "divergence_type": "Critical — definedness divergence. C has UB on OOB; safe Rust panics. For C2Rust output using unsafe, both have UB — no divergence (but still a safety bug). For LLM translations using safe Rust, divergence occurs when index is out of bounds.",
+      "smt_encoding_approach": "oob = (index < 0) ∨ (index ≥ length). Array memory modeled as Z3 Array(BitVec64, BitVec8). C reads mem[base + index*elem_size] regardless. Assert oob to find witnesses. QF_ABV theory for memory modeling.",
+      "fuzzing_seed_strategy": "Seed with indices at bounds: 0, length-1, length, length+1, -1, and buffer sizes of 0, 1, and maximum allocation."
+    },
+    {
+      "operation": "Null pointer dereference",
+      "c_semantics": "Undefined behavior. Program may crash, read garbage, or silently continue. No language-level null check.",
+      "rust_semantics": "Impossible through safe references (compile error). Possible through raw pointers in unsafe blocks (UB). C2Rust output uses raw pointers in unsafe.",
+      "divergence_type": "Critical — definedness divergence for safe Rust translations. For C2Rust output (unsafe raw pointers), both have UB — no divergence at language level but still a safety concern.",
+      "smt_encoding_approach": "is_null = (ptr == 0). At product program dereference points, check is_null. For safe Rust translations: null dereference in C is a divergence (C UB, Rust compilation error). For unsafe: both UB, no assertion needed.",
+      "fuzzing_seed_strategy": "Seed with null pointers for all pointer parameters. Test with both null and valid allocations."
+    },
+    {
+      "operation": "Pointer arithmetic and provenance",
+      "c_semantics": "Flat memory model. Can compare/subtract pointers across allocations (implementation-defined). Pointer arithmetic beyond allocation bounds is UB.",
+      "rust_semantics": "Provenance-based model. Cross-allocation pointer comparison/subtraction is UB-like. offset_from requires same allocation. Strict provenance model.",
+      "divergence_type": "Moderate — provenance divergence. C allows cross-allocation pointer operations that Rust constrains. Primarily relevant for serialization code and custom allocators.",
+      "smt_encoding_approach": "Provenance modeled as uninterpreted sort. For pointer subtraction/comparison: check same_provenance(ptr_a, ptr_b). Divergence when different provenance and operation requires same provenance.",
+      "fuzzing_seed_strategy": "Seed with pointers to different allocations, pointers at allocation boundaries, and pointers computed by arithmetic from different bases."
+    },
+    {
+      "operation": "transmute / union field access (type punning)",
+      "c_semantics": "Union access: read a different member than was last written. Implementation-defined behavior (most compilers allow it). Common pattern for type punning in serialization code.",
+      "rust_semantics": "transmute reinterprets bit pattern. Union access in unsafe is allowed but layout must match. Struct padding/alignment may differ from C.",
+      "divergence_type": "Moderate — representation divergence. If struct layout or padding differs between C and Rust for the involved types, bit-level reinterpretation produces different values. Functions containing transmute are flagged with [transmute-present] warning.",
+      "smt_encoding_approach": "At transmute/union access points: src_bits = bitcast_to_bv(src), assert dst_bits_C == dst_bits_R. If struct layout differs, this assertion fails — genuine divergence.",
+      "fuzzing_seed_strategy": "Seed with values that exercise all bit patterns of the source type, especially values where padding bits differ between C and Rust struct layouts."
+    }
+  ],
+
+  "trust_boundary": {
+    "assumptions": [
+      "A1 — Frontend correctness: C and Rust frontends faithfully lower source programs to the shared IR. C frontend reads libclang's resolved types to reduce trusted code. Partially dischargeable via differential testing against compiler output (~1000 expressions), but not machine-checked. Could be discharged by verified compilation (CompCert-style), out of scope.",
+      "A2 — Loop bound k: Equivalence results hold only for executions completing within k loop iterations. Dischargeable by loop invariant inference, but we deliberately choose bounded verification for tractability.",
+      "A3 — Structural alignment: Product program construction correctly aligns corresponding instructions. Partially dischargeable — alignment is deterministic for C2Rust output and validated by structural alignment certificate (post-check that opkind and types match for each aligned pair).",
+      "A4 — SMT encoding correctness: Translation from IR verification conditions to SMT formulae is faithful. Dischargeable in principle via verified SMT encoder, out of scope. Tested by round-trip validation: SMT solutions checked against concrete execution.",
+      "A5 — SMT solver soundness: Z3 correctly reports SAT/UNSAT. External trust — effectively undischargeable. Mitigated by cross-checking with CVC5 on a 5% random sample of 'equivalent' verdicts.",
+      "A6 — Divergence table completeness: T' captures all operation kinds where C and Rust semantics can diverge for the C2Rust subset. Validated by systematic enumeration against ISO C11 and Rust Reference. Could be missed: platform-specific behavior, locale-dependent operations, compiler extensions.",
+      "Platform scope: All results assume LP64 (Linux x86-64): sizeof(int)=4, sizeof(long)=8, sizeof(long long)=8, char is signed, right-shift of signed values is arithmetic (GCC/Clang behavior). Tool accepts --target flag for other configurations."
+    ],
+    "non_goals": [
+      "Concurrency: No modeling of thread interleavings, atomics, or synchronization. Functions containing pthread/atomic operations are flagged as unsupported.",
+      "Interprocedural analysis: Each function pair analyzed independently. Thin wrapper functions may be trivially equivalent but unverifiable without inlining.",
+      "Unbounded verification: All equivalence verdicts are bounded by k. An 'equivalent' function may diverge at iteration k+1.",
+      "Multi-platform verification: Results are for LP64 only. Other platforms require re-running with appropriate target configuration.",
+      "Idiomatic Rust verification: Structural alignment requires >50% block match. Highly idiomatic translations (iterators, pattern matching, closures) will be structurally rejected.",
+      "Mechanized proofs: Theorems are paper proofs, not Coq/Lean-verified.",
+      "Performance equivalence: We verify semantic equivalence only, not execution speed or resource usage.",
+      "Memory model formalization: Memory modeled as flat byte array. Rust's borrow checker guarantees not exploited for verification.",
+      "Compiler-optimized binary verification: We model the C abstract machine, not optimized compiled binaries. Divergences may not reproduce at higher optimization levels."
+    ],
+    "known_limitations": [
+      "Inline assembly: libsodium uses inline assembly for constant-time operations and SIMD. Estimated 15-30% of libsodium functions contain inline assembly and will be rejected. Rejection count reported in structural analyzability metric.",
+      "C2Rust version dependence: Results specific to pinned C2Rust version. Output format changes between versions (e.g., Wrapping<T> vs .wrapping_add()). Sensitivity check on 10% sample with newer version.",
+      "LLM structural mismatch: Predicted >60% of LLM translations will be structurally rejected due to idiomatic differences (iterators, match, Result propagation). Fuzzing-only fallback provides partial coverage for rejected pairs.",
+      "Z3 QF_FP performance: Floating-point SMT solver is 10-100× slower than QF_BV. Symbolic float verification is best-effort; fuzzing is the primary mechanism for float divergence detection.",
+      "State merging precision loss: Functions with high-fan-out control flow (>4-way branches) are analyzed with reduced precision. Divergences reachable only through specific switch case combinations may be missed by symbolic analysis but caught by fuzzing.",
+      "Macro expansion invisibility: Tool sees post-expansion C and post-transpilation Rust. Divergences caused by macro expansion subtleties detected but may be misclassified.",
+      "Compiler-version-dependent C behavior: Implementation-defined behavior depends on compiler, not language. GCC and Clang may differ on signed right-shift, padding, alignment. Tool models one choice (platform-configured).",
+      "Error accumulation in float verification: Per-operation ε tolerance can accumulate across 50+ operations. Tracked explicitly but may produce conservative (false-alarm) divergence reports for long float computation chains."
+    ]
+  },
+
+  "novelty_claims": {
+    "vs_existing_work": {
+      "llreve": "LLREVE operates on LLVM IR and uses Horn clause solving for relational verification of loop programs. It targets compiler validation (same language, different optimization levels), not cross-language equivalence. Its fundamental limitation for our use case: LLVM IR erases the semantic distinctions (overflow behavior, float precision, error handling) that cause C↔Rust divergences. LLREVE reports 'equivalent' for function pairs where our tool reports 'divergent' with concrete witnesses. LLREVE's last release (v0.1, ~2017) is stale; we retain it as a secondary baseline for historical comparison, with Alive2 as the primary IR-level baseline.",
+      "alive2": "Alive2 operates on LLVM IR for compiler validation — verifying that LLVM optimization passes preserve semantics. It is actively maintained and state-of-the-art for IR-level relational verification. However, it shares LLREVE's fundamental limitation: operating at the IR level, it cannot detect divergences rooted in source-language semantic differences that compile to identical IR. We use Alive2 as our primary IR-level baseline to demonstrate the erasure thesis against a strong, modern tool.",
+      "uc_klee": "UC-KLEE extends KLEE (symbolic execution for LLVM IR) with under-constrained symbolic execution for checking function equivalence. Like LLREVE and Alive2, it operates on LLVM IR and inherits the erasure problem. Additionally, UC-KLEE does not handle cross-language semantic differences — it assumes both functions share the same language semantics. Our tool's semantic configuration parameterization (σ = (ω, φ, ε)) and coercion point insertion are specifically designed to address cross-language semantic gaps that UC-KLEE cannot model.",
+      "product_programs_barthe": "Our product program construction is an instantiation of Barthe et al.'s relational verification framework (POPL 2011). Our contribution is NOT the general framework but the specific instantiation for C↔Rust, which requires: (1) the semantic divergence table T enumerating all C↔Rust semantic gaps, (2) the coercion insertion mechanism that generates per-operation verification conditions from T, (3) the SMT encodings for each divergence class (QF_BV, QF_FP, QF_ABV), and (4) the angelic nondeterminism treatment of C's undefined behavior. These are engineering contributions grounded in formal definitions, not novel proof techniques. The novelty is in the domain-specific application, not the general relational verification machinery."
+    },
+    "primary_contributions": [
+      "The LLVM-IR-erasure thesis: a crisp, empirically demonstrable negative result establishing that IR-level equivalence checking is fundamentally inadequate for cross-language migration verification. Demonstrated by concrete function pairs where IR-level tools report 'equivalent' and our tool reports 'divergent' with witnesses.",
+      "The cross-language reconciliation relation (Definition 1.12'): the first formal definition of equivalence for programs in different languages with different semantics for the same operations. Not refinement, not bisimulation, not observational equivalence — a novel relation parameterized by the semantic gap between language configurations, with angelic nondeterminism for C's undefined behavior.",
+      "The integer reconciliation algebra with overflow alignment contracts: the first complete formal treatment of integer overflow reconciliation across language boundaries. Five overflow alignment contracts (ub×wrap, ub×panic, ub×sat, wrap×panic, wrap×wrap) with verified SMT encodings covering all C↔Rust integer operation pairs.",
+      "The semantic divergence table T: a complete, empirically validated enumeration of where C and Rust semantics differ, with per-operation SMT encoding functions and fuzzing seed generation strategies. Each row is load-bearing — removing it causes the tool to miss a divergence class.",
+      "The divergence taxonomy: the first systematic empirical characterization of semantic divergences in C2Rust transpiler output at library scale (libsodium + zlib). Classification by root cause (9 classes) and severity (Critical/Latent/Benign). Independently valuable regardless of tool performance.",
+      "Directed ε-approximation with error accumulation tracking: fixes the non-transitivity of standard ε-equivalence by replacing it with a directed approximation bound that explicitly tracks accumulated error through the product program. A genuine technical contribution — most approximate equivalence checkers ignore accumulation.",
+      "The two-phase architecture (fuzzing-first, verification-second): an engineering contribution that delivers value incrementally. Phase 1 (differential fuzzing with semantic seeds) is independently useful. Phase 2 (bounded symbolic verification) upgrades bug-finding to bounded proof. The composition ensures every function pair receives a verdict.",
+      "End-to-end evaluation on production code: exhaustive analysis of ALL exportable functions in two production libraries (libsodium, zlib) plus 720 LLM translation pairs, with multiple baselines (Alive2, LLREVE, AFL++×3, GPT-4×2, test-suite-only), comprehensive ablations, and falsifiable research questions."
+    ]
+  }
+}

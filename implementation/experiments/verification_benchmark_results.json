@@ -1,0 +1,505 @@
+{
+  "experiment": "cross_language_verification_benchmark",
+  "timestamp": "2026-02-23T10:30:02",
+  "total_time_s": 0.07,
+  "n_equivalent_pairs": 20,
+  "n_divergent_pairs": 20,
+  "metrics": {
+    "overall": {
+      "accuracy": 0.875,
+      "precision": 0.9412,
+      "recall": 0.8,
+      "f1": 0.8649,
+      "true_positives": 16,
+      "false_positives": 1,
+      "true_negatives": 19,
+      "false_negatives": 4
+    },
+    "equivalent_accuracy": 0.95,
+    "divergent_recall": 0.8,
+    "per_divergence_type": {
+      "conversion": {
+        "total": 3,
+        "detected": 1,
+        "recall": 0.3333
+      },
+      "div_by_zero": {
+        "total": 3,
+        "detected": 3,
+        "recall": 1.0
+      },
+      "logic": {
+        "total": 5,
+        "detected": 3,
+        "recall": 0.6
+      },
+      "overflow": {
+        "total": 6,
+        "detected": 6,
+        "recall": 1.0
+      },
+      "shift": {
+        "total": 3,
+        "detected": 3,
+        "recall": 1.0
+      }
+    },
+    "avg_verification_time_s": 0.001699,
+    "max_verification_time_s": 0.00819
+  },
+  "detailed_results": [
+    {
+      "id": "eq_01",
+      "name": "add_ints",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.005777,
+      "counterexample": null
+    },
+    {
+      "id": "eq_02",
+      "name": "multiply",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.003821,
+      "counterexample": null
+    },
+    {
+      "id": "eq_03",
+      "name": "max_val",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.00695,
+      "counterexample": null
+    },
+    {
+      "id": "eq_04",
+      "name": "abs_val",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.64,
+      "correct": true,
+      "verification_time_s": 0.001069,
+      "counterexample": null
+    },
+    {
+      "id": "eq_05",
+      "name": "clamp",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.00819,
+      "counterexample": null
+    },
+    {
+      "id": "eq_06",
+      "name": "is_even",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.001129,
+      "counterexample": null
+    },
+    {
+      "id": "eq_07",
+      "name": "negate",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.000506,
+      "counterexample": null
+    },
+    {
+      "id": "eq_08",
+      "name": "identity",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.002735,
+      "counterexample": null
+    },
+    {
+      "id": "eq_09",
+      "name": "square",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.000544,
+      "counterexample": null
+    },
+    {
+      "id": "eq_10",
+      "name": "min_val",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.006918,
+      "counterexample": null
+    },
+    {
+      "id": "eq_11",
+      "name": "sign",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": false,
+      "verification_time_s": 3.1e-05,
+      "counterexample": null
+    },
+    {
+      "id": "eq_12",
+      "name": "bitwise_and",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.003911,
+      "counterexample": null
+    },
+    {
+      "id": "eq_13",
+      "name": "bitwise_or",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.004444,
+      "counterexample": null
+    },
+    {
+      "id": "eq_14",
+      "name": "xor",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.004482,
+      "counterexample": null
+    },
+    {
+      "id": "eq_15",
+      "name": "zero_check",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.000568,
+      "counterexample": null
+    },
+    {
+      "id": "eq_16",
+      "name": "double_val",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.000539,
+      "counterexample": null
+    },
+    {
+      "id": "eq_17",
+      "name": "positive_check",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.000543,
+      "counterexample": null
+    },
+    {
+      "id": "eq_18",
+      "name": "subtract",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.9,
+      "correct": true,
+      "verification_time_s": 0.004546,
+      "counterexample": null
+    },
+    {
+      "id": "eq_19",
+      "name": "increment",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.000539,
+      "counterexample": null
+    },
+    {
+      "id": "eq_20",
+      "name": "decrement",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "confidence": 0.8,
+      "correct": true,
+      "verification_time_s": 0.000519,
+      "counterexample": null
+    },
+    {
+      "id": "div_01",
+      "name": "overflow_add",
+      "divergence_type": "overflow",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 7.6e-05,
+      "counterexample": null,
+      "explanation": "C has undefined behavior on overflow, Rust wrapping_add wraps"
+    },
+    {
+      "id": "div_02",
+      "name": "overflow_mul",
+      "divergence_type": "overflow",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.9e-05,
+      "counterexample": null,
+      "explanation": "C UB on overflow, Rust returns 0 on overflow"
+    },
+    {
+      "id": "div_03",
+      "name": "overflow_negate",
+      "divergence_type": "overflow",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.6e-05,
+      "counterexample": null,
+      "explanation": "C UB for INT_MIN, Rust wraps"
+    },
+    {
+      "id": "div_04",
+      "name": "overflow_shift",
+      "divergence_type": "overflow",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.6e-05,
+      "counterexample": null,
+      "explanation": "C UB for shift >= bitwidth, Rust wraps shift amount"
+    },
+    {
+      "id": "div_05",
+      "name": "divide",
+      "divergence_type": "div_by_zero",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 5.8e-05,
+      "counterexample": null,
+      "explanation": "C UB on div by zero, Rust returns 0"
+    },
+    {
+      "id": "div_06",
+      "name": "modulo",
+      "divergence_type": "div_by_zero",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.9e-05,
+      "counterexample": null,
+      "explanation": "C UB on mod by zero, Rust returns a"
+    },
+    {
+      "id": "div_07",
+      "name": "safe_div_diff",
+      "divergence_type": "div_by_zero",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 2.1e-05,
+      "counterexample": null,
+      "explanation": "Different sentinel values for div-by-zero"
+    },
+    {
+      "id": "div_08",
+      "name": "right_shift_neg",
+      "divergence_type": "shift",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 4.8e-05,
+      "counterexample": null,
+      "explanation": "C arithmetic shift (impl-defined for negative), Rust logical shift"
+    },
+    {
+      "id": "div_09",
+      "name": "left_shift_neg",
+      "divergence_type": "shift",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.9e-05,
+      "counterexample": null,
+      "explanation": "C UB for negative left shift, Rust wraps"
+    },
+    {
+      "id": "div_10",
+      "name": "shift_overflow",
+      "divergence_type": "shift",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.8e-05,
+      "counterexample": null,
+      "explanation": "C UB for large n, Rust wraps"
+    },
+    {
+      "id": "div_11",
+      "name": "unsigned_conv",
+      "divergence_type": "conversion",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.7e-05,
+      "counterexample": null,
+      "explanation": "C preserves bit pattern, Rust clamps negative to 0"
+    },
+    {
+      "id": "div_12",
+      "name": "truncation",
+      "divergence_type": "conversion",
+      "expected": "divergent",
+      "verdict": "likely_equivalent",
+      "confidence": 0.6,
+      "correct": false,
+      "verification_time_s": 0.000486,
+      "counterexample": null,
+      "explanation": "C truncates (impl-defined), Rust clamps"
+    },
+    {
+      "id": "div_13",
+      "name": "float_to_int",
+      "divergence_type": "conversion",
+      "expected": "divergent",
+      "verdict": "likely_equivalent",
+      "confidence": 0.6,
+      "correct": false,
+      "verification_time_s": 0.000484,
+      "counterexample": null,
+      "explanation": "Different truncation for out-of-range values"
+    },
+    {
+      "id": "div_14",
+      "name": "abs_diff",
+      "divergence_type": "logic",
+      "expected": "divergent",
+      "verdict": "likely_equivalent",
+      "confidence": 0.6,
+      "correct": false,
+      "verification_time_s": 0.007119,
+      "counterexample": null,
+      "explanation": "Rust abs() panics on INT_MIN, C version doesn't"
+    },
+    {
+      "id": "div_15",
+      "name": "bounded_inc",
+      "divergence_type": "logic",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 3.1e-05,
+      "counterexample": null,
+      "explanation": "C overflows then compares, Rust saturates first"
+    },
+    {
+      "id": "div_16",
+      "name": "wrap_around",
+      "divergence_type": "overflow",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 1.9e-05,
+      "counterexample": null,
+      "explanation": "C modulo sign follows dividend, Rust always positive"
+    },
+    {
+      "id": "div_17",
+      "name": "power_of_two",
+      "divergence_type": "logic",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.95,
+      "correct": true,
+      "verification_time_s": 0.001031,
+      "counterexample": {
+        "inputs": [
+          0
+        ],
+        "c_output": "True",
+        "rust_output": "False"
+      },
+      "explanation": "C returns true for x=0, Rust excludes 0"
+    },
+    {
+      "id": "div_18",
+      "name": "diff_abs_returns",
+      "divergence_type": "logic",
+      "expected": "divergent",
+      "verdict": "likely_equivalent",
+      "confidence": 0.6,
+      "correct": false,
+      "verification_time_s": 0.000673,
+      "counterexample": null,
+      "explanation": "C: -INT_MIN is UB, Rust: unsigned_abs handles it differently"
+    },
+    {
+      "id": "div_19",
+      "name": "round_div",
+      "divergence_type": "logic",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 2.4e-05,
+      "counterexample": null,
+      "explanation": "Different rounding for negative values"
+    },
+    {
+      "id": "div_20",
+      "name": "array_sum_overflow",
+      "divergence_type": "overflow",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "confidence": 0.85,
+      "correct": true,
+      "verification_time_s": 2.1e-05,
+      "counterexample": null,
+      "explanation": "C can overflow, Rust promotes to i64 and clamps"
+    }
+  ],
+  "summary": {
+    "accuracy": 0.875,
+    "precision": 0.9412,
+    "recall": 0.8,
+    "f1": 0.8649,
+    "avg_time_per_pair_s": 0.001699
+  }
+}

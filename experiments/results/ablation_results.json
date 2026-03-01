@@ -1,0 +1,424 @@
+{
+  "results": [
+    {
+      "name": "add_overflow_signed",
+      "expected_divergent": true,
+      "config_a": {
+        "verdict": "divergent",
+        "time_ms": 10.358095169067383,
+        "smt_queries": 2,
+        "counterexample": {
+          "input_0": "-1073741929",
+          "input_1": "-2147480372",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.5247592926025391
+      },
+      "config_c": {
+        "verdict": "divergent",
+        "queries": 10000,
+        "time_ms": 11.747121810913086,
+        "divergences": 2587,
+        "cex": {
+          "a": "-335343207",
+          "b": "-2019505554"
+        }
+      },
+      "config_a_correct": true,
+      "config_b_correct": false,
+      "config_c_correct": true
+    },
+    {
+      "name": "negate_min",
+      "expected_divergent": true,
+      "config_a": {
+        "verdict": "divergent",
+        "time_ms": 2.9091835021972656,
+        "smt_queries": 2,
+        "counterexample": {
+          "input_0": "-2147483648",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.3657341003417969
+      },
+      "config_c": {
+        "verdict": "equivalent",
+        "queries": 10000,
+        "time_ms": 10.589838027954102,
+        "divergences": 0
+      },
+      "config_a_correct": true,
+      "config_b_correct": false,
+      "config_c_correct": false
+    },
+    {
+      "name": "div_by_zero",
+      "expected_divergent": false,
+      "config_a": {
+        "verdict": "equivalent",
+        "time_ms": 2.574920654296875,
+        "smt_queries": 0,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 5,
+        "alignment_score": 0.5222857142857144,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 10.509014129638672
+      },
+      "config_c": {
+        "verdict": "equivalent",
+        "queries": 10000,
+        "time_ms": 10.716915130615234,
+        "divergences": 0
+      },
+      "config_a_correct": true,
+      "config_b_correct": true,
+      "config_c_correct": true
+    },
+    {
+      "name": "max_function",
+      "expected_divergent": false,
+      "config_a": {
+        "verdict": "divergent",
+        "time_ms": 3.5860538482666016,
+        "smt_queries": 1,
+        "counterexample": {
+          "input_0": "0",
+          "input_1": "-1"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 7,
+        "alignment_score": 0.2753714285714286,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.476837158203125
+      },
+      "config_c": {
+        "verdict": "equivalent",
+        "queries": 10000,
+        "time_ms": 10.165929794311523,
+        "divergences": 0
+      },
+      "config_a_correct": false,
+      "config_b_correct": true,
+      "config_c_correct": true
+    },
+    {
+      "name": "bitwise_and",
+      "expected_divergent": false,
+      "config_a": {
+        "verdict": "equivalent",
+        "time_ms": 2.736806869506836,
+        "smt_queries": 1,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.5369186401367188
+      },
+      "config_c": {
+        "verdict": "equivalent",
+        "queries": 10000,
+        "time_ms": 11.277914047241211,
+        "divergences": 0
+      },
+      "config_a_correct": true,
+      "config_b_correct": true,
+      "config_c_correct": true
+    },
+    {
+      "name": "shift_overflow",
+      "expected_divergent": true,
+      "config_a": {
+        "verdict": "divergent",
+        "time_ms": 4.69660758972168,
+        "smt_queries": 2,
+        "counterexample": {
+          "input_0": "0",
+          "input_1": "32",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.9201045751633986,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.7801055908203125
+      },
+      "config_c": {
+        "verdict": "divergent",
+        "queries": 10000,
+        "time_ms": 11.349916458129883,
+        "divergences": 10000,
+        "cex": {
+          "a": "598833565",
+          "b": "-966241705"
+        }
+      },
+      "config_a_correct": true,
+      "config_b_correct": false,
+      "config_c_correct": true
+    },
+    {
+      "name": "mul_overflow",
+      "expected_divergent": true,
+      "config_a": {
+        "verdict": "divergent",
+        "time_ms": 100.08716583251953,
+        "smt_queries": 2,
+        "counterexample": {
+          "input_0": "-569922099",
+          "input_1": "1311022588",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.347137451171875
+      },
+      "config_c": {
+        "verdict": "divergent",
+        "queries": 10000,
+        "time_ms": 10.645866394042969,
+        "divergences": 10000,
+        "cex": {
+          "a": "598833565",
+          "b": "-966241705"
+        }
+      },
+      "config_a_correct": true,
+      "config_b_correct": false,
+      "config_c_correct": true
+    },
+    {
+      "name": "abs_function",
+      "expected_divergent": true,
+      "config_a": {
+        "verdict": "equivalent",
+        "time_ms": 1.8038749694824219,
+        "smt_queries": 0,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 4,
+        "alignment_score": 0.6743333333333333,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.5698204040527344
+      },
+      "config_c": {
+        "verdict": "equivalent",
+        "queries": 10000,
+        "time_ms": 19.264936447143555,
+        "divergences": 0
+      },
+      "config_a_correct": false,
+      "config_b_correct": false,
+      "config_c_correct": false
+    },
+    {
+      "name": "sub_overflow",
+      "expected_divergent": true,
+      "config_a": {
+        "verdict": "divergent",
+        "time_ms": 6.519079208374023,
+        "smt_queries": 2,
+        "counterexample": {
+          "input_0": "480291",
+          "input_1": "-2147003357",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.7379055023193359
+      },
+      "config_c": {
+        "verdict": "divergent",
+        "queries": 10000,
+        "time_ms": 11.41500473022461,
+        "divergences": 2492,
+        "cex": {
+          "a": "-1188800802",
+          "b": "1015636137"
+        }
+      },
+      "config_a_correct": true,
+      "config_b_correct": false,
+      "config_c_correct": true
+    },
+    {
+      "name": "unsigned_add",
+      "expected_divergent": false,
+      "config_a": {
+        "verdict": "equivalent",
+        "time_ms": 3.39508056640625,
+        "smt_queries": 1,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "config_b": {
+        "verdict": "equivalent",
+        "queries": 1,
+        "time_ms": 0.8378028869628906
+      },
+      "config_c": {
+        "verdict": "equivalent",
+        "queries": 10000,
+        "time_ms": 11.568069458007812,
+        "divergences": 0
+      },
+      "config_a_correct": true,
+      "config_b_correct": true,
+      "config_c_correct": true
+    }
+  ],
+  "summary": {
+    "config_a_accuracy": 0.8,
+    "config_b_accuracy": 0.4,
+    "config_c_accuracy": 0.8,
+    "total_pairs": 10,
+    "config_a_correct": 8,
+    "config_b_correct": 4,
+    "config_c_correct": 8,
+    "config_a_name": "Full SemRec pipeline (\u03c3_C \u2260 \u03c3_R, UB detection)",
+    "config_b_name": "No \u03c3-bridge (plain BV semantics, no UB)",
+    "config_c_name": "Random testing (10K samples per pair)"
+  }
+}

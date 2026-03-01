@@ -1,0 +1,376 @@
+{
+  "experiment": "llm_translation_bug_finding",
+  "model": "gpt-4.1-nano",
+  "num_functions": 20,
+  "num_translated": 20,
+  "num_with_bugs": 10,
+  "num_equivalent": 10,
+  "total_bugs": 13,
+  "bug_types": {
+    "division_overflow": 3,
+    "negation_overflow": 2,
+    "signed_overflow": 6,
+    "shift_overflow": 1,
+    "bounds_check_divergence": 1
+  },
+  "results": [
+    {
+      "name": "safe_divide",
+      "category": "error_handling",
+      "c_code": "int safe_divide(int a, int b) {\n    if (b == 0) return 0;\n    return a / b;\n}",
+      "rust_code": "fn safe_divide(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        0\n    } else {\n        a / b\n    }\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "medium",
+          "explanation": "INT_MIN / -1 overflows in both C and Rust. C is UB, Rust panics."
+        }
+      ],
+      "analysis_time_ms": 9.038925170898438,
+      "num_bugs": 1
+    },
+    {
+      "name": "abs_diff",
+      "category": "overflow",
+      "c_code": "int abs_diff(int a, int b) {\n    int diff = a - b;\n    return diff < 0 ? -diff : diff;\n}",
+      "rust_code": "fn abs_diff(a: i32, b: i32) -> i32 {\n    let diff = a - b;\n    if diff < 0 {\n        -diff\n    } else {\n        diff\n    }\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "negation_overflow",
+          "counterexample": {
+            "a": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap",
+          "severity": "high",
+          "explanation": "Negating INT_MIN (-2147483648) is UB in C. LLM used unary - in Rust which panics in debug mode."
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": -2147483520,
+            "b": 1408
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "analysis_time_ms": 5.081653594970703,
+      "num_bugs": 2
+    },
+    {
+      "name": "clamp_i32",
+      "category": "control_flow",
+      "c_code": "int clamp_i32(int val, int lo, int hi) {\n    if (val < lo) return lo;\n    if (val > hi) return hi;\n    return val;\n}",
+      "rust_code": "fn clamp_i32(val: i32, lo: i32, hi: i32) -> i32 {\n    if val < lo {\n        lo\n    } else if val > hi {\n        hi\n    } else {\n        val\n    }\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.0040531158447265625,
+      "num_bugs": 0
+    },
+    {
+      "name": "count_bits",
+      "category": "bitwise",
+      "c_code": "int count_bits(unsigned int n) {\n    int count = 0;\n    while (n) {\n        count += n & 1;\n        n >>= 1;\n    }\n    return count;\n}",
+      "rust_code": "fn count_bits(mut n: u32) -> i32 {\n    let mut count = 0;\n    while n != 0 {\n        count += (n & 1) as i32;\n        n >>= 1;\n    }\n    count\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.00476837158203125,
+      "num_bugs": 0
+    },
+    {
+      "name": "is_power_of_2",
+      "category": "bitwise",
+      "c_code": "int is_power_of_2(unsigned int n) {\n    return n != 0 && (n & (n - 1)) == 0;\n}",
+      "rust_code": "fn is_power_of_2(n: u32) -> bool {\n    n != 0 && (n & (n - 1)) == 0\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.17714500427246094,
+      "num_bugs": 0
+    },
+    {
+      "name": "average",
+      "category": "overflow",
+      "c_code": "int average(int a, int b) {\n    return (a + b) / 2;\n}",
+      "rust_code": "fn average(a: i32, b: i32) -> i32 {\n    (a + b) / 2\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap_in_release",
+          "severity": "high",
+          "explanation": "LLM translated signed addition using standard + operator. In Rust debug mode, this panics on overflow; in C, it's UB. The LLM should have used checked_add() or wrapping_add()."
+        },
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "medium",
+          "explanation": "INT_MIN / -1 overflows in both C and Rust. C is UB, Rust panics."
+        }
+      ],
+      "analysis_time_ms": 3.7620067596435547,
+      "num_bugs": 2
+    },
+    {
+      "name": "sign",
+      "category": "control_flow",
+      "c_code": "int sign(int x) {\n    if (x > 0) return 1;\n    if (x < 0) return -1;\n    return 0;\n}",
+      "rust_code": "fn sign(x: i32) -> i32 {\n    if x > 0 {\n        1\n    } else if x < 0 {\n        -1\n    } else {\n        0\n    }\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.003814697265625,
+      "num_bugs": 0
+    },
+    {
+      "name": "max3",
+      "category": "control_flow",
+      "c_code": "int max3(int a, int b, int c) {\n    int m = a;\n    if (b > m) m = b;\n    if (c > m) m = c;\n    return m;\n}",
+      "rust_code": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b > m {\n        m = b;\n    }\n    if c > m {\n        m = c;\n    }\n    m\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.010013580322265625,
+      "num_bugs": 0
+    },
+    {
+      "name": "gcd",
+      "category": "loop",
+      "c_code": "int gcd(int a, int b) {\n    while (b != 0) {\n        int t = b;\n        b = a % b;\n        a = t;\n    }\n    return a;\n}",
+      "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.15306472778320312,
+      "num_bugs": 0
+    },
+    {
+      "name": "sum_to_n",
+      "category": "overflow",
+      "c_code": "int sum_to_n(int n) {\n    int sum = 0;\n    for (int i = 1; i <= n; i++) {\n        sum += i;\n    }\n    return sum;\n}",
+      "rust_code": "fn sum_to_n(n: i32) -> i32 {\n    (1..=n).sum()\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap_in_release",
+          "severity": "high",
+          "explanation": "LLM translated signed addition using standard + operator. In Rust debug mode, this panics on overflow; in C, it's UB. The LLM should have used checked_add() or wrapping_add()."
+        }
+      ],
+      "analysis_time_ms": 2.5720596313476562,
+      "num_bugs": 1
+    },
+    {
+      "name": "reverse_bits",
+      "category": "bitwise",
+      "c_code": "unsigned int reverse_bits(unsigned int n) {\n    unsigned int result = 0;\n    for (int i = 0; i < 32; i++) {\n        result = (result << 1) | (n & 1);\n        n >>= 1;\n    }\n    return result;\n}",
+      "rust_code": "fn reverse_bits(mut n: u32) -> u32 {\n    let mut result = 0;\n    for _ in 0..32 {\n        result = (result << 1) | (n & 1);\n        n >>= 1;\n    }\n    result\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.0050067901611328125,
+      "num_bugs": 0
+    },
+    {
+      "name": "checked_add",
+      "category": "overflow",
+      "c_code": "int checked_add(int a, int b, int *overflow) {\n    int sum = a + b;\n    *overflow = (b > 0 && sum < a) || (b < 0 && sum > a);\n    return sum;\n}",
+      "rust_code": "fn checked_add(a: i32, b: i32) -> (i32, bool) {\n    let sum = a + b;\n    let overflow = (b > 0 && sum < a) || (b < 0 && sum > a);\n    (sum, overflow)\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap_in_release",
+          "severity": "high",
+          "explanation": "LLM translated signed addition using standard + operator. In Rust debug mode, this panics on overflow; in C, it's UB. The LLM should have used checked_add() or wrapping_add()."
+        }
+      ],
+      "analysis_time_ms": 2.5970935821533203,
+      "num_bugs": 1
+    },
+    {
+      "name": "midpoint",
+      "category": "overflow",
+      "c_code": "int midpoint(int a, int b) {\n    return a + (b - a) / 2;\n}",
+      "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    a + (b - a) / 2\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "medium",
+          "explanation": "INT_MIN / -1 overflows in both C and Rust. C is UB, Rust panics."
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 654311666,
+            "b": -2137147583
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "analysis_time_ms": 4.591941833496094,
+      "num_bugs": 2
+    },
+    {
+      "name": "leading_zeros",
+      "category": "bitwise",
+      "c_code": "int leading_zeros(unsigned int x) {\n    if (x == 0) return 32;\n    int n = 0;\n    if (x <= 0x0000FFFF) { n += 16; x <<= 16; }\n    if (x <= 0x00FFFFFF) { n += 8; x <<= 8; }\n    if (x <= 0x0FFFFFFF) { n += 4; x <<= 4; }\n    if (x <= 0x3FFFFFFF) { n += 2; x <<= 2; }\n    if (x <= 0x7FFFFFFF) { n += 1; }\n    return n;\n}",
+      "rust_code": "fn leading_zeros(x: u32) -> u32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut n = 0;\n    let mut x = x;\n    if x <= 0x0000FFFF {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FFFFFF {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFFFFFF {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFFFFFF {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFFFFFF {\n        n += 1;\n    }\n    n\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.0059604644775390625,
+      "num_bugs": 0
+    },
+    {
+      "name": "saturating_sub",
+      "category": "overflow",
+      "c_code": "int saturating_sub(int a, int b) {\n    long long result = (long long)a - (long long)b;\n    if (result > 2147483647) return 2147483647;\n    if (result < -2147483648LL) return -2147483648;\n    return (int)result;\n}",
+      "rust_code": "fn saturating_sub(a: i32, b: i32) -> i32 {\n    let result = a as i64 - b as i64;\n    if result > i32::MAX as i64 {\n        i32::MAX\n    } else if result < i32::MIN as i64 {\n        i32::MIN\n    } else {\n        result as i32\n    }\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.07390975952148438,
+      "num_bugs": 0
+    },
+    {
+      "name": "rotate_right",
+      "category": "bitwise",
+      "c_code": "unsigned int rotate_right(unsigned int x, int n) {\n    return (x >> n) | (x << (32 - n));\n}",
+      "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = n as u32;\n    (x >> n) | (x << (32 - n))\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "x": -1,
+            "n": 32
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "wraps_shift_amount_mod_32",
+          "severity": "high",
+          "explanation": "C: shift by >= width is UB. Rust: reduces shift amount modulo width."
+        }
+      ],
+      "analysis_time_ms": 3.0641555786132812,
+      "num_bugs": 1
+    },
+    {
+      "name": "array_sum",
+      "category": "memory",
+      "c_code": "int array_sum(int *arr, int len) {\n    int sum = 0;\n    for (int i = 0; i < len; i++) {\n        sum += arr[i];\n    }\n    return sum;\n}",
+      "rust_code": "fn array_sum(arr: &[i32]) -> i32 {\n    arr.iter().sum()\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "bounds_check_divergence",
+          "counterexample": {
+            "idx": 2147483647,
+            "len": 1
+          },
+          "c_behavior": "undefined_behavior_on_oob",
+          "rust_behavior": "panic_on_oob",
+          "severity": "medium",
+          "explanation": "C: no bounds check (UB on out-of-bounds). Rust: panics."
+        }
+      ],
+      "analysis_time_ms": 2.162933349609375,
+      "num_bugs": 1
+    },
+    {
+      "name": "fibonacci_n",
+      "category": "overflow",
+      "c_code": "int fibonacci(int n) {\n    if (n <= 1) return n;\n    int a = 0, b = 1;\n    for (int i = 2; i <= n; i++) {\n        int tmp = a + b;\n        a = b;\n        b = tmp;\n    }\n    return b;\n}",
+      "rust_code": "fn fibonacci(n: i32) -> i32 {\n    if n <= 1 {\n        return n;\n    }\n    let mut a = 0;\n    let mut b = 1;\n    for _ in 2..=n {\n        let tmp = a + b;\n        a = b;\n        b = tmp;\n    }\n    b\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap_in_release",
+          "severity": "high",
+          "explanation": "LLM translated signed addition using standard + operator. In Rust debug mode, this panics on overflow; in C, it's UB. The LLM should have used checked_add() or wrapping_add()."
+        }
+      ],
+      "analysis_time_ms": 2.2530555725097656,
+      "num_bugs": 1
+    },
+    {
+      "name": "min_of_abs",
+      "category": "overflow",
+      "c_code": "int min_of_abs(int a, int b) {\n    int abs_a = a < 0 ? -a : a;\n    int abs_b = b < 0 ? -b : b;\n    return abs_a < abs_b ? abs_a : abs_b;\n}",
+      "rust_code": "fn min_of_abs(a: i32, b: i32) -> i32 {\n    let abs_a = if a < 0 { -a } else { a };\n    let abs_b = if b < 0 { -b } else { b };\n    if abs_a < abs_b { abs_a } else { abs_b }\n}",
+      "verdict": "divergent",
+      "bugs_found": [
+        {
+          "type": "negation_overflow",
+          "counterexample": {
+            "a": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_or_wrap",
+          "severity": "high",
+          "explanation": "Negating INT_MIN (-2147483648) is UB in C. LLM used unary - in Rust which panics in debug mode."
+        }
+      ],
+      "analysis_time_ms": 1.0330677032470703,
+      "num_bugs": 1
+    },
+    {
+      "name": "swap_nibbles",
+      "category": "bitwise",
+      "c_code": "unsigned char swap_nibbles(unsigned char x) {\n    return (x >> 4) | (x << 4);\n}",
+      "rust_code": "fn swap_nibbles(x: u8) -> u8 {\n    (x >> 4) | (x << 4)\n}",
+      "verdict": "equivalent",
+      "bugs_found": [],
+      "analysis_time_ms": 0.00286102294921875,
+      "num_bugs": 0
+    }
+  ]
+}

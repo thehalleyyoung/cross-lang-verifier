@@ -1,0 +1,304 @@
+[
+  {
+    "verdict": "divergent_on_overflow",
+    "counterexample": {
+      "arg0": "3221225367",
+      "arg1": "2147486924"
+    },
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 14.166831970214844,
+    "pipeline": "e2e",
+    "c_ret": "arg0 + arg1",
+    "r_ret": "arg0 + arg1",
+    "name": "add_overflow_signed",
+    "category": "overflow",
+    "expected": "divergent_on_overflow",
+    "tag": "OVF",
+    "note": "C: UB on signed overflow; Rust wrapping_add wraps",
+    "c_code": "int add(int a, int b) { return a + b; }",
+    "r_code": "pub fn add(a: i32, b: i32) -> i32 { a.wrapping_add(b) }"
+  },
+  {
+    "verdict": "divergent_on_overflow",
+    "counterexample": {
+      "arg0": "3754672483",
+      "arg1": "2124358666"
+    },
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 153.54299545288086,
+    "pipeline": "e2e",
+    "c_ret": "arg0*arg1",
+    "r_ret": "arg0*arg1",
+    "name": "mul_overflow",
+    "category": "overflow",
+    "expected": "divergent_on_overflow",
+    "tag": "OVF",
+    "note": "Multiplication overflow",
+    "c_code": "int mul(int a, int b) { return a * b; }",
+    "r_code": "pub fn mul(a: i32, b: i32) -> i32 { a.wrapping_mul(b) }"
+  },
+  {
+    "verdict": "divergent_on_overflow",
+    "counterexample": {
+      "arg0": "3221209055",
+      "arg1": "2147475456"
+    },
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 11.332988739013672,
+    "pipeline": "e2e",
+    "c_ret": "arg0 - arg1",
+    "r_ret": "arg0 - arg1",
+    "name": "sub_overflow",
+    "category": "overflow",
+    "expected": "divergent_on_overflow",
+    "tag": "OVF",
+    "note": "Subtraction overflow",
+    "c_code": "int sub(int a, int b) { return a - b; }",
+    "r_code": "pub fn sub(a: i32, b: i32) -> i32 { a.wrapping_sub(b) }"
+  },
+  {
+    "verdict": "divergent",
+    "counterexample": {
+      "arg0": "2147483647"
+    },
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.8741333333333332,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 10.7421875,
+    "pipeline": "e2e",
+    "c_ret": "-arg0",
+    "r_ret": "undef",
+    "name": "negate_min",
+    "category": "overflow",
+    "expected": "divergent_on_overflow",
+    "tag": "OVF",
+    "note": "Negating INT_MIN",
+    "c_code": "int neg(int a) { return -a; }",
+    "r_code": "pub fn neg(a: i32) -> i32 { a.wrapping_neg() }"
+  },
+  {
+    "verdict": "divergent",
+    "counterexample": {
+      "arg0": "0",
+      "arg1": "0"
+    },
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.9159999999999999,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 9.744882583618164,
+    "pipeline": "e2e",
+    "c_ret": "arg0 << arg1",
+    "r_ret": "undef",
+    "name": "shift_overflow",
+    "category": "overflow",
+    "expected": "divergent_on_overflow",
+    "tag": "OVF",
+    "note": "Shift by >= width",
+    "c_code": "int shl(int a, int b) { return a << b; }",
+    "r_code": "pub fn shl(a: i32, b: i32) -> i32 { a.wrapping_shl(b as u32) }"
+  },
+  {
+    "verdict": "equivalent",
+    "counterexample": null,
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 13.782024383544922,
+    "pipeline": "e2e",
+    "c_ret": "arg0 & arg1",
+    "r_ret": "arg0 & arg1",
+    "name": "bitwise_and",
+    "category": "bitwise",
+    "expected": "equivalent",
+    "tag": null,
+    "note": "Bitwise AND, always equivalent",
+    "c_code": "unsigned int mask(unsigned int x, unsigned int m) { return x & m; }",
+    "r_code": "pub fn mask(x: u32, m: u32) -> u32 { x & m }"
+  },
+  {
+    "verdict": "equivalent",
+    "counterexample": null,
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 10.363101959228516,
+    "pipeline": "e2e",
+    "c_ret": "arg0 | arg1",
+    "r_ret": "arg0 | arg1",
+    "name": "bitwise_or",
+    "category": "bitwise",
+    "expected": "equivalent",
+    "tag": null,
+    "note": "Bitwise OR, always equivalent",
+    "c_code": "unsigned int combine(unsigned int a, unsigned int b) { return a | b; }",
+    "r_code": "pub fn combine(a: u32, b: u32) -> u32 { a | b }"
+  },
+  {
+    "verdict": "equivalent",
+    "counterexample": null,
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 20.718097686767578,
+    "pipeline": "e2e",
+    "c_ret": "arg0 + arg1",
+    "r_ret": "arg0 + arg1",
+    "name": "unsigned_add",
+    "category": "arithmetic",
+    "expected": "equivalent",
+    "tag": null,
+    "note": "Unsigned addition wraps in both",
+    "c_code": "unsigned int uadd(unsigned int a, unsigned int b) { return a + b; }",
+    "r_code": "pub fn uadd(a: u32, b: u32) -> u32 { a.wrapping_add(b) }"
+  },
+  {
+    "verdict": "equivalent",
+    "counterexample": null,
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 5.185127258300781,
+    "pipeline": "e2e",
+    "c_ret": "arg0",
+    "r_ret": "arg0",
+    "name": "int_to_uint_cast",
+    "category": "cast",
+    "expected": "equivalent",
+    "tag": null,
+    "note": "Same bit pattern",
+    "c_code": "unsigned int to_uint(int x) { return (unsigned int)x; }",
+    "r_code": "pub fn to_uint(x: i32) -> u32 { x as u32 }"
+  },
+  {
+    "verdict": "equivalent",
+    "counterexample": null,
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 14.445066452026367,
+    "pipeline": "e2e",
+    "c_ret": "SignExt(32, arg0)",
+    "r_ret": "SignExt(32, arg0)",
+    "name": "widening_cast",
+    "category": "cast",
+    "expected": "equivalent",
+    "tag": null,
+    "note": "Sign-extending widening",
+    "c_code": "long widen(int x) { return (long)x; }",
+    "r_code": "pub fn widen(x: i32) -> i64 { x as i64 }"
+  },
+  {
+    "verdict": "equivalent",
+    "counterexample": null,
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 6.855010986328125,
+    "pipeline": "e2e",
+    "c_ret": "Extract(31, 0, arg0)",
+    "r_ret": "Extract(31, 0, arg0)",
+    "name": "truncating_cast",
+    "category": "cast",
+    "expected": "equivalent",
+    "tag": null,
+    "note": "Truncating cast",
+    "c_code": "int trunc(long x) { return (int)x; }",
+    "r_code": "pub fn trunc(x: i64) -> i32 { x as i32 }"
+  },
+  {
+    "verdict": "equivalent",
+    "counterexample": null,
+    "stages": {
+      "parse": true,
+      "ir_lowering": true,
+      "product": true,
+      "alignment_score": 0.976,
+      "coercion_points": 0,
+      "smt_encoding": true
+    },
+    "smt_queries": 2,
+    "time_ms": 5.511760711669922,
+    "pipeline": "e2e",
+    "c_ret": "arg0/arg1",
+    "r_ret": "arg0/arg1",
+    "name": "div_by_zero",
+    "category": "error_handling",
+    "expected": "divergent",
+    "tag": "ERR",
+    "note": "Division by zero: C UB, Rust panics",
+    "c_code": "int divide(int a, int b) { return a / b; }",
+    "r_code": "pub fn divide(a: i32, b: i32) -> i32 { a / b }"
+  }
+]

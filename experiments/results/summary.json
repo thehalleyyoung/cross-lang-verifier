@@ -1,0 +1,93 @@
+{
+  "total": 32,
+  "equivalent": 16,
+  "divergent": 16,
+  "unknown": 0,
+  "error": 0,
+  "c_parse_success": 32,
+  "rust_parse_success": 32,
+  "c_ir_success": 32,
+  "rust_ir_success": 32,
+  "product_built_count": 32,
+  "ir_invisible_divergences": 9,
+  "total_smt_queries": 41,
+  "total_time_ms": 20273.07391166687,
+  "by_category": {
+    "arithmetic": {
+      "total": 2,
+      "equiv": 1,
+      "div": 1,
+      "unk": 0,
+      "err": 0
+    },
+    "overflow": {
+      "total": 9,
+      "equiv": 1,
+      "div": 8,
+      "unk": 0,
+      "err": 0
+    },
+    "control_flow": {
+      "total": 4,
+      "equiv": 2,
+      "div": 2,
+      "unk": 0,
+      "err": 0
+    },
+    "bitwise": {
+      "total": 6,
+      "equiv": 3,
+      "div": 3,
+      "unk": 0,
+      "err": 0
+    },
+    "cast": {
+      "total": 4,
+      "equiv": 4,
+      "div": 0,
+      "unk": 0,
+      "err": 0
+    },
+    "error_handling": {
+      "total": 1,
+      "equiv": 1,
+      "div": 0,
+      "unk": 0,
+      "err": 0
+    },
+    "floating_point": {
+      "total": 2,
+      "equiv": 2,
+      "div": 0,
+      "unk": 0,
+      "err": 0
+    },
+    "loop": {
+      "total": 2,
+      "equiv": 2,
+      "div": 0,
+      "unk": 0,
+      "err": 0
+    },
+    "string": {
+      "total": 1,
+      "equiv": 0,
+      "div": 1,
+      "unk": 0,
+      "err": 0
+    },
+    "memory": {
+      "total": 1,
+      "equiv": 0,
+      "div": 1,
+      "unk": 0,
+      "err": 0
+    }
+  },
+  "by_divergence_type": {
+    "OVF": 12,
+    "ERR": 1,
+    "FP": 2,
+    "MEM": 1
+  }
+}

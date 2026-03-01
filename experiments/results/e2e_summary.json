@@ -1,0 +1,50 @@
+{
+  "total_pairs": 12,
+  "correct": 9,
+  "accuracy_pct": 75.0,
+  "stage_success": {
+    "parse": {
+      "count": 12,
+      "pct": 100.0
+    },
+    "ir_lowering": {
+      "count": 12,
+      "pct": 100.0
+    },
+    "product": {
+      "count": 12,
+      "pct": 100.0
+    },
+    "smt_encoding": {
+      "count": 12,
+      "pct": 100.0
+    }
+  },
+  "category_breakdown": {
+    "overflow": {
+      "correct": 3,
+      "total": 5
+    },
+    "bitwise": {
+      "correct": 2,
+      "total": 2
+    },
+    "arithmetic": {
+      "correct": 1,
+      "total": 1
+    },
+    "cast": {
+      "correct": 3,
+      "total": 3
+    },
+    "error_handling": {
+      "correct": 0,
+      "total": 1
+    }
+  },
+  "verdicts": {
+    "divergent_on_overflow": 3,
+    "divergent": 2,
+    "equivalent": 7
+  }
+}

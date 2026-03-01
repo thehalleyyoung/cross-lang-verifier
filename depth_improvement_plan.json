@@ -1,0 +1,69 @@
+{
+  "project": "SemRec: Counterexample-Guided LLM Repair Oracle for C-to-Rust Translation",
+  "path_applied": "B (Technical Depth)",
+  "triage_critique": "Scope limited to single functions with integer arithmetic excludes pointer arithmetic, structs, dynamic memory, and interprocedural dependencies pervasive in safety-critical C code.",
+  "top_improvements": [
+    {
+      "id": "B1-statistical-rigor",
+      "priority": 1,
+      "title": "Statistical Rigor: Bootstrap CIs, FP/FN Decomposition, K-Sensitivity, Stratified Reporting",
+      "rationale": "Multiple reviewers (Yuan Cheng, Sara Roy, Aniruddha Sinha) flagged the lack of confidence intervals, FP/FN decomposition, and sensitivity analysis. These are low-hanging fruit that dramatically improve paper credibility without requiring new verification capabilities.",
+      "changes": [
+        "Add bootstrap confidence interval computation to experiment runner",
+        "Decompose accuracy into false positive (false equivalence) vs false negative (false divergence) rates",
+        "Add K-sensitivity analysis varying unrolling bound from 8 to 128",
+        "Add stratified per-category accuracy tables",
+        "Add confusion matrix output"
+      ],
+      "files_modified": [
+        "experiments/run_experiments.py",
+        "experiments/statistical_analysis.py (new)"
+      ]
+    },
+    {
+      "id": "B1-type-expansion",
+      "priority": 2,
+      "title": "Expand Verification Scope: Pointer Arithmetic, Struct, and Dynamic Memory Benchmarks",
+      "rationale": "The memory model (memory_model.py) already supports pointers, structs, and heap reasoning, but benchmarks only exercise integer arithmetic. Adding benchmarks that exercise the existing memory model infrastructure validates the claimed capabilities.",
+      "changes": [
+        "Add pointer arithmetic benchmark pairs to run_experiments.py",
+        "Add struct field access benchmark pairs",
+        "Add dynamic memory (malloc/free) benchmark pairs",
+        "Extend oracle repair hints for pointer/struct divergences",
+        "Run experiments and collect real results"
+      ],
+      "files_modified": [
+        "experiments/run_experiments.py",
+        "implementation/src/oracle/oracle.py"
+      ]
+    },
+    {
+      "id": "B1-real-world",
+      "priority": 3,
+      "title": "Real-World Validation with c2rust-Style Translation Patterns",
+      "rationale": "All existing benchmarks are synthetic. Adding realistic C-to-Rust patterns that mimic common c2rust translation idioms addresses the benchmark construction bias critique.",
+      "changes": [
+        "Add c2rust-style benchmark pairs with realistic translation patterns",
+        "Include common c2rust idioms: raw pointer casts, unsafe blocks, extern C patterns",
+        "Run experiments and report results honestly"
+      ],
+      "files_modified": [
+        "experiments/run_experiments.py"
+      ]
+    }
+  ],
+  "math_rigor_items": [
+    "Strengthen Theorem 1 (Soundness) with explicit encoding correctness conditions",
+    "Add bounded completeness lemma for K-unrolling with concrete characterization",
+    "Fix proof sketch for Property 1 to handle edge case of vacuous truth under UB",
+    "Add FP/FN rate bounds to evaluation claims"
+  ],
+  "estimated_effort": "Medium — leverages existing memory model and verification infrastructure",
+  "success_criteria": [
+    "All benchmark pairs run through the real pipeline (no hardcoded results)",
+    "Statistical analysis produces bootstrap CIs on all reported metrics",
+    "FP/FN decomposition available for all verdict categories",
+    "K-sensitivity data covers K ∈ {8, 16, 32, 64, 128}",
+    "Paper claims match actual experimental results"
+  ]
+}

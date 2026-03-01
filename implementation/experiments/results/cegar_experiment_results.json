@@ -1,0 +1,4196 @@
+{
+  "cegar_nano": {
+    "model": "gpt-4.1-nano",
+    "n_functions": 40,
+    "analysis": {
+      "total_pairs": 40,
+      "converged": 11,
+      "convergence_rate": 27.5,
+      "equivalent_on_first_try": 9,
+      "remained_divergent": 16,
+      "errors": 1,
+      "avg_iterations": 2.8,
+      "avg_time_ms": 3889.4,
+      "bug_classification": {
+        "undefined_behavior": 7,
+        "other": 14
+      },
+      "repairability_breakdown": {
+        "easy": {},
+        "medium": {},
+        "hard": {
+          "undefined_behavior": 7,
+          "other": 14
+        }
+      },
+      "convergence_curve": {
+        "1": 9,
+        "2": 2
+      },
+      "repair_by_class": {
+        "undefined_behavior": {
+          "total": 7,
+          "repaired": 0
+        },
+        "other": {
+          "total": 14,
+          "repaired": 2
+        },
+        "none": {
+          "total": 19,
+          "repaired": 9
+        }
+      }
+    },
+    "per_function": [
+      {
+        "func_name": "add_wrapping",
+        "c_code": "\nint add_wrapping(int a, int b) {\n    return a + b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073741865",
+                "input_1": "-2147480884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 13.775110244750977,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 13.098955154418945,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.532979965209961,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073741865",
+                "input_1": "-2147480884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.562067031860352,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.883932113647461,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 6030.328035354614,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "add_checked_divergent",
+        "c_code": "\nint add_checked(int a, int b) {\n    return a + b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.826234817504883,
+            "llm_prompt_tokens": 251,
+            "llm_completion_tokens": 27
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.620002746582031,
+            "llm_prompt_tokens": 248,
+            "llm_completion_tokens": 30
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a.checked_add(b).unwrap()\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-16777217",
+                "input_1": "-2130706431"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.657196044921875,
+            "llm_prompt_tokens": 238,
+            "llm_completion_tokens": 30
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.773782730102539,
+            "llm_prompt_tokens": 251,
+            "llm_completion_tokens": 27
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.9070587158203125,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 3524.235963821411,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "mul_overflow",
+        "c_code": "\nint mul_overflow(int a, int b) {\n    return a * b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-343134208",
+                "input_1": "-33208508"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 83.53090286254883,
+            "llm_prompt_tokens": 254,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1770103330",
+                "input_1": "2059139106"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 105.79299926757812,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a * b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1720680352",
+                "input_1": "-1420218370"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 96.78506851196289,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2086666240",
+                "input_1": "-657975262"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 128.65400314331055,
+            "llm_prompt_tokens": 255,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a * b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-585293825",
+                "input_1": "-756"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 76.90882682800293,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 5023.751020431519,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "sub_overflow",
+        "c_code": "\nint sub_overflow(int a, int b) {\n    return a - b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073758241",
+                "input_1": "2147475456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.703853607177734,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a - b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073758242",
+                "input_1": "2147475456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.1740875244140625,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "480291",
+                "input_1": "-2147003357"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.036996841430664,
+            "llm_prompt_tokens": 254,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a - b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073758242",
+                "input_1": "2147475456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.348133087158203,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073758242",
+                "input_1": "2147475456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.534814834594727,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 5012.476205825806,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "saturating_add",
+        "c_code": "\nint saturating_add(int a, int b) {\n    return a + b;\n}\n",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 21.48294448852539,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    a.saturating_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 8.673667907714844,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 46
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    // Perform addition with wrapping to match C's undefined behavior on overflow\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073741865",
+                "input_1": "-2147480884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.92296028137207,
+            "llm_prompt_tokens": 271,
+            "llm_completion_tokens": 76
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    // Use checked_add to detect overflow\n    match a.checked_add(b) {\n        Some(sum) => sum,\n        None => {\n            // Overflow occurred, mimic C's undefined behavior by wrapping\n            a.wrapping_add(b)\n        }\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.6540756225585938,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 4,
+        "total_time_ms": 3923.309087753296,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "is_power_of_two",
+        "c_code": "\nint is_power_of_two(unsigned int x) {\n    return x != 0 && (x & (x - 1)) == 0;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn is_power_of_two(x: u32) -> bool {\n    x != 0 && (x & (x.wrapping_sub(1))) == 0\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.706071853637695,
+            "llm_prompt_tokens": 248,
+            "llm_completion_tokens": 37
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn is_power_of_two(x: u32) -> bool {\n    x != 0 && (x & (x - 1)) == 0\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 6.203889846801758,
+            "llm_prompt_tokens": 245,
+            "llm_completion_tokens": 37
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn is_power_of_two(x: u32) -> bool {\n    x != 0 && (x & (x - 1)) == 0\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 6.051063537597656,
+            "llm_prompt_tokens": 245,
+            "llm_completion_tokens": 37
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn is_power_of_two(x: u32) -> bool {\n    x != 0 && (x & (x - 1)) == 0\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.701780319213867,
+            "llm_prompt_tokens": 245,
+            "llm_completion_tokens": 37
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn is_power_of_two(x: u32) -> bool {\n    x != 0 && (x & (x - 1)) == 0\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.81812858581543,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 4944.419145584106,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "rotate_right",
+        "c_code": "\nunsigned int rotate_right(unsigned int x, int n) {\n    n = n & 31;\n    return (x >> n) | (x << (32 - n));\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    (x >> n) | (x.wrapping_shl(32 - n))\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "951899205",
+                "input_1": "131073"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 10.298728942871094,
+            "llm_prompt_tokens": 281,
+            "llm_completion_tokens": 55
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    (x >> n) | (x.wrapping_shl(32 - n))\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "571688276",
+                "input_1": "4194328"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 9.97471809387207,
+            "llm_prompt_tokens": 282,
+            "llm_completion_tokens": 51
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    (x >> n) | (x << (32 - n))\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1075435318",
+                "input_1": "270532620"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 10.727167129516602,
+            "llm_prompt_tokens": 279,
+            "llm_completion_tokens": 51
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    (x >> n) | (x << (32 - n))\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1200432106",
+                "input_1": "272398"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 10.278701782226562,
+            "llm_prompt_tokens": 278,
+            "llm_completion_tokens": 51
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    (x >> n) | (x << (32 - n))\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "688397383",
+                "input_1": "196634"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 9.168863296508789,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 5772.753000259399,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "swap_bytes",
+        "c_code": "\nunsigned int swap_bytes(unsigned int x) {\n    return ((x & 0xFF000000) >> 24) |\n           ((x & 0x00FF0000) >> 8)  |\n           ((x & 0x0000FF00) << 8)  |\n           ((x & 0x000000FF) << 24);\n}\n",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn swap_bytes(x: u32) -> u32 {\n    ((x & 0xFF000000).wrapping_shr(24))\n        | ((x & 0x00FF0000).wrapping_shr(8))\n        | ((x & 0x0000FF00).wrapping_shl(8))\n        | ((x & 0x000000FF).wrapping_shl(24))\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 8.758068084716797,
+            "llm_prompt_tokens": 173,
+            "llm_completion_tokens": 94
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 3232.332944869995,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "bit_extract",
+        "c_code": "\nunsigned int extract_bits(unsigned int x, int lo, int hi) {\n    if (lo < 0 || hi > 32 || lo >= hi) return 0;\n    unsigned int mask = ((1u << (hi - lo)) - 1) << lo;\n    return (x & mask) >> lo;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n    let width = (hi - lo) as u32;\n    // Handle shift by >= 32 by wrapping; in Rust, shifting by >= bit width yields 0\n    let mask = (((1u32.wrapping_shl(width).wrapping_sub(1)))).wrapping_shl(lo as u32);\n    (x & mask) >> (lo as u32)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "2147475456",
+                "input_2": "-1073758241"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 14.497995376586914,
+            "llm_prompt_tokens": 414,
+            "llm_completion_tokens": 90
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n    let width = (hi - lo) as u32;\n    let mask = ((1u32 << width) - 1) << lo;\n    (x & mask) >> lo\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "2147475456",
+                "input_2": "-1073758241"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 12.351036071777344,
+            "llm_prompt_tokens": 374,
+            "llm_completion_tokens": 126
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n    let width = (hi - lo) as u32;\n    // To avoid undefined behavior when shifting by 32 bits, handle the case when width == 32\n    if width == 0 {\n        return 0;\n    }\n    let mask = ((1u32 << width) - 1) << lo;\n    (x & mask) >> lo\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "2147475456",
+                "input_2": "-1073758242"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 12.47715950012207,
+            "llm_prompt_tokens": 410,
+            "llm_completion_tokens": 283
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n    let width = (hi - lo) as u32;\n    // Handle the case when width == 32 to avoid shifting by 32 bits\n    if width == 32 {\n        // In C, (1u << 32) is undefined, but in Rust, shifting by 32 is also undefined.\n        // So, instead, create the mask directly without shifting.\n        // The mask should be all ones in the bits from lo to hi-1.\n        // Since width == 32, the mask covers all bits from 0 to 31.\n        // But we need to shift by lo, so:\n        // mask = ((1u32 << 32) - 1) << lo\n        // But (1u32 << 32) is invalid, so we do:\n        // mask = u32::MAX << lo\n        // and then shift accordingly.\n        let mask = u32::MAX << lo;\n        return (x & mask) >> lo;\n    }\n    let mask = ((1u32 << width) - 1) << lo;\n    (x & mask) >> lo\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "2147475456",
+                "input_2": "-1073758242"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 12.270689010620117,
+            "llm_prompt_tokens": 567,
+            "llm_completion_tokens": 492
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n    let width = (hi - lo) as u32;\n    // Handle the case when width == 32 to avoid shifting by 32 bits\n    if width == 32 {\n        // In C, (1u << 32) is undefined; in Rust, shifting by 32 is also undefined.\n        // To match C semantics exactly, we need to produce the same result as if the mask\n        // was all ones shifted by lo, but only if hi - lo == 32.\n        // Since width == 32, the mask should be all ones in bits from lo to 31.\n        // The mask is then: all ones shifted left by lo, but since shifting by 32 is invalid,\n        // we can directly create the mask as u32::MAX shifted by lo, but only if lo == 0.\n        // But in C, shifting by 32 is undefined, so the mask would be ( (1u << 32) - 1 ) << lo,\n        // which is equivalent to u32::MAX << lo, but shifting by 32 is invalid.\n        // To match C behavior, we can do:\n        // mask = u32::MAX << lo, but only if lo == 0.\n        // Otherwise, for lo > 0, the mask would be zero because shifting by 32 is invalid.\n        // But since in C, the expression is undefined, the safe way is to produce the same as\n        // the original code with a check.\n        // So, for width == 32, the mask is all ones shifted by lo, but only if lo == 0.\n        // For other lo, the mask is zero because shifting by 32 is invalid.\n        if lo == 0 {\n            let mask = u32::MAX;\n            return (x & mask) >> lo;\n        } else {\n            // For lo > 0, shifting by 32 is invalid, so mask is zero.\n            return 0;\n        }\n    }\n    let mask = ((1u32 << width) - 1) << lo;\n    (x & mask) >> lo\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "-2147483648",
+                "input_2": "637116044"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 13.128995895385742,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 15115.573644638062,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "leading_zeros",
+        "c_code": "\nint leading_zeros(unsigned int x) {\n    if (x == 0) return 32;\n    int n = 0;\n    if (x <= 0x0000FFFF) { n += 16; x <<= 16; }\n    if (x <= 0x00FFFFFF) { n += 8;  x <<= 8; }\n    if (x <= 0x0FFFFFFF) { n += 4;  x <<= 4; }\n    if (x <= 0x3FFFFFFF) { n += 2;  x <<= 2; }\n    if (x <= 0x7FFFFFFF) { n += 1; }\n    return n;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn leading_zeros(mut x: u32) -> u32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut n = 0;\n    if x <= 0x0000FFFF {\n        n += 16;\n        x = x.wrapping_shl(16);\n    }\n    if x <= 0x00FFFFFF {\n        n += 8;\n        x = x.wrapping_shl(8);\n    }\n    if x <= 0x0FFFFFFF {\n        n += 4;\n        x = x.wrapping_shl(4);\n    }\n    if x <= 0x3FFFFFFF {\n        n += 2;\n        x = x.wrapping_shl(2);\n    }\n    if x <= 0x7FFFFFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-4098"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 19.868135452270508,
+            "llm_prompt_tokens": 514,
+            "llm_completion_tokens": 162
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn leading_zeros(mut x: u32) -> u32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut n = 0;\n    if x <= 0x0000FFFF {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FFFFFF {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFFFFFF {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFFFFFF {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFFFFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-262146"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 13.449907302856445,
+            "llm_prompt_tokens": 490,
+            "llm_completion_tokens": 162
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn leading_zeros(mut x: u32) -> u32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut n = 0;\n    if x <= 0x0000FFFF {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FFFFFF {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFFFFFF {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFFFFFF {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFFFFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-32770"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 13.265848159790039,
+            "llm_prompt_tokens": 490,
+            "llm_completion_tokens": 162
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn leading_zeros(mut x: u32) -> u32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut n = 0;\n    if x <= 0x0000FFFF {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FFFFFF {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFFFFFF {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFFFFFF {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFFFFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 13.01717758178711,
+            "llm_prompt_tokens": 489,
+            "llm_completion_tokens": 162
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn leading_zeros(mut x: u32) -> u32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut n = 0;\n    if x <= 0x0000FFFF {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FFFFFF {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFFFFFF {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFFFFFF {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFFFFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-32770"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 15.65408706665039,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 12327.584981918335,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "i64_to_i32_trunc",
+        "c_code": "int trunc64(long long x) { return (int)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn trunc64(x: i64) -> i32 {\n    x as i32\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.3522377014160156,
+            "llm_prompt_tokens": 109,
+            "llm_completion_tokens": 23
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 594.4550037384033,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "i32_to_i8_trunc",
+        "c_code": "signed char trunc32to8(int x) { return (signed char)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn trunc32to8(x: i32) -> i8 {\n    x as i8\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.1409988403320312,
+            "llm_prompt_tokens": 112,
+            "llm_completion_tokens": 25
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 800.1651763916016,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "i32_to_i16_trunc",
+        "c_code": "short trunc32to16(int x) { return (short)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn trunc32to16(x: i32) -> i16 {\n    x as i16\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 1.7957687377929688,
+            "llm_prompt_tokens": 110,
+            "llm_completion_tokens": 25
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 856.4090728759766,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "u32_to_i32_reinterpret",
+        "c_code": "int u2i(unsigned int x) { return (int)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn u2i(x: u32) -> i32 {\n    x as i32\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 1.6949176788330078,
+            "llm_prompt_tokens": 110,
+            "llm_completion_tokens": 24
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 747.3599910736084,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "i32_to_u32_reinterpret",
+        "c_code": "unsigned int i2u(int x) { return (unsigned int)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn i2u(x: i32) -> u32 {\n    x as u32\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 1.550912857055664,
+            "llm_prompt_tokens": 111,
+            "llm_completion_tokens": 24
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 547.6601123809814,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "add_then_shift",
+        "c_code": "int add_shift(int a, int b, int n) { return (a + b) << n; }",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn add_shift(a: i32, b: i32, n: i32) -> i32 {\n    let sum = a.wrapping_add(b);\n    let shift_amount = n.wrapping_shl(0); // Use wrapping shift to handle large or negative n\n    sum.wrapping_shl(shift_amount as u32)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-33",
+                "input_1": "32766",
+                "input_2": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 20.56407928466797,
+            "llm_prompt_tokens": 296,
+            "llm_completion_tokens": 36
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn add_shift(a: i32, b: i32, n: i32) -> i32 {\n    (a + b) << n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884",
+                "input_2": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 9.67717170715332,
+            "llm_prompt_tokens": 275,
+            "llm_completion_tokens": 75
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn add_shift(a: i32, b: i32, n: i32) -> i32 {\n    // To match C semantics exactly, perform addition in i64 to avoid overflow,\n    // then shift, then cast back to i32.\n    ((a as i64 + b as i64) << n) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3",
+                "input_2": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 11.195898056030273,
+            "llm_prompt_tokens": 311,
+            "llm_completion_tokens": 125
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn add_shift(a: i32, b: i32, n: i32) -> i32 {\n    // Perform addition in i64 to avoid overflow, then shift, then cast back to i32.\n    // To match C semantics exactly, ensure that the addition does not overflow in i32.\n    // In C, signed integer overflow is undefined behavior, but in Rust, we must emulate\n    // wrapping behavior explicitly.\n    let sum = (a as i64).wrapping_add(b as i64);\n    let shifted = sum << n;\n    shifted as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-32966",
+                "input_1": "98285",
+                "input_2": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 12.97307014465332,
+            "llm_prompt_tokens": 345,
+            "llm_completion_tokens": 130
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn add_shift(a: i32, b: i32, n: i32) -> i32 {\n    // Perform addition in i32 with wrapping to match C's signed overflow behavior.\n    let sum = a.wrapping_add(b);\n    // Shift the sum by n bits, with wrapping to emulate C's behavior.\n    // In C, shifting signed integers is implementation-defined, but typically it's a logical shift.\n    // To match C's behavior exactly, perform the shift on the wrapped sum.\n    let shifted = (sum as i32).wrapping_shl(n as u32);\n    shifted\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-125",
+                "input_1": "1179644",
+                "input_2": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 10.119915008544922,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 6951.990127563477,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "mul_then_div",
+        "c_code": "int mul_div(int a, int b, int c) { return (a * b) / c; }",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn mul_div(a: i32, b: i32, c: i32) -> i32 {\n    let product = a.wrapping_mul(b);\n    product.wrapping_div(c)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-134217728",
+                "input_1": "-7",
+                "input_2": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 209.0461254119873,
+            "llm_prompt_tokens": 266,
+            "llm_completion_tokens": 48
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn mul_div(a: i32, b: i32, c: i32) -> i32 {\n    (a as i64 * b as i64 / c as i64) as i32\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 5181.9939613342285,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 2,
+        "total_time_ms": 8002.662181854248,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "shift_then_cast",
+        "c_code": "signed char shift_trunc(int x, int n) { return (signed char)(x << n); }",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    let shifted = x.wrapping_shl(n as u32);\n    shifted as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "65535",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 26.233196258544922,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 94
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    // Cast x to i16 to emulate C's implicit conversion before shifting\n    let x16 = x as i16;\n    // Perform the shift on i16\n    let shifted = (x16 << n) as i16;\n    // Cast the result back to i8, truncating as in C\n    shifted as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "65535",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 6.439924240112305,
+            "llm_prompt_tokens": 303,
+            "llm_completion_tokens": 87
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    // Emulate C's implicit conversion of x to signed char (i8) before shifting\n    let x_char = x as i8;\n    // Perform the shift on i8, then cast back to i8\n    (x_char.wrapping_shl(n as u32)) as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "32767",
+                "input_1": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.736112594604492,
+            "llm_prompt_tokens": 296,
+            "llm_completion_tokens": 87
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    // Emulate C's implicit conversion of x to signed char (i8) before shifting\n    let x_char = x as i8;\n    // Perform the shift on i8, then cast back to i8\n    (x_char.wrapping_shl(n as u32)) as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "65535",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.357027053833008,
+            "llm_prompt_tokens": 296,
+            "llm_completion_tokens": 87
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    // Emulate C's implicit conversion of x to signed char (i8) before shifting\n    let x_char = x as i8;\n    // Perform the shift on i8, then cast back to i8\n    (x_char.wrapping_shl(n as u32)) as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "65535",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.429983139038086,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 5691.7712688446045,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "abs_then_div",
+        "c_code": "int abs_div(int a, int b) { int v = a < 0 ? -a : a; return v / b; }",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { a.wrapping_neg() } else { a };\n    v.wrapping_div(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "805306368",
+                "input_1": "268435456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 67.31986999511719,
+            "llm_prompt_tokens": 270,
+            "llm_completion_tokens": 44
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { -a } else { a };\n    v / b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1043462144",
+                "input_1": "566755587"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 65.99020957946777,
+            "llm_prompt_tokens": 264,
+            "llm_completion_tokens": 48
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { a.wrapping_neg() } else { a };\n    v / b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1101606088",
+                "input_1": "810583600"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 37.61577606201172,
+            "llm_prompt_tokens": 268,
+            "llm_completion_tokens": 44
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { -a } else { a };\n    v / b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1879048192",
+                "input_1": "273"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 73.37188720703125,
+            "llm_prompt_tokens": 262,
+            "llm_completion_tokens": 75
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { -a } else { a };\n    // Handle potential overflow when negating i32::MIN\n    let v = if a == i32::MIN { a } else { v };\n    v / b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483635",
+                "input_1": "1073741826"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 34.278154373168945,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 5484.40408706665,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "square_then_mod",
+        "c_code": "int sq_mod(int x, int m) { return (x * x) % m; }",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn sq_mod(x: i32, m: i32) -> i32 {\n    let product = x.wrapping_mul(x);\n    let modulus = m;\n    // Handle division by zero: in C, modulo by zero is undefined, so here we return 0\n    if modulus == 0 {\n        return 0;\n    }\n    // Compute the remainder, ensuring it has the same sign as the divisor\n    let r = product % modulus;\n    if r < 0 {\n        r + modulus\n    } else {\n        r\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-27141",
+                "input_1": "37092"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 1830.5389881134033,
+            "llm_prompt_tokens": 329,
+            "llm_completion_tokens": 98
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn sq_mod(x: i32, m: i32) -> i32 {\n    if m == 0 {\n        return 0;\n    }\n    let product = x.wrapping_mul(x);\n    let r = product % m;\n    // In C, the % operator's result has the same sign as the dividend (product)\n    // Rust's % operator also has the same sign as the dividend, so no adjustment needed\n    r\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "28310",
+                "input_1": "33554432"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 181.49518966674805,
+            "llm_prompt_tokens": 307,
+            "llm_completion_tokens": 118
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn sq_mod(x: i32, m: i32) -> i32 {\n    if m == 0 {\n        return 0;\n    }\n    let product = x.wrapping_mul(x);\n    let mut r = product % m;\n    // Adjust result to match C's behavior: ensure the remainder has the same sign as the dividend\n    if r != 0 && ((product < 0 && m > 0) || (product > 0 && m < 0)) {\n        r += m;\n    }\n    r\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 5113.786220550537,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 3,
+        "total_time_ms": 12212.92495727539,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "countdown",
+        "c_code": "int countdown(int n) {\n    int s = 0;\n    while (n > 0) { s += n; n--; }\n    return s;\n}",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn countdown(mut n: i32) -> i32 {\n    let mut s = 0;\n    while n > 0 {\n        s = s.wrapping_add(n);\n        n = n.wrapping_sub(1);\n    }\n    s\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 3.0760765075683594,
+            "llm_prompt_tokens": 129,
+            "llm_completion_tokens": 58
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 889.0748023986816,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "sum_to_n",
+        "c_code": "int sum_to_n(int n) {\n    int s = 0;\n    int i;\n    for (i = 1; i <= n; i++) s += i;\n    return s;\n}",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn sum_to_n(n: i32) -> i32 {\n    let mut s: i32 = 0;\n    let mut i: i32 = 1;\n    while i <= n {\n        s = s.wrapping_add(i);\n        i = i.wrapping_add(1);\n    }\n    s\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.7608871459960938,
+            "llm_prompt_tokens": 137,
+            "llm_completion_tokens": 72
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1178.7171363830566,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "fibonacci",
+        "c_code": "int fib(int n) {\n    int a = 0, b = 1, t;\n    int i;\n    for (i = 0; i < n; i++) { t = b; b = a + b; a = t; }\n    return a;\n}",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn fib(n: i32) -> i32 {\n    let mut a: i32 = 0;\n    let mut b: i32 = 1;\n    for _ in 0..n {\n        let t = b;\n        b = a.wrapping_add(b);\n        a = t;\n    }\n    a\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 3.3087730407714844,
+            "llm_prompt_tokens": 154,
+            "llm_completion_tokens": 73
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1173.037052154541,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "collatz_steps",
+        "c_code": "int collatz(int n) {\n    int steps = 0;\n    while (n > 1 && steps < 100) {\n        if (n % 2 == 0) n = n / 2;\n        else n = 3 * n + 1;\n        steps++;\n    }\n    return steps;\n}",
+        "converged": false,
+        "final_verdict": "error",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn collatz(mut n: i32) -> i32 {\n    let mut steps = 0;\n    while n > 1 && steps < 100 {\n        if n % 2 == 0 {\n            n = n.wrapping_div(2);\n        } else {\n            n = n.wrapping_mul(3).wrapping_add(1);\n        }\n        steps += 1;\n    }\n    steps\n}",
+            "verdict": "error",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.093791961669922,
+            "llm_prompt_tokens": 163,
+            "llm_completion_tokens": 93
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 2076.134204864502,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "linear_search",
+        "c_code": "int find_val(int val, int a, int b, int c, int d) {\n    if (a == val) return 0;\n    if (b == val) return 1;\n    if (c == val) return 2;\n    if (d == val) return 3;\n    return -1;\n}",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn find_val(val: i32, a: i32, b: i32, c: i32, d: i32) -> i32 {\n    if a == val {\n        0\n    } else if b == val {\n        1\n    } else if c == val {\n        2\n    } else if d == val {\n        3\n    } else {\n        -1\n    }\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 12.043952941894531,
+            "llm_prompt_tokens": 164,
+            "llm_completion_tokens": 93
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1460.2301120758057,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "div_by_zero",
+        "c_code": "\nint safe_div(int a, int b) {\n    if (b == 0) return 0;\n    return a / b;\n}\n",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn safe_div(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        0\n    } else {\n        a.wrapping_div(b)\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.460002899169922,
+            "llm_prompt_tokens": 124,
+            "llm_completion_tokens": 47
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 854.5289039611816,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "div_int_min",
+        "c_code": "\nint div_safe(int a, int b) {\n    return a / b;\n}\n",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn div_safe(a: i32, b: i32) -> i32 {\n    // Handle division by zero explicitly\n    if b == 0 {\n        // Behavior for division by zero is undefined in C.\n        // Here, we choose to return 0, but this can be adjusted as needed.\n        return 0;\n    }\n    // Use wrapping_div to mimic C's undefined behavior on overflow\n    a.wrapping_div(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1",
+                "input_1": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 12.362003326416016,
+            "llm_prompt_tokens": 300,
+            "llm_completion_tokens": 27
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn div_safe(a: i32, b: i32) -> i32 {\n    a / b\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.646923065185547,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 2,
+        "total_time_ms": 2450.653076171875,
+        "bug_class": "other",
+        "llm_repairable": true,
+        "repair_iterations": 2
+      },
+      {
+        "func_name": "modulo_negative",
+        "c_code": "\nint modulo(int a, int b) {\n    if (b == 0) return 0;\n    return a % b;\n}\n",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn modulo(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        0\n    } else {\n        a.wrapping_rem(b)\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.482175827026367,
+            "llm_prompt_tokens": 123,
+            "llm_completion_tokens": 46
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 679.6009540557861,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "unsigned_div",
+        "c_code": "\nunsigned int udiv(unsigned int a, unsigned int b) {\n    if (b == 0) return 0;\n    return a / b;\n}\n",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn udiv(a: u32, b: u32) -> u32 {\n    if b == 0 {\n        0\n    } else {\n        a.wrapping_div(b)\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.518177032470703,
+            "llm_prompt_tokens": 127,
+            "llm_completion_tokens": 47
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 727.6132106781006,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "power_of_two_div",
+        "c_code": "\nint div_by_4(int x) {\n    return x / 4;\n}\n",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn div_by_4(x: i32) -> i32 {\n    x.wrapping_div(4)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "4"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 46.9670295715332,
+            "llm_prompt_tokens": 222,
+            "llm_completion_tokens": 25
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn div_by_4(x: i32) -> i32 {\n    x / 4\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.147197723388672,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 2,
+        "total_time_ms": 1304.66628074646,
+        "bug_class": "other",
+        "llm_repairable": true,
+        "repair_iterations": 2
+      },
+      {
+        "func_name": "safe_divide_errno",
+        "c_code": "\nint safe_divide(int a, int b) {\n    if (b == 0) return -1;\n    if (a == -2147483648 && b == -1) return -1;\n    return a / b;\n}\n",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn safe_divide(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        -1\n    } else if a == i32::MIN && b == -1 {\n        -1\n    } else {\n        a.wrapping_div(b)\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 5.780935287475586,
+            "llm_prompt_tokens": 145,
+            "llm_completion_tokens": 68
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1155.4279327392578,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "sqrt_int",
+        "c_code": "\nint isqrt(int n) {\n    if (n < 0) return -1;\n    if (n == 0) return 0;\n    int x = n;\n    int y = (x + 1) / 2;\n    while (y < x) {\n        x = y;\n        y = (x + n / x) / 2;\n    }\n    return x;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn isqrt(n: i32) -> i32 {\n    if n < 0 {\n        return -1;\n    }\n    if n == 0 {\n        return 0;\n    }\n    let mut x = n;\n    let mut y = ((x as i64 + 1) / 2) as i32;\n    while y < x {\n        x = y;\n        // To avoid division by zero, handle the case when x == 0\n        // but since n > 0, x should never be zero here.\n        let x_i64 = x as i64;\n        let n_i64 = n as i64;\n        y = ((x_i64 + n_i64 / x_i64) / 2) as i32;\n    }\n    x\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 59.9818229675293,
+            "llm_prompt_tokens": 431,
+            "llm_completion_tokens": 136
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn isqrt(n: i32) -> i32 {\n    if n < 0 {\n        return -1;\n    }\n    if n == 0 {\n        return 0;\n    }\n    let mut x = n;\n    let mut y = ((x as i64 + 1) / 2) as i32;\n    while y < x {\n        x = y;\n        let x_i64 = x as i64;\n        let n_i64 = n as i64;\n        y = ((x_i64 + n_i64 / x_i64) / 2) as i32;\n    }\n    x\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 45.884132385253906,
+            "llm_prompt_tokens": 398,
+            "llm_completion_tokens": 136
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn isqrt(n: i32) -> i32 {\n    if n < 0 {\n        return -1;\n    }\n    if n == 0 {\n        return 0;\n    }\n    let mut x = n;\n    let mut y = ((x as i64 + 1) / 2) as i32;\n    while y < x {\n        x = y;\n        let x_i64 = x as i64;\n        let n_i64 = n as i64;\n        y = ((x_i64 + n_i64 / x_i64) / 2) as i32;\n    }\n    x\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 42.742013931274414,
+            "llm_prompt_tokens": 398,
+            "llm_completion_tokens": 136
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn isqrt(n: i32) -> i32 {\n    if n < 0 {\n        return -1;\n    }\n    if n == 0 {\n        return 0;\n    }\n    let mut x = n;\n    let mut y = ((x as i64 + 1) / 2) as i32;\n    while y < x {\n        x = y;\n        let x_i64 = x as i64;\n        let n_i64 = n as i64;\n        y = ((x_i64 + n_i64 / x_i64) / 2) as i32;\n    }\n    x\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 40.36283493041992,
+            "llm_prompt_tokens": 398,
+            "llm_completion_tokens": 136
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn isqrt(n: i32) -> i32 {\n    if n < 0 {\n        return -1;\n    }\n    if n == 0 {\n        return 0;\n    }\n    let mut x = n;\n    let mut y = ((x as i64 + 1) / 2) as i32;\n    while y < x {\n        x = y;\n        let x_i64 = x as i64;\n        let n_i64 = n as i64;\n        y = ((x_i64 + n_i64 / x_i64) / 2) as i32;\n    }\n    x\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 40.51494598388672,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 9603.269100189209,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "array_index_safe",
+        "c_code": "\nint get_element(int* arr, int len, int idx) {\n    if (idx < 0 || idx >= len) return -1;\n    return arr[idx];\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn get_element(arr: &[i32], len: usize, idx: i32) -> i32 {\n    if idx < 0 || idx as usize >= len {\n        -1\n    } else {\n        arr[idx as usize]\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "1048576",
+                "input_2": "-2146439074"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 11.14201545715332,
+            "llm_prompt_tokens": 292,
+            "llm_completion_tokens": 58
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn get_element(arr: &[i32], len: usize, idx: i32) -> i32 {\n    if idx < 0 || (idx as usize) >= len {\n        -1\n    } else {\n        arr[idx as usize]\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "1048576",
+                "input_2": "-2146439074"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 11.39688491821289,
+            "llm_prompt_tokens": 294,
+            "llm_completion_tokens": 58
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn get_element(arr: &[i32], len: usize, idx: i32) -> i32 {\n    if idx < 0 || (idx as usize) >= len {\n        -1\n    } else {\n        arr[idx as usize]\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "1048576",
+                "input_2": "-2146439074"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 14.60576057434082,
+            "llm_prompt_tokens": 294,
+            "llm_completion_tokens": 58
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn get_element(arr: &[i32], len: usize, idx: i32) -> i32 {\n    if idx < 0 || (idx as usize) >= len {\n        -1\n    } else {\n        arr[idx as usize]\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "1048576",
+                "input_2": "-2146439074"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 9.079933166503906,
+            "llm_prompt_tokens": 294,
+            "llm_completion_tokens": 58
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn get_element(arr: &[i32], len: usize, idx: i32) -> i32 {\n    if idx < 0 || (idx as usize) >= len {\n        -1\n    } else {\n        arr[idx as usize]\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "1048576",
+                "input_2": "-2146439074"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 9.341001510620117,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 6008.352041244507,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "clamp_value",
+        "c_code": "\nint clamp(int x, int lo, int hi) {\n    if (x < lo) return lo;\n    if (x > hi) return hi;\n    return x;\n}\n",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn clamp(x: i32, lo: i32, hi: i32) -> i32 {\n    if x < lo {\n        lo\n    } else if x > hi {\n        hi\n    } else {\n        x\n    }\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 10.210037231445312,
+            "llm_prompt_tokens": 132,
+            "llm_completion_tokens": 55
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 883.2309246063232,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "null_vs_option",
+        "c_code": "\nint deref_or_default(int* ptr, int default_val) {\n    if (ptr == 0) return default_val;\n    return *ptr;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn deref_or_default(ptr: *const i32, default_val: i32) -> i32 {\n    if ptr.is_null() {\n        default_val\n    } else {\n        unsafe { *ptr }\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 3.2379627227783203,
+            "llm_prompt_tokens": 268,
+            "llm_completion_tokens": 50
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn deref_or_default(ptr: *const i32, default_val: i32) -> i32 {\n    if ptr.is_null() {\n        default_val\n    } else {\n        unsafe { *ptr }\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 3.086090087890625,
+            "llm_prompt_tokens": 268,
+            "llm_completion_tokens": 50
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn deref_or_default(ptr: *const i32, default_val: i32) -> i32 {\n    if ptr.is_null() {\n        default_val\n    } else {\n        unsafe { *ptr }\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.998134613037109,
+            "llm_prompt_tokens": 268,
+            "llm_completion_tokens": 50
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn deref_or_default(ptr: *const i32, default_val: i32) -> i32 {\n    if ptr.is_null() {\n        default_val\n    } else {\n        unsafe { *ptr }\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.703210830688477,
+            "llm_prompt_tokens": 268,
+            "llm_completion_tokens": 50
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn deref_or_default(ptr: *const i32, default_val: i32) -> i32 {\n    if ptr.is_null() {\n        default_val\n    } else {\n        unsafe { *ptr }\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 4.676103591918945,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 5054.864883422852,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "count_bits",
+        "c_code": "\nint count_bits(unsigned int x) {\n    int count = 0;\n    while (x != 0) {\n        count += x & 1;\n        x >>= 1;\n    }\n    return count;\n}\n",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn count_bits(mut x: u32) -> i32 {\n    let mut count = 0;\n    while x != 0 {\n        count += (x & 1) as i32;\n        x >>= 1;\n    }\n    count\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 4.475116729736328,
+            "llm_prompt_tokens": 140,
+            "llm_completion_tokens": 57
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 788.2058620452881,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "gcd_loop",
+        "c_code": "\nint gcd(int a, int b) {\n    if (a < 0) a = -a;\n    if (b < 0) b = -b;\n    while (b != 0) {\n        int t = b;\n        b = a % b;\n        a = t;\n    }\n    return a;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    // Convert to absolute values using wrapping to handle edge cases like i32::MIN\n    a = a.wrapping_abs();\n    b = b.wrapping_abs();\n\n    while b != 0 {\n        let t = b;\n        // Use wrapping_rem to handle division edge cases\n        b = a.wrapping_rem(b);\n        a = t;\n    }\n    a\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2",
+                "input_1": "1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 11.904001235961914,
+            "llm_prompt_tokens": 358,
+            "llm_completion_tokens": 83
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    if a < 0 {\n        a = -a;\n    }\n    if b < 0 {\n        b = -b;\n    }\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2147483646",
+                "input_1": "2147483645"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 24.41692352294922,
+            "llm_prompt_tokens": 344,
+            "llm_completion_tokens": 83
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    if a < 0 {\n        a = -a;\n    }\n    if b < 0 {\n        b = -b;\n    }\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2147467264",
+                "input_1": "2147467263"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 12.053966522216797,
+            "llm_prompt_tokens": 344,
+            "llm_completion_tokens": 83
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    if a < 0 {\n        a = -a;\n    }\n    if b < 0 {\n        b = -b;\n    }\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2147483647",
+                "input_1": "2147483646"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 9.023189544677734,
+            "llm_prompt_tokens": 344,
+            "llm_completion_tokens": 83
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    if a < 0 {\n        a = -a;\n    }\n    if b < 0 {\n        b = -b;\n    }\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2147483520",
+                "input_1": "2147483519"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 15.395641326904297,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 6681.156873703003,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "fibonacci",
+        "c_code": "\nint fibonacci(int n) {\n    if (n <= 1) return n;\n    int a = 0, b = 1;\n    for (int i = 2; i <= n; i++) {\n        int t = a + b;\n        a = b;\n        b = t;\n    }\n    return b;\n}\n",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn fibonacci(n: i32) -> i32 {\n    if n <= 1 {\n        return n;\n    }\n    let mut a: i32 = 0;\n    let mut b: i32 = 1;\n    for _ in 2..=n {\n        let t = a.wrapping_add(b);\n        a = b;\n        b = t;\n    }\n    b\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 10.171175003051758,
+            "llm_prompt_tokens": 165,
+            "llm_completion_tokens": 87
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1020.8828449249268,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "binary_search",
+        "c_code": "\nint midpoint(int lo, int hi) {\n    return (lo + hi) / 2;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn midpoint(lo: i32, hi: i32) -> i32 {\n    (lo.wrapping_add(hi)) / 2\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 10.789871215820312,
+            "llm_prompt_tokens": 260,
+            "llm_completion_tokens": 40
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn midpoint(lo: i32, hi: i32) -> i32 {\n    (lo as i64 + hi as i64) as i32 / 2\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 14.83011245727539,
+            "llm_prompt_tokens": 265,
+            "llm_completion_tokens": 35
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn midpoint(lo: i32, hi: i32) -> i32 {\n    (lo.wrapping_add(hi)) / 2\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 12.118101119995117,
+            "llm_prompt_tokens": 263,
+            "llm_completion_tokens": 40
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn midpoint(lo: i32, hi: i32) -> i32 {\n    (lo as i64 + hi as i64) as i32 / 2\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.700992584228516,
+            "llm_prompt_tokens": 268,
+            "llm_completion_tokens": 35
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn midpoint(lo: i32, hi: i32) -> i32 {\n    (lo.wrapping_add(hi)) / 2\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.173849105834961,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 3766.849994659424,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "reverse_bits_loop",
+        "c_code": "\nunsigned int reverse_bits(unsigned int x) {\n    unsigned int result = 0;\n    for (int i = 0; i < 32; i++) {\n        result = (result << 1) | (x & 1);\n        x >>= 1;\n    }\n    return result;\n}\n",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn reverse_bits(mut x: u32) -> u32 {\n    let mut result = 0u32;\n    for _ in 0..32 {\n        result = (result << 1) | (x & 1);\n        x = x.wrapping_shr(1);\n    }\n    result\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 3.5810470581054688,
+            "llm_prompt_tokens": 158,
+            "llm_completion_tokens": 70
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1023.7927436828613,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      }
+    ]
+  },
+  "cegar_strong": {
+    "model": "gpt-5-chat-latest",
+    "n_functions": 20,
+    "analysis": {
+      "total_pairs": 20,
+      "converged": 6,
+      "convergence_rate": 30.0,
+      "equivalent_on_first_try": 6,
+      "remained_divergent": 10,
+      "errors": 1,
+      "avg_iterations": 3.2,
+      "avg_time_ms": 2858.9,
+      "bug_classification": {
+        "undefined_behavior": 7,
+        "other": 5
+      },
+      "repairability_breakdown": {
+        "easy": {},
+        "medium": {},
+        "hard": {
+          "undefined_behavior": 7,
+          "other": 5
+        }
+      },
+      "convergence_curve": {
+        "1": 6
+      },
+      "repair_by_class": {
+        "undefined_behavior": {
+          "total": 7,
+          "repaired": 0
+        },
+        "other": {
+          "total": 5,
+          "repaired": 0
+        },
+        "none": {
+          "total": 8,
+          "repaired": 6
+        }
+      }
+    },
+    "per_function": [
+      {
+        "func_name": "add_wrapping",
+        "c_code": "\nint add_wrapping(int a, int b) {\n    return a + b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.147861480712891,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.091117858886719,
+            "llm_prompt_tokens": 250,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073741865",
+                "input_1": "-2147480884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 5.873918533325195,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.072044372558594,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn add_wrapping(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.191730499267578,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 2961.879014968872,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "add_checked_divergent",
+        "c_code": "\nint add_checked(int a, int b) {\n    return a + b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 13.318777084350586,
+            "llm_prompt_tokens": 251,
+            "llm_completion_tokens": 27
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.674051284790039,
+            "llm_prompt_tokens": 251,
+            "llm_completion_tokens": 38
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    (a as i64 + b as i64) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 8.028984069824219,
+            "llm_prompt_tokens": 262,
+            "llm_completion_tokens": 30
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.5670013427734375,
+            "llm_prompt_tokens": 254,
+            "llm_completion_tokens": 27
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn add_checked(a: i32, b: i32) -> i32 {\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 8.291959762573242,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 3299.070119857788,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "mul_overflow",
+        "c_code": "\nint mul_overflow(int a, int b) {\n    return a * b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1946394625",
+                "input_1": "-1919156244"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 89.48302268981934,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 42
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    (a as i64).wrapping_mul(b as i64) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1796701821",
+                "input_1": "802109694"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 539.4251346588135,
+            "llm_prompt_tokens": 266,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-623575045",
+                "input_1": "-2113941760"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 80.11794090270996,
+            "llm_prompt_tokens": 255,
+            "llm_completion_tokens": 39
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    (a as i64 * b as i64) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1090691336",
+                "input_1": "2133366356"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 78.9330005645752,
+            "llm_prompt_tokens": 264,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1886216916",
+                "input_1": "-118512335"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 79.99277114868164,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 3722.2540378570557,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "sub_overflow",
+        "c_code": "\nint sub_overflow(int a, int b) {\n    return a - b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073758241",
+                "input_1": "2147475456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 7.2231292724609375,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a - b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "637116045",
+                "input_1": "-2147483648"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 17.5321102142334,
+            "llm_prompt_tokens": 252,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073758241",
+                "input_1": "2147475456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 7.168054580688477,
+            "llm_prompt_tokens": 256,
+            "llm_completion_tokens": 28
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a - b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "637116045",
+                "input_1": "-2147483648"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.571054458618164,
+            "llm_prompt_tokens": 252,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn sub_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_sub(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1073758241",
+                "input_1": "2147475456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 14.142990112304688,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 2646.632194519043,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "saturating_add",
+        "c_code": "\nint saturating_add(int a, int b) {\n    return a + b;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.136178970336914,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 39
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    (a as i64 + b as i64) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.580829620361328,
+            "llm_prompt_tokens": 261,
+            "llm_completion_tokens": 31
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.122827529907227,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 105
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    // In C, signed integer overflow is undefined behavior.\n    // To match C semantics exactly, we must make the Rust code also have undefined behavior\n    // when overflow occurs. Using normal `+` on i32 in Rust does that in debug mode,\n    // and in release mode it has the same semantics as C (two's complement wrap, but UB if modeled).\n    a + b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147483645",
+                "input_1": "3"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.304025650024414,
+            "llm_prompt_tokens": 327,
+            "llm_completion_tokens": 39
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn saturating_add(a: i32, b: i32) -> i32 {\n    (a as i64 + b as i64) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 6.672143936157227,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 4883.017063140869,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "is_power_of_two",
+        "c_code": "\nint is_power_of_two(unsigned int x) {\n    return x != 0 && (x & (x - 1)) == 0;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn is_power_of_two(x: u32) -> i32 {\n    ((x != 0) && (x & x.wrapping_sub(1)) == 0) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 6.352901458740234,
+            "llm_prompt_tokens": 254,
+            "llm_completion_tokens": 56
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn is_power_of_two(x: u32) -> i32 {\n    if x != 0 && (x & (x.wrapping_sub(1))) == 0 {\n        1\n    } else {\n        0\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 20.750761032104492,
+            "llm_prompt_tokens": 264,
+            "llm_completion_tokens": 47
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn is_power_of_two(x: u32) -> i32 {\n    ((x != 0) && ((x & (x.wrapping_sub(1))) == 0)) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 6.048917770385742,
+            "llm_prompt_tokens": 255,
+            "llm_completion_tokens": 56
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn is_power_of_two(x: u32) -> i32 {\n    if x != 0 && (x & (x.wrapping_sub(1))) == 0 {\n        1\n    } else {\n        0\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 7.030010223388672,
+            "llm_prompt_tokens": 264,
+            "llm_completion_tokens": 47
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn is_power_of_two(x: u32) -> i32 {\n    ((x != 0) && (x & (x.wrapping_sub(1))) == 0) as i32\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 7.198810577392578,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 3658.535957336426,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "rotate_right",
+        "c_code": "\nunsigned int rotate_right(unsigned int x, int n) {\n    n = n & 31;\n    return (x >> n) | (x << (32 - n));\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    let right = x.wrapping_shr(n);\n    let left = x.wrapping_shl(32u32.wrapping_sub(n));\n    right | left\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "543228934",
+                "input_1": "24"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 10.041236877441406,
+            "llm_prompt_tokens": 298,
+            "llm_completion_tokens": 67
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    if n == 0 {\n        x\n    } else {\n        (x >> n) | (x << (32 - n))\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1260512954",
+                "input_1": "880803869"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 10.10894775390625,
+            "llm_prompt_tokens": 295,
+            "llm_completion_tokens": 60
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    (x >> n) | (x << ((32u32.wrapping_sub(n)) & 31))\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1244991880",
+                "input_1": "-2147483647"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 10.359764099121094,
+            "llm_prompt_tokens": 289,
+            "llm_completion_tokens": 67
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    if n == 0 {\n        x\n    } else {\n        (x >> n) | (x << (32 - n))\n    }\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1976698925",
+                "input_1": "7363856"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 9.101152420043945,
+            "llm_prompt_tokens": 295,
+            "llm_completion_tokens": 60
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn rotate_right(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    (x >> n) | (x << ((32u32.wrapping_sub(n)) & 31))\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1973011074",
+                "input_1": "1443665220"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 9.985923767089844,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 4421.634197235107,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "swap_bytes",
+        "c_code": "\nunsigned int swap_bytes(unsigned int x) {\n    return ((x & 0xFF000000) >> 24) |\n           ((x & 0x00FF0000) >> 8)  |\n           ((x & 0x0000FF00) << 8)  |\n           ((x & 0x000000FF) << 24);\n}\n",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn swap_bytes(x: u32) -> u32 {\n    ((x & 0xFF00_0000).wrapping_shr(24))\n        | ((x & 0x00FF_0000).wrapping_shr(8))\n        | ((x & 0x0000_FF00).wrapping_shl(8))\n        | ((x & 0x0000_00FF).wrapping_shl(24))\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 8.881807327270508,
+            "llm_prompt_tokens": 173,
+            "llm_completion_tokens": 100
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1016.524076461792,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "bit_extract",
+        "c_code": "\nunsigned int extract_bits(unsigned int x, int lo, int hi) {\n    if (lo < 0 || hi > 32 || lo >= hi) return 0;\n    unsigned int mask = ((1u << (hi - lo)) - 1) << lo;\n    return (x & mask) >> lo;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n    let width = (hi - lo) as u32;\n    let lo_u = lo as u32;\n    let mask = (1u32.wrapping_shl(width).wrapping_sub(1)).wrapping_shl(lo_u);\n    x.wrapping_and(mask).wrapping_shr(lo_u)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "-2147483648",
+                "input_2": "637116045"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 15.618085861206055,
+            "llm_prompt_tokens": 399,
+            "llm_completion_tokens": 155
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    // Match C's defined behavior: if invalid range, return 0\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n\n    // Safe conversions after validation\n    let width = (hi - lo) as u32;\n    let lo_u = lo as u32;\n\n    // Emulate C's unsigned shift semantics exactly\n    let mask = if width >= 32 {\n        u32::MAX\n    } else {\n        (1u32 << width) - 1\n    } << lo_u;\n\n    (x & mask) >> lo_u\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "2147475456",
+                "input_2": "-1073758241"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 19.425153732299805,
+            "llm_prompt_tokens": 439,
+            "llm_completion_tokens": 268
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    // Match C's defined behavior: if invalid range, return 0\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n\n    // Compute width safely\n    let width = (hi - lo) as u32;\n    let lo_u = lo as u32;\n\n    // In C, shifting by >= 32 bits is undefined, but our guard ensures hi <= 32 and lo >= 0, so width <= 32.\n    // However, if width == 32, (1u << 32) is undefined in C, so we must emulate the wraparound behavior.\n    // In C, (1u << 32) on a 32-bit unsigned int is actually undefined, but since hi <= 32, width == 32 only if lo == 0.\n    // In that case, mask should be all bits set (0xFFFFFFFF).\n    let mask = if width >= 32 {\n        u32::MAX\n    } else {\n        ((1u32 << width).wrapping_sub(1)) << lo_u\n    };\n\n    (x & mask) >> lo_u\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "-2147483648",
+                "input_2": "637116044"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 14.110088348388672,
+            "llm_prompt_tokens": 551,
+            "llm_completion_tokens": 269
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    // In C, if (lo < 0 || hi > 32 || lo >= hi) return 0;\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n\n    // Compute width and lo as unsigned\n    let width = (hi - lo) as u32;\n    let lo_u = lo as u32;\n\n    // Emulate C's 32-bit unsigned shift semantics exactly.\n    // In C, (1u << n) is undefined for n >= 32, but since we guard hi <= 32 and lo >= 0,\n    // width is in [1, 32]. When width == 32, C's expression ((1u << 32) - 1) << lo\n    // would actually be undefined, but we emulate the *intended* wraparound result\n    // that most compilers produce (all bits set).\n    let mask = if width == 32 {\n        u32::MAX\n    } else {\n        ((1u32 << width).wrapping_sub(1)) << lo_u\n    };\n\n    (x & mask) >> lo_u\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "2147475456",
+                "input_2": "-1073758241"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 13.121843338012695,
+            "llm_prompt_tokens": 553,
+            "llm_completion_tokens": 305
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn extract_bits(x: u32, lo: i32, hi: i32) -> u32 {\n    // In C, if (lo < 0 || hi > 32 || lo >= hi) return 0;\n    if lo < 0 || hi > 32 || lo >= hi {\n        return 0;\n    }\n\n    // Compute width and lo as unsigned\n    let width = (hi - lo) as u32;\n    let lo_u = lo as u32;\n\n    // In C, (1u << n) is undefined for n >= 32, but since we guard hi <= 32 and lo >= 0,\n    // width is in [1, 32]. When width == 32, (1u << 32) is undefined, but we must\n    // reproduce the *actual* C semantics, which means we must not emulate wraparound.\n    // Instead, we must ensure that the Rust code produces the same result as C would\n    // for all *defined* inputs, and for undefined inputs, any result is acceptable.\n    // So we only perform the shift when width < 32.\n    let mask = if width >= 32 {\n        u32::MAX.wrapping_shl(lo_u)\n    } else {\n        ((1u32 << width).wrapping_sub(1)).wrapping_shl(lo_u)\n    };\n\n    (x & mask).wrapping_shr(lo_u)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "2147475456",
+                "input_2": "-1073758241"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 18.690109252929688,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 8591.205835342407,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "leading_zeros",
+        "c_code": "\nint leading_zeros(unsigned int x) {\n    if (x == 0) return 32;\n    int n = 0;\n    if (x <= 0x0000FFFF) { n += 16; x <<= 16; }\n    if (x <= 0x00FFFFFF) { n += 8;  x <<= 8; }\n    if (x <= 0x0FFFFFFF) { n += 4;  x <<= 4; }\n    if (x <= 0x3FFFFFFF) { n += 2;  x <<= 2; }\n    if (x <= 0x7FFFFFFF) { n += 1; }\n    return n;\n}\n",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn leading_zeros(x: u32) -> i32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut x = x;\n    let mut n: i32 = 0;\n    if x <= 0x0000_FFFF {\n        n += 16;\n        x = x.wrapping_shl(16);\n    }\n    if x <= 0x00FF_FFFF {\n        n += 8;\n        x = x.wrapping_shl(8);\n    }\n    if x <= 0x0FFF_FFFF {\n        n += 4;\n        x = x.wrapping_shl(4);\n    }\n    if x <= 0x3FFF_FFFF {\n        n += 2;\n        x = x.wrapping_shl(2);\n    }\n    if x <= 0x7FFF_FFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2097154"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 14.609098434448242,
+            "llm_prompt_tokens": 530,
+            "llm_completion_tokens": 177
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn leading_zeros(x: u32) -> i32 {\n    let mut x = x;\n    if x == 0 {\n        return 32;\n    }\n    let mut n: i32 = 0;\n    if x <= 0x0000_FFFF {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FF_FFFF {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFF_FFFF {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFF_FFFF {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFF_FFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-8194"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 13.427019119262695,
+            "llm_prompt_tokens": 505,
+            "llm_completion_tokens": 187
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn leading_zeros(x: u32) -> i32 {\n    let mut x = x;\n    if x == 0 {\n        return 32;\n    }\n    let mut n: i32 = 0;\n    if x <= 0x0000_FFFFu32 {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FF_FFFFu32 {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFF_FFFFu32 {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFF_FFFFu32 {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFF_FFFFu32 {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 12.711048126220703,
+            "llm_prompt_tokens": 514,
+            "llm_completion_tokens": 177
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn leading_zeros(x: u32) -> i32 {\n    let mut x = x;\n    if x == 0 {\n        return 32;\n    }\n    let mut n: i32 = 0;\n    if x <= 0x0000_FFFF {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FF_FFFF {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFF_FFFF {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFF_FFFF {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFF_FFFF {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-8194"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 12.684106826782227,
+            "llm_prompt_tokens": 505,
+            "llm_completion_tokens": 187
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn leading_zeros(x: u32) -> i32 {\n    let mut x = x;\n    if x == 0 {\n        return 32;\n    }\n    let mut n: i32 = 0;\n    if x <= 0x0000_FFFFu32 {\n        n += 16;\n        x <<= 16;\n    }\n    if x <= 0x00FF_FFFFu32 {\n        n += 8;\n        x <<= 8;\n    }\n    if x <= 0x0FFF_FFFFu32 {\n        n += 4;\n        x <<= 4;\n    }\n    if x <= 0x3FFF_FFFFu32 {\n        n += 2;\n        x <<= 2;\n    }\n    if x <= 0x7FFF_FFFFu32 {\n        n += 1;\n    }\n    n\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-2"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 13.692855834960938,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 5380.697011947632,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "i64_to_i32_trunc",
+        "c_code": "int trunc64(long long x) { return (int)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn trunc64(x: i64) -> i32 {\n    x as i32\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 1.7757415771484375,
+            "llm_prompt_tokens": 109,
+            "llm_completion_tokens": 23
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 777.7919769287109,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "i32_to_i8_trunc",
+        "c_code": "signed char trunc32to8(int x) { return (signed char)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn trunc32to8(x: i32) -> i8 {\n    x as i8\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 1.7189979553222656,
+            "llm_prompt_tokens": 112,
+            "llm_completion_tokens": 25
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 603.6169528961182,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "i32_to_i16_trunc",
+        "c_code": "short trunc32to16(int x) { return (short)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn trunc32to16(x: i32) -> i16 {\n    x as i16\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 1.5606880187988281,
+            "llm_prompt_tokens": 110,
+            "llm_completion_tokens": 25
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 460.86812019348145,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "u32_to_i32_reinterpret",
+        "c_code": "int u2i(unsigned int x) { return (int)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn u2i(x: u32) -> i32 {\n    x as i32\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 1.56402587890625,
+            "llm_prompt_tokens": 110,
+            "llm_completion_tokens": 24
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 579.9150466918945,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "i32_to_u32_reinterpret",
+        "c_code": "unsigned int i2u(int x) { return (unsigned int)x; }",
+        "converged": true,
+        "final_verdict": "equivalent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn i2u(x: i32) -> u32 {\n    x as u32\n}",
+            "verdict": "equivalent",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 11.801958084106445,
+            "llm_prompt_tokens": 111,
+            "llm_completion_tokens": 24
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 448.69136810302734,
+        "bug_class": "none",
+        "llm_repairable": true,
+        "repair_iterations": 1
+      },
+      {
+        "func_name": "add_then_shift",
+        "c_code": "int add_shift(int a, int b, int n) { return (a + b) << n; }",
+        "converged": false,
+        "final_verdict": "error",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn add_shift(a: i32, b: i32, n: i32) -> i32 {\n    // In C, signed overflow and shift by >= bit width are undefined.\n    // Use wrapping operations to match C's two's-complement machine behavior.\n    a.wrapping_add(b).wrapping_shl(n as u32)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "2147479551",
+                "input_1": "1075832884",
+                "input_2": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 7.0648193359375,
+            "llm_prompt_tokens": 315,
+            "llm_completion_tokens": 123
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn add_shift(a: i32, b: i32, n: i32) -> i32 {\n    // In C, signed overflow and invalid shift counts cause undefined behavior.\n    // To match C semantics exactly, we must make the Rust function also undefined\n    // (panic) in those cases, rather than wrapping.\n    let sum = a.checked_add(b).expect(\"signed overflow (C UB)\");\n    if n < 0 || n as u32 >= 32 {\n        panic!(\"shift count out of range (C UB)\");\n    }\n    sum << n\n}",
+            "verdict": "error",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 0.9808540344238281,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 2,
+        "total_time_ms": 2642.6727771759033,
+        "bug_class": "undefined_behavior",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "mul_then_div",
+        "c_code": "int mul_div(int a, int b, int c) { return (a * b) / c; }",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn mul_div(a: i32, b: i32, c: i32) -> i32 {\n    // Perform multiplication with wrapping to match C's overflow behavior\n    let prod = a.wrapping_mul(b);\n    // In C, division by zero is undefined, but we must define behavior for all inputs.\n    // We'll emulate C's behavior as closely as possible by performing a normal division,\n    // but handle division by zero explicitly to avoid panic.\n    if c == 0 {\n        // C's behavior is undefined; choose a deterministic wrapping result.\n        // We'll return the wrapped quotient of prod / 0, which we define as 0.\n        0\n    } else {\n        prod.wrapping_div(c)\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 3.5262107849121094,
+            "llm_prompt_tokens": 118,
+            "llm_completion_tokens": 159
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1404.4339656829834,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "shift_then_cast",
+        "c_code": "signed char shift_trunc(int x, int n) { return (signed char)(x << n); }",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    let shifted = x.wrapping_shl(n as u32);\n    shifted as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "65535",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 5.649805068969727,
+            "llm_prompt_tokens": 253,
+            "llm_completion_tokens": 69
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    let shifted = if n < 0 || n as u32 >= 32 {\n        0\n    } else {\n        x.wrapping_shl(n as u32)\n    };\n    shifted as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "65535",
+                "input_1": "0"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 6.880998611450195,
+            "llm_prompt_tokens": 278,
+            "llm_completion_tokens": 40
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    (x.wrapping_shl(n as u32)) as i8\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "0",
+                "input_1": "32"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "c_undefined_behavior (assumption 0 violated)",
+              "divergence_class": "undefined_behavior"
+            },
+            "repair_hint": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior",
+            "time_ms": 25.834083557128906,
+            "llm_prompt_tokens": 263,
+            "llm_completion_tokens": 104
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn shift_trunc(x: i32, n: i32) -> i8 {\n    if n < 0 || n >= 32 {\n        // In C, shifting by n >= width or negative is undefined behavior.\n        // To match C semantics exactly, we make this case undefined in Rust too.\n        unsafe { std::hint::unreachable_unchecked() }\n    } else {\n        (x.wrapping_shl(n as u32)) as i8\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.671957015991211,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 4,
+        "total_time_ms": 4264.221906661987,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "abs_then_div",
+        "c_code": "int abs_div(int a, int b) { int v = a < 0 ? -a : a; return v / b; }",
+        "converged": false,
+        "final_verdict": "divergent",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { a.wrapping_neg() } else { a };\n    v.wrapping_div(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "201326592",
+                "input_1": "-1"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 64.09502029418945,
+            "llm_prompt_tokens": 268,
+            "llm_completion_tokens": 44
+          },
+          {
+            "iteration": 1,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { -a } else { a };\n    v / b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "-1006631040",
+                "input_1": "805306368"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 29.780864715576172,
+            "llm_prompt_tokens": 264,
+            "llm_completion_tokens": 64
+          },
+          {
+            "iteration": 2,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 {\n        (a as i64).wrapping_neg() as i32\n    } else {\n        a\n    };\n    v.wrapping_div(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "536870912",
+                "input_1": "268435456"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 62.512874603271484,
+            "llm_prompt_tokens": 283,
+            "llm_completion_tokens": 44
+          },
+          {
+            "iteration": 3,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 { -a } else { a };\n    v / b\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "134222372",
+                "input_1": "115235875"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 65.08898735046387,
+            "llm_prompt_tokens": 263,
+            "llm_completion_tokens": 64
+          },
+          {
+            "iteration": 4,
+            "rust_code": "fn abs_div(a: i32, b: i32) -> i32 {\n    let v = if a < 0 {\n        (a as i64).wrapping_neg() as i32\n    } else {\n        a\n    };\n    v.wrapping_div(b)\n}",
+            "verdict": "divergent",
+            "counterexample": {
+              "inputs": {
+                "input_0": "1187529584",
+                "input_1": "1075544048"
+              },
+              "c_behavior": null,
+              "rust_behavior": null,
+              "reason": "output_mismatch",
+              "divergence_class": "other"
+            },
+            "repair_hint": "Semantic divergence detected: output_mismatch",
+            "divergence_class": "other",
+            "time_ms": 64.35418128967285,
+            "llm_prompt_tokens": 0,
+            "llm_completion_tokens": 0
+          }
+        ],
+        "total_iterations": 5,
+        "total_time_ms": 3993.586778640747,
+        "bug_class": "other",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      },
+      {
+        "func_name": "square_then_mod",
+        "c_code": "int sq_mod(int x, int m) { return (x * x) % m; }",
+        "converged": false,
+        "final_verdict": "unknown",
+        "iterations": [
+          {
+            "iteration": 0,
+            "rust_code": "fn sq_mod(x: i32, m: i32) -> i32 {\n    if m == 0 {\n        // In C, x % 0 is undefined; to preserve identical behavior for all inputs,\n        // we must avoid UB. We'll emulate it by performing the operation in wrapping\n        // arithmetic and returning the same result as if the CPU performed it with\n        // undefined behavior \u2014 but since that's not well-defined, we choose a safe,\n        // deterministic fallback (e.g., 0).\n        0\n    } else {\n        (x.wrapping_mul(x)).wrapping_rem(m)\n    }\n}",
+            "verdict": "unknown",
+            "counterexample": null,
+            "repair_hint": "",
+            "divergence_class": "",
+            "time_ms": 2.4099349975585938,
+            "llm_prompt_tokens": 115,
+            "llm_completion_tokens": 134
+          }
+        ],
+        "total_iterations": 1,
+        "total_time_ms": 1419.787883758545,
+        "bug_class": "none",
+        "llm_repairable": false,
+        "repair_iterations": 0
+      }
+    ]
+  },
+  "naive_retry": {
+    "model": "gpt-4.1-nano",
+    "n_functions": 20,
+    "converged": 7,
+    "convergence_rate": 35.0,
+    "per_function": [
+      {
+        "name": "add_wrapping",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "add_checked_divergent",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "mul_overflow",
+        "verdict": "equivalent",
+        "converged": true
+      },
+      {
+        "name": "sub_overflow",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "saturating_add",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "is_power_of_two",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "rotate_right",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "swap_bytes",
+        "verdict": "equivalent",
+        "converged": true
+      },
+      {
+        "name": "bit_extract",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "leading_zeros",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "i64_to_i32_trunc",
+        "verdict": "equivalent",
+        "converged": true
+      },
+      {
+        "name": "i32_to_i8_trunc",
+        "verdict": "equivalent",
+        "converged": true
+      },
+      {
+        "name": "i32_to_i16_trunc",
+        "verdict": "equivalent",
+        "converged": true
+      },
+      {
+        "name": "u32_to_i32_reinterpret",
+        "verdict": "equivalent",
+        "converged": true
+      },
+      {
+        "name": "i32_to_u32_reinterpret",
+        "verdict": "equivalent",
+        "converged": true
+      },
+      {
+        "name": "add_then_shift",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "mul_then_div",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "shift_then_cast",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "abs_then_div",
+        "verdict": "divergent",
+        "converged": false
+      },
+      {
+        "name": "square_then_mod",
+        "verdict": "divergent",
+        "converged": false
+      }
+    ]
+  },
+  "comparison": {
+    "cegar_nano_rate": 27.5,
+    "cegar_strong_rate": 30.0,
+    "naive_retry_rate": 35.0
+  }
+}

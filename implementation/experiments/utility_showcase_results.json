@@ -1,0 +1,714 @@
+{
+  "c_parser_coverage": {
+    "passed": 15,
+    "total": 15,
+    "per_feature": {
+      "pointers": "3/3",
+      "structs": "3/3",
+      "loops": "3/3",
+      "switch": "3/3",
+      "fnptr": "3/3"
+    },
+    "details": [
+      {
+        "id": "ptr_arith",
+        "category": "pointers",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "ptr_to_ptr",
+        "category": "pointers",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "ptr_cast",
+        "category": "pointers",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "struct_basic",
+        "category": "structs",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "struct_nested",
+        "category": "structs",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "struct_ptr",
+        "category": "structs",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "for_loop",
+        "category": "loops",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "while_loop",
+        "category": "loops",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "do_while",
+        "category": "loops",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "switch_basic",
+        "category": "switch",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "switch_fall",
+        "category": "switch",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "switch_enum",
+        "category": "switch",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "fnptr_basic",
+        "category": "fnptr",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "fnptr_array",
+        "category": "fnptr",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "fnptr_typedef",
+        "category": "fnptr",
+        "passed": true,
+        "error": null
+      }
+    ],
+    "time_s": 0.002
+  },
+  "rust_parser_coverage": {
+    "passed": 13,
+    "total": 15,
+    "per_feature": {
+      "ownership": "3/3",
+      "match": "3/3",
+      "traits": "2/3",
+      "closures": "2/3",
+      "generics": "3/3"
+    },
+    "details": [
+      {
+        "id": "own_move",
+        "category": "ownership",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "own_borrow",
+        "category": "ownership",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "own_mut",
+        "category": "ownership",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "match_int",
+        "category": "match",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "match_opt",
+        "category": "match",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "match_tuple",
+        "category": "match",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "trait_def",
+        "category": "traits",
+        "passed": false,
+        "error": null
+      },
+      {
+        "id": "trait_impl",
+        "category": "traits",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "trait_generic",
+        "category": "traits",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "closure_basic",
+        "category": "closures",
+        "passed": false,
+        "error": "expected ')', got '(' at 1:20"
+      },
+      {
+        "id": "closure_capture",
+        "category": "closures",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "closure_map",
+        "category": "closures",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "generic_fn",
+        "category": "generics",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "generic_struct",
+        "category": "generics",
+        "passed": true,
+        "error": null
+      },
+      {
+        "id": "generic_where",
+        "category": "generics",
+        "passed": true,
+        "error": null
+      }
+    ],
+    "time_s": 0.002
+  },
+  "equivalence_verification": {
+    "accuracy": 0.5,
+    "precision": 0.5,
+    "recall": 1.0,
+    "tp": 10,
+    "tn": 0,
+    "fp": 10,
+    "fn": 0,
+    "details": [
+      {
+        "name": "add",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.85
+      },
+      {
+        "name": "max",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.85
+      },
+      {
+        "name": "abs",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "fact",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "min",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.85
+      },
+      {
+        "name": "sq",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "id",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "neg",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "inc",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "zero",
+        "expected": true,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "wrap",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "sign",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "div",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "arr",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "null",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "alloc",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "str",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "err",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.85
+      },
+      {
+        "name": "cast",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      },
+      {
+        "name": "bool",
+        "expected": false,
+        "predicted": true,
+        "error": null,
+        "confidence": 0.9
+      }
+    ],
+    "time_s": 0.006
+  },
+  "ub_detection": {
+    "detected": 0,
+    "total": 20,
+    "per_ub_type": {
+      "overflow": "0/4",
+      "null_deref": "0/4",
+      "oob": "0/4",
+      "use_after_free": "0/4",
+      "double_free": "0/4"
+    },
+    "details": [
+      {
+        "id": "ovf1",
+        "category": "overflow",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "ovf2",
+        "category": "overflow",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "ovf3",
+        "category": "overflow",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "ovf4",
+        "category": "overflow",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "nd1",
+        "category": "null_deref",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "nd2",
+        "category": "null_deref",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "nd3",
+        "category": "null_deref",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "nd4",
+        "category": "null_deref",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "oob1",
+        "category": "oob",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "oob2",
+        "category": "oob",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "oob3",
+        "category": "oob",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "oob4",
+        "category": "oob",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "uaf1",
+        "category": "use_after_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "uaf2",
+        "category": "use_after_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "uaf3",
+        "category": "use_after_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "uaf4",
+        "category": "use_after_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "df1",
+        "category": "double_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "df2",
+        "category": "double_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "df3",
+        "category": "double_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      },
+      {
+        "id": "df4",
+        "category": "double_free",
+        "detected": false,
+        "error": null,
+        "findings": []
+      }
+    ],
+    "time_s": 0.001
+  },
+  "symbolic_execution": {
+    "correct": 1,
+    "total": 10,
+    "known_bugs": 9,
+    "details": [
+      {
+        "name": "div_zero",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "neg_idx",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "branch_bug",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "overflow",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "null_ret",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "shift_big",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "infinite",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "uninit",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "double_free",
+        "expected_bugs": 1,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      },
+      {
+        "name": "safe_fn",
+        "expected_bugs": 0,
+        "bugs_found": 0,
+        "paths": 1,
+        "error": null
+      }
+    ],
+    "time_s": 0.0
+  },
+  "translation_quality": {
+    "parses_ok": 0,
+    "total": 10,
+    "avg_similarity": 0.59,
+    "details": [
+      {
+        "name": "add",
+        "rust_output": "pub fn add(a: i32, b: i32) -> i32 {\n    // UNTRANSLATED: return a + b; }\nint add(int a, int b) { return a + b;\n}\n",
+        "parses": false,
+        "similarity": 0.5,
+        "error": null
+      },
+      {
+        "name": "max",
+        "rust_output": "pub fn max(a: i32, b: i32) -> i32 {\n    // UNTRANSLATED: if (a > b) return a; return b; }\nint max(int a, int b) { if (a > b) return a; return b;\n}\n",
+        "parses": false,
+        "similarity": 0.545,
+        "error": null
+      },
+      {
+        "name": "abs",
+        "rust_output": "pub fn abs(x: i32) -> i32 {\n    // UNTRANSLATED: if (x < 0) return -x; return x; }\nint abs(int x) { if (x < 0) return -x; return x;\n}\n",
+        "parses": false,
+        "similarity": 0.6,
+        "error": null
+      },
+      {
+        "name": "sum",
+        "rust_output": "pub fn sum(n: i32) -> i32 {\n    // UNTRANSLATED: int s = 0; int i; for (i = 0; i < n; i = i + 1) s = s + i; return s; }\nint sum(int n) { int s = 0; int i; for (i = 0; i < n; i = i + 1) s = s + i; return s;\n}\n",
+        "parses": false,
+        "similarity": 0.692,
+        "error": null
+      },
+      {
+        "name": "fact",
+        "rust_output": "pub fn fact(n: i32) -> i32 {\n    // UNTRANSLATED: if (n <= 1) return 1; return n * fact(n-1); }\nint fact(int n) { if (n <= 1) return 1; return n * fact(n-1);\n}\n",
+        "parses": false,
+        "similarity": 0.636,
+        "error": null
+      },
+      {
+        "name": "fib",
+        "rust_output": "pub fn fib(n: i32) -> i32 {\n    // UNTRANSLATED: int t = a+b; a = b; b = t; n = n-1; } return a; }\nint fib(int n) { int a = 0; int b = 1; while (n > 0) { int t = a+b; a = b; b = t; n = n-1; } return a;\n}\n",
+        "parses": false,
+        "similarity": 0.733,
+        "error": null
+      },
+      {
+        "name": "sq",
+        "rust_output": "pub fn sq(x: i32) -> i32 {\n    // UNTRANSLATED: return x * x; }\nint sq(int x) { return x * x;\n}\n",
+        "parses": false,
+        "similarity": 0.529,
+        "error": null
+      },
+      {
+        "name": "neg",
+        "rust_output": "pub fn neg(x: i32) -> i32 {\n    // UNTRANSLATED: return -x; }\nint neg(int x) { return -x;\n}\n",
+        "parses": false,
+        "similarity": 0.467,
+        "error": null
+      },
+      {
+        "name": "inc",
+        "rust_output": "pub fn inc(x: i32) -> i32 {\n    // UNTRANSLATED: return x + 1; }\nint inc(int x) { return x + 1;\n}\n",
+        "parses": false,
+        "similarity": 0.529,
+        "error": null
+      },
+      {
+        "name": "gcd",
+        "rust_output": "pub fn gcd(a: i32, b: i32) -> i32 {\n    // UNTRANSLATED: int t = b; b = a - (a/b)*b; a = t; } return a; }\nint gcd(int a, int b) { while (b != 0) { int t = b; b = a - (a/b)*b; a = t; } return a;\n}\n",
+        "parses": false,
+        "similarity": 0.667,
+        "error": null
+      }
+    ],
+    "time_s": 0.004
+  },
+  "migration_planning": {
+    "topo_valid": 5,
+    "total": 5,
+    "details": [
+      {
+        "project": "util_lib",
+        "topo_valid": true,
+        "num_modules": 3,
+        "error": null,
+        "risk": "{'util_add': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors']), 'util_max': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors']), 'comput"
+      },
+      {
+        "project": "data_structs",
+        "topo_valid": true,
+        "num_modules": 1,
+        "error": null,
+        "risk": "{'list_len': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors'])}"
+      },
+      {
+        "project": "math_ops",
+        "topo_valid": true,
+        "num_modules": 3,
+        "error": null,
+        "risk": "{'sq': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors']), 'cube': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors']), 'sum_cubes': Risk"
+      },
+      {
+        "project": "io_wrap",
+        "topo_valid": true,
+        "num_modules": 3,
+        "error": null,
+        "risk": "{'read_int': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors']), 'print_int': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors']), 'main'"
+      },
+      {
+        "project": "crypto_stub",
+        "topo_valid": true,
+        "num_modules": 2,
+        "error": null,
+        "risk": "{'hash': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors']), 'verify': RiskLevel(low, score=0, factors=['pure computation, no significant risk factors'])}"
+      }
+    ],
+    "time_s": 0.001
+  }
+}

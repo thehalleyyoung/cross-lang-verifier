@@ -1,0 +1,501 @@
+{
+  "experiment": "pbt_baseline_comparison",
+  "description": "SemRec real pipeline vs differential testing baseline",
+  "total_pairs": 10,
+  "semrec": {
+    "correct": 7,
+    "accuracy": 0.7,
+    "divergences_found": 6,
+    "pipeline_succeeded": 9,
+    "total_time_ms": 1435.3151321411133
+  },
+  "diff_testing": {
+    "correct": 10,
+    "accuracy": 1.0,
+    "divergences_found": 7,
+    "total_time_ms": 186.18083000183105,
+    "random_samples": 10000,
+    "boundary_values": true
+  },
+  "semrec_only_found": [
+    "saturating_add"
+  ],
+  "diff_only_found": [
+    "rotate_right",
+    "safe_divide"
+  ],
+  "results": [
+    {
+      "name": "safe_add",
+      "expected": "divergent",
+      "semrec": {
+        "verdict": "divergent",
+        "time_ms": 14.005899429321289,
+        "counterexample": {
+          "input_0": "-1073741929",
+          "input_1": "-2147480372",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.976)",
+          "product: OK (1 blocks, 0 coercion pts)",
+          "smt: divergent (2 queries)"
+        ],
+        "smt_queries": 2,
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "divergent",
+        "divergences_found": 2539,
+        "first_divergence": {
+          "input": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "c_result": "UB",
+          "rust_result": 0
+        },
+        "total_tested": 10121,
+        "time_ms": 21.31509780883789
+      },
+      "semrec_correct": true,
+      "diff_correct": true
+    },
+    {
+      "name": "negate",
+      "expected": "divergent",
+      "semrec": {
+        "verdict": "divergent",
+        "time_ms": 4.102230072021484,
+        "counterexample": {
+          "input_0": "-2147483648",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.976)",
+          "product: OK (1 blocks, 0 coercion pts)",
+          "smt: divergent (2 queries)"
+        ],
+        "smt_queries": 2,
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "divergent",
+        "divergences_found": 1,
+        "first_divergence": {
+          "input": {
+            "x": -2147483648
+          },
+          "c_result": "UB",
+          "rust_result": -2147483648
+        },
+        "total_tested": 10011,
+        "time_ms": 14.693021774291992
+      },
+      "semrec_correct": true,
+      "diff_correct": true
+    },
+    {
+      "name": "abs_diff",
+      "expected": "divergent",
+      "semrec": {
+        "verdict": "divergent",
+        "time_ms": 9.424924850463867,
+        "counterexample": {
+          "input_0": "-1135231342",
+          "input_1": "87032172"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.319)",
+          "product: OK (7 blocks, 0 coercion pts)",
+          "smt: divergent (1 queries)"
+        ],
+        "smt_queries": 1,
+        "coercion_points": 0,
+        "product_blocks": 7,
+        "alignment_score": 0.3194685314685315,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "divergent",
+        "divergences_found": 2549,
+        "first_divergence": {
+          "input": {
+            "a": -2147483648,
+            "b": 0
+          },
+          "c_result": "UB",
+          "rust_result": -2147483648
+        },
+        "total_tested": 10121,
+        "time_ms": 20.943880081176758
+      },
+      "semrec_correct": true,
+      "diff_correct": true
+    },
+    {
+      "name": "average",
+      "expected": "divergent",
+      "semrec": {
+        "verdict": "divergent",
+        "time_ms": 1248.9008903503418,
+        "counterexample": {
+          "input_0": "-1909438593",
+          "input_1": "-83622037"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.976)",
+          "product: OK (1 blocks, 0 coercion pts)",
+          "smt: divergent (1 queries)"
+        ],
+        "smt_queries": 1,
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "divergent",
+        "divergences_found": 4395,
+        "first_divergence": {
+          "input": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "c_result": "UB",
+          "rust_result": 0
+        },
+        "total_tested": 10121,
+        "time_ms": 19.608020782470703
+      },
+      "semrec_correct": true,
+      "diff_correct": true
+    },
+    {
+      "name": "clamp",
+      "expected": "equivalent",
+      "semrec": {
+        "verdict": "equivalent",
+        "time_ms": 6.203174591064453,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.242)",
+          "product: OK (9 blocks, 0 coercion pts)",
+          "smt: equivalent (1 queries)"
+        ],
+        "smt_queries": 1,
+        "coercion_points": 0,
+        "product_blocks": 9,
+        "alignment_score": 0.24248888888888886,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "equivalent",
+        "divergences_found": 0,
+        "first_divergence": null,
+        "total_tested": 10125,
+        "time_ms": 18.970251083374023
+      },
+      "semrec_correct": true,
+      "diff_correct": true
+    },
+    {
+      "name": "rotate_right",
+      "expected": "divergent",
+      "semrec": {
+        "verdict": "pipeline_fail",
+        "time_ms": 0.7381439208984375,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": false
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: FAIL ('Function' object has no attribute 'type')"
+        ],
+        "smt_queries": 0,
+        "coercion_points": 0,
+        "product_blocks": 0,
+        "alignment_score": 0.0,
+        "error_msg": "Rust IR lowering failed: 'Function' object has no attribute 'type'"
+      },
+      "diff_testing": {
+        "verdict": "divergent",
+        "divergences_found": 10018,
+        "first_divergence": {
+          "input": {
+            "x": 0,
+            "n": 4294967293
+          },
+          "c_result": "UB",
+          "rust_result": 0
+        },
+        "total_tested": 10036,
+        "time_ms": 20.59173583984375
+      },
+      "semrec_correct": false,
+      "diff_correct": true
+    },
+    {
+      "name": "sign",
+      "expected": "equivalent",
+      "semrec": {
+        "verdict": "equivalent",
+        "time_ms": 3.4019947052001953,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.517)",
+          "product: OK (6 blocks, 0 coercion pts)",
+          "smt: equivalent (0 queries)"
+        ],
+        "smt_queries": 0,
+        "coercion_points": 0,
+        "product_blocks": 6,
+        "alignment_score": 0.5173846153846154,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "equivalent",
+        "divergences_found": 0,
+        "first_divergence": null,
+        "total_tested": 10011,
+        "time_ms": 10.968685150146484
+      },
+      "semrec_correct": true,
+      "diff_correct": true
+    },
+    {
+      "name": "safe_divide",
+      "expected": "divergent",
+      "semrec": {
+        "verdict": "equivalent",
+        "time_ms": 2.0978450775146484,
+        "counterexample": null,
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.522)",
+          "product: OK (5 blocks, 0 coercion pts)",
+          "smt: equivalent (0 queries)"
+        ],
+        "smt_queries": 0,
+        "coercion_points": 0,
+        "product_blocks": 5,
+        "alignment_score": 0.5222857142857144,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "divergent",
+        "divergences_found": 1,
+        "first_divergence": {
+          "input": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_result": "UB",
+          "rust_result": "PANIC"
+        },
+        "total_tested": 10121,
+        "time_ms": 18.2340145111084
+      },
+      "semrec_correct": false,
+      "diff_correct": true
+    },
+    {
+      "name": "midpoint",
+      "expected": "divergent",
+      "semrec": {
+        "verdict": "divergent",
+        "time_ms": 103.98697853088379,
+        "counterexample": {
+          "input_0": "134217728",
+          "input_1": "-216296349"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.976)",
+          "product: OK (1 blocks, 0 coercion pts)",
+          "smt: divergent (1 queries)"
+        ],
+        "smt_queries": 1,
+        "coercion_points": 0,
+        "product_blocks": 1,
+        "alignment_score": 0.976,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "divergent",
+        "divergences_found": 2444,
+        "first_divergence": {
+          "input": {
+            "a": -2147483648,
+            "b": 0
+          },
+          "c_result": "UB",
+          "rust_result": 1073741824
+        },
+        "total_tested": 10121,
+        "time_ms": 22.644996643066406
+      },
+      "semrec_correct": true,
+      "diff_correct": true
+    },
+    {
+      "name": "saturating_add",
+      "expected": "equivalent",
+      "semrec": {
+        "verdict": "divergent",
+        "time_ms": 42.45305061340332,
+        "counterexample": {
+          "input_0": "0",
+          "input_1": "0",
+          "reason": "c_undefined_behavior_reachable"
+        },
+        "pipeline_stages": {
+          "c_parse": true,
+          "rust_parse": true,
+          "c_ir": true,
+          "rust_ir": true,
+          "alignment": true,
+          "product": true,
+          "smt": true
+        },
+        "pipeline_log": [
+          "c_parse: OK",
+          "rust_parse: OK",
+          "c_ir: OK (1 functions)",
+          "rust_ir: OK (1 functions)",
+          "alignment: OK (sim=0.216)",
+          "product: OK (9 blocks, 0 coercion pts)",
+          "smt: divergent (3 queries)"
+        ],
+        "smt_queries": 3,
+        "coercion_points": 0,
+        "product_blocks": 9,
+        "alignment_score": 0.21559089026915113,
+        "error_msg": null
+      },
+      "diff_testing": {
+        "verdict": "equivalent",
+        "divergences_found": 0,
+        "first_divergence": null,
+        "total_tested": 10121,
+        "time_ms": 18.21112632751465
+      },
+      "semrec_correct": false,
+      "diff_correct": true
+    }
+  ]
+}

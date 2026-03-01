@@ -1,0 +1,2256 @@
+{
+  "experiment": "real_world_c_to_rust_verification",
+  "model": "gpt-4.1-nano",
+  "num_functions": 50,
+  "num_translated": 50,
+  "num_equivalent": 13,
+  "num_divergent": 37,
+  "total_bugs": 74,
+  "bug_types": {
+    "signed_overflow": 37,
+    "modulo_by_zero": 4,
+    "division_by_zero": 7,
+    "shift_overflow": 12,
+    "negation_overflow": 6,
+    "division_overflow": 6,
+    "semantic_mismatch": 1,
+    "volatile_semantics_lost": 1
+  },
+  "by_category": {
+    "string": {
+      "total": 1,
+      "divergent": 1,
+      "equivalent": 0,
+      "bugs": 2
+    },
+    "memory": {
+      "total": 1,
+      "divergent": 0,
+      "equivalent": 1,
+      "bugs": 0
+    },
+    "arithmetic": {
+      "total": 6,
+      "divergent": 6,
+      "equivalent": 0,
+      "bugs": 13
+    },
+    "bitwise": {
+      "total": 9,
+      "divergent": 9,
+      "equivalent": 0,
+      "bugs": 9
+    },
+    "overflow": {
+      "total": 7,
+      "divergent": 6,
+      "equivalent": 1,
+      "bugs": 15
+    },
+    "control_flow": {
+      "total": 5,
+      "divergent": 3,
+      "equivalent": 2,
+      "bugs": 12
+    },
+    "division": {
+      "total": 3,
+      "divergent": 3,
+      "equivalent": 0,
+      "bugs": 7
+    },
+    "error_handling": {
+      "total": 3,
+      "divergent": 3,
+      "equivalent": 0,
+      "bugs": 9
+    },
+    "hashing": {
+      "total": 3,
+      "divergent": 2,
+      "equivalent": 1,
+      "bugs": 2
+    },
+    "comparison": {
+      "total": 4,
+      "divergent": 1,
+      "equivalent": 3,
+      "bugs": 1
+    },
+    "cast": {
+      "total": 4,
+      "divergent": 0,
+      "equivalent": 4,
+      "bugs": 0
+    },
+    "floating_point": {
+      "total": 2,
+      "divergent": 1,
+      "equivalent": 1,
+      "bugs": 2
+    },
+    "security": {
+      "total": 2,
+      "divergent": 2,
+      "equivalent": 0,
+      "bugs": 2
+    }
+  },
+  "baseline_comparison": {
+    "semrec_divergent": 37,
+    "random_divergent": 34,
+    "no_bridge_divergent": 19
+  },
+  "results": [
+    {
+      "name": "strlen_simple",
+      "category": "string",
+      "description": "Simple strlen implementation",
+      "c_code": "int strlen_simple(const char *s) {\n    int n = 0;\n    while (s[n]) n++;\n    return n;\n}",
+      "rust_code": "fn strlen_simple(s: &str) -> usize {\n    s.bytes().position(|b| b == 0).unwrap_or_else(|| s.len())\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": -3,
+            "b": 1908928951
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 88.08088302612305,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": -3,
+          "b": 1908928951
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "memset_byte",
+      "category": "memory",
+      "description": "Simple memset",
+      "c_code": "void memset_byte(unsigned char *dst, unsigned char val, int n) {\n    for (int i = 0; i < n; i++) dst[i] = val;\n}",
+      "rust_code": "fn memset_byte(dst: &mut [u8], val: u8, n: usize) {\n    for i in 0..n.min(dst.len()) {\n        dst[i] = val;\n    }\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0050067901611328125,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "gcd",
+      "category": "arithmetic",
+      "description": "Greatest common divisor via Euclidean algorithm",
+      "c_code": "int gcd(int a, int b) {\n    while (b != 0) {\n        int t = b;\n        b = a % b;\n        a = t;\n    }\n    return a;\n}",
+      "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "modulo_by_zero",
+          "counterexample": {
+            "m": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 0.6511211395263672,
+      "semrec_counterexamples": [
+        {
+          "m": 0
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "isqrt",
+      "category": "arithmetic",
+      "description": "Integer square root via Newton's method",
+      "c_code": "unsigned int isqrt(unsigned int n) {\n    unsigned int x = n;\n    unsigned int y = (x + 1) / 2;\n    while (y < x) {\n        x = y;\n        y = (x + n / x) / 2;\n    }\n    return x;\n}",
+      "rust_code": "fn isqrt(n: u32) -> u32 {\n    let mut x = n;\n    let mut y = (x + 1) / 2;\n    while y < x {\n        x = y;\n        y = (x + n / x) / 2;\n    }\n    x\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "division_by_zero",
+          "counterexample": {
+            "a": 1,
+            "b": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 1.744985580444336,
+      "semrec_counterexamples": [
+        {
+          "a": 1,
+          "b": 0
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "ipow",
+      "category": "arithmetic",
+      "description": "Integer exponentiation by squaring",
+      "c_code": "int ipow(int base, int exp) {\n    int result = 1;\n    while (exp > 0) {\n        if (exp & 1) result *= base;\n        exp >>= 1;\n        base *= base;\n    }\n    return result;\n}",
+      "rust_code": "fn ipow(mut base: i32, mut exp: i32) -> i32 {\n    let mut result = 1;\n    while exp > 0 {\n        if (exp & 1) != 0 {\n            result *= base;\n        }\n        exp >>= 1;\n        base *= base;\n    }\n    result\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": 520093055,
+            "b": -1540637281
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 81.97474479675293,
+      "semrec_counterexamples": [
+        {
+          "a": 520093055,
+          "b": -1540637281
+        },
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "factorial",
+      "category": "arithmetic",
+      "description": "Iterative factorial",
+      "c_code": "int factorial(int n) {\n    int r = 1;\n    for (int i = 2; i <= n; i++) r *= i;\n    return r;\n}",
+      "rust_code": "fn factorial(n: i32) -> i32 {\n    let mut r = 1;\n    for i in 2..=n {\n        r *= i;\n    }\n    r\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": 1879048191,
+            "b": 446857215
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 82.88693428039551,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": 1879048191,
+          "b": 446857215
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "fibonacci",
+      "category": "arithmetic",
+      "description": "Iterative Fibonacci",
+      "c_code": "int fibonacci(int n) {\n    if (n <= 1) return n;\n    int a = 0, b = 1;\n    for (int i = 2; i <= n; i++) {\n        int t = a + b;\n        a = b;\n        b = t;\n    }\n    return b;\n}",
+      "rust_code": "fn fibonacci(n: i32) -> i32 {\n    if n <= 1 {\n        return n;\n    }\n    let mut a = 0;\n    let mut b = 1;\n    for _ in 2..=n {\n        let t = a + b;\n        a = b;\n        b = t;\n    }\n    b\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 3.650188446044922,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "sum_digits",
+      "category": "arithmetic",
+      "description": "Sum of decimal digits",
+      "c_code": "int sum_digits(int n) {\n    int s = 0;\n    if (n < 0) n = -n;\n    while (n > 0) {\n        s += n % 10;\n        n /= 10;\n    }\n    return s;\n}",
+      "rust_code": "fn sum_digits(n: i32) -> i32 {\n    let mut n = n.abs();\n    let mut s = 0;\n    while n > 0 {\n        s += n % 10;\n        n /= 10;\n    }\n    s\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "negation_overflow",
+          "operation": "negation of INT_MIN",
+          "counterexample": {
+            "x": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "division_by_zero",
+          "counterexample": {
+            "a": 1,
+            "b": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        },
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "high"
+        },
+        {
+          "type": "modulo_by_zero",
+          "counterexample": {
+            "m": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        }
+      ],
+      "semrec_queries": 6,
+      "semrec_time_ms": 7.462978363037109,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "x": -2147483648
+        },
+        {
+          "a": 1,
+          "b": 0
+        },
+        {
+          "a": -2147483648,
+          "b": -1
+        },
+        {
+          "m": 0
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "reverse_bits",
+      "category": "bitwise",
+      "description": "Reverse all bits of a 32-bit integer",
+      "c_code": "unsigned int reverse_bits(unsigned int n) {\n    unsigned int r = 0;\n    for (int i = 0; i < 32; i++) {\n        r = (r << 1) | (n & 1);\n        n >>= 1;\n    }\n    return r;\n}",
+      "rust_code": "fn reverse_bits(mut n: u32) -> u32 {\n    let mut r = 0;\n    for _ in 0..32 {\n        r = (r << 1) | (n & 1);\n        n >>= 1;\n    }\n    r\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 1.7459392547607422,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "count_leading_zeros",
+      "category": "bitwise",
+      "description": "Count leading zeros",
+      "c_code": "int count_leading_zeros(unsigned int x) {\n    if (x == 0) return 32;\n    int n = 0;\n    if ((x & 0xFFFF0000) == 0) { n += 16; x <<= 16; }\n    if ((x & 0xFF000000) == 0) { n += 8; x <<= 8; }\n    if ((x & 0xF0000000) == 0) { n += 4; x <<= 4; }\n    if ((x & 0xC0000000) == 0) { n += 2; x <<= 2; }\n    if ((x & 0x80000000) == 0) { n += 1; }\n    return n;\n}",
+      "rust_code": "fn count_leading_zeros(x: u32) -> i32 {\n    if x == 0 {\n        return 32;\n    }\n    let mut n = 0;\n    let mut value = x;\n    if (value & 0xFFFF0000) == 0 {\n        n += 16;\n        value <<= 16;\n    }\n    if (value & 0xFF000000) == 0 {\n        n += 8;\n        value <<= 8;\n    }\n    if (value & 0xF0000000) == 0 {\n        n += 4;\n        value <<= 4;\n    }\n    if (value & 0xC0000000) == 0 {\n        n += 2;\n        value <<= 2;\n    }\n    if (value & 0x80000000) == 0 {\n        n += 1;\n    }\n    n\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 1.5170574188232422,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "midpoint",
+      "category": "overflow",
+      "description": "Overflow-safe midpoint (common interview pattern)",
+      "c_code": "int midpoint(int a, int b) {\n    return a + (b - a) / 2;\n}",
+      "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    a + (b - a) / 2\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "division_by_zero",
+          "counterexample": {
+            "a": 1,
+            "b": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        },
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 4,
+      "semrec_time_ms": 5.1479339599609375,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "a": 1,
+          "b": 0
+        },
+        {
+          "a": -2147483648,
+          "b": -1
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "safe_multiply",
+      "category": "overflow",
+      "description": "Multiplication with overflow check",
+      "c_code": "int safe_multiply(int a, int b) {\n    if (a == 0 || b == 0) return 0;\n    int result = a * b;\n    if (result / a != b) return -1;\n    return result;\n}",
+      "rust_code": "fn safe_multiply(a: i32, b: i32) -> i32 {\n    if a == 0 || b == 0 {\n        return 0;\n    }\n    let result = a.checked_mul(b);\n    match result {\n        Some(res) => {\n            if res / a != b {\n                -1\n            } else {\n                res\n            }\n        }\n        None => -1,\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": -1879051745,
+            "b": -378880258
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "division_by_zero",
+          "counterexample": {
+            "a": 1,
+            "b": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        },
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 4,
+      "semrec_time_ms": 85.77203750610352,
+      "semrec_counterexamples": [
+        {
+          "a": -1879051745,
+          "b": -378880258
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "a": 1,
+          "b": 0
+        },
+        {
+          "a": -2147483648,
+          "b": -1
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "abs_val",
+      "category": "overflow",
+      "description": "Absolute value (UB on INT_MIN)",
+      "c_code": "int abs_val(int x) {\n    return x < 0 ? -x : x;\n}",
+      "rust_code": "fn abs_val(x: i32) -> i32 {\n    if x < 0 {\n        -x\n    } else {\n        x\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "negation_overflow",
+          "operation": "negation of INT_MIN",
+          "counterexample": {
+            "x": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 4.178762435913086,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "x": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "saturating_add_i32",
+      "category": "overflow",
+      "description": "Saturating addition (relies on overflow behavior)",
+      "c_code": "int saturating_add_i32(int a, int b) {\n    int result = a + b;\n    if (a > 0 && b > 0 && result < 0) return 2147483647;\n    if (a < 0 && b < 0 && result > 0) return -2147483648;\n    return result;\n}",
+      "rust_code": "fn saturating_add_i32(a: i32, b: i32) -> i32 {\n    let result = a + b;\n    if a > 0 && b > 0 && result < 0 {\n        i32::MAX\n    } else if a < 0 && b < 0 && result > 0 {\n        i32::MIN\n    } else {\n        result\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 5.352258682250977,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "safe_negate",
+      "category": "overflow",
+      "description": "Safe negation avoiding INT_MIN UB",
+      "c_code": "int safe_negate(int x) {\n    if (x == -2147483648) return 2147483647;\n    return -x;\n}",
+      "rust_code": "fn safe_negate(x: i32) -> i32 {\n    if x == i32::MIN {\n        i32::MAX\n    } else {\n        -x\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "negation_overflow",
+          "operation": "negation of INT_MIN",
+          "counterexample": {
+            "x": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 3.030061721801758,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "x": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "checked_shift_left",
+      "category": "overflow",
+      "description": "Shift with bounds check",
+      "c_code": "int checked_shift_left(int val, int shift) {\n    if (shift < 0 || shift >= 32) return 0;\n    return val << shift;\n}",
+      "rust_code": "fn checked_shift_left(val: i32, shift: i32) -> i32 {\n    if shift < 0 || shift >= 32 {\n        0\n    } else {\n        val << shift\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 2.732992172241211,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "wrapping_add",
+      "category": "overflow",
+      "description": "Unsigned wrapping addition",
+      "c_code": "unsigned int wrapping_add(unsigned int a, unsigned int b) {\n    return a + b;\n}",
+      "rust_code": "fn wrapping_add(a: u32, b: u32) -> u32 {\n    a + b\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0040531158447265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "binary_search",
+      "category": "control_flow",
+      "description": "Binary search in sorted array",
+      "c_code": "int binary_search(int *arr, int n, int target) {\n    int lo = 0, hi = n - 1;\n    while (lo <= hi) {\n        int mid = lo + (hi - lo) / 2;\n        if (arr[mid] == target) return mid;\n        if (arr[mid] < target) lo = mid + 1;\n        else hi = mid - 1;\n    }\n    return -1;\n}",
+      "rust_code": "fn binary_search(arr: &[i32], target: i32) -> i32 {\n    let mut lo: usize = 0;\n    let mut hi: usize = arr.len().wrapping_sub(1);\n    while lo <= hi {\n        let mid = lo + (hi - lo) / 2;\n        match arr[mid] {\n            val if val == target => return mid as i32,\n            val if val < target => lo = mid + 1,\n            _ => {\n                if mid == 0 {\n                    break;\n                }\n                hi = mid - 1;\n            }\n        }\n    }\n    -1\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": -1208221697,
+            "b": 1610612735
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "division_by_zero",
+          "counterexample": {
+            "a": 1,
+            "b": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        },
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "high"
+        },
+        {
+          "type": "semantic_mismatch",
+          "operation": "LLM used wrapping arithmetic for signed C code",
+          "c_behavior": "undefined_behavior_on_overflow",
+          "rust_behavior": "wraps_silently",
+          "severity": "medium",
+          "explanation": "LLM translated signed C arithmetic to Rust wrapping ops, masking potential UB"
+        }
+      ],
+      "semrec_queries": 5,
+      "semrec_time_ms": 87.9971981048584,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": -1208221697,
+          "b": 1610612735
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "a": 1,
+          "b": 0
+        },
+        {
+          "a": -2147483648,
+          "b": -1
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "bubble_sort_pass",
+      "category": "control_flow",
+      "description": "Single pass of bubble sort",
+      "c_code": "int bubble_sort_pass(int *arr, int n) {\n    int swapped = 0;\n    for (int i = 0; i < n - 1; i++) {\n        if (arr[i] > arr[i+1]) {\n            int tmp = arr[i];\n            arr[i] = arr[i+1];\n            arr[i+1] = tmp;\n            swapped = 1;\n        }\n    }\n    return swapped;\n}",
+      "rust_code": "fn bubble_sort_pass(arr: &mut [i32]) -> i32 {\n    let mut swapped = 0;\n    for i in 0..arr.len().saturating_sub(1) {\n        if arr[i] > arr[i + 1] {\n            arr.swap(i, i + 1);\n            swapped = 1;\n        }\n    }\n    swapped\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": -85000257,
+            "b": -827414529
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 3,
+      "semrec_time_ms": 189.81027603149414,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": -85000257,
+          "b": -827414529
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "min3",
+      "category": "control_flow",
+      "description": "Minimum of three integers",
+      "c_code": "int min3(int a, int b, int c) {\n    int m = a;\n    if (b < m) m = b;\n    if (c < m) m = c;\n    return m;\n}",
+      "rust_code": "fn min3(a: i32, b: i32, c: i32) -> i32 {\n    *[a, b, c].iter().min().unwrap()\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.003814697265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "clamp",
+      "category": "control_flow",
+      "description": "Clamp value to range",
+      "c_code": "int clamp(int val, int lo, int hi) {\n    if (val < lo) return lo;\n    if (val > hi) return hi;\n    return val;\n}",
+      "rust_code": "fn clamp(val: i32, lo: i32, hi: i32) -> i32 {\n    if val < lo {\n        lo\n    } else if val > hi {\n        hi\n    } else {\n        val\n    }\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.003814697265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "is_sorted",
+      "category": "control_flow",
+      "description": "Check if array is sorted",
+      "c_code": "int is_sorted(int *arr, int n) {\n    for (int i = 0; i < n - 1; i++) {\n        if (arr[i] > arr[i+1]) return 0;\n    }\n    return 1;\n}",
+      "rust_code": "fn is_sorted(arr: &[i32]) -> bool {\n    for i in 0..arr.len().saturating_sub(1) {\n        if arr[i] > arr[i + 1] {\n            return false;\n        }\n    }\n    true\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": -152043521,
+            "b": 2147483643
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 3,
+      "semrec_time_ms": 130.45310974121094,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": -152043521,
+          "b": 2147483643
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "div_round_up",
+      "category": "division",
+      "description": "Integer division rounding up (overflow risk)",
+      "c_code": "int div_round_up(int a, int b) {\n    return (a + b - 1) / b;\n}",
+      "rust_code": "fn div_round_up(a: i32, b: i32) -> i32 {\n    (a + b - 1) / b\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "division_by_zero",
+          "counterexample": {
+            "a": 1,
+            "b": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        },
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 4,
+      "semrec_time_ms": 6.064176559448242,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "a": 1,
+          "b": 0
+        },
+        {
+          "a": -2147483648,
+          "b": -1
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "mod_positive",
+      "category": "division",
+      "description": "Always-positive modulo",
+      "c_code": "int mod_positive(int a, int m) {\n    int r = a % m;\n    return r < 0 ? r + m : r;\n}",
+      "rust_code": "fn mod_positive(a: i32, m: i32) -> i32 {\n    let r = a % m;\n    if r < 0 { r + m } else { r }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "modulo_by_zero",
+          "counterexample": {
+            "m": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 3.019094467163086,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "m": 0
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "is_divisible",
+      "category": "division",
+      "description": "Check divisibility with zero guard",
+      "c_code": "int is_divisible(int a, int b) {\n    if (b == 0) return 0;\n    return a % b == 0;\n}",
+      "rust_code": "fn is_divisible(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        0\n    } else {\n        if a % b == 0 { 1 } else { 0 }\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "modulo_by_zero",
+          "counterexample": {
+            "m": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 1.8231868743896484,
+      "semrec_counterexamples": [
+        {
+          "m": 0
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "popcount",
+      "category": "bitwise",
+      "description": "Population count (Brian Kernighan's)",
+      "c_code": "int popcount(unsigned int x) {\n    int count = 0;\n    while (x) {\n        count++;\n        x &= x - 1;\n    }\n    return count;\n}",
+      "rust_code": "fn popcount(mut x: u32) -> i32 {\n    let mut count = 0;\n    while x != 0 {\n        count += 1;\n        x &= x - 1;\n    }\n    count\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 11.387825012207031,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "next_power_of_2",
+      "category": "bitwise",
+      "description": "Round up to next power of 2",
+      "c_code": "unsigned int next_power_of_2(unsigned int v) {\n    v--;\n    v |= v >> 1;\n    v |= v >> 2;\n    v |= v >> 4;\n    v |= v >> 8;\n    v |= v >> 16;\n    v++;\n    return v;\n}",
+      "rust_code": "fn next_power_of_2(mut v: u32) -> u32 {\n    v -= 1;\n    v |= v >> 1;\n    v |= v >> 2;\n    v |= v >> 4;\n    v |= v >> 8;\n    v |= v >> 16;\n    v + 1\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 2.3260116577148438,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "is_power_of_2",
+      "category": "bitwise",
+      "description": "Power of 2 check",
+      "c_code": "int is_power_of_2(unsigned int n) {\n    return n != 0 && (n & (n - 1)) == 0;\n}",
+      "rust_code": "fn is_power_of_2(n: u32) -> bool {\n    n != 0 && (n & (n - 1)) == 0\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 2.285003662109375,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "extract_bits",
+      "category": "bitwise",
+      "description": "Extract bit field",
+      "c_code": "unsigned int extract_bits(unsigned int val, int start, int len) {\n    return (val >> start) & ((1u << len) - 1);\n}",
+      "rust_code": "fn extract_bits(val: u32, start: i32, len: i32) -> u32 {\n    let mask = (1u32 << len) - 1;\n    (val >> start) & mask\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 1.9729137420654297,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "set_bit",
+      "category": "bitwise",
+      "description": "Set a single bit",
+      "c_code": "unsigned int set_bit(unsigned int val, int pos) {\n    return val | (1u << pos);\n}",
+      "rust_code": "fn set_bit(val: u32, pos: i32) -> u32 {\n    val | (1 << pos)\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 2.020120620727539,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "clear_bit",
+      "category": "bitwise",
+      "description": "Clear a single bit",
+      "c_code": "unsigned int clear_bit(unsigned int val, int pos) {\n    return val & ~(1u << pos);\n}",
+      "rust_code": "fn clear_bit(val: u32, pos: i32) -> u32 {\n    val & !(1 << pos)\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 1.6701221466064453,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "rotate_right",
+      "category": "bitwise",
+      "description": "32-bit right rotation",
+      "c_code": "unsigned int rotate_right(unsigned int val, int n) {\n    n &= 31;\n    return (val >> n) | (val << (32 - n));\n}",
+      "rust_code": "fn rotate_right(val: u32, n: i32) -> u32 {\n    let n = n & 31;\n    (val >> n) | (val << (32 - n))\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 2.0160675048828125,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "safe_divide",
+      "category": "error_handling",
+      "description": "Division guarding zero and INT_MIN/-1",
+      "c_code": "int safe_divide(int a, int b) {\n    if (b == 0) return 0;\n    if (a == -2147483648 && b == -1) return 2147483647;\n    return a / b;\n}",
+      "rust_code": "fn safe_divide(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    if a == i32::MIN && b == -1 {\n        return i32::MAX;\n    }\n    a / b\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "negation_overflow",
+          "operation": "negation of INT_MIN",
+          "counterexample": {
+            "x": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "division_by_zero",
+          "counterexample": {
+            "a": 1,
+            "b": 0
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "critical"
+        },
+        {
+          "type": "division_overflow",
+          "operation": "INT_MIN / -1",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 4,
+      "semrec_time_ms": 4.293918609619141,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "x": -2147483648
+        },
+        {
+          "a": 1,
+          "b": 0
+        },
+        {
+          "a": -2147483648,
+          "b": -1
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "parse_digit",
+      "category": "error_handling",
+      "description": "Parse single ASCII digit",
+      "c_code": "int parse_digit(char c) {\n    if (c >= '0' && c <= '9') return c - '0';\n    return -1;\n}",
+      "rust_code": "fn parse_digit(c: char) -> i32 {\n    if c >= '0' && c <= '9' {\n        (c as u8 - b'0') as i32\n    } else {\n        -1\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 5.177021026611328,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "atoi_simple",
+      "category": "error_handling",
+      "description": "Simple string-to-integer conversion",
+      "c_code": "int atoi_simple(const char *s) {\n    int result = 0;\n    int sign = 1;\n    if (*s == '-') { sign = -1; s++; }\n    while (*s >= '0' && *s <= '9') {\n        result = result * 10 + (*s - '0');\n        s++;\n    }\n    return sign * result;\n}",
+      "rust_code": "fn atoi_simple(s: &str) -> i32 {\n    let mut chars = s.chars();\n    let mut result: i32 = 0;\n    let mut sign: i32 = 1;\n\n    if let Some(first_char) = chars.next() {\n        if first_char == '-' {\n            sign = -1;\n        } else {\n            // If not '-', process the first character\n            if first_char.is_digit(10) {\n                result = first_char.to_digit(10).unwrap() as i32;\n            } else {\n                // If first character is not a digit or '-', return 0 or handle as needed\n                return 0;\n            }\n        }\n    }\n\n    for c in chars {\n        if c.is_digit(10) {\n            result = result * 10 + c.to_digit(10).unwrap() as i32;\n        } else {\n            break;\n        }\n    }\n\n    sign * result\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "addition",
+          "counterexample": {
+            "a": -2147483617,
+            "b": -2147483617
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "multiplication",
+          "counterexample": {
+            "a": -536905733,
+            "b": -173687809
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "negation_overflow",
+          "operation": "negation of INT_MIN",
+          "counterexample": {
+            "x": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 4,
+      "semrec_time_ms": 117.22803115844727,
+      "semrec_counterexamples": [
+        {
+          "a": -2147483617,
+          "b": -2147483617
+        },
+        {
+          "a": -536905733,
+          "b": -173687809
+        },
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "x": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "djb2_step",
+      "category": "hashing",
+      "description": "Single step of DJB2 hash",
+      "c_code": "unsigned int djb2_step(unsigned int hash, unsigned char c) {\n    return ((hash << 5) + hash) + c;\n}",
+      "rust_code": "fn djb2_step(hash: u32, c: u8) -> u32 {\n    (hash.wrapping_shl(5)).wrapping_add(hash).wrapping_add(c as u32)\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 4.866838455200195,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "fnv1a_step",
+      "category": "hashing",
+      "description": "Single step of FNV-1a hash",
+      "c_code": "unsigned int fnv1a_step(unsigned int hash, unsigned char byte) {\n    hash ^= byte;\n    hash *= 16777619u;\n    return hash;\n}",
+      "rust_code": "fn fnv1a_step(hash: u32, byte: u8) -> u32 {\n    (hash ^ (byte as u32)).wrapping_mul(16777619)\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.010013580322265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "crc8_step",
+      "category": "hashing",
+      "description": "Single byte CRC-8 computation",
+      "c_code": "unsigned char crc8_step(unsigned char crc, unsigned char data) {\n    crc ^= data;\n    for (int i = 0; i < 8; i++) {\n        if (crc & 0x80)\n            crc = (crc << 1) ^ 0x07;\n        else\n            crc <<= 1;\n    }\n    return crc;\n}",
+      "rust_code": "fn crc8_step(crc: u8, data: u8) -> u8 {\n    let mut crc = crc ^ data;\n    for _ in 0..8 {\n        if crc & 0x80 != 0 {\n            crc = (crc << 1) ^ 0x07;\n        } else {\n            crc <<= 1;\n        }\n    }\n    crc\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 1.8200874328613281,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "sign_of",
+      "category": "comparison",
+      "description": "Branchless sign function",
+      "c_code": "int sign_of(int x) {\n    return (x > 0) - (x < 0);\n}",
+      "rust_code": "fn sign_of(x: i32) -> i32 {\n    (x > 0) as i32 - (x < 0) as i32\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 8.231878280639648,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "max_of",
+      "category": "comparison",
+      "description": "Maximum of two integers",
+      "c_code": "int max_of(int a, int b) {\n    return a > b ? a : b;\n}",
+      "rust_code": "fn max_of(a: i32, b: i32) -> i32 {\n    if a > b { a } else { b }\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0050067901611328125,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "min_of",
+      "category": "comparison",
+      "description": "Minimum of two integers",
+      "c_code": "int min_of(int a, int b) {\n    return a < b ? a : b;\n}",
+      "rust_code": "fn min_of(a: i32, b: i32) -> i32 {\n    if a < b { a } else { b }\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0040531158447265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "in_range",
+      "category": "comparison",
+      "description": "Range check",
+      "c_code": "int in_range(int val, int lo, int hi) {\n    return val >= lo && val <= hi;\n}",
+      "rust_code": "fn in_range(val: i32, lo: i32, hi: i32) -> bool {\n    val >= lo && val <= hi\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0040531158447265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "i32_to_u32",
+      "category": "cast",
+      "description": "Signed to unsigned cast",
+      "c_code": "unsigned int i32_to_u32(int x) {\n    return (unsigned int)x;\n}",
+      "rust_code": "fn i32_to_u32(x: i32) -> u32 {\n    x as u32\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0040531158447265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "u32_to_i32",
+      "category": "cast",
+      "description": "Unsigned to signed cast",
+      "c_code": "int u32_to_i32(unsigned int x) {\n    return (int)x;\n}",
+      "rust_code": "fn u32_to_i32(x: u32) -> i32 {\n    x as i32\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.009059906005859375,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "byte_to_int",
+      "category": "cast",
+      "description": "Byte widening",
+      "c_code": "int byte_to_int(unsigned char b) {\n    return (int)b;\n}",
+      "rust_code": "fn byte_to_int(b: u8) -> i32 {\n    b as i32\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0040531158447265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "truncate_to_byte",
+      "category": "cast",
+      "description": "Truncate to byte",
+      "c_code": "unsigned char truncate_to_byte(int x) {\n    return (unsigned char)(x & 0xFF);\n}",
+      "rust_code": "fn truncate_to_byte(x: i32) -> u8 {\n    (x & 0xFF) as u8\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0040531158447265625,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "lerp",
+      "category": "floating_point",
+      "description": "Linear interpolation",
+      "c_code": "double lerp(double a, double b, double t) {\n    return a + t * (b - a);\n}",
+      "rust_code": "fn lerp(a: f64, b: f64, t: f64) -> f64 {\n    a + t * (b - a)\n}",
+      "semrec_verdict": "equivalent",
+      "semrec_bugs": [],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.00286102294921875,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "float_eq",
+      "category": "floating_point",
+      "description": "Approximate float equality",
+      "c_code": "int float_eq(double a, double b, double eps) {\n    double diff = a - b;\n    if (diff < 0) diff = -diff;\n    return diff < eps;\n}",
+      "rust_code": "fn float_eq(a: f64, b: f64, eps: f64) -> bool {\n    let diff = (a - b).abs();\n    diff < eps\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "signed_overflow",
+          "operation": "subtraction",
+          "counterexample": {
+            "a": 0,
+            "b": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        },
+        {
+          "type": "negation_overflow",
+          "operation": "negation of INT_MIN",
+          "counterexample": {
+            "x": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_in_debug_wrap_in_release",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 2,
+      "semrec_time_ms": 3.5982131958007812,
+      "semrec_counterexamples": [
+        {
+          "a": 0,
+          "b": -2147483648
+        },
+        {
+          "x": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    },
+    {
+      "name": "constant_time_eq",
+      "category": "security",
+      "description": "Constant-time equality (side-channel resistant)",
+      "c_code": "int constant_time_eq(unsigned int a, unsigned int b) {\n    unsigned int diff = a ^ b;\n    diff |= diff >> 16;\n    diff |= diff >> 8;\n    diff |= diff >> 4;\n    diff |= diff >> 2;\n    diff |= diff >> 1;\n    return (int)(~diff & 1);\n}",
+      "rust_code": "fn constant_time_eq(a: u32, b: u32) -> i32 {\n    let mut diff = a ^ b;\n    diff |= diff >> 16;\n    diff |= diff >> 8;\n    diff |= diff >> 4;\n    diff |= diff >> 2;\n    diff |= diff >> 1;\n    ((!(diff & 1)) as i32)\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "shift_overflow",
+          "counterexample": {
+            "shift": -2147483648
+          },
+          "c_behavior": "undefined_behavior",
+          "rust_behavior": "panic_or_wrap_shift_amount",
+          "severity": "medium"
+        }
+      ],
+      "semrec_queries": 1,
+      "semrec_time_ms": 2.2897720336914062,
+      "semrec_counterexamples": [
+        {
+          "shift": -2147483648
+        }
+      ],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 1,
+        "verdict": "divergent"
+      },
+      "no_bridge": {
+        "verdict": "divergent",
+        "bugs_found": 1
+      }
+    },
+    {
+      "name": "secure_zero",
+      "category": "security",
+      "description": "Secure memory zeroing (volatile to prevent optimization)",
+      "c_code": "void secure_zero(unsigned char *buf, int len) {\n    volatile unsigned char *p = (volatile unsigned char *)buf;\n    for (int i = 0; i < len; i++) p[i] = 0;\n}",
+      "rust_code": "fn secure_zero(buf: &mut [u8]) {\n    for byte in buf.iter_mut() {\n        *byte = 0;\n    }\n}",
+      "semrec_verdict": "divergent",
+      "semrec_bugs": [
+        {
+          "type": "volatile_semantics_lost",
+          "c_behavior": "volatile prevents optimization",
+          "rust_behavior": "compiler may optimize away",
+          "severity": "high"
+        }
+      ],
+      "semrec_queries": 0,
+      "semrec_time_ms": 0.0069141387939453125,
+      "semrec_counterexamples": [],
+      "random_testing": {
+        "n_samples": 10000,
+        "divergences_found": 0,
+        "verdict": "equivalent"
+      },
+      "no_bridge": {
+        "verdict": "equivalent",
+        "bugs_found": 0
+      }
+    }
+  ]
+}

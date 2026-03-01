@@ -1,0 +1,5621 @@
+{
+  "summary": {
+    "n_pairs": 52,
+    "n_divergent": 29,
+    "n_equivalent": 23,
+    "oracle_accuracy_pct": 48.1,
+    "budgets": {
+      "naive_n100": {
+        "diff_accuracy_pct": 32.7,
+        "divergences_found": 10,
+        "divergences_total": 29
+      },
+      "ub_aware_n100": {
+        "diff_accuracy_pct": 50.0,
+        "divergences_found": 19,
+        "divergences_total": 29
+      },
+      "naive_n1000": {
+        "diff_accuracy_pct": 32.7,
+        "divergences_found": 10,
+        "divergences_total": 29
+      },
+      "ub_aware_n1000": {
+        "diff_accuracy_pct": 50.0,
+        "divergences_found": 19,
+        "divergences_total": 29
+      },
+      "naive_n10000": {
+        "diff_accuracy_pct": 32.7,
+        "divergences_found": 10,
+        "divergences_total": 29
+      },
+      "ub_aware_n10000": {
+        "diff_accuracy_pct": 50.0,
+        "divergences_found": 19,
+        "divergences_total": 29
+      }
+    }
+  },
+  "naive_results": {
+    "100": [
+      {
+        "name": "add_wrapping",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "add_checked_divergent",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mul_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "sub_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "saturating_add",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "negate_min",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "abs_function",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "unsigned_add",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mixed_sign_compare",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, -1]",
+          "n_tested": 29,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "increment_loop",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "checked_add_result",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "widening_mul",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_by_zero",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_int_min",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "modulo_negative",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 2147483647]",
+          "n_tested": 39,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_left_overflow",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "shift_right_arithmetic",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_negative_amount",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "unsigned_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -1]",
+          "n_tested": 38,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "power_of_two_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "count_bits",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "gcd_loop",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 1]",
+          "n_tested": 28,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "fibonacci",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "binary_search",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "reverse_bits_loop",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "collatz_steps",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "digit_sum",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "count_trailing_zeros",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "safe_divide_errno",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sqrt_int",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "array_index_safe",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "clamp_value",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 332,
+          "n_total": 332,
+          "n_random": 100,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "null_vs_option",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "find_char",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "max_of_three",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 1, 1]",
+          "n_tested": 2,
+          "n_total": 332,
+          "n_random": 100,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sign_function",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "is_power_of_two",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[0]",
+          "n_tested": 1,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "rotate_right",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2, -2]",
+          "n_tested": 5,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "swap_bytes",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2]",
+          "n_tested": 5,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "bit_extract",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 332,
+          "n_total": 332,
+          "n_random": 100,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "leading_zeros",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "parity",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "interleave_bits",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "bit_reverse_byte",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "hash_djb2",
+        "category": "string",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "array_sum",
+        "category": "string",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "memset_pattern",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "array_max",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "copy_array",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "dot_product",
+        "category": "memory",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "insertion_sort",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "linear_search",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      }
+    ],
+    "1000": [
+      {
+        "name": "add_wrapping",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "add_checked_divergent",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mul_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "sub_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "saturating_add",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "negate_min",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "abs_function",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "unsigned_add",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mixed_sign_compare",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, -1]",
+          "n_tested": 29,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "increment_loop",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "checked_add_result",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "widening_mul",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_by_zero",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_int_min",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "modulo_negative",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 2147483647]",
+          "n_tested": 39,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_left_overflow",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "shift_right_arithmetic",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_negative_amount",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "unsigned_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -1]",
+          "n_tested": 38,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "power_of_two_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "count_bits",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "gcd_loop",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 1]",
+          "n_tested": 28,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "fibonacci",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "binary_search",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "reverse_bits_loop",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "collatz_steps",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "digit_sum",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "count_trailing_zeros",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "safe_divide_errno",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sqrt_int",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "array_index_safe",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "clamp_value",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1232,
+          "n_total": 1232,
+          "n_random": 1000,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "null_vs_option",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "find_char",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "max_of_three",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 1, 1]",
+          "n_tested": 2,
+          "n_total": 1232,
+          "n_random": 1000,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sign_function",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "is_power_of_two",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[0]",
+          "n_tested": 1,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "rotate_right",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2, -2]",
+          "n_tested": 5,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "swap_bytes",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2]",
+          "n_tested": 5,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "bit_extract",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1232,
+          "n_total": 1232,
+          "n_random": 1000,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "leading_zeros",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "parity",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "interleave_bits",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "bit_reverse_byte",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "hash_djb2",
+        "category": "string",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_sum",
+        "category": "string",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "memset_pattern",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_max",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "copy_array",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "dot_product",
+        "category": "memory",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "insertion_sort",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "linear_search",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      }
+    ],
+    "10000": [
+      {
+        "name": "add_wrapping",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "add_checked_divergent",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mul_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "sub_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "saturating_add",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "negate_min",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "abs_function",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "unsigned_add",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mixed_sign_compare",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, -1]",
+          "n_tested": 29,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "increment_loop",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "checked_add_result",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "widening_mul",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_by_zero",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_int_min",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "modulo_negative",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 2147483647]",
+          "n_tested": 39,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_left_overflow",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "shift_right_arithmetic",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_negative_amount",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "unsigned_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -1]",
+          "n_tested": 38,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "power_of_two_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "count_bits",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "gcd_loop",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 1]",
+          "n_tested": 28,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "fibonacci",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "binary_search",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "reverse_bits_loop",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "collatz_steps",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "digit_sum",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "count_trailing_zeros",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "safe_divide_errno",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sqrt_int",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "array_index_safe",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "clamp_value",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10232,
+          "n_total": 10232,
+          "n_random": 10000,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "null_vs_option",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "find_char",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "max_of_three",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 1, 1]",
+          "n_tested": 2,
+          "n_total": 10232,
+          "n_random": 10000,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sign_function",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "is_power_of_two",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[0]",
+          "n_tested": 1,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "rotate_right",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2, -2]",
+          "n_tested": 5,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "swap_bytes",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2]",
+          "n_tested": 5,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "bit_extract",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10232,
+          "n_total": 10232,
+          "n_random": 10000,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "leading_zeros",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "parity",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "interleave_bits",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "bit_reverse_byte",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "hash_djb2",
+        "category": "string",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_sum",
+        "category": "string",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "memset_pattern",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_max",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "copy_array",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "dot_product",
+        "category": "memory",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "insertion_sort",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "linear_search",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      }
+    ]
+  },
+  "ub_aware_results": {
+    "100": [
+      {
+        "name": "add_wrapping",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "add_checked_divergent",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "mul_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[65535, 65535]",
+          "n_tested": 12,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sub_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -2147483648]",
+          "n_tested": 40,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "saturating_add",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "negate_min",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648]",
+          "n_tested": 15,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "abs_function",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648]",
+          "n_tested": 15,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "unsigned_add",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mixed_sign_compare",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, -1]",
+          "n_tested": 29,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "increment_loop",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "checked_add_result",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "widening_mul",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_by_zero",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 207,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_int_min",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "modulo_negative",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 2147483647]",
+          "n_tested": 39,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_left_overflow",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_right_arithmetic",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_negative_amount",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "unsigned_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -1]",
+          "n_tested": 38,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "power_of_two_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "count_bits",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "gcd_loop",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648, -2147483648]",
+          "n_tested": 15,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "fibonacci",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "binary_search",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "reverse_bits_loop",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "collatz_steps",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "digit_sum",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "count_trailing_zeros",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "safe_divide_errno",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sqrt_int",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "array_index_safe",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "clamp_value",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 332,
+          "n_total": 332,
+          "n_random": 100,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "null_vs_option",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "find_char",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "max_of_three",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 1, 1]",
+          "n_tested": 2,
+          "n_total": 332,
+          "n_random": 100,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sign_function",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "is_power_of_two",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[0]",
+          "n_tested": 1,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "rotate_right",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 207,
+          "n_random": 100,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "swap_bytes",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2]",
+          "n_tested": 5,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "bit_extract",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1, -1]",
+          "n_tested": 3,
+          "n_total": 332,
+          "n_random": 100,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "leading_zeros",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "parity",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "interleave_bits",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "bit_reverse_byte",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 126,
+          "n_total": 126,
+          "n_random": 100,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "hash_djb2",
+        "category": "string",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "array_sum",
+        "category": "string",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "memset_pattern",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "array_max",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "copy_array",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "dot_product",
+        "category": "memory",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "insertion_sort",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      },
+      {
+        "name": "linear_search",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 100,
+          "error": true
+        }
+      }
+    ],
+    "1000": [
+      {
+        "name": "add_wrapping",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "add_checked_divergent",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "mul_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[65535, 65535]",
+          "n_tested": 12,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sub_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -2147483648]",
+          "n_tested": 40,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "saturating_add",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "negate_min",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648]",
+          "n_tested": 15,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "abs_function",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648]",
+          "n_tested": 15,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "unsigned_add",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mixed_sign_compare",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, -1]",
+          "n_tested": 29,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "increment_loop",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "checked_add_result",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "widening_mul",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_by_zero",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1107,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_int_min",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "modulo_negative",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 2147483647]",
+          "n_tested": 39,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_left_overflow",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_right_arithmetic",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_negative_amount",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "unsigned_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -1]",
+          "n_tested": 38,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "power_of_two_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "count_bits",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "gcd_loop",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648, -2147483648]",
+          "n_tested": 15,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "fibonacci",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "binary_search",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "reverse_bits_loop",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "collatz_steps",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "digit_sum",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "count_trailing_zeros",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "safe_divide_errno",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sqrt_int",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "array_index_safe",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "clamp_value",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1232,
+          "n_total": 1232,
+          "n_random": 1000,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "null_vs_option",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "find_char",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "max_of_three",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 1, 1]",
+          "n_tested": 2,
+          "n_total": 1232,
+          "n_random": 1000,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sign_function",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "is_power_of_two",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[0]",
+          "n_tested": 1,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "rotate_right",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 1107,
+          "n_random": 1000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "swap_bytes",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2]",
+          "n_tested": 5,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "bit_extract",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1, -1]",
+          "n_tested": 3,
+          "n_total": 1232,
+          "n_random": 1000,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "leading_zeros",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "parity",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "interleave_bits",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "bit_reverse_byte",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 1026,
+          "n_total": 1026,
+          "n_random": 1000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "hash_djb2",
+        "category": "string",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_sum",
+        "category": "string",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "memset_pattern",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_max",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "copy_array",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "dot_product",
+        "category": "memory",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "insertion_sort",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      },
+      {
+        "name": "linear_search",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 1000,
+          "error": true
+        }
+      }
+    ],
+    "10000": [
+      {
+        "name": "add_wrapping",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "add_checked_divergent",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "mul_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[65535, 65535]",
+          "n_tested": 12,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sub_overflow",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -2147483648]",
+          "n_tested": 40,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "saturating_add",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "negate_min",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648]",
+          "n_tested": 15,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "abs_function",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648]",
+          "n_tested": 15,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "unsigned_add",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "mixed_sign_compare",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, -1]",
+          "n_tested": 29,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "increment_loop",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "checked_add_result",
+        "category": "arithmetic",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "widening_mul",
+        "category": "arithmetic",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_by_zero",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10107,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "div_int_min",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "modulo_negative",
+        "category": "division",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 2147483647]",
+          "n_tested": 39,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_left_overflow",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_right_arithmetic",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "shift_negative_amount",
+        "category": "shift",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1]",
+          "n_tested": 3,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "unsigned_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, -1]",
+          "n_tested": 38,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "power_of_two_div",
+        "category": "division",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "count_bits",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "gcd_loop",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2147483648, -2147483648]",
+          "n_tested": 15,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "fibonacci",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "equivalent",
+        "diff_correct": false,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "binary_search",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[2147483647, 2147483647]",
+          "n_tested": 14,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "reverse_bits_loop",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "collatz_steps",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "digit_sum",
+        "category": "loops",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "count_trailing_zeros",
+        "category": "loops",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "safe_divide_errno",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sqrt_int",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "array_index_safe",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "clamp_value",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10232,
+          "n_total": 10232,
+          "n_random": 10000,
+          "n_edge": 232,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "null_vs_option",
+        "category": "error_handling",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "find_char",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "max_of_three",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1, 1, 1]",
+          "n_tested": 2,
+          "n_total": 10232,
+          "n_random": 10000,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "sign_function",
+        "category": "error_handling",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "is_power_of_two",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[0]",
+          "n_tested": 1,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "rotate_right",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[0, 0]",
+          "n_tested": 1,
+          "n_total": 10107,
+          "n_random": 10000,
+          "n_edge": 107,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "swap_bytes",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[-2]",
+          "n_tested": 5,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "bit_extract",
+        "category": "bitwise",
+        "expected": "divergent",
+        "diff_verdict": "divergent",
+        "diff_correct": true,
+        "oracle_verdict": "divergent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": true,
+          "input": "[-1, -1, -1]",
+          "n_tested": 3,
+          "n_total": 10232,
+          "n_random": 10000,
+          "n_edge": 232,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "leading_zeros",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "divergent",
+        "diff_correct": false,
+        "oracle_verdict": "divergent",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": true,
+          "input": "[1]",
+          "n_tested": 2,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": true
+        }
+      },
+      {
+        "name": "parity",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "interleave_bits",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "bit_reverse_byte",
+        "category": "bitwise",
+        "expected": "equivalent",
+        "diff_verdict": "equivalent",
+        "diff_correct": true,
+        "oracle_verdict": "equivalent",
+        "oracle_correct": true,
+        "diff_detail": {
+          "found": false,
+          "input": null,
+          "n_tested": 10026,
+          "n_total": 10026,
+          "n_random": 10000,
+          "n_edge": 26,
+          "edge_found": false
+        }
+      },
+      {
+        "name": "hash_djb2",
+        "category": "string",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_sum",
+        "category": "string",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "memset_pattern",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "array_max",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "copy_array",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "dot_product",
+        "category": "memory",
+        "expected": "divergent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "insertion_sort",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "error",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      },
+      {
+        "name": "linear_search",
+        "category": "memory",
+        "expected": "equivalent",
+        "diff_verdict": "error",
+        "diff_correct": false,
+        "oracle_verdict": "unknown",
+        "oracle_correct": false,
+        "diff_detail": {
+          "found": false,
+          "n_tested": 0,
+          "n_random": 10000,
+          "error": true
+        }
+      }
+    ]
+  },
+  "oracle_results": {
+    "add_wrapping": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 85.46900749206543
+    },
+    "add_checked_divergent": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 6.223201751708984
+    },
+    "mul_overflow": {
+      "verdict": "equivalent",
+      "correct": false,
+      "time_ms": 5015.705108642578
+    },
+    "sub_overflow": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.986928939819336
+    },
+    "saturating_add": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.651950836181641
+    },
+    "negate_min": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 2.329111099243164
+    },
+    "abs_function": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 3.0357837677001953
+    },
+    "unsigned_add": {
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 1.931905746459961
+    },
+    "mixed_sign_compare": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 4.635095596313477
+    },
+    "increment_loop": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 2.8009414672851562
+    },
+    "checked_add_result": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 5.343914031982422
+    },
+    "widening_mul": {
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 5104.859352111816
+    },
+    "div_by_zero": {
+      "verdict": "equivalent",
+      "correct": false,
+      "time_ms": 2.7980804443359375
+    },
+    "div_int_min": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 2.3407936096191406
+    },
+    "modulo_negative": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 74.25999641418457
+    },
+    "shift_left_overflow": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.125999450683594
+    },
+    "shift_right_arithmetic": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 7.074117660522461
+    },
+    "shift_negative_amount": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 4.479885101318359
+    },
+    "unsigned_div": {
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 115.91196060180664
+    },
+    "power_of_two_div": {
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 1.5401840209960938
+    },
+    "count_bits": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 2.7360916137695312
+    },
+    "gcd_loop": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 7.776975631713867
+    },
+    "fibonacci": {
+      "verdict": "equivalent",
+      "correct": false,
+      "time_ms": 5.82122802734375
+    },
+    "binary_search": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 26.870012283325195
+    },
+    "reverse_bits_loop": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.3521652221679688
+    },
+    "collatz_steps": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 5.608797073364258
+    },
+    "digit_sum": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.715991973876953
+    },
+    "count_trailing_zeros": {
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 4.031896591186523
+    },
+    "safe_divide_errno": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.136251449584961
+    },
+    "sqrt_int": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 37.4758243560791
+    },
+    "array_index_safe": {
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.9758472442626953
+    },
+    "clamp_value": {
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 8.152008056640625
+    },
+    "null_vs_option": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 1.756906509399414
+    },
+    "find_char": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.690004348754883
+    },
+    "max_of_three": {
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 4.24504280090332
+    },
+    "sign_function": {
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 3.9281845092773438
+    },
+    "is_power_of_two": {
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 5.651950836181641
+    },
+    "rotate_right": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 9.059906005859375
+    },
+    "swap_bytes": {
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 9.690046310424805
+    },
+    "bit_extract": {
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 12.091875076293945
+    },
+    "leading_zeros": {
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 7.175922393798828
+    },
+    "parity": {
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 16.865968704223633
+    },
+    "interleave_bits": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 7.151126861572266
+    },
+    "bit_reverse_byte": {
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 15.596151351928711
+    },
+    "hash_djb2": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 2.8128623962402344
+    },
+    "array_sum": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 2.380847930908203
+    },
+    "memset_pattern": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 2.34222412109375
+    },
+    "array_max": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 4.461050033569336
+    },
+    "copy_array": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.1528472900390625
+    },
+    "dot_product": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.918170928955078
+    },
+    "insertion_sort": {
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.6989707946777344
+    },
+    "linear_search": {
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.5860538482666016
+    }
+  },
+  "oracle_unique_vs_naive": [
+    "add_wrapping",
+    "add_checked_divergent",
+    "sub_overflow",
+    "negate_min",
+    "abs_function",
+    "shift_left_overflow",
+    "shift_negative_amount",
+    "bit_extract"
+  ],
+  "oracle_unique_vs_ub_aware": []
+}

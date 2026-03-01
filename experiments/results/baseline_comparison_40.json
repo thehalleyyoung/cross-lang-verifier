@@ -1,0 +1,3104 @@
+{
+  "experiment": "scaled_cegar_evaluation",
+  "model": "gpt-4.1-nano",
+  "max_iterations": 3,
+  "benchmark_suite_size": 40,
+  "cegar": {
+    "statistics": {
+      "total": 40,
+      "success": 5,
+      "success_rate": 0.125,
+      "success_rate_ci_95": [
+        0.025,
+        0.25
+      ],
+      "by_category": {
+        "composition": {
+          "total": 2,
+          "success": 0,
+          "bugs": {
+            "other": 6
+          },
+          "rate": 0.0
+        },
+        "division": {
+          "total": 4,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "overflow": {
+          "total": 7,
+          "success": 0,
+          "bugs": {
+            "other": 8,
+            "undefined_behavior": 5
+          },
+          "rate": 0.0
+        },
+        "loop": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "control_flow": {
+          "total": 4,
+          "success": 1,
+          "bugs": {
+            "other": 4
+          },
+          "rate": 0.25
+        },
+        "cast": {
+          "total": 3,
+          "success": 3,
+          "bugs": {},
+          "rate": 1.0
+        },
+        "bitwise": {
+          "total": 2,
+          "success": 0,
+          "bugs": {
+            "other": 3
+          },
+          "rate": 0.0
+        },
+        "edge_case": {
+          "total": 4,
+          "success": 0,
+          "bugs": {
+            "other": 3
+          },
+          "rate": 0.0
+        },
+        "encoding": {
+          "total": 2,
+          "success": 1,
+          "bugs": {},
+          "rate": 0.5
+        },
+        "byte_ops": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "constant_time": {
+          "total": 2,
+          "success": 0,
+          "bugs": {
+            "other": 6
+          },
+          "rate": 0.0
+        },
+        "shift": {
+          "total": 3,
+          "success": 0,
+          "bugs": {
+            "other": 3
+          },
+          "rate": 0.0
+        },
+        "checked": {
+          "total": 1,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "saturating": {
+          "total": 1,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        }
+      },
+      "bug_class_repairability": {
+        "other": {
+          "found": 33,
+          "repaired": 1,
+          "repair_rate": 0.030303030303030304
+        },
+        "undefined_behavior": {
+          "found": 5,
+          "repaired": 0,
+          "repair_rate": 0.0
+        }
+      },
+      "convergence_curve": {
+        "1": 0.1,
+        "2": 0.125,
+        "3": 0.125,
+        "4": 0.125,
+        "5": 0.125
+      },
+      "avg_iterations_success": 1.2,
+      "avg_verify_time_ms": 690.3078734874725,
+      "avg_llm_time_ms": 1947.6086974143982,
+      "total_time_ms": 105517.82751083374
+    },
+    "results": [
+      {
+        "func_name": "byte_pack_2",
+        "category": "composition",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "255"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "255",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "255",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 7407.7699184417725,
+        "verify_time_ms": 1638.3578777313232,
+        "llm_time_ms": 5769.339799880981,
+        "error": null
+      },
+      {
+        "func_name": "positive_mod",
+        "category": "division",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 929.8901557922363,
+        "verify_time_ms": 2.0818710327148438,
+        "llm_time_ms": 927.7989864349365,
+        "error": null
+      },
+      {
+        "func_name": "square",
+        "category": "overflow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "c_undefined_behavior (assumption 0 violated)",
+          "c_undefined_behavior (assumption 0 violated)",
+          "c_undefined_behavior (assumption 0 violated)"
+        ],
+        "bug_classes": [
+          "undefined_behavior",
+          "undefined_behavior",
+          "undefined_behavior"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-1428065793"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior"
+          },
+          {
+            "inputs": {
+              "input_0": "-1886265347"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior"
+          },
+          {
+            "inputs": {
+              "input_0": "-270848"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 4080.230951309204,
+        "verify_time_ms": 1711.7280960083008,
+        "llm_time_ms": 2368.4353828430176,
+        "error": null
+      },
+      {
+        "func_name": "sum_of_squares",
+        "category": "loop",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1205.631971359253,
+        "verify_time_ms": 3.220081329345703,
+        "llm_time_ms": 1202.4030685424805,
+        "error": null
+      },
+      {
+        "func_name": "sign",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 3813.447952270508,
+        "verify_time_ms": 53.00283432006836,
+        "llm_time_ms": 3760.375738143921,
+        "error": null
+      },
+      {
+        "func_name": "char_to_int",
+        "category": "cast",
+        "source": "generic",
+        "method": "cegar",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 481.90999031066895,
+        "verify_time_ms": 12.191057205200195,
+        "llm_time_ms": 469.70200538635254,
+        "error": null
+      },
+      {
+        "func_name": "int_to_unsigned",
+        "category": "cast",
+        "source": "generic",
+        "method": "cegar",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 512.8030776977539,
+        "verify_time_ms": 5.782604217529297,
+        "llm_time_ms": 507.01212882995605,
+        "error": null
+      },
+      {
+        "func_name": "rotl32",
+        "category": "bitwise",
+        "source": "openssl",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-259522560",
+              "input_1": "13"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483543",
+              "input_1": "5"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2046705600",
+              "input_1": "27"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 2894.3538665771484,
+        "verify_time_ms": 61.5382194519043,
+        "llm_time_ms": 2832.726240158081,
+        "error": null
+      },
+      {
+        "func_name": "compare_3way",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "cegar",
+        "success": true,
+        "iterations": 2,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "136052114",
+              "input_1": "1110604050"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 1703.1569480895996,
+        "verify_time_ms": 16.23821258544922,
+        "llm_time_ms": 1686.8948936462402,
+        "error": null
+      },
+      {
+        "func_name": "is_divisible",
+        "category": "division",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 839.1919136047363,
+        "verify_time_ms": 3.005504608154297,
+        "llm_time_ms": 836.1790180206299,
+        "error": null
+      },
+      {
+        "func_name": "sqr_diff",
+        "category": "overflow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-2133227015",
+              "input_1": "-2133226181"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2089128082",
+              "input_1": "-2089126895"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-787678643",
+              "input_1": "-787659779"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "unknown",
+        "total_time_ms": 26851.00483894348,
+        "verify_time_ms": 23672.00803756714,
+        "llm_time_ms": 3178.9157390594482,
+        "error": null
+      },
+      {
+        "func_name": "count_trailing_ones",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 908.1809520721436,
+        "verify_time_ms": 6.016731262207031,
+        "llm_time_ms": 902.1580219268799,
+        "error": null
+      },
+      {
+        "func_name": "encode_varint_size",
+        "category": "encoding",
+        "source": "sqlite",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 868.7629699707031,
+        "verify_time_ms": 6.880044937133789,
+        "llm_time_ms": 861.875057220459,
+        "error": null
+      },
+      {
+        "func_name": "div_round_up",
+        "category": "division",
+        "source": "linux",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1511.7039680480957,
+        "verify_time_ms": 7.557868957519531,
+        "llm_time_ms": 1504.1160583496094,
+        "error": null
+      },
+      {
+        "func_name": "is_whitespace",
+        "category": "byte_ops",
+        "source": "musl",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1003.1418800354004,
+        "verify_time_ms": 3.658294677734375,
+        "llm_time_ms": 999.4771480560303,
+        "error": null
+      },
+      {
+        "func_name": "ct_ge",
+        "category": "constant_time",
+        "source": "openssl",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 3457.340955734253,
+        "verify_time_ms": 31.440258026123047,
+        "llm_time_ms": 3425.8432388305664,
+        "error": null
+      },
+      {
+        "func_name": "sum_pair",
+        "category": "overflow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "c_undefined_behavior (assumption 0 violated)",
+          "c_undefined_behavior (assumption 0 violated)"
+        ],
+        "bug_classes": [
+          "other",
+          "undefined_behavior",
+          "undefined_behavior"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-16777217",
+              "input_1": "-2130706431"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "2147479551",
+              "input_1": "1075832884"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior"
+          },
+          {
+            "inputs": {
+              "input_0": "2147479551",
+              "input_1": "1075832884"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "c_undefined_behavior (assumption 0 violated)",
+            "divergence_class": "undefined_behavior"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: c_undefined_behavior (assumption 0 violated)",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 2776.052951812744,
+        "verify_time_ms": 65.05274772644043,
+        "llm_time_ms": 2710.911750793457,
+        "error": null
+      },
+      {
+        "func_name": "triple_add",
+        "category": "overflow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 935.2099895477295,
+        "verify_time_ms": 3.1518936157226562,
+        "llm_time_ms": 932.049036026001,
+        "error": null
+      },
+      {
+        "func_name": "div_ceil",
+        "category": "division",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1824.1808414459229,
+        "verify_time_ms": 3.359079360961914,
+        "llm_time_ms": 1820.814847946167,
+        "error": null
+      },
+      {
+        "func_name": "div_by_shift",
+        "category": "shift",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "16777216"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 6878.238916397095,
+        "verify_time_ms": 28.209209442138672,
+        "llm_time_ms": 6849.959373474121,
+        "error": null
+      },
+      {
+        "func_name": "short_to_int",
+        "category": "cast",
+        "source": "generic",
+        "method": "cegar",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 455.71303367614746,
+        "verify_time_ms": 1.8420219421386719,
+        "llm_time_ms": 453.86505126953125,
+        "error": null
+      },
+      {
+        "func_name": "checked_add",
+        "category": "checked",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 640.1257514953613,
+        "verify_time_ms": 7.131099700927734,
+        "llm_time_ms": 632.9898834228516,
+        "error": null
+      },
+      {
+        "func_name": "digit_to_char",
+        "category": "byte_ops",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 666.3601398468018,
+        "verify_time_ms": 1.641988754272461,
+        "llm_time_ms": 664.7119522094727,
+        "error": null
+      },
+      {
+        "func_name": "is_negative_zero",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 4319.543123245239,
+        "verify_time_ms": 5.519866943359375,
+        "llm_time_ms": 4314.013957977295,
+        "error": null
+      },
+      {
+        "func_name": "unpack_b",
+        "category": "encoding",
+        "source": "generic",
+        "method": "cegar",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 607.5870990753174,
+        "verify_time_ms": 2.6328563690185547,
+        "llm_time_ms": 604.9461364746094,
+        "error": null
+      },
+      {
+        "func_name": "shl_safe",
+        "category": "shift",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 807.0416450500488,
+        "verify_time_ms": 7.748126983642578,
+        "llm_time_ms": 799.2877960205078,
+        "error": null
+      },
+      {
+        "func_name": "select3",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 850.9819507598877,
+        "verify_time_ms": 8.511543273925781,
+        "llm_time_ms": 842.4618244171143,
+        "error": null
+      },
+      {
+        "func_name": "encode_pair",
+        "category": "composition",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 4508.357048034668,
+        "verify_time_ms": 52.75988578796387,
+        "llm_time_ms": 4455.510854721069,
+        "error": null
+      },
+      {
+        "func_name": "fahr_to_celsius",
+        "category": "overflow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-370559666"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-246044082"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-296117848"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 3020.8351612091064,
+        "verify_time_ms": 62.83068656921387,
+        "llm_time_ms": 2957.9293727874756,
+        "error": null
+      },
+      {
+        "func_name": "safe_double",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1026.505947113037,
+        "verify_time_ms": 2.2530555725097656,
+        "llm_time_ms": 1024.2469310760498,
+        "error": null
+      },
+      {
+        "func_name": "ct_eq",
+        "category": "constant_time",
+        "source": "openssl",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 4207.920074462891,
+        "verify_time_ms": 48.048973083496094,
+        "llm_time_ms": 4159.811019897461,
+        "error": null
+      },
+      {
+        "func_name": "arith_shift_round",
+        "category": "shift",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1200.2003192901611,
+        "verify_time_ms": 2.597808837890625,
+        "llm_time_ms": 1197.5972652435303,
+        "error": null
+      },
+      {
+        "func_name": "sat_add_i32",
+        "category": "saturating",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 878.7200450897217,
+        "verify_time_ms": 13.15617561340332,
+        "llm_time_ms": 865.556001663208,
+        "error": null
+      },
+      {
+        "func_name": "hex_digit_val",
+        "category": "byte_ops",
+        "source": "musl",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1021.4929580688477,
+        "verify_time_ms": 2.803802490234375,
+        "llm_time_ms": 1018.6831951141357,
+        "error": null
+      },
+      {
+        "func_name": "median3",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1208.1022262573242,
+        "verify_time_ms": 3.7508010864257812,
+        "llm_time_ms": 1204.3452262878418,
+        "error": null
+      },
+      {
+        "func_name": "safe_add",
+        "category": "overflow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 2,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-16777217",
+              "input_1": "-2130706431"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "unknown",
+        "total_time_ms": 1710.482120513916,
+        "verify_time_ms": 12.810945510864258,
+        "llm_time_ms": 1697.6239681243896,
+        "error": null
+      },
+      {
+        "func_name": "highest_bit",
+        "category": "bitwise",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1338.6931419372559,
+        "verify_time_ms": 2.8960704803466797,
+        "llm_time_ms": 1335.792064666748,
+        "error": null
+      },
+      {
+        "func_name": "saturate_to_i16",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [
+          "output_mismatch",
+          "output_mismatch",
+          "output_mismatch"
+        ],
+        "bug_classes": [
+          "other",
+          "other",
+          "other"
+        ],
+        "counterexamples": [
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          {
+            "inputs": {
+              "input_0": "-2147483648"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          }
+        ],
+        "repair_hints": [
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          },
+          {
+            "description": "Semantic divergence detected: output_mismatch",
+            "suggested_fix": "Review the C semantics for undefined behavior and ensure the Rust translation handles all edge cases.",
+            "fix_category": "review",
+            "confidence": 0.3
+          }
+        ],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 3964.876651763916,
+        "verify_time_ms": 32.4406623840332,
+        "llm_time_ms": 3932.375907897949,
+        "error": null
+      },
+      {
+        "func_name": "collatz_steps",
+        "category": "loop",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1518.3839797973633,
+        "verify_time_ms": 4.256963729858398,
+        "llm_time_ms": 1514.1210556030273,
+        "error": null
+      },
+      {
+        "func_name": "scale_percent",
+        "category": "overflow",
+        "source": "generic",
+        "method": "cegar",
+        "success": false,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 683.7000846862793,
+        "verify_time_ms": 2.201080322265625,
+        "llm_time_ms": 681.4908981323242,
+        "error": null
+      }
+    ]
+  },
+  "naive_retry": {
+    "statistics": {
+      "total": 33,
+      "success": 6,
+      "success_rate": 0.18181818181818182,
+      "success_rate_ci_95": [
+        0.06060606060606061,
+        0.3333333333333333
+      ],
+      "by_category": {
+        "saturating": {
+          "total": 1,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "checked": {
+          "total": 1,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "loop": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "overflow": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "edge_case": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "cast": {
+          "total": 3,
+          "success": 3,
+          "bugs": {},
+          "rate": 1.0
+        },
+        "byte_ops": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "encoding": {
+          "total": 2,
+          "success": 1,
+          "bugs": {},
+          "rate": 0.5
+        },
+        "composition": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "control_flow": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "division": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "constant_time": {
+          "total": 2,
+          "success": 1,
+          "bugs": {},
+          "rate": 0.5
+        },
+        "shift": {
+          "total": 3,
+          "success": 1,
+          "bugs": {},
+          "rate": 0.3333333333333333
+        },
+        "bitwise": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        }
+      },
+      "bug_class_repairability": {},
+      "convergence_curve": {
+        "1": 0.12121212121212122,
+        "2": 0.15151515151515152,
+        "3": 0.18181818181818182,
+        "4": 0.18181818181818182,
+        "5": 0.18181818181818182
+      },
+      "avg_iterations_success": 1.5,
+      "avg_verify_time_ms": 1017.5597450949929,
+      "avg_llm_time_ms": 2230.831023418542,
+      "total_time_ms": 107197.90768623352
+    },
+    "results": [
+      {
+        "func_name": "sat_add_i32",
+        "category": "saturating",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3431.3719272613525,
+        "verify_time_ms": 21.416664123535156,
+        "llm_time_ms": 3409.9302291870117,
+        "error": null
+      },
+      {
+        "func_name": "checked_add",
+        "category": "checked",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1965.367078781128,
+        "verify_time_ms": 11.522054672241211,
+        "llm_time_ms": 1953.83620262146,
+        "error": null
+      },
+      {
+        "func_name": "collatz_steps",
+        "category": "loop",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 4760.976076126099,
+        "verify_time_ms": 6.875514984130859,
+        "llm_time_ms": 4754.090309143066,
+        "error": null
+      },
+      {
+        "func_name": "sum_of_squares",
+        "category": "loop",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3793.8051223754883,
+        "verify_time_ms": 4.132986068725586,
+        "llm_time_ms": 3789.6621227264404,
+        "error": null
+      },
+      {
+        "func_name": "sqr_diff",
+        "category": "overflow",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "unknown",
+        "total_time_ms": 18522.45283126831,
+        "verify_time_ms": 16979.607820510864,
+        "llm_time_ms": 1542.8204536437988,
+        "error": null
+      },
+      {
+        "func_name": "scale_percent",
+        "category": "overflow",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 2117.021083831787,
+        "verify_time_ms": 3.7322044372558594,
+        "llm_time_ms": 2113.279104232788,
+        "error": null
+      },
+      {
+        "func_name": "square",
+        "category": "overflow",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 18850.461959838867,
+        "verify_time_ms": 15962.708234786987,
+        "llm_time_ms": 2887.1960639953613,
+        "error": null
+      },
+      {
+        "func_name": "count_trailing_ones",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 1909.5430374145508,
+        "verify_time_ms": 10.658025741577148,
+        "llm_time_ms": 1898.8749980926514,
+        "error": null
+      },
+      {
+        "func_name": "safe_double",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 2609.3499660491943,
+        "verify_time_ms": 5.169391632080078,
+        "llm_time_ms": 2604.1722297668457,
+        "error": null
+      },
+      {
+        "func_name": "is_negative_zero",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 2652.6191234588623,
+        "verify_time_ms": 187.180757522583,
+        "llm_time_ms": 2465.4202461242676,
+        "error": null
+      },
+      {
+        "func_name": "char_to_int",
+        "category": "cast",
+        "source": "generic",
+        "method": "naive",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 400.5100727081299,
+        "verify_time_ms": 14.948844909667969,
+        "llm_time_ms": 385.5092525482178,
+        "error": null
+      },
+      {
+        "func_name": "short_to_int",
+        "category": "cast",
+        "source": "generic",
+        "method": "naive",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 359.9827289581299,
+        "verify_time_ms": 4.122257232666016,
+        "llm_time_ms": 355.8528423309326,
+        "error": null
+      },
+      {
+        "func_name": "int_to_unsigned",
+        "category": "cast",
+        "source": "generic",
+        "method": "naive",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 371.65379524230957,
+        "verify_time_ms": 12.194156646728516,
+        "llm_time_ms": 359.4529628753662,
+        "error": null
+      },
+      {
+        "func_name": "is_whitespace",
+        "category": "byte_ops",
+        "source": "musl",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1820.3771114349365,
+        "verify_time_ms": 7.291078567504883,
+        "llm_time_ms": 1813.0760192871094,
+        "error": null
+      },
+      {
+        "func_name": "hex_digit_val",
+        "category": "byte_ops",
+        "source": "musl",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 2699.7621059417725,
+        "verify_time_ms": 5.1059722900390625,
+        "llm_time_ms": 2694.648265838623,
+        "error": null
+      },
+      {
+        "func_name": "digit_to_char",
+        "category": "byte_ops",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1966.3081169128418,
+        "verify_time_ms": 2.9168128967285156,
+        "llm_time_ms": 1963.3798599243164,
+        "error": null
+      },
+      {
+        "func_name": "encode_varint_size",
+        "category": "encoding",
+        "source": "sqlite",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 2157.810926437378,
+        "verify_time_ms": 16.131877899169922,
+        "llm_time_ms": 2141.667366027832,
+        "error": null
+      },
+      {
+        "func_name": "unpack_b",
+        "category": "encoding",
+        "source": "generic",
+        "method": "naive",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 353.81126403808594,
+        "verify_time_ms": 3.229856491088867,
+        "llm_time_ms": 350.57616233825684,
+        "error": null
+      },
+      {
+        "func_name": "byte_pack_2",
+        "category": "composition",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 1744.483232498169,
+        "verify_time_ms": 22.330760955810547,
+        "llm_time_ms": 1722.1381664276123,
+        "error": null
+      },
+      {
+        "func_name": "encode_pair",
+        "category": "composition",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 2139.401912689209,
+        "verify_time_ms": 64.33367729187012,
+        "llm_time_ms": 2075.0479698181152,
+        "error": null
+      },
+      {
+        "func_name": "select3",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 1632.349967956543,
+        "verify_time_ms": 16.536951065063477,
+        "llm_time_ms": 1615.7958507537842,
+        "error": null
+      },
+      {
+        "func_name": "sign",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "divergent",
+        "total_time_ms": 1930.2921295166016,
+        "verify_time_ms": 17.1201229095459,
+        "llm_time_ms": 1913.154125213623,
+        "error": null
+      },
+      {
+        "func_name": "median3",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3596.3940620422363,
+        "verify_time_ms": 7.448673248291016,
+        "llm_time_ms": 3588.9360904693604,
+        "error": null
+      },
+      {
+        "func_name": "div_ceil",
+        "category": "division",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 4664.369821548462,
+        "verify_time_ms": 6.083250045776367,
+        "llm_time_ms": 4658.275842666626,
+        "error": null
+      },
+      {
+        "func_name": "is_divisible",
+        "category": "division",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1746.9580173492432,
+        "verify_time_ms": 7.968425750732422,
+        "llm_time_ms": 1738.9771938323975,
+        "error": null
+      },
+      {
+        "func_name": "div_round_up",
+        "category": "division",
+        "source": "linux",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 4654.904127120972,
+        "verify_time_ms": 6.73365592956543,
+        "llm_time_ms": 4648.159027099609,
+        "error": null
+      },
+      {
+        "func_name": "ct_ge",
+        "category": "constant_time",
+        "source": "openssl",
+        "method": "naive",
+        "success": true,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 1705.7998180389404,
+        "verify_time_ms": 21.266937255859375,
+        "llm_time_ms": 1684.5180988311768,
+        "error": null
+      },
+      {
+        "func_name": "ct_eq",
+        "category": "constant_time",
+        "source": "openssl",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 2972.691774368286,
+        "verify_time_ms": 55.708885192871094,
+        "llm_time_ms": 2916.964292526245,
+        "error": null
+      },
+      {
+        "func_name": "shl_safe",
+        "category": "shift",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 1784.6579551696777,
+        "verify_time_ms": 13.998985290527344,
+        "llm_time_ms": 1770.6489562988281,
+        "error": null
+      },
+      {
+        "func_name": "div_by_shift",
+        "category": "shift",
+        "source": "generic",
+        "method": "naive",
+        "success": true,
+        "iterations": 2,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 741.0428524017334,
+        "verify_time_ms": 11.657953262329102,
+        "llm_time_ms": 729.3701171875,
+        "error": null
+      },
+      {
+        "func_name": "arith_shift_round",
+        "category": "shift",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 2667.1760082244873,
+        "verify_time_ms": 7.674694061279297,
+        "llm_time_ms": 2659.4908237457275,
+        "error": null
+      },
+      {
+        "func_name": "highest_bit",
+        "category": "bitwise",
+        "source": "generic",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 2798.0427742004395,
+        "verify_time_ms": 5.668878555297852,
+        "llm_time_ms": 2792.3567295074463,
+        "error": null
+      },
+      {
+        "func_name": "rotl32",
+        "category": "bitwise",
+        "source": "openssl",
+        "method": "naive",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 1676.1589050292969,
+        "verify_time_ms": 55.99522590637207,
+        "llm_time_ms": 1620.1457977294922,
+        "error": null
+      }
+    ]
+  },
+  "spec_only": {
+    "statistics": {
+      "total": 33,
+      "success": 6,
+      "success_rate": 0.18181818181818182,
+      "success_rate_ci_95": [
+        0.06060606060606061,
+        0.3333333333333333
+      ],
+      "by_category": {
+        "saturating": {
+          "total": 1,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "checked": {
+          "total": 1,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "loop": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "overflow": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "edge_case": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "cast": {
+          "total": 3,
+          "success": 3,
+          "bugs": {},
+          "rate": 1.0
+        },
+        "byte_ops": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "encoding": {
+          "total": 2,
+          "success": 1,
+          "bugs": {},
+          "rate": 0.5
+        },
+        "composition": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "control_flow": {
+          "total": 3,
+          "success": 1,
+          "bugs": {},
+          "rate": 0.3333333333333333
+        },
+        "division": {
+          "total": 3,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "constant_time": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        },
+        "shift": {
+          "total": 3,
+          "success": 1,
+          "bugs": {},
+          "rate": 0.3333333333333333
+        },
+        "bitwise": {
+          "total": 2,
+          "success": 0,
+          "bugs": {},
+          "rate": 0.0
+        }
+      },
+      "bug_class_repairability": {},
+      "convergence_curve": {
+        "1": 0.15151515151515152,
+        "2": 0.15151515151515152,
+        "3": 0.18181818181818182,
+        "4": 0.18181818181818182,
+        "5": 0.18181818181818182
+      },
+      "avg_iterations_success": 1.3333333333333333,
+      "avg_verify_time_ms": 1913.6065714287035,
+      "avg_llm_time_ms": 3477.2485891977944,
+      "total_time_ms": 177899.15657043457
+    },
+    "results": [
+      {
+        "func_name": "sat_add_i32",
+        "category": "saturating",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 4614.215850830078,
+        "verify_time_ms": 35.84599494934082,
+        "llm_time_ms": 4578.34792137146,
+        "error": null
+      },
+      {
+        "func_name": "checked_add",
+        "category": "checked",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3279.2632579803467,
+        "verify_time_ms": 29.578685760498047,
+        "llm_time_ms": 3249.666452407837,
+        "error": null
+      },
+      {
+        "func_name": "collatz_steps",
+        "category": "loop",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 5319.954872131348,
+        "verify_time_ms": 26.74722671508789,
+        "llm_time_ms": 5293.185234069824,
+        "error": null
+      },
+      {
+        "func_name": "sum_of_squares",
+        "category": "loop",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 5134.391069412231,
+        "verify_time_ms": 16.529560089111328,
+        "llm_time_ms": 5117.843389511108,
+        "error": null
+      },
+      {
+        "func_name": "sqr_diff",
+        "category": "overflow",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "unknown",
+        "total_time_ms": 32972.47219085693,
+        "verify_time_ms": 30762.01581954956,
+        "llm_time_ms": 2210.4310989379883,
+        "error": null
+      },
+      {
+        "func_name": "scale_percent",
+        "category": "overflow",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "unknown",
+        "total_time_ms": 32396.307945251465,
+        "verify_time_ms": 30051.592111587524,
+        "llm_time_ms": 2344.578981399536,
+        "error": null
+      },
+      {
+        "func_name": "square",
+        "category": "overflow",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 3414.3030643463135,
+        "verify_time_ms": 1031.404733657837,
+        "llm_time_ms": 2382.873773574829,
+        "error": null
+      },
+      {
+        "func_name": "count_trailing_ones",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 3788.484811782837,
+        "verify_time_ms": 36.06557846069336,
+        "llm_time_ms": 3752.401828765869,
+        "error": null
+      },
+      {
+        "func_name": "safe_double",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 5229.932069778442,
+        "verify_time_ms": 5.800485610961914,
+        "llm_time_ms": 5224.116802215576,
+        "error": null
+      },
+      {
+        "func_name": "is_negative_zero",
+        "category": "edge_case",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "unknown",
+        "total_time_ms": 5107.454061508179,
+        "verify_time_ms": 551.8865585327148,
+        "llm_time_ms": 4555.431842803955,
+        "error": null
+      },
+      {
+        "func_name": "char_to_int",
+        "category": "cast",
+        "source": "generic",
+        "method": "spec_only",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 502.0601749420166,
+        "verify_time_ms": 17.260074615478516,
+        "llm_time_ms": 484.760046005249,
+        "error": null
+      },
+      {
+        "func_name": "short_to_int",
+        "category": "cast",
+        "source": "generic",
+        "method": "spec_only",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 474.63202476501465,
+        "verify_time_ms": 8.14199447631836,
+        "llm_time_ms": 466.43686294555664,
+        "error": null
+      },
+      {
+        "func_name": "int_to_unsigned",
+        "category": "cast",
+        "source": "generic",
+        "method": "spec_only",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 513.61083984375,
+        "verify_time_ms": 18.603086471557617,
+        "llm_time_ms": 494.9979782104492,
+        "error": null
+      },
+      {
+        "func_name": "is_whitespace",
+        "category": "byte_ops",
+        "source": "musl",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 2753.8058757781982,
+        "verify_time_ms": 11.63029670715332,
+        "llm_time_ms": 2742.157220840454,
+        "error": null
+      },
+      {
+        "func_name": "hex_digit_val",
+        "category": "byte_ops",
+        "source": "musl",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 4479.02512550354,
+        "verify_time_ms": 7.262945175170898,
+        "llm_time_ms": 4471.742630004883,
+        "error": null
+      },
+      {
+        "func_name": "digit_to_char",
+        "category": "byte_ops",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3393.343925476074,
+        "verify_time_ms": 6.6509246826171875,
+        "llm_time_ms": 3386.676788330078,
+        "error": null
+      },
+      {
+        "func_name": "encode_varint_size",
+        "category": "encoding",
+        "source": "sqlite",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 3865.8089637756348,
+        "verify_time_ms": 18.06163787841797,
+        "llm_time_ms": 3847.731828689575,
+        "error": null
+      },
+      {
+        "func_name": "unpack_b",
+        "category": "encoding",
+        "source": "generic",
+        "method": "spec_only",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 1116.6467666625977,
+        "verify_time_ms": 2.9418468475341797,
+        "llm_time_ms": 1113.6977672576904,
+        "error": null
+      },
+      {
+        "func_name": "byte_pack_2",
+        "category": "composition",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 4121.98805809021,
+        "verify_time_ms": 69.24581527709961,
+        "llm_time_ms": 4052.7169704437256,
+        "error": null
+      },
+      {
+        "func_name": "encode_pair",
+        "category": "composition",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 5305.826187133789,
+        "verify_time_ms": 79.90813255310059,
+        "llm_time_ms": 5225.895404815674,
+        "error": null
+      },
+      {
+        "func_name": "select3",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "unknown",
+        "final_verdict": "unknown",
+        "total_time_ms": 3426.899194717407,
+        "verify_time_ms": 17.73977279663086,
+        "llm_time_ms": 3409.14249420166,
+        "error": null
+      },
+      {
+        "func_name": "sign",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "spec_only",
+        "success": true,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 2149.319887161255,
+        "verify_time_ms": 30.229806900024414,
+        "llm_time_ms": 2119.0736293792725,
+        "error": null
+      },
+      {
+        "func_name": "median3",
+        "category": "control_flow",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 5137.221813201904,
+        "verify_time_ms": 8.041858673095703,
+        "llm_time_ms": 5129.16898727417,
+        "error": null
+      },
+      {
+        "func_name": "div_ceil",
+        "category": "division",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 4557.192087173462,
+        "verify_time_ms": 5.8498382568359375,
+        "llm_time_ms": 4551.329851150513,
+        "error": null
+      },
+      {
+        "func_name": "is_divisible",
+        "category": "division",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3030.6899547576904,
+        "verify_time_ms": 13.523101806640625,
+        "llm_time_ms": 3017.144203186035,
+        "error": null
+      },
+      {
+        "func_name": "div_round_up",
+        "category": "division",
+        "source": "linux",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 8596.27890586853,
+        "verify_time_ms": 48.06113243103027,
+        "llm_time_ms": 8548.173427581787,
+        "error": null
+      },
+      {
+        "func_name": "ct_ge",
+        "category": "constant_time",
+        "source": "openssl",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 3436.209201812744,
+        "verify_time_ms": 39.63518142700195,
+        "llm_time_ms": 3396.5439796447754,
+        "error": null
+      },
+      {
+        "func_name": "ct_eq",
+        "category": "constant_time",
+        "source": "openssl",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 4083.0819606781006,
+        "verify_time_ms": 73.93980026245117,
+        "llm_time_ms": 4009.115695953369,
+        "error": null
+      },
+      {
+        "func_name": "shl_safe",
+        "category": "shift",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3508.364677429199,
+        "verify_time_ms": 15.333890914916992,
+        "llm_time_ms": 3493.0191040039062,
+        "error": null
+      },
+      {
+        "func_name": "div_by_shift",
+        "category": "shift",
+        "source": "generic",
+        "method": "spec_only",
+        "success": true,
+        "iterations": 1,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "equivalent",
+        "final_verdict": "equivalent",
+        "total_time_ms": 503.4749507904053,
+        "verify_time_ms": 10.76197624206543,
+        "llm_time_ms": 492.703914642334,
+        "error": null
+      },
+      {
+        "func_name": "arith_shift_round",
+        "category": "shift",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 4280.226945877075,
+        "verify_time_ms": 15.726089477539062,
+        "llm_time_ms": 4264.485120773315,
+        "error": null
+      },
+      {
+        "func_name": "highest_bit",
+        "category": "bitwise",
+        "source": "generic",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "error",
+        "final_verdict": "error",
+        "total_time_ms": 3906.510829925537,
+        "verify_time_ms": 6.028175354003906,
+        "llm_time_ms": 3900.4712104797363,
+        "error": null
+      },
+      {
+        "func_name": "rotl32",
+        "category": "bitwise",
+        "source": "openssl",
+        "method": "spec_only",
+        "success": false,
+        "iterations": 3,
+        "max_iterations": 3,
+        "bugs_found": [],
+        "bug_classes": [],
+        "counterexamples": [],
+        "repair_hints": [],
+        "initial_verdict": "divergent",
+        "final_verdict": "divergent",
+        "total_time_ms": 3500.1590251922607,
+        "verify_time_ms": 76.97272300720215,
+        "llm_time_ms": 3423.1410026550293,
+        "error": null
+      }
+    ]
+  }
+}

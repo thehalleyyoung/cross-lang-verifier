@@ -1,0 +1,1675 @@
+{
+  "experiment": "real_clib_evaluation",
+  "n_functions": 30,
+  "sources": [
+    "ffmpeg-pattern",
+    "allocator-common",
+    "crypto-common",
+    "graphics-common",
+    "musl-libc",
+    "linux-kernel",
+    "zlib",
+    "openssl",
+    "standard",
+    "libsodium",
+    "custom",
+    "abseil"
+  ],
+  "summary": {
+    "semrec_divergent": 11,
+    "semrec_equivalent": 19,
+    "semrec_total_bugs": 16,
+    "cbmc_ub_warnings": 23,
+    "naive_bv_divergent": 2,
+    "random_testing_divergent": 6,
+    "semrec_only_finds": [
+      "musl_abs",
+      "clz_fallback",
+      "sign_extend_bit",
+      "isqrt",
+      "rotr32",
+      "extract_bits"
+    ],
+    "cbmc_false_positives": [
+      "crypto_verify_16_bytes",
+      "adler32_update",
+      "hweight32",
+      "sodium_memcmp_4",
+      "crc32_step",
+      "fls_generic",
+      "is_zero_4bytes",
+      "update_hash",
+      "bswap16",
+      "clamp_mul_u8",
+      "verify_eq_32",
+      "safe_index",
+      "ipow_unsigned"
+    ],
+    "bug_type_distribution": {
+      "negation_overflow": 3,
+      "signed_overflow_add": 5,
+      "signed_overflow_mul": 2,
+      "division_by_zero": 2,
+      "division_overflow": 1,
+      "shift_out_of_range": 3
+    }
+  },
+  "semrec_results": [
+    {
+      "name": "crypto_verify_16_bytes",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 52.162885665893555,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.760)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "libsodium",
+      "c_code": "int crypto_verify_16(const unsigned char *x, const unsigned char *y) {\n    unsigned int d = 0;\n    d |= x[0] ^ y[0];\n    d |= x[1] ^ y[1];\n    d |= x[2] ^ y[2];\n    d |= x[3] ^ y[3];\n    return (1 & ((d - 1) >> 8)) - 1;\n}",
+      "rust_code": "fn crypto_verify_16(x: &[u8], y: &[u8]) -> i32 {\n    let mut d: u32 = 0;\n    d |= (x[0] ^ y[0]) as u32;\n    d |= (x[1] ^ y[1]) as u32;\n    d |= (x[2] ^ y[2]) as u32;\n    d |= (x[3] ^ y[3]) as u32;\n    (1 & ((d.wrapping_sub(1)) >> 8)) as i32 - 1\n}",
+      "expected_divergence": "unsigned_subtraction_wrap",
+      "description": "Constant-time 4-byte comparison from libsodium. The final expression (1 & ((d-1) >> 8)) - 1 relies on unsigned wrap semantics."
+    },
+    {
+      "name": "musl_abs",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": -2147483648
+      },
+      "smt_queries": 2,
+      "time_ms": 6.682157516479492,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.674)",
+        "product:OK(4blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "negation_overflow",
+          "description": "Negation of INT_MIN: C has UB, Rust wraps to INT_MIN",
+          "counterexample": {
+            "a": -2147483648
+          },
+          "severity": "high"
+        }
+      ],
+      "source": "musl-libc",
+      "c_code": "int abs_val(int a) {\n    return a > 0 ? a : -a;\n}",
+      "rust_code": "fn abs_val(a: i32) -> i32 {\n    if a > 0 { a } else { -a }\n}",
+      "expected_divergence": "negation_overflow",
+      "description": "From musl libc abs(). Negation of INT_MIN is UB in C."
+    },
+    {
+      "name": "adler32_update",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 1.5180110931396484,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:FAIL(GlobalVariable.__init__() got an unexpected keyword argument 'is_const'. Did you mean 'is_constant'?)"
+      ],
+      "bugs_found": [],
+      "source": "zlib",
+      "c_code": "unsigned long adler32_step(unsigned long adler, unsigned char byte) {\n    unsigned long s1 = adler & 0xffff;\n    unsigned long s2 = (adler >> 16) & 0xffff;\n    s1 = (s1 + byte) % 65521;\n    s2 = (s2 + s1) % 65521;\n    return (s2 << 16) + s1;\n}",
+      "rust_code": "fn adler32_step(adler: u32, byte: u8) -> u32 {\n    const MOD_ADLER: u32 = 65521;\n    let s1 = (adler & 0xffff).wrapping_add(byte as u32) % MOD_ADLER;\n    let s2 = ((adler >> 16) & 0xffff).wrapping_add(s1) % MOD_ADLER;\n    (s2 << 16) | s1\n}",
+      "expected_divergence": null,
+      "description": "Single-byte adler32 update from zlib. Uses unsigned arithmetic throughout."
+    },
+    {
+      "name": "hweight32",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 11.004924774169922,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.823)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "linux-kernel",
+      "c_code": "unsigned int hweight32(unsigned int w) {\n    w -= (w >> 1) & 0x55555555;\n    w = (w & 0x33333333) + ((w >> 2) & 0x33333333);\n    w = (w + (w >> 4)) & 0x0f0f0f0f;\n    return (w * 0x01010101) >> 24;\n}",
+      "rust_code": "fn hweight32(w: u32) -> u32 {\n    let mut w = w - ((w >> 1) & 0x55555555);\n    w = (w & 0x33333333) + ((w >> 2) & 0x33333333);\n    w = (w + (w >> 4)) & 0x0f0f0f0f;\n    (w.wrapping_mul(0x01010101)) >> 24\n}",
+      "expected_divergence": null,
+      "description": "Population count from Linux kernel. Pure unsigned bitops."
+    },
+    {
+      "name": "sodium_memcmp_4",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 1.8188953399658203,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:FAIL(ArrayType.__init__() got an unexpected keyword argument 'count')"
+      ],
+      "bugs_found": [],
+      "source": "libsodium",
+      "c_code": "int sodium_memcmp_4(const unsigned char *b1, const unsigned char *b2) {\n    unsigned char d = 0;\n    d |= b1[0] ^ b2[0];\n    d |= b1[1] ^ b2[1];\n    d |= b1[2] ^ b2[2];\n    d |= b1[3] ^ b2[3];\n    return (int)(1 & ((d - 1) >> 8)) - 1;\n}",
+      "rust_code": "fn sodium_memcmp_4(b1: &[u8; 4], b2: &[u8; 4]) -> i32 {\n    let mut d: u8 = 0;\n    d |= b1[0] ^ b2[0];\n    d |= b1[1] ^ b2[1];\n    d |= b1[2] ^ b2[2];\n    d |= b1[3] ^ b2[3];\n    (1 & ((d.wrapping_sub(1)) >> 8)) as i32 - 1\n}",
+      "expected_divergence": "cast_semantics",
+      "description": "Constant-time memory comparison. Cast from unsigned to signed at the end."
+    },
+    {
+      "name": "musl_isdigit",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 0.5371570587158203,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:FAIL(ord() expected string of length 1, but int found)"
+      ],
+      "bugs_found": [],
+      "source": "musl-libc",
+      "c_code": "int isdigit_c(int c) {\n    return (unsigned int)(c - '0') < 10;\n}",
+      "rust_code": "fn is_digit_c(c: i32) -> bool {\n    (c.wrapping_sub('0' as i32) as u32) < 10\n}",
+      "expected_divergence": "unsigned_wrap_on_negative",
+      "description": "Character classification from musl. Subtraction may wrap for negative c."
+    },
+    {
+      "name": "crc32_step",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 5.089998245239258,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.904)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "zlib",
+      "c_code": "unsigned long crc32_byte(unsigned long crc, unsigned char byte, const unsigned long *table) {\n    return table[(crc ^ byte) & 0xff] ^ (crc >> 8);\n}",
+      "rust_code": "fn crc32_byte(crc: u32, byte: u8, table: &[u32]) -> u32 {\n    table[((crc ^ (byte as u32)) & 0xff) as usize] ^ (crc >> 8)\n}",
+      "expected_divergence": "pointer_bounds",
+      "description": "Single-byte CRC32 update from zlib. Pointer dereference for table lookup."
+    },
+    {
+      "name": "fls_generic",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 10.088205337524414,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.677)",
+        "product:OK(13blk)"
+      ],
+      "bugs_found": [],
+      "source": "linux-kernel",
+      "c_code": "int fls(unsigned int x) {\n    int r = 32;\n    if (!x) return 0;\n    if (!(x & 0xffff0000)) { x <<= 16; r -= 16; }\n    if (!(x & 0xff000000)) { x <<= 8; r -= 8; }\n    if (!(x & 0xf0000000)) { x <<= 4; r -= 4; }\n    if (!(x & 0xc0000000)) { x <<= 2; r -= 2; }\n    if (!(x & 0x80000000)) { r -= 1; }\n    return r;\n}",
+      "rust_code": "fn fls(x: u32) -> i32 {\n    let mut r = 32;\n    if x == 0 {\n        return 0;\n    }\n    let mut x = x;\n    if (x & 0xffff0000) == 0 {\n        x <<= 16;\n        r -= 16;\n    }\n    if (x & 0xff000000) == 0 {\n        x <<= 8;\n        r -= 8;\n    }\n    if (x & 0xf0000000) == 0 {\n        x <<= 4;\n        r -= 4;\n    }\n    if (x & 0xc0000000) == 0 {\n        x <<= 2;\n        r -= 2;\n    }\n    if (x & 0x80000000) == 0 {\n        r -= 1;\n    }\n    r\n}",
+      "expected_divergence": null,
+      "description": "Find-last-set from Linux kernel. Pure unsigned shifts and masks."
+    },
+    {
+      "name": "bounded_strlen",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": -2147483648,
+        "b": -2147483648
+      },
+      "smt_queries": 3,
+      "time_ms": 122.35689163208008,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.377)",
+        "product:OK(10blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "signed_overflow_add",
+          "description": "Signed addition overflow: C has UB, Rust wraps",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow_mul",
+          "description": "Signed multiplication overflow: C has UB, Rust wraps",
+          "counterexample": {
+            "a": -100663305,
+            "b": -1638008457
+          },
+          "severity": "high"
+        }
+      ],
+      "source": "musl-libc",
+      "c_code": "int bounded_count(const int *arr, int len, int target) {\n    int count = 0;\n    for (int i = 0; i < len; i++) {\n        if (arr[i] == target) count++;\n    }\n    return count;\n}",
+      "rust_code": "fn bounded_count(arr: &[i32], target: i32) -> i32 {\n    let mut count = 0;\n    for &value in arr {\n        if value == target {\n            count += 1;\n        }\n    }\n    count\n}",
+      "expected_divergence": "increment_overflow",
+      "description": "Bounded linear scan, modeled without pointers. count++ could overflow."
+    },
+    {
+      "name": "is_zero_4bytes",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 4.345178604125977,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.831)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "libsodium",
+      "c_code": "int is_zero(unsigned int x) {\n    return (int)(1 & ((x - 1) >> 31)) & (int)(1 & ~(x >> 31));\n}",
+      "rust_code": "fn is_zero(x: u32) -> i32 {\n    (((1 & ((x.wrapping_sub(1)) >> 31)) as i32) & ((1 & !(x >> 31)) as i32))\n}",
+      "expected_divergence": "unsigned_wrap",
+      "description": "Constant-time zero check. Relies on unsigned subtraction wrapping for x=0."
+    },
+    {
+      "name": "div_round_nearest",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": -2147483648,
+        "b": -2147483648
+      },
+      "smt_queries": 4,
+      "time_ms": 7.198333740234375,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.976)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "signed_overflow_add",
+          "description": "Signed addition overflow: C has UB, Rust wraps",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "severity": "high"
+        },
+        {
+          "type": "division_by_zero",
+          "description": "Division by zero: C has UB, Rust panics",
+          "counterexample": {
+            "a": 0,
+            "b": 0
+          },
+          "severity": "critical"
+        },
+        {
+          "type": "division_overflow",
+          "description": "INT_MIN / -1: C has UB, Rust panics",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -1
+          },
+          "severity": "critical"
+        }
+      ],
+      "source": "ffmpeg-pattern",
+      "c_code": "int div_round(int a, int b) {\n    return (a + b / 2) / b;\n}",
+      "rust_code": "fn div_round(a: i32, b: i32) -> i32 {\n    (a + b / 2) / b\n}",
+      "expected_divergence": "overflow_and_divzero",
+      "description": "Division with rounding toward nearest. a+b/2 can overflow, b can be 0."
+    },
+    {
+      "name": "clz_fallback",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": -2147483648
+      },
+      "smt_queries": 2,
+      "time_ms": 6.967782974243164,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.088)",
+        "product:OK(21blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "negation_overflow",
+          "description": "Negation of INT_MIN: C has UB, Rust wraps to INT_MIN",
+          "counterexample": {
+            "a": -2147483648
+          },
+          "severity": "high"
+        }
+      ],
+      "source": "musl-libc",
+      "c_code": "int clz(unsigned int x) {\n    int n = 32;\n    unsigned int y;\n    y = x >> 16; if (y) { n -= 16; x = y; }\n    y = x >> 8;  if (y) { n -= 8;  x = y; }\n    y = x >> 4;  if (y) { n -= 4;  x = y; }\n    y = x >> 2;  if (y) { n -= 2;  x = y; }\n    y = x >> 1;  if (y) return n - 2;\n    return n - x;\n}",
+      "rust_code": "fn clz(mut x: u32) -> i32 {\n    let mut n = 32;\n    let mut y: u32;\n    y = x >> 16; if y != 0 { n -= 16; x = y; }\n    y = x >> 8;  if y != 0 { n -= 8;  x = y; }\n    y = x >> 4;  if y != 0 { n -= 4;  x = y; }\n    y = x >> 2;  if y != 0 { n -= 2;  x = y; }\n    y = x >> 1;  if y != 0 { return n - 2; }\n    (n - x as i32)\n}",
+      "expected_divergence": null,
+      "description": "Count leading zeros fallback from musl. Pure unsigned operations."
+    },
+    {
+      "name": "ct_select",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 3.7949085235595703,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.976)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "openssl",
+      "c_code": "unsigned int ct_select(unsigned int mask, unsigned int a, unsigned int b) {\n    return (mask & a) | (~mask & b);\n}",
+      "rust_code": "fn ct_select(mask: u32, a: u32, b: u32) -> u32 {\n    (mask & a) | (!mask & b)\n}",
+      "expected_divergence": null,
+      "description": "Constant-time select from OpenSSL. Pure bitwise, always equivalent."
+    },
+    {
+      "name": "midpoint_int",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": 2147483647,
+        "b": 2147483647
+      },
+      "smt_queries": 3,
+      "time_ms": 6.056785583496094,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.976)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "signed_overflow_add",
+          "description": "Signed addition overflow: C has UB, Rust wraps",
+          "counterexample": {
+            "a": 2147483647,
+            "b": 2147483647
+          },
+          "severity": "high"
+        },
+        {
+          "type": "negation_overflow",
+          "description": "Negation of INT_MIN: C has UB, Rust wraps to INT_MIN",
+          "counterexample": {
+            "a": -2147483648
+          },
+          "severity": "high"
+        }
+      ],
+      "source": "abseil",
+      "c_code": "int midpoint(int a, int b) {\n    return a + (b - a) / 2;\n}",
+      "rust_code": "fn midpoint(a: i32, b: i32) -> i32 {\n    a + (b - a) / 2\n}",
+      "expected_divergence": "subtraction_overflow",
+      "description": "Overflow-safe midpoint. But b-a can still overflow for extreme values."
+    },
+    {
+      "name": "sign_extend_bit",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "shift_amount": -2147483648
+      },
+      "smt_queries": 2,
+      "time_ms": 5.018949508666992,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.735)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "shift_out_of_range",
+          "description": "Shift by >= width: C has UB, Rust wraps shift amount",
+          "counterexample": {
+            "shift_amount": -2147483648
+          },
+          "severity": "medium"
+        }
+      ],
+      "source": "linux-kernel",
+      "c_code": "int sign_extend32(unsigned int value, int index) {\n    unsigned int shift = 31 - index;\n    return (int)(value << shift) >> shift;\n}",
+      "rust_code": "fn sign_extend32(value: u32, index: i32) -> i32 {\n    let shift = 31 - index;\n    ((value << shift) as i32) >> shift\n}",
+      "expected_divergence": "impl_defined_shift",
+      "description": "Sign extension of arbitrary bit position. Right shift of signed is implementation-defined in C."
+    },
+    {
+      "name": "update_hash",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 2.651214599609375,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.937)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "zlib",
+      "c_code": "unsigned int update_hash(unsigned int h, unsigned char c) {\n    return ((h << 5) + h) + c;\n}",
+      "rust_code": "fn update_hash(h: u32, c: u8) -> u32 {\n    (h << 5).wrapping_add(h).wrapping_add(c as u32)\n}",
+      "expected_divergence": null,
+      "description": "DJB2-style hash step from zlib deflate. Unsigned, equivalent."
+    },
+    {
+      "name": "isqrt",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": 0,
+        "b": 0
+      },
+      "smt_queries": 2,
+      "time_ms": 4.565954208374023,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.578)",
+        "product:OK(6blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "division_by_zero",
+          "description": "Division by zero: C has UB, Rust panics",
+          "counterexample": {
+            "a": 0,
+            "b": 0
+          },
+          "severity": "critical"
+        }
+      ],
+      "source": "custom",
+      "c_code": "unsigned int isqrt(unsigned int n) {\n    if (n < 2) return n;\n    unsigned int x = n;\n    unsigned int y = (x + 1) / 2;\n    while (y < x) {\n        x = y;\n        y = (x + n / x) / 2;\n    }\n    return x;\n}",
+      "rust_code": "fn isqrt(n: u32) -> u32 {\n    if n < 2 {\n        return n;\n    }\n    let mut x = n;\n    let mut y = (x + 1) / 2;\n    while y < x {\n        x = y;\n        y = (x + n / x) / 2;\n    }\n    x\n}",
+      "expected_divergence": "addition_overflow",
+      "description": "Integer square root via Newton. x + n/x can overflow for large n."
+    },
+    {
+      "name": "simple_atoi",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": -2147483648,
+        "b": -2147483648
+      },
+      "smt_queries": 3,
+      "time_ms": 91.56608581542969,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:FAIL(ord() expected string of length 1, but int found)"
+      ],
+      "bugs_found": [
+        {
+          "type": "signed_overflow_add",
+          "description": "Signed addition overflow: C has UB, Rust wraps",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "severity": "high"
+        },
+        {
+          "type": "signed_overflow_mul",
+          "description": "Signed multiplication overflow: C has UB, Rust wraps",
+          "counterexample": {
+            "a": -1027,
+            "b": 1037565951
+          },
+          "severity": "high"
+        }
+      ],
+      "source": "musl-libc",
+      "c_code": "int simple_atoi(int c0, int c1, int c2) {\n    int result = 0;\n    result = result * 10 + (c0 - '0');\n    result = result * 10 + (c1 - '0');\n    result = result * 10 + (c2 - '0');\n    return result;\n}",
+      "rust_code": "fn simple_atoi(c0: i32, c1: i32, c2: i32) -> i32 {\n    let mut result = 0;\n    result = result * 10 + (c0 - '0' as i32);\n    result = result * 10 + (c1 - '0' as i32);\n    result = result * 10 + (c2 - '0' as i32);\n    result\n}",
+      "expected_divergence": "multiplication_overflow",
+      "description": "Simplified 3-digit atoi. Multiplication by 10 can overflow."
+    },
+    {
+      "name": "rotr32",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "shift_amount": -2147483648
+      },
+      "smt_queries": 2,
+      "time_ms": 6.582975387573242,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.902)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "shift_out_of_range",
+          "description": "Shift by >= width: C has UB, Rust wraps shift amount",
+          "counterexample": {
+            "shift_amount": -2147483648
+          },
+          "severity": "medium"
+        }
+      ],
+      "source": "crypto-common",
+      "c_code": "unsigned int rotr32(unsigned int x, int n) {\n    return (x >> n) | (x << (32 - n));\n}",
+      "rust_code": "fn rotr32(x: u32, n: i32) -> u32 {\n    (x >> n) | (x << (32 - n))\n}",
+      "expected_divergence": "shift_ub",
+      "description": "32-bit rotate right. UB in C when n=0 (32-0=32 >= width) or n>=32."
+    },
+    {
+      "name": "max3",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 3.1707286834716797,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.273)",
+        "product:OK(9blk)"
+      ],
+      "bugs_found": [],
+      "source": "linux-kernel",
+      "c_code": "int max3(int a, int b, int c) {\n    int m = a;\n    if (b > m) m = b;\n    if (c > m) m = c;\n    return m;\n}",
+      "rust_code": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b > m {\n        m = b;\n    }\n    if c > m {\n        m = c;\n    }\n    m\n}",
+      "expected_divergence": null,
+      "description": "Three-way maximum. No overflow possible, should be equivalent."
+    },
+    {
+      "name": "saturating_inc",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 1.3980865478515625,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.643)",
+        "product:OK(5blk)"
+      ],
+      "bugs_found": [],
+      "source": "custom",
+      "c_code": "int sat_inc(int x) {\n    if (x < 2147483647) return x + 1;\n    return 2147483647;\n}",
+      "rust_code": "fn sat_inc(x: i32) -> i32 {\n    if x < 2147483647 {\n        x + 1\n    } else {\n        2147483647\n    }\n}",
+      "expected_divergence": null,
+      "description": "Saturating increment. Guard prevents overflow, should be equivalent."
+    },
+    {
+      "name": "bswap16",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 1.7180442810058594,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.836)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "linux-kernel",
+      "c_code": "unsigned short bswap16(unsigned short x) {\n    return (x >> 8) | (x << 8);\n}",
+      "rust_code": "fn bswap16(x: u16) -> u16 {\n    (x >> 8) | (x << 8)\n}",
+      "expected_divergence": "integer_promotion",
+      "description": "16-bit byte swap. x<<8 on unsigned short: integer promotion to int in C."
+    },
+    {
+      "name": "gcd_euclid",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 3.3681392669677734,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.932)",
+        "product:OK(4blk)"
+      ],
+      "bugs_found": [],
+      "source": "standard",
+      "c_code": "int gcd(int a, int b) {\n    while (b != 0) {\n        int t = b;\n        b = a % b;\n        a = t;\n    }\n    return a;\n}",
+      "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+      "expected_divergence": "modulo_overflow",
+      "description": "Euclidean GCD. a%b is UB when b=0 (but guarded by while), INT_MIN%-1 is UB."
+    },
+    {
+      "name": "align_up",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 3.3941268920898438,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.909)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "allocator-common",
+      "c_code": "unsigned int align_up(unsigned int x, unsigned int align) {\n    return (x + align - 1) & ~(align - 1);\n}",
+      "rust_code": "fn align_up(x: u32, align: u32) -> u32 {\n    (x + align - 1) & !(align - 1)\n}",
+      "expected_divergence": "unsigned_addition_wrap",
+      "description": "Align up to power of 2. x+align-1 can wrap for large x."
+    },
+    {
+      "name": "clamp_mul_u8",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 3.1790733337402344,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.400)",
+        "product:OK(5blk)"
+      ],
+      "bugs_found": [],
+      "source": "graphics-common",
+      "c_code": "unsigned char clamp_mul(unsigned char a, unsigned char b) {\n    unsigned int result = (unsigned int)a * (unsigned int)b;\n    if (result > 255) return 255;\n    return (unsigned char)result;\n}",
+      "rust_code": "fn clamp_mul(a: u8, b: u8) -> u8 {\n    let result = (a as u32) * (b as u32);\n    if result > 255 {\n        255\n    } else {\n        result as u8\n    }\n}",
+      "expected_divergence": null,
+      "description": "Clamped 8-bit multiply for pixel blending. Should be equivalent."
+    },
+    {
+      "name": "verify_eq_32",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 3.0570030212402344,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.759)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [],
+      "source": "libsodium",
+      "c_code": "int verify_eq(unsigned int a, unsigned int b) {\n    unsigned int diff = a ^ b;\n    return (int)((diff - 1) >> 31) & 1;\n}",
+      "rust_code": "fn verify_eq(a: u32, b: u32) -> u32 {\n    let diff = a ^ b;\n    (((diff.wrapping_sub(1)) >> 31) & 1)\n}",
+      "expected_divergence": "unsigned_wrap_semantics",
+      "description": "Constant-time equality check. diff-1 wraps when diff=0 (a==b)."
+    },
+    {
+      "name": "fibonacci_n",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "a": -2147483648,
+        "b": -2147483648
+      },
+      "smt_queries": 2,
+      "time_ms": 5.327701568603516,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.510)",
+        "product:OK(6blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "signed_overflow_add",
+          "description": "Signed addition overflow: C has UB, Rust wraps",
+          "counterexample": {
+            "a": -2147483648,
+            "b": -2147483648
+          },
+          "severity": "high"
+        }
+      ],
+      "source": "standard",
+      "c_code": "int fibonacci(int n) {\n    int a = 0, b = 1;\n    for (int i = 0; i < n; i++) {\n        int t = a + b;\n        a = b;\n        b = t;\n    }\n    return a;\n}",
+      "rust_code": "fn fibonacci(n: i32) -> i32 {\n    let mut a = 0;\n    let mut b = 1;\n    for _ in 0..n {\n        let t = a + b;\n        a = b;\n        b = t;\n    }\n    a\n}",
+      "expected_divergence": "addition_overflow",
+      "description": "Fibonacci sequence. a+b overflows for n>=47 (signed)."
+    },
+    {
+      "name": "safe_index",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 0.9028911590576172,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:FAIL('NoneType' object has no attribute 'users')"
+      ],
+      "bugs_found": [],
+      "source": "custom",
+      "c_code": "int safe_get(int value, int index, int len) {\n    if (index < 0 || index >= len) return -1;\n    return value;\n}",
+      "rust_code": "fn safe_get(value: i32, index: i32, len: i32) -> i32 {\n    if index < 0 || index >= len {\n        -1\n    } else {\n        value\n    }\n}",
+      "expected_divergence": null,
+      "description": "Bounds-checked access pattern. No overflow possible."
+    },
+    {
+      "name": "extract_bits",
+      "method": "sigma_bridge",
+      "verdict": "divergent",
+      "counterexample": {
+        "shift_amount": -2147483648
+      },
+      "smt_queries": 2,
+      "time_ms": 5.403995513916016,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.875)",
+        "product:OK(1blk)"
+      ],
+      "bugs_found": [
+        {
+          "type": "shift_out_of_range",
+          "description": "Shift by >= width: C has UB, Rust wraps shift amount",
+          "counterexample": {
+            "shift_amount": -2147483648
+          },
+          "severity": "medium"
+        }
+      ],
+      "source": "linux-kernel",
+      "c_code": "unsigned int extract_bits(unsigned int val, int start, int len) {\n    return (val >> start) & ((1u << len) - 1);\n}",
+      "rust_code": "fn extract_bits(val: u32, start: i32, len: i32) -> u32 {\n    (val >> start) & ((1u32 << len) - 1)\n}",
+      "expected_divergence": "shift_ub",
+      "description": "Extract bit field. 1u<<len is UB if len>=32, val>>start UB if start>=32."
+    },
+    {
+      "name": "ipow_unsigned",
+      "method": "sigma_bridge",
+      "verdict": "equivalent",
+      "counterexample": null,
+      "smt_queries": 1,
+      "time_ms": 4.94384765625,
+      "pipeline_stages": [
+        "c_parse:OK",
+        "rust_parse:OK",
+        "c_ir:OK",
+        "rust_ir:OK",
+        "align:OK(sim=0.767)",
+        "product:OK(8blk)"
+      ],
+      "bugs_found": [],
+      "source": "standard",
+      "c_code": "unsigned int ipow(unsigned int base, unsigned int exp) {\n    unsigned int result = 1;\n    while (exp > 0) {\n        if (exp & 1) result *= base;\n        exp >>= 1;\n        if (exp > 0) base *= base;\n    }\n    return result;\n}",
+      "rust_code": "fn ipow(mut base: u32, mut exp: u32) -> u32 {\n    let mut result = 1;\n    while exp > 0 {\n        if exp & 1 != 0 {\n            result *= base;\n        }\n        exp >>= 1;\n        if exp > 0 {\n            base *= base;\n        }\n    }\n    result\n}",
+      "expected_divergence": null,
+      "description": "Integer power with unsigned types. Wraps on overflow in both languages."
+    }
+  ],
+  "cbmc_results": [
+    {
+      "name": "crypto_verify_16_bytes",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow_mul",
+          "description": "Potential signed multiplication overflow"
+        },
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.014066696166992188
+    },
+    {
+      "name": "musl_abs",
+      "method": "cbmc_baseline",
+      "verdict": "no_ub_found",
+      "ub_found": [],
+      "time_ms": 0.0011920928955078125
+    },
+    {
+      "name": "adler32_update",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "modulo_by_zero",
+          "description": "Potential modulo by zero"
+        },
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.008106231689453125
+    },
+    {
+      "name": "hweight32",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow_mul",
+          "description": "Potential signed multiplication overflow"
+        },
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0069141387939453125
+    },
+    {
+      "name": "sodium_memcmp_4",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow_mul",
+          "description": "Potential signed multiplication overflow"
+        },
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.010013580322265625
+    },
+    {
+      "name": "musl_isdigit",
+      "method": "cbmc_baseline",
+      "verdict": "no_ub_found",
+      "ub_found": [],
+      "time_ms": 0.00095367431640625
+    },
+    {
+      "name": "crc32_step",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "fls_generic",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.007152557373046875
+    },
+    {
+      "name": "bounded_strlen",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow",
+          "description": "Potential signed integer overflow (UB per C11 \u00a76.5/5)"
+        },
+        {
+          "type": "signed_overflow_mul",
+          "description": "Potential signed multiplication overflow"
+        }
+      ],
+      "time_ms": 0.007867813110351562
+    },
+    {
+      "name": "is_zero_4bytes",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0059604644775390625
+    },
+    {
+      "name": "div_round_nearest",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow",
+          "description": "Potential signed integer overflow (UB per C11 \u00a76.5/5)"
+        },
+        {
+          "type": "division_by_zero",
+          "description": "Potential division by zero"
+        }
+      ],
+      "time_ms": 0.0050067901611328125
+    },
+    {
+      "name": "clz_fallback",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0059604644775390625
+    },
+    {
+      "name": "ct_select",
+      "method": "cbmc_baseline",
+      "verdict": "no_ub_found",
+      "ub_found": [],
+      "time_ms": 0.00095367431640625
+    },
+    {
+      "name": "midpoint_int",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow",
+          "description": "Potential signed integer overflow (UB per C11 \u00a76.5/5)"
+        },
+        {
+          "type": "division_by_zero",
+          "description": "Potential division by zero"
+        }
+      ],
+      "time_ms": 0.0059604644775390625
+    },
+    {
+      "name": "sign_extend_bit",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0059604644775390625
+    },
+    {
+      "name": "update_hash",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0019073486328125
+    },
+    {
+      "name": "isqrt",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "division_by_zero",
+          "description": "Potential division by zero"
+        }
+      ],
+      "time_ms": 0.0021457672119140625
+    },
+    {
+      "name": "simple_atoi",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow",
+          "description": "Potential signed integer overflow (UB per C11 \u00a76.5/5)"
+        },
+        {
+          "type": "signed_overflow_mul",
+          "description": "Potential signed multiplication overflow"
+        }
+      ],
+      "time_ms": 0.007867813110351562
+    },
+    {
+      "name": "rotr32",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "max3",
+      "method": "cbmc_baseline",
+      "verdict": "no_ub_found",
+      "ub_found": [],
+      "time_ms": 0.0007152557373046875
+    },
+    {
+      "name": "saturating_inc",
+      "method": "cbmc_baseline",
+      "verdict": "no_ub_found",
+      "ub_found": [],
+      "time_ms": 0.0040531158447265625
+    },
+    {
+      "name": "bswap16",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.00286102294921875
+    },
+    {
+      "name": "gcd_euclid",
+      "method": "cbmc_baseline",
+      "verdict": "no_ub_found",
+      "ub_found": [],
+      "time_ms": 0.0016689300537109375
+    },
+    {
+      "name": "align_up",
+      "method": "cbmc_baseline",
+      "verdict": "no_ub_found",
+      "ub_found": [],
+      "time_ms": 0.0019073486328125
+    },
+    {
+      "name": "clamp_mul_u8",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow_mul",
+          "description": "Potential signed multiplication overflow"
+        }
+      ],
+      "time_ms": 0.0040531158447265625
+    },
+    {
+      "name": "verify_eq_32",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.0040531158447265625
+    },
+    {
+      "name": "fibonacci_n",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow",
+          "description": "Potential signed integer overflow (UB per C11 \u00a76.5/5)"
+        }
+      ],
+      "time_ms": 0.00286102294921875
+    },
+    {
+      "name": "safe_index",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "negation_overflow",
+          "description": "Potential negation overflow"
+        }
+      ],
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "extract_bits",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.005245208740234375
+    },
+    {
+      "name": "ipow_unsigned",
+      "method": "cbmc_baseline",
+      "verdict": "ub_possible",
+      "ub_found": [
+        {
+          "type": "signed_overflow_mul",
+          "description": "Potential signed multiplication overflow"
+        },
+        {
+          "type": "shift_ub",
+          "description": "Potential shift by >= width"
+        }
+      ],
+      "time_ms": 0.008106231689453125
+    }
+  ],
+  "naive_results": [
+    {
+      "name": "crypto_verify_16_bytes",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.009059906005859375
+    },
+    {
+      "name": "musl_abs",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0021457672119140625
+    },
+    {
+      "name": "adler32_update",
+      "method": "naive_bv",
+      "verdict": "potentially_divergent",
+      "time_ms": 0.007867813110351562
+    },
+    {
+      "name": "hweight32",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "sodium_memcmp_4",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0057220458984375
+    },
+    {
+      "name": "musl_isdigit",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0019073486328125
+    },
+    {
+      "name": "crc32_step",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "fls_generic",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0059604644775390625
+    },
+    {
+      "name": "bounded_strlen",
+      "method": "naive_bv",
+      "verdict": "potentially_divergent",
+      "time_ms": 0.00476837158203125
+    },
+    {
+      "name": "is_zero_4bytes",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0026226043701171875
+    },
+    {
+      "name": "div_round_nearest",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.028133392333984375
+    },
+    {
+      "name": "clz_fallback",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.003814697265625
+    },
+    {
+      "name": "ct_select",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0057220458984375
+    },
+    {
+      "name": "midpoint_int",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0021457672119140625
+    },
+    {
+      "name": "sign_extend_bit",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0040531158447265625
+    },
+    {
+      "name": "update_hash",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.00286102294921875
+    },
+    {
+      "name": "isqrt",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "simple_atoi",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.003814697265625
+    },
+    {
+      "name": "rotr32",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0019073486328125
+    },
+    {
+      "name": "max3",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "saturating_inc",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.004291534423828125
+    },
+    {
+      "name": "bswap16",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0021457672119140625
+    },
+    {
+      "name": "gcd_euclid",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0021457672119140625
+    },
+    {
+      "name": "align_up",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.00476837158203125
+    },
+    {
+      "name": "clamp_mul_u8",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "verify_eq_32",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0019073486328125
+    },
+    {
+      "name": "fibonacci_n",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0016689300537109375
+    },
+    {
+      "name": "safe_index",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0030994415283203125
+    },
+    {
+      "name": "extract_bits",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0019073486328125
+    },
+    {
+      "name": "ipow_unsigned",
+      "method": "naive_bv",
+      "verdict": "equivalent",
+      "time_ms": 0.0050067901611328125
+    }
+  ],
+  "random_results": [
+    {
+      "name": "crypto_verify_16_bytes",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.372119903564453
+    },
+    {
+      "name": "musl_abs",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.3888092041015625
+    },
+    {
+      "name": "adler32_update",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.160165786743164
+    },
+    {
+      "name": "hweight32",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.216909408569336
+    },
+    {
+      "name": "sodium_memcmp_4",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.19306755065918
+    },
+    {
+      "name": "musl_isdigit",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.332065582275391
+    },
+    {
+      "name": "crc32_step",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.329204559326172
+    },
+    {
+      "name": "fls_generic",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 5.252838134765625
+    },
+    {
+      "name": "bounded_strlen",
+      "method": "random_testing",
+      "verdict": "divergent",
+      "n_samples": 10000,
+      "time_ms": 4.285097122192383
+    },
+    {
+      "name": "is_zero_4bytes",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 3.9780139923095703
+    },
+    {
+      "name": "div_round_nearest",
+      "method": "random_testing",
+      "verdict": "divergent",
+      "n_samples": 10000,
+      "time_ms": 4.273176193237305
+    },
+    {
+      "name": "clz_fallback",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.166126251220703
+    },
+    {
+      "name": "ct_select",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.212141036987305
+    },
+    {
+      "name": "midpoint_int",
+      "method": "random_testing",
+      "verdict": "divergent",
+      "n_samples": 10000,
+      "time_ms": 4.764795303344727
+    },
+    {
+      "name": "sign_extend_bit",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.068851470947266
+    },
+    {
+      "name": "update_hash",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.212141036987305
+    },
+    {
+      "name": "isqrt",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.15492057800293
+    },
+    {
+      "name": "simple_atoi",
+      "method": "random_testing",
+      "verdict": "divergent",
+      "n_samples": 10000,
+      "time_ms": 4.815101623535156
+    },
+    {
+      "name": "rotr32",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.050254821777344
+    },
+    {
+      "name": "max3",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.233121871948242
+    },
+    {
+      "name": "saturating_inc",
+      "method": "random_testing",
+      "verdict": "divergent",
+      "n_samples": 10000,
+      "time_ms": 4.021167755126953
+    },
+    {
+      "name": "bswap16",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.066944122314453
+    },
+    {
+      "name": "gcd_euclid",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 3.941059112548828
+    },
+    {
+      "name": "align_up",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.114866256713867
+    },
+    {
+      "name": "clamp_mul_u8",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.146099090576172
+    },
+    {
+      "name": "verify_eq_32",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.148006439208984
+    },
+    {
+      "name": "fibonacci_n",
+      "method": "random_testing",
+      "verdict": "divergent",
+      "n_samples": 10000,
+      "time_ms": 4.2819976806640625
+    },
+    {
+      "name": "safe_index",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.373788833618164
+    },
+    {
+      "name": "extract_bits",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.269838333129883
+    },
+    {
+      "name": "ipow_unsigned",
+      "method": "random_testing",
+      "verdict": "equivalent",
+      "n_samples": 10000,
+      "time_ms": 4.21595573425293
+    }
+  ],
+  "translations": {
+    "crypto_verify_16_bytes": "fn crypto_verify_16(x: &[u8], y: &[u8]) -> i32 {\n    let mut d: u32 = 0;\n    d |= (x[0] ^ y[0]) as u32;\n    d |= (x[1] ^ y[1]) as u32;\n    d |= (x[2] ^ y[2]) as u32;\n    d |= (x[3] ^ y[3]) as u32;\n    (1 & ((d.wrapping_sub(1)) >> 8)) as i32 - 1\n}",
+    "musl_abs": "fn abs_val(a: i32) -> i32 {\n    if a > 0 { a } else { -a }\n}",
+    "adler32_update": "fn adler32_step(adler: u32, byte: u8) -> u32 {\n    const MOD_ADLER: u32 = 65521;\n    let s1 = (adler & 0xffff).wrapping_add(byte as u32) % MOD_ADLER;\n    let s2 = ((adler >> 16) & 0xffff).wrapping_add(s1) % MOD_ADLER;\n    (s2 << 16) | s1\n}",
+    "hweight32": "fn hweight32(w: u32) -> u32 {\n    let mut w = w - ((w >> 1) & 0x55555555);\n    w = (w & 0x33333333) + ((w >> 2) & 0x33333333);\n    w = (w + (w >> 4)) & 0x0f0f0f0f;\n    (w.wrapping_mul(0x01010101)) >> 24\n}",
+    "sodium_memcmp_4": "fn sodium_memcmp_4(b1: &[u8; 4], b2: &[u8; 4]) -> i32 {\n    let mut d: u8 = 0;\n    d |= b1[0] ^ b2[0];\n    d |= b1[1] ^ b2[1];\n    d |= b1[2] ^ b2[2];\n    d |= b1[3] ^ b2[3];\n    (1 & ((d.wrapping_sub(1)) >> 8)) as i32 - 1\n}",
+    "musl_isdigit": "fn is_digit_c(c: i32) -> bool {\n    (c.wrapping_sub('0' as i32) as u32) < 10\n}",
+    "crc32_step": "fn crc32_byte(crc: u32, byte: u8, table: &[u32]) -> u32 {\n    table[((crc ^ (byte as u32)) & 0xff) as usize] ^ (crc >> 8)\n}",
+    "fls_generic": "fn fls(x: u32) -> i32 {\n    let mut r = 32;\n    if x == 0 {\n        return 0;\n    }\n    let mut x = x;\n    if (x & 0xffff0000) == 0 {\n        x <<= 16;\n        r -= 16;\n    }\n    if (x & 0xff000000) == 0 {\n        x <<= 8;\n        r -= 8;\n    }\n    if (x & 0xf0000000) == 0 {\n        x <<= 4;\n        r -= 4;\n    }\n    if (x & 0xc0000000) == 0 {\n        x <<= 2;\n        r -= 2;\n    }\n    if (x & 0x80000000) == 0 {\n        r -= 1;\n    }\n    r\n}",
+    "bounded_strlen": "fn bounded_count(arr: &[i32], target: i32) -> i32 {\n    let mut count = 0;\n    for &value in arr {\n        if value == target {\n            count += 1;\n        }\n    }\n    count\n}",
+    "is_zero_4bytes": "fn is_zero(x: u32) -> i32 {\n    (((1 & ((x.wrapping_sub(1)) >> 31)) as i32) & ((1 & !(x >> 31)) as i32))\n}",
+    "div_round_nearest": "fn div_round(a: i32, b: i32) -> i32 {\n    (a + b / 2) / b\n}",
+    "clz_fallback": "fn clz(mut x: u32) -> i32 {\n    let mut n = 32;\n    let mut y: u32;\n    y = x >> 16; if y != 0 { n -= 16; x = y; }\n    y = x >> 8;  if y != 0 { n -= 8;  x = y; }\n    y = x >> 4;  if y != 0 { n -= 4;  x = y; }\n    y = x >> 2;  if y != 0 { n -= 2;  x = y; }\n    y = x >> 1;  if y != 0 { return n - 2; }\n    (n - x as i32)\n}",
+    "ct_select": "fn ct_select(mask: u32, a: u32, b: u32) -> u32 {\n    (mask & a) | (!mask & b)\n}",
+    "midpoint_int": "fn midpoint(a: i32, b: i32) -> i32 {\n    a + (b - a) / 2\n}",
+    "sign_extend_bit": "fn sign_extend32(value: u32, index: i32) -> i32 {\n    let shift = 31 - index;\n    ((value << shift) as i32) >> shift\n}",
+    "update_hash": "fn update_hash(h: u32, c: u8) -> u32 {\n    (h << 5).wrapping_add(h).wrapping_add(c as u32)\n}",
+    "isqrt": "fn isqrt(n: u32) -> u32 {\n    if n < 2 {\n        return n;\n    }\n    let mut x = n;\n    let mut y = (x + 1) / 2;\n    while y < x {\n        x = y;\n        y = (x + n / x) / 2;\n    }\n    x\n}",
+    "simple_atoi": "fn simple_atoi(c0: i32, c1: i32, c2: i32) -> i32 {\n    let mut result = 0;\n    result = result * 10 + (c0 - '0' as i32);\n    result = result * 10 + (c1 - '0' as i32);\n    result = result * 10 + (c2 - '0' as i32);\n    result\n}",
+    "rotr32": "fn rotr32(x: u32, n: i32) -> u32 {\n    (x >> n) | (x << (32 - n))\n}",
+    "max3": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b > m {\n        m = b;\n    }\n    if c > m {\n        m = c;\n    }\n    m\n}",
+    "saturating_inc": "fn sat_inc(x: i32) -> i32 {\n    if x < 2147483647 {\n        x + 1\n    } else {\n        2147483647\n    }\n}",
+    "bswap16": "fn bswap16(x: u16) -> u16 {\n    (x >> 8) | (x << 8)\n}",
+    "gcd_euclid": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let t = b;\n        b = a % b;\n        a = t;\n    }\n    a\n}",
+    "align_up": "fn align_up(x: u32, align: u32) -> u32 {\n    (x + align - 1) & !(align - 1)\n}",
+    "clamp_mul_u8": "fn clamp_mul(a: u8, b: u8) -> u8 {\n    let result = (a as u32) * (b as u32);\n    if result > 255 {\n        255\n    } else {\n        result as u8\n    }\n}",
+    "verify_eq_32": "fn verify_eq(a: u32, b: u32) -> u32 {\n    let diff = a ^ b;\n    (((diff.wrapping_sub(1)) >> 31) & 1)\n}",
+    "fibonacci_n": "fn fibonacci(n: i32) -> i32 {\n    let mut a = 0;\n    let mut b = 1;\n    for _ in 0..n {\n        let t = a + b;\n        a = b;\n        b = t;\n    }\n    a\n}",
+    "safe_index": "fn safe_get(value: i32, index: i32, len: i32) -> i32 {\n    if index < 0 || index >= len {\n        -1\n    } else {\n        value\n    }\n}",
+    "extract_bits": "fn extract_bits(val: u32, start: i32, len: i32) -> u32 {\n    (val >> start) & ((1u32 << len) - 1)\n}",
+    "ipow_unsigned": "fn ipow(mut base: u32, mut exp: u32) -> u32 {\n    let mut result = 1;\n    while exp > 0 {\n        if exp & 1 != 0 {\n            result *= base;\n        }\n        exp >>= 1;\n        if exp > 0 {\n            base *= base;\n        }\n    }\n    result\n}"
+  }
+}

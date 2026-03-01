@@ -1,0 +1,23 @@
+{
+  "selected_injections": [
+    {
+      "persona": "C_ml_ai_for_code",
+      "injection": "CEGAR Evaluation Framework — Verification Oracle for LLM Translation Pipelines",
+      "description": "Reframe SemRec as the first systematic VERIFICATION ORACLE for LLM-based code translation. Scale CEGAR evaluation to 200+ real C functions, test with actual LLM calls, classify bug types by LLM-repairability, and demonstrate that formal counterexample feedback significantly improves LLM translation quality compared to naive retry.",
+      "feasibility": "High — the CEGAR loop already exists and works. We need to: (1) fix the pipeline bugs, (2) scale the benchmark with real C functions, (3) run actual LLM experiments, (4) analyze convergence and bug classification.",
+      "distance_from_existing": "No existing tool combines formal cross-language verification with LLM repair guidance. Alive2 verifies LLVM IR transformations but doesn't guide LLMs. Kani does Rust BMC but doesn't verify translations. This is a new tool category."
+    },
+    {
+      "persona": "A_systems_architect",  
+      "injection": "CLI Verification Oracle API",
+      "description": "Build SemRec as a proper CLI tool with a verify command and a translate-with-CEGAR command. Make the pipeline actually work end-to-end by fixing the false positive bug and eliminating hand-coded Z3. Add completeness characterization for the supported fragment.",
+      "feasibility": "High — requires fixing existing bugs and adding a thin CLI layer.",
+      "distance_from_existing": "Exposes a unique API shape: (C_code, Rust_code) → (verdict, counterexample, repair_hint) that no other tool provides."
+    }
+  ],
+  "rationale": "The CEGAR verification oracle pivot maximally leverages the existing codebase (the CEGAR loop, pipeline, SMT encoder all exist) while creating genuine novelty: the first tool that provides formal-methods-backed counterexample guidance for LLM code translation repair. Combined with fixing the pipeline to work end-to-end and scaling the benchmark, this addresses both the 'not novel' critique (new capability) and the 'not rigorous' critique (real experiments with real results).",
+  "rejected_alternatives": {
+    "categorical_unifier": "Too theoretical, risks 'fancy vocabulary' without practical impact",
+    "completeness_theorem": "Useful but insufficient alone to escape 'not novel' — would be an incremental theoretical addition"
+  }
+}

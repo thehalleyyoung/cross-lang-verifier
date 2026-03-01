@@ -1,0 +1,476 @@
+{
+  "summary": "44/52 (85%) accuracy",
+  "correct": 44,
+  "total": 52,
+  "timeout_ms": 60000,
+  "results": [
+    {
+      "name": "add_wrapping",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 532.0,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483645, input_1=2147483647 -> C:0, Rust:-4, kind=output_mismatch)"
+    },
+    {
+      "name": "add_checked_divergent",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 8.2,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483645, input_1=2147483647 -> C:0, Rust:-4, kind=output_mismatch)"
+    },
+    {
+      "name": "mul_overflow",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 302.2,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=3270770685, input_1=4017750014 -> C:4, Rust:-1414922234, kind=output_mismatch)"
+    },
+    {
+      "name": "sub_overflow",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 18.2,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648, input_1=2147483646 -> C:0, Rust:2, kind=output_mismatch)"
+    },
+    {
+      "name": "saturating_add",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 15.0,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483645, input_1=3 -> C:-3, Rust:2147483647, kind=output_mismatch)"
+    },
+    {
+      "name": "negate_min",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 7.5,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648 -> C:1, Rust:-2147483648, kind=output_mismatch)"
+    },
+    {
+      "name": "abs_function",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 11.2,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648 -> C:1398103, Rust:-2147483648, kind=output_mismatch)"
+    },
+    {
+      "name": "unsigned_add",
+      "category": "arithmetic",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 1.4,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "mixed_sign_compare",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "equivalent",
+      "correct": false,
+      "time_ms": 1.6,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "increment_loop",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 21.9,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2 -> C:0, Rust:1, kind=output_mismatch)"
+    },
+    {
+      "name": "checked_add_result",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 17.7,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=4294705088, input_1=2147745856 -> C:-2147483648, Rust:0, kind=output_mismatch)"
+    },
+    {
+      "name": "widening_mul",
+      "category": "arithmetic",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 60652.0,
+      "explanation": "Z3 could not determine equivalence (timeout or resource limit)"
+    },
+    {
+      "name": "div_by_zero",
+      "category": "division",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 208.8,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648, input_1=4294967295 -> C:2115416099, Rust:-2147483648, kind=output_mismatch)"
+    },
+    {
+      "name": "div_int_min",
+      "category": "division",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 449.1,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648, input_1=4294967295 -> C:0, Rust:-2147483648, kind=output_mismatch)"
+    },
+    {
+      "name": "modulo_negative",
+      "category": "division",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 123.1,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648, input_1=4294967295 -> C:-1299230409, Rust:0, kind=output_mismatch)"
+    },
+    {
+      "name": "shift_left_overflow",
+      "category": "shift",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 20.2,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=65519, input_1=48 -> C:1048576, Rust:-1114112, kind=output_mismatch)"
+    },
+    {
+      "name": "shift_right_arithmetic",
+      "category": "shift",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 18.9,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2013200384, input_1=48 -> C:-30720, Rust:30719, kind=output_mismatch)"
+    },
+    {
+      "name": "shift_negative_amount",
+      "category": "shift",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 6.0,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=142731393, input_1=348010496 -> C:1835932280, Rust:142731393, kind=output_mismatch)"
+    },
+    {
+      "name": "unsigned_div",
+      "category": "division",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 11.3,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "power_of_two_div",
+      "category": "division",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 12.2,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "count_bits",
+      "category": "loops",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 33.3,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "gcd_loop",
+      "category": "loops",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 6268.2,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648, input_1=1757413377 -> C:-4194059, Rust:-11, kind=output_mismatch)"
+    },
+    {
+      "name": "fibonacci",
+      "category": "loops",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 117.6,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=6 -> C:1, Rust:8, kind=output_mismatch)"
+    },
+    {
+      "name": "binary_search",
+      "category": "loops",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 19.7,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483652, input_1=2147483646 -> C:1, Rust:2147483646, kind=output_mismatch)"
+    },
+    {
+      "name": "reverse_bits_loop",
+      "category": "loops",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 120.0,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=253 -> C:0, Rust:191, kind=output_mismatch)"
+    },
+    {
+      "name": "collatz_steps",
+      "category": "loops",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 9151.8,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=743006494 -> C:4, Rust:1, kind=output_mismatch)"
+    },
+    {
+      "name": "digit_sum",
+      "category": "loops",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 42398.2,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483648 -> C:40, Rust:0, kind=output_mismatch)"
+    },
+    {
+      "name": "count_trailing_zeros",
+      "category": "loops",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 30.6,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "safe_divide_errno",
+      "category": "error_handling",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 484.9,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=4294967284, input_1=0 -> C:-1, Rust:0, kind=output_mismatch)"
+    },
+    {
+      "name": "sqrt_int",
+      "category": "error_handling",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 8392.3,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2147483647 -> C:0, Rust:-1073741824, kind=output_mismatch)"
+    },
+    {
+      "name": "array_index_safe",
+      "category": "error_handling",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 91.6,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=0, input_1=1, input_2=0 -> C:0, Rust:-1, kind=output_mismatch)"
+    },
+    {
+      "name": "clamp_value",
+      "category": "error_handling",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 11.2,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "null_vs_option",
+      "category": "error_handling",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 104.8,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=0, input_1=4294967295 -> C:-1, Rust:0, kind=output_mismatch)"
+    },
+    {
+      "name": "find_char",
+      "category": "error_handling",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 7.0,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "max_of_three",
+      "category": "error_handling",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 11.4,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "sign_function",
+      "category": "error_handling",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 9.5,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "is_power_of_two",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 31.8,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "rotate_right",
+      "category": "bitwise",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 21.6,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=2458130433, input_1=0 -> C:-220374421, Rust:-1836836863, kind=output_mismatch)"
+    },
+    {
+      "name": "swap_bytes",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 14.4,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "bit_extract",
+      "category": "bitwise",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 30.7,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=3220568055, input_1=30, input_2=31 -> C:0, Rust:2, kind=output_mismatch)"
+    },
+    {
+      "name": "leading_zeros",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 45.8,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "parity",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 24.2,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "interleave_bits",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 88.8,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=0, input_1=4 -> C:0, Rust:16, kind=output_mismatch)"
+    },
+    {
+      "name": "bit_reverse_byte",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.7,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "hash_djb2",
+      "category": "string",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 43.8,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=0, input_1=0 -> C:5381, Rust:0, kind=output_mismatch)"
+    },
+    {
+      "name": "array_sum",
+      "category": "string",
+      "expected": "divergent",
+      "actual": "equivalent",
+      "correct": false,
+      "time_ms": 30.4,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "memset_pattern",
+      "category": "memory",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 1.6,
+      "explanation": "Both functions have void return; trivially equivalent"
+    },
+    {
+      "name": "array_max",
+      "category": "memory",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 35.5,
+      "explanation": "Found diverging input: DivergenceWitness(input_0=0, input_1=1 -> C:0, Rust:-2147483648, kind=output_mismatch)"
+    },
+    {
+      "name": "copy_array",
+      "category": "memory",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 4.0,
+      "explanation": "Both functions have void return; trivially equivalent"
+    },
+    {
+      "name": "dot_product",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "equivalent",
+      "correct": false,
+      "time_ms": 10.1,
+      "explanation": "Z3 proved no input can cause different outputs"
+    },
+    {
+      "name": "insertion_sort",
+      "category": "memory",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 232.5,
+      "explanation": "Both functions have void return; trivially equivalent"
+    },
+    {
+      "name": "linear_search",
+      "category": "memory",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 53.7,
+      "explanation": "Z3 proved no input can cause different outputs"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "personas": {
+    "A_systems_architect": {
+      "genuinely_novel": "Operating at the source-level semantic boundary where C/Rust arithmetic semantics diverge before LLVM IR erases the distinction. No existing tool (CBMC, Kani, Alive2) does cross-language equivalence checking at this layer.",
+      "looks_novel_but_isnt": "The σ-bridge (SemanticConfig) is just a configuration dataclass mapping operations to overflow modes — this is standard parameterization. The product program construction is textbook. The recursive-descent parsers reinvent what tree-sitter/libclang already do.",
+      "novelty_injection": "Reframe SemRec as a VERIFICATION ORACLE API that plugs into any LLM-based code translation pipeline. Expose a JSON-RPC or CLI interface: given (source_lang, target_lang, source_code, translated_code), return (verdict, counterexample, repair_hint). This makes SemRec infrastructure, not a standalone tool — no existing formal verification tool offers this API shape for cross-language translation verification."
+    },
+    "B_pl_fm_theorist": {
+      "genuinely_novel": "The formalization of when LLVM IR erasure makes divergences invisible is correct and useful. The distinction between 'equivalent under defined behavior' vs 'divergent due to UB interpretation' is a real semantic subtlety.",
+      "looks_novel_but_isnt": "Theorem 1 (soundness) is trivial: UNSAT → equivalent. The σ-bridge is a configuration, not a Galois connection or abstract interpretation. There is no complexity result, no decidability boundary, no surprising negative result.",
+      "novelty_injection": "Prove a COMPLETENESS CHARACTERIZATION: for the supported fragment (integer arithmetic + control flow, no pointers/heap), show that SemRec's encoding is complete — if a divergence exists in the supported fragment, SemRec will find it. Then prove an INCOMPLETENESS BOUNDARY: show precisely which language features (pointers, aliasing, concurrency) break completeness and why. This gives a genuine theoretical contribution beyond 'UNSAT → no bug'."
+    },
+    "C_ml_ai_for_code": {
+      "genuinely_novel": "The CEGAR LLM-in-the-loop concept — feeding Z3 counterexamples back to guide LLM repair — is timely and genuinely promising. The 45% success rate with a weak LLM (GPT-4.1-nano) suggests strong models could do much better.",
+      "looks_novel_but_isnt": "The current CEGAR implementation is shallow: translate → verify → if divergent, tell LLM the counterexample → repeat. There's no learned component, no structured prompting strategy, no analysis of which bug classes LLMs can/cannot fix.",
+      "novelty_injection": "Build a comprehensive CEGAR EVALUATION FRAMEWORK: (1) Scale to 200+ real C functions from open-source projects (musl, SQLite), (2) Test with multiple LLMs and measure convergence curves, (3) Classify bug types by LLM-repairability (overflow bugs vs logic bugs vs type bugs), (4) Show that CEGAR with formal counterexamples beats naive retry and specification-only prompting. This creates the first systematic study of formal-methods-guided LLM code repair."
+    },
+    "D_devtools_usability": {
+      "genuinely_novel": "The idea of a safety net for AI-assisted C→Rust migration addresses a real pain point. Every company migrating C to Rust worries about subtle semantic bugs.",
+      "looks_novel_but_isnt": "The tool requires Python scripting to use — no CLI, no CI integration, no cargo plugin. The benchmark is 32 hand-crafted toy functions. No developer would actually use this in its current form.",
+      "novelty_injection": "Build a proper CLI tool and GitHub Action: `semrec verify --c original.c --rust translated.rs` that produces a clear report. Add a `semrec translate --cegar` mode that does the full CEGAR loop. Make it work on real C2Rust output for at least simple functions. Ship as a pip-installable package."
+    },
+    "E_algebraic_categorical_unifier": {
+      "genuinely_novel": "The σ-bridge concept could be generalized: it maps (language × operation × type) → semantic_behavior. This is a 3-dimensional lookup that could be formalized as a functor from a category of language semantics to a category of verification conditions.",
+      "looks_novel_but_isnt": "Currently the σ-bridge is a flat Python dataclass, not a mathematical structure. The components (parsing, IR, product program, SMT) don't share a unifying abstraction.",
+      "novelty_injection": "Formalize the σ-bridge as a SEMANTIC FUNCTOR: define a small category of 'arithmetic semantics specifications' where morphisms are semantic refinements (e.g., C11 → Rust is a refinement that resolves UB to defined behavior). Show that the product program construction is a pullback in this category, and that adding a new language pair requires only defining the functor, not modifying the verification engine."
+    }
+  }
+}
