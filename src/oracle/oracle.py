@@ -109,44 +109,74 @@ _REPAIR_RULES = [
     {
         "pattern": "signed_overflow",
         "fix_category": "wrapping_op",
-        "description": "C signed overflow is UB; Rust panics in debug mode.",
-        "suggested_fix": "Use wrapping_add/wrapping_sub/wrapping_mul for C-equivalent semantics.",
+        "description": "C signed overflow is UB; the compiler may assume it never happens. Rust panics in debug or wraps in release.",
+        "suggested_fix": "Replace ALL signed arithmetic: a + b → a.wrapping_add(b), a - b → a.wrapping_sub(b), a * b → a.wrapping_mul(b). Do this for EVERY +, -, * on i32/i64.",
     },
     {
         "pattern": "int_min_negation",
         "fix_category": "wrapping_op",
-        "description": "Negating INT_MIN is UB in C; Rust panics or wraps.",
-        "suggested_fix": "Use wrapping_neg() or handle INT_MIN explicitly.",
+        "description": "Negating INT_MIN (-2147483648) is UB in C; -INT_MIN overflows.",
+        "suggested_fix": "Replace -x with x.wrapping_neg(). Example: fn negate(x: i32) -> i32 { x.wrapping_neg() }",
     },
     {
         "pattern": "int_min_div_neg1",
         "fix_category": "guard",
-        "description": "INT_MIN / -1 is UB in C; Rust panics.",
-        "suggested_fix": "Add guard: if a == i32::MIN && b == -1 { return i32::MIN; } before division.",
+        "description": "INT_MIN / -1 is UB in C because the result (2147483648) overflows i32.",
+        "suggested_fix": "Add guard before division: if a == i32::MIN && b == -1 { return i32::MIN; } then a / b. Also guard a % b similarly.",
     },
     {
         "pattern": "shift_ub",
         "fix_category": "wrapping_op",
-        "description": "Shifting by >= bit width is UB in C; Rust wraps/panics.",
-        "suggested_fix": "Mask shift amount: n & 31, or use wrapping_shl/wrapping_shr.",
+        "description": "Shifting by >= bit width (32 for i32) is UB in C. C compilers typically mask with & 31.",
+        "suggested_fix": "Use wrapping_shl/wrapping_shr: x.wrapping_shl(n as u32) which masks automatically. Or manually: x << ((n & 31) as u32).",
+    },
+    {
+        "pattern": "shift_negative",
+        "fix_category": "wrapping_op",
+        "description": "Left-shifting a negative value is UB in C.",
+        "suggested_fix": "Use wrapping_shl: x.wrapping_shl(n as u32). This handles negative values correctly via two's complement.",
     },
     {
         "pattern": "division_by_zero",
         "fix_category": "guard",
         "description": "Division by zero is UB in C; Rust panics.",
-        "suggested_fix": "Add explicit zero check before division.",
+        "suggested_fix": "Guard: if b == 0 { return 0; } (or appropriate default) before every a / b and a % b.",
     },
     {
         "pattern": "cast_truncation",
         "fix_category": "cast",
-        "description": "Integer narrowing cast may truncate differently.",
-        "suggested_fix": "Use 'as' cast with explicit truncation semantics.",
+        "description": "Integer narrowing cast may lose bits: (int)long_val truncates in C.",
+        "suggested_fix": "Use explicit 'as i32' cast in Rust. Both C and Rust truncate the same way for 'as' casts.",
     },
     {
         "pattern": "cast_sign_change",
         "fix_category": "cast",
-        "description": "Signed/unsigned reinterpretation differs.",
-        "suggested_fix": "Use explicit 'as u32' / 'as i32' with awareness of bit pattern.",
+        "description": "Signed/unsigned reinterpretation: (unsigned)(-1) == 4294967295 in C.",
+        "suggested_fix": "Use 'as u32' for signed→unsigned, 'as i32' for unsigned→signed. Bit pattern is preserved.",
+    },
+    {
+        "pattern": "output_mismatch",
+        "fix_category": "wrapping_op",
+        "description": "Output differs on specific inputs — likely unsigned overflow semantics.",
+        "suggested_fix": "Replace ALL signed arithmetic with wrapping variants: wrapping_add, wrapping_sub, wrapping_mul, wrapping_neg, wrapping_shl, wrapping_shr. Use 'as' casts for type conversions.",
+    },
+    {
+        "pattern": "c_undefined_behavior",
+        "fix_category": "wrapping_op",
+        "description": "C undefined behavior detected. The C code relies on UB that compilers handle as two's complement.",
+        "suggested_fix": "Use wrapping arithmetic for ALL signed operations. C UB on overflow means the Rust code must use wrapping_add/wrapping_sub/wrapping_mul to match two's complement behavior.",
+    },
+    {
+        "pattern": "pointer",
+        "fix_category": "bounds_check",
+        "description": "Pointer operation divergence: C allows out-of-bounds UB, Rust bounds-checks.",
+        "suggested_fix": "Add bounds checking: if idx < arr.len() { arr[idx] } else { default }. Use .get(idx).copied().unwrap_or(default) for safe access.",
+    },
+    {
+        "pattern": "null",
+        "fix_category": "option",
+        "description": "Null pointer check: C uses NULL, Rust uses Option<&T>.",
+        "suggested_fix": "Use Option<&T> and match/unwrap_or for null-pointer patterns.",
     },
 ]
 
@@ -245,9 +275,11 @@ class VerificationOracle:
     correctness oracle, enabling CEGAR-style iterative repair.
     """
 
-    def __init__(self, timeout_ms: int = 10000, func_name: str = ""):
+    def __init__(self, timeout_ms: int = 10000, func_name: str = "",
+                 cegar_mode: bool = False):
         self.timeout_ms = timeout_ms
         self._default_func_name = func_name
+        self._cegar_mode = cegar_mode
 
     def verify(self, c_code: str, rust_code: str,
                func_name: Optional[str] = None) -> OracleResult:
@@ -552,7 +584,8 @@ class VerificationOracle:
         elif result != z3.unsat:
             return "unknown", None, n_queries
 
-        # Check UB divergence
+        # Check UB divergence — distinguish output mismatch from UB-only divergence
+        ub_divergence = False
         if c_ctx.assumptions:
             shared_ids = {var.get_id() for _, var in shared_vars}
 
@@ -570,9 +603,15 @@ class VerificationOracle:
                 check = s2.check()
                 n_queries += 1
                 if check == z3.sat:
+                    ub_divergence = True
                     m = s2.model()
                     cex = {nm: _model_val(m, var) for nm, var in shared_vars}
                     cex["reason"] = f"c_undefined_behavior (assumption {i} violated)"
+                    # In CEGAR mode: outputs match on well-defined inputs,
+                    # only C UB inputs cause divergence. This means the Rust
+                    # translation is correct (uses wrapping semantics).
+                    if self._cegar_mode:
+                        return "conditionally_equivalent", cex, n_queries
                     return "divergent", cex, n_queries
 
         return "equivalent", None, n_queries

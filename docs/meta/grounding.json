@@ -1,32 +1,57 @@
 {
   "project": "SemRec: Cross-Language Equivalence Verifier",
-  "version": "2.0",
-  "grounding_date": "2025-01-01",
+  "version": "3.0",
+  "grounding_date": "2025-07-27",
   "claims": {
-    "accuracy_202_pairs": {
-      "value": "86.6%",
-      "basis": "SMT-based verification on 202 function pairs (52 core + 150 scaled)",
-      "methodology": "Each pair encoded via σ-bridge into QF_BV constraints, solved with Z3",
+    "accuracy_212_pairs": {
+      "value": "29.7%",
+      "ci_95": ["24.0%", "36.2%"],
+      "basis": "SMT-based verification on 212 function pairs (52 core + 130 expanded + 19 memory + 11 C2Rust-realistic)",
+      "methodology": "Each pair encoded via σ-bridge into QF_BV/QF_ABV constraints, solved with Z3",
+      "artifact": "experiments/results/full_verification_v3.json",
       "limitations": [
-        "Loop analysis is bounded model checking (BMC) at K=32, not full verification",
-        "Memory/string categories achieve 0% due to pointer exclusion from fragment",
-        "Error handling (50%) limited by lack of interprocedural analysis"
+        "Struct category achieves 0% due to parser limitations on typedef struct",
+        "Loop analysis is bounded model checking (BMC) at K=32",
+        "Memory category achieves 28.6% — limited by frontend support for pointer types in function signatures",
+        "Overall accuracy reflects inclusion of categories beyond the supported fragment"
       ]
     },
-    "expanded_benchmark": {
-      "value": "352 total pairs across 14 categories",
-      "basis": "130 new pairs added covering struct, enum, float, C2Rust, iterator, cast, compound, control_flow",
-      "methodology": "Hand-written pairs with known expected results"
+    "core_fragment_accuracy": {
+      "value": "83.3% on arithmetic, 100% on shift, 60% on cast/division",
+      "basis": "Core supported fragment: arithmetic, bitwise, division, shift, cast, error handling",
+      "artifact": "experiments/results/full_verification_v3.json"
     },
-    "differential_testing_comparison": {
-      "value": "32.7% accuracy for differential testing",
-      "basis": "Random testing with 10,000 inputs per pair on 52 core pairs",
-      "methodology": "Cannot detect 8 UB-related divergences by construction"
+    "memory_accuracy": {
+      "value": "26.3% (5/19)",
+      "basis": "19 memory/pointer benchmark pairs using QF_ABV array theory extension",
+      "artifact": "experiments/results/memory_verification.json",
+      "improvement": "Up from 0% in prior version"
+    },
+    "c2rust_realistic_accuracy": {
+      "value": "18.2% (2/11)",
+      "basis": "11 pairs approximating real C2Rust transpiler output patterns",
+      "artifact": "experiments/results/c2rust_realistic_verification.json"
     },
     "cegar_convergence": {
-      "value": "16.7% (5/30)",
-      "basis": "CEGAR loop with GPT-4.1-nano, 5 iterations each",
-      "methodology": "Converges only when LLM produces correct translation on first attempt"
+      "value": "35.0% (7/20)",
+      "basis": "CEGAR loop with GPT-4.1-nano, 5 iterations each, 20 UB-heavy functions",
+      "methodology": "Improved repair hints with UB-specific guidance and conditional equivalence mode",
+      "artifact": "experiments/results/cegar_ub_improved.json",
+      "improvement": "Up from 0% on UB functions in prior version",
+      "detail": {
+        "pure_ub_convergence": "67% (4/6) on overflow/negation functions",
+        "structural_ub_convergence": "0% (0/6) on division/shift guard functions",
+        "first_try_correct": "10% (2/20)",
+        "avg_iterations": 3.4,
+        "avg_time_ms": 3314
+      }
+    },
+    "verification_performance": {
+      "mean_time_ms": 186.3,
+      "median_time_ms": 5.1,
+      "p95_time_ms": 1124.7,
+      "total_suite_time_s": 39.5,
+      "artifact": "experiments/results/experiment_summary_v3.json"
     }
   },
   "supported_fragment": {
@@ -38,28 +63,32 @@
       "Type casts (widening, narrowing, sign change, float conversion)",
       "Struct types (field access, construction, nested structs)",
       "Enum/tagged union types (discriminant extraction, variant construction)",
-      "Floating-point (IEEE 754 f32/f64 via QF_FP)"
+      "Floating-point (IEEE 754 f32/f64 via QF_FP)",
+      "Pointer/memory operations via QF_ABV: alloca, load, store, GEP, malloc/free, memcpy/memset"
     ],
     "excludes": [
-      "Pointers and heap allocation (requires separation logic)",
-      "String operations (pointer-based)",
       "Interprocedural analysis",
-      "Concurrency"
+      "Concurrency",
+      "Complex string operations (beyond byte-level)",
+      "Dynamic dispatch / vtables",
+      "Typedef struct in C parser (parser limitation)"
     ]
   },
   "honest_scoping": {
-    "loop_analysis": "Bounded model checking (BMC) at depth K=32, NOT full verification. Exact for bounded loops, best-effort for unbounded.",
+    "loop_analysis": "Bounded model checking (BMC) at depth K=32, NOT full verification. Exact for bounded loops, best-effort for unbounded. An UNSAT result at depth K guarantees equivalence for all executions of ≤ K iterations.",
+    "memory_model": "Byte-addressable array model (QF_ABV). Tracks alloca/store/load/GEP with SSA versioning. Allocation non-overlap and alignment enforced via Z3 constraints. Does not model garbage collection, custom allocators, or memory-mapped I/O.",
     "struct_encoding": "Flat bitvector concatenation — correct for value semantics, does not model pointer-to-struct or heap-allocated structs",
     "enum_encoding": "Tagged bitvector union — correct for discriminant + payload, does not model enum layout optimizations (niche filling)",
-    "float_encoding": "IEEE 754 via Z3 QF_FP — correct for standard operations, does not model platform-specific behavior or -ffast-math"
+    "float_encoding": "IEEE 754 via Z3 QF_FP — correct for standard operations, does not model platform-specific behavior or -ffast-math",
+    "cegar_conditional_equivalence": "CEGAR mode accepts translations where outputs match on all well-defined inputs, recognizing UB-only divergences as correct wrapping translations. This is sound: if C has UB on input x, any Rust behavior on x is acceptable."
   },
   "key_theorems": {
     "conditional_soundness": {
       "statement": "For functions in F: UNSAT ⟹ ∀x∈D_¬UB. f_C(x) = f_R(x)",
       "conditions": [
-        "Functions must be in supported fragment F",
+        "Functions must be in supported fragment F (now including memory operations)",
         "Loops must have ≤ K iterations for exact results",
-        "No pointer/heap operations"
+        "Memory operations must be within allocated bounds"
       ]
     },
     "counterexample_correctness": {
@@ -67,8 +96,24 @@
       "conditions": ["Same conditions as soundness theorem"]
     },
     "decidability": {
-      "statement": "For F, the verification problem is decidable (QF_BV + BMC)",
-      "conditions": ["Finite unrolling bound K"]
+      "statement": "For F, the verification problem is decidable (QF_BV + QF_ABV + BMC)",
+      "conditions": ["Finite unrolling bound K", "Finite memory allocations"]
+    },
+    "memory_soundness_extension": {
+      "statement": "For functions in F_M (F extended with alloca/load/store/GEP): UNSAT ⟹ ∀x∈D_¬UB_M. f_C(x) = f_R(x)",
+      "conditions": [
+        "D_¬UB_M excludes inputs causing out-of-bounds access, null dereference, or use-after-free",
+        "Memory operations must be on statically deterministic allocation sizes",
+        "memcpy/memset bounded to 64 bytes in unrolling"
+      ]
     }
+  },
+  "sigma_bridge_formal_semantics": {
+    "ub_encoding": "C UB is encoded as havoc: when an operation triggers UB (detected via overflow/shift/division predicates), the C-side result is replaced with an unconstrained symbolic bitvector. This models the fact that a C compiler may produce ANY value for UB operations.",
+    "overflow_mode_ub": "For OverflowMode.UB: emit ub_flag = bvsadd_overflow(a,b); result = ite(ub_flag, fresh_unconstrained_bv, bvadd(a,b)). The ub_flag is added to the C-side assumptions list.",
+    "overflow_mode_wrap": "For OverflowMode.WRAP: emit result = bvadd(a,b). No assumptions added.",
+    "shift_model_ub": "For ShiftModel.UB: if shift_amount ≥ bitwidth, flag as UB (havoc result). For ShiftModel.MASK: emit shift_amount & (bitwidth-1).",
+    "division_model": "For DivisionModel.UB: flag division by zero and INT_MIN/-1 as UB. For DivisionModel.PANIC: these are divergent from C's UB.",
+    "implementation_defined_behavior": "C implementation-defined behaviors (int width, char signedness, struct padding) are currently fixed: int=32 bits, char=signed, padding=standard ABI alignment. Future work: parameterize via σ_C configuration."
   }
 }

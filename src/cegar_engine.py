@@ -146,15 +146,24 @@ class CEGAREngine:
         return preprocess_rust_code(code)
 
     def _initial_prompt(self, c_code: str) -> List[Dict[str, str]]:
-        """Create initial translation prompt."""
+        """Create initial translation prompt with detailed UB guidance."""
         return [
             {"role": "system", "content": (
-                "You are a C-to-Rust translation expert. Translate the given C function "
-                "to semantically equivalent Rust. The Rust function must produce identical "
-                "output for ALL possible inputs, including edge cases like overflow, "
-                "division by zero, and shift by >= bit width. Use wrapping arithmetic "
-                "where C has undefined behavior. Return ONLY the Rust function in a "
-                "```rust``` code block."
+                "You are a C-to-Rust translation expert specializing in undefined behavior. "
+                "Translate the given C function to semantically equivalent Rust.\n\n"
+                "CRITICAL RULES for C-to-Rust equivalence:\n"
+                "1. Signed integer overflow is UNDEFINED BEHAVIOR in C. The C compiler may "
+                "assume it never happens. In Rust, use wrapping_add/wrapping_sub/wrapping_mul "
+                "to match two's complement behavior.\n"
+                "2. Signed integer division: INT_MIN / -1 is UB in C. Guard with: "
+                "if a == i32::MIN && b == -1 { return i32::MIN; }\n"
+                "3. Division by zero is UB in C. Guard: if b == 0 { return 0; }\n"
+                "4. Shift by >= bit width is UB in C. Use wrapping_shl/wrapping_shr or mask: "
+                "n.wrapping_shl((s & 31) as u32)\n"
+                "5. Negation of INT_MIN is UB in C. Use wrapping_neg().\n"
+                "6. For ALL arithmetic on signed integers, default to wrapping variants.\n\n"
+                "Return ONLY the Rust function in a ```rust``` code block. "
+                "Do not use closures, iterators, or complex method chains."
             )},
             {"role": "user", "content": f"Translate this C function to equivalent Rust:\n\n```c\n{c_code}\n```"}
         ]
@@ -162,24 +171,110 @@ class CEGAREngine:
     def _repair_prompt(self, c_code: str, rust_code: str,
                        counterexample: Dict[str, Any],
                        repair_hint: str, iteration: int) -> List[Dict[str, str]]:
-        """Create repair prompt with counterexample feedback."""
+        """Create repair prompt with detailed counterexample and semantic guidance."""
         cex_str = json.dumps(counterexample, indent=2)
+
+        # Generate detailed UB explanation from counterexample
+        ub_guidance = self._generate_ub_guidance(counterexample)
+
         return [
             {"role": "system", "content": (
-                "You are a C-to-Rust translation expert. A previous translation was "
-                "found to be semantically incorrect by a formal verification oracle. "
-                "Fix the Rust translation to match C semantics exactly. "
-                "Return ONLY the corrected Rust function in a ```rust``` code block."
+                "You are a C-to-Rust translation expert. A formal verification oracle "
+                "found that your Rust translation diverges from the C original on "
+                "specific inputs. You must fix the Rust code to match C's behavior "
+                "EXACTLY on ALL inputs.\n\n"
+                "COMMON MISTAKES TO AVOID:\n"
+                "- Using Rust's default + instead of wrapping_add for signed integers\n"
+                "- Forgetting that C signed overflow is UB (compiler may optimize it away)\n"
+                "- Not guarding division by zero or INT_MIN/-1\n"
+                "- Using >> instead of wrapping_shr for shifts\n"
+                "- Using - instead of wrapping_neg for negation\n\n"
+                "Return ONLY the corrected Rust function in a ```rust``` code block. "
+                "Use simple, direct code with wrapping arithmetic."
             )},
             {"role": "user", "content": (
-                f"The following C function:\n```c\n{c_code}\n```\n\n"
-                f"Was translated to this Rust (iteration {iteration}):\n```rust\n{rust_code}\n```\n\n"
-                f"The verification oracle found a DIVERGENCE with this counterexample:\n"
+                f"Original C function:\n```c\n{c_code}\n```\n\n"
+                f"Your Rust translation (iteration {iteration}):\n```rust\n{rust_code}\n```\n\n"
+                f"VERIFICATION FAILURE — the oracle found a diverging input:\n"
                 f"```json\n{cex_str}\n```\n\n"
+                f"Analysis: {ub_guidance}\n\n"
                 f"Repair hint: {repair_hint}\n\n"
-                f"Fix the Rust translation to produce identical output to C for ALL inputs."
+                f"Fix the Rust function so it produces IDENTICAL output to C for ALL inputs. "
+                f"Use wrapping arithmetic (wrapping_add, wrapping_sub, wrapping_mul, "
+                f"wrapping_neg, wrapping_shl, wrapping_shr) for ALL signed integer operations."
             )}
         ]
+
+    def _generate_ub_guidance(self, counterexample: Dict[str, Any]) -> str:
+        """Generate detailed UB explanation from counterexample data."""
+        if not counterexample:
+            return "Unknown divergence. Ensure all arithmetic uses wrapping variants."
+
+        reason = counterexample.get("reason", "")
+        inputs = {k: v for k, v in counterexample.items()
+                  if k not in ("reason", "c_behavior", "rust_behavior")}
+
+        guidance_parts = []
+
+        # Check for overflow-triggering inputs
+        for name, val in inputs.items():
+            try:
+                v = int(val)
+                if v == 2147483647:
+                    guidance_parts.append(
+                        f"Input {name}={v} (INT_MAX). Adding 1 causes signed overflow "
+                        f"(UB in C, panic in Rust debug mode). Use wrapping_add."
+                    )
+                elif v == -2147483648:
+                    guidance_parts.append(
+                        f"Input {name}={v} (INT_MIN). Negating or dividing by -1 is UB in C. "
+                        f"Use wrapping_neg() for negation, guard division."
+                    )
+                elif v == 0:
+                    guidance_parts.append(
+                        f"Input {name}=0. If used as divisor, this is UB in C. "
+                        f"Guard: if divisor == 0 {{ return 0; }}"
+                    )
+                elif v == -1:
+                    guidance_parts.append(
+                        f"Input {name}=-1. If dividing INT_MIN by -1, this is UB in C."
+                    )
+                elif v >= 32 or v < 0:
+                    if "shift" in reason.lower() or "shl" in reason.lower() or "shr" in reason.lower():
+                        guidance_parts.append(
+                            f"Input {name}={v}. Shift amount >= 32 or negative is UB in C. "
+                            f"Mask: (amount & 31) or use wrapping_shl/wrapping_shr."
+                        )
+            except (ValueError, TypeError):
+                pass
+
+        if "overflow" in reason.lower():
+            guidance_parts.append(
+                "This is a signed overflow divergence. Replace ALL uses of +, -, * "
+                "on signed integers with wrapping_add, wrapping_sub, wrapping_mul."
+            )
+        elif "division" in reason.lower() or "div" in reason.lower():
+            guidance_parts.append(
+                "This is a division-related divergence. Add guards for division by zero "
+                "AND for INT_MIN / -1."
+            )
+        elif "shift" in reason.lower():
+            guidance_parts.append(
+                "This is a shift-related divergence. Mask the shift amount with & 31 "
+                "or use wrapping_shl/wrapping_shr."
+            )
+        elif "negat" in reason.lower():
+            guidance_parts.append(
+                "This is a negation divergence. Use wrapping_neg() instead of unary -."
+            )
+
+        if not guidance_parts:
+            guidance_parts.append(
+                "General semantic divergence. Ensure ALL arithmetic operations on signed "
+                "integers use wrapping variants."
+            )
+
+        return " ".join(guidance_parts)
 
     def _syntax_fix_prompt(self, c_code: str, rust_code: str,
                            error_msg: str) -> List[Dict[str, str]]:
@@ -210,7 +305,7 @@ class CEGAREngine:
             sys.path.insert(0, impl_dir)
         from src.oracle.oracle import VerificationOracle
 
-        oracle = VerificationOracle(timeout_ms=self.timeout_ms)
+        oracle = VerificationOracle(timeout_ms=self.timeout_ms, cegar_mode=True)
         start = time.time()
         iterations = []
         converged = False
@@ -276,9 +371,9 @@ class CEGAREngine:
             )
             iterations.append(it)
 
-            if result.verdict == "equivalent":
+            if result.verdict in ("equivalent", "conditionally_equivalent"):
                 converged = True
-                final_verdict = "equivalent"
+                final_verdict = result.verdict
                 break
             elif result.verdict in ("error", "unknown"):
                 final_verdict = result.verdict

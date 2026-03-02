@@ -7,6 +7,7 @@ Given two IR functions (one from C, one from Rust), automatically:
 3. Apply semantic configuration σ = (ovf, fp, err) during encoding
 4. Generate equivalence conditions
 5. Handle: integer overflow, null/Option, error handling, array bounds, shifts
+6. Handle: pointer/memory operations via QF_ABV array theory (load, store, alloca, GEP)
 
 This replaces hand-coded per-category Z3 queries with a generic IR→Z3 compiler.
 """
@@ -29,6 +30,7 @@ from ..ir.instructions import (
     Instruction, BinaryOp, UnaryOp, CompareOp, CastInst,
     LoadInst, StoreInst, CallInst, ReturnInst, BranchInst,
     PhiInst, SelectInst, AllocaInst, GetElementPtrInst,
+    MemcpyInst, MemsetInst,
     Value, Constant, Argument, BinOpKind, CmpPredicate, CastKind,
     InstructionMetadata,
 )
@@ -112,6 +114,66 @@ class AutoEncodingContext:
         self.rust_side_conditions: List[z3.BoolRef] = []
 
         self._fresh_counter = 0
+
+        # --- Memory model state (per-side, keyed by prefix) ---
+        # Memory is Z3 Array(BitVec(ptr_width), BitVec(8)) with SSA versioning.
+        self._mem_version: Dict[str, int] = {}     # prefix -> current version
+        self._mem_arrays: Dict[str, z3.ArrayRef] = {}  # "c_mem_0" -> Z3 array
+        self._alloc_counter: Dict[str, int] = {}   # prefix -> next alloc id
+        self._alloc_bases: Dict[str, Dict[int, z3.BitVecRef]] = {}  # prefix -> {id: base}
+        self._alloc_sizes: Dict[str, Dict[int, z3.BitVecRef]] = {}  # prefix -> {id: size}
+        self._ptr_provenance: Dict[str, Dict[str, int]] = {}  # prefix -> {var: alloc_id}
+
+    def _init_memory(self, prefix: str) -> None:
+        """Initialize a fresh memory array for a function side."""
+        mem_name = f"{prefix}mem_0"
+        addr_sort = z3.BitVecSort(self.pointer_width)
+        byte_sort = z3.BitVecSort(8)
+        mem = z3.Array(mem_name, addr_sort, byte_sort)
+        self._mem_version[prefix] = 0
+        self._mem_arrays[mem_name] = mem
+        self._alloc_counter[prefix] = 0
+        self._alloc_bases[prefix] = {}
+        self._alloc_sizes[prefix] = {}
+        self._ptr_provenance[prefix] = {}
+
+    def get_memory(self, prefix: str) -> z3.ArrayRef:
+        """Get the current memory array for a side."""
+        v = self._mem_version.get(prefix, 0)
+        key = f"{prefix}mem_{v}"
+        return self._mem_arrays.get(key, z3.Array(key, z3.BitVecSort(self.pointer_width), z3.BitVecSort(8)))
+
+    def update_memory(self, prefix: str, new_mem: z3.ArrayRef) -> None:
+        """Create a new SSA version of memory for a side."""
+        v = self._mem_version.get(prefix, 0) + 1
+        self._mem_version[prefix] = v
+        key = f"{prefix}mem_{v}"
+        self._mem_arrays[key] = new_mem
+
+    def alloc_stack(self, prefix: str, size_bytes: int, align: int = 8) -> z3.BitVecRef:
+        """Allocate stack memory, returning a symbolic base address."""
+        aid = self._alloc_counter.get(prefix, 0)
+        self._alloc_counter[prefix] = aid + 1
+        base = z3.BitVec(f"{prefix}alloc_{aid}_base", self.pointer_width)
+        sz = z3.BitVecVal(size_bytes, self.pointer_width)
+        self._alloc_bases.setdefault(prefix, {})[aid] = base
+        self._alloc_sizes.setdefault(prefix, {})[aid] = sz
+        # Alignment constraint
+        if align > 1:
+            self.solver.add(z3.URem(base, z3.BitVecVal(align, self.pointer_width)) == 0)
+        # Non-null
+        self.solver.add(base != z3.BitVecVal(0, self.pointer_width))
+        # Non-overlapping with previous allocations
+        for prev_id, prev_base in list(self._alloc_bases.get(prefix, {}).items()):
+            if prev_id == aid:
+                continue
+            prev_sz = self._alloc_sizes[prefix][prev_id]
+            # base+size <= prev_base OR prev_base+prev_size <= base
+            self.solver.add(z3.Or(
+                z3.ULE(base + sz, prev_base),
+                z3.ULE(prev_base + prev_sz, base)
+            ))
+        return base
 
     def fresh(self, prefix: str = "t") -> str:
         self._fresh_counter += 1
@@ -288,7 +350,11 @@ class AutoSMTEncoder:
         
         Handles control flow by building conditional return expressions
         when branches lead to different return values.
+        Handles memory operations via QF_ABV array theory.
         """
+        # Initialize memory model for this side
+        ctx._init_memory(prefix)
+
         # Map from instruction object id to Z3 expression (avoids name collisions)
         inst_results: Dict[int, z3.ExprRef] = {}
         # Collect all (path_condition, return_value) pairs
@@ -376,10 +442,14 @@ class AutoSMTEncoder:
             return self._encode_phi(inst, ctx, prefix)
         if isinstance(inst, ReturnInst):
             return self._encode_return(inst, ctx, prefix)
+        if isinstance(inst, AllocaInst):
+            return self._encode_alloca(inst, ctx, prefix)
+        if isinstance(inst, GetElementPtrInst):
+            return self._encode_gep(inst, ctx, prefix, config)
         if isinstance(inst, LoadInst):
             return self._encode_load(inst, ctx, prefix)
         if isinstance(inst, StoreInst):
-            return None
+            return self._encode_store(inst, ctx, prefix)
         if isinstance(inst, CallInst):
             return self._encode_call(inst, ctx, prefix, config)
         if isinstance(inst, BranchInst):
@@ -774,14 +844,225 @@ class AutoSMTEncoder:
 
     def _encode_load(self, inst: LoadInst, ctx: AutoEncodingContext,
                      prefix: str) -> z3.ExprRef:
-        sort = self._type_to_sort(inst.type) if inst.type else z3.BitVecSort(32)
+        """Encode a load instruction using the memory array model.
+
+        Reads width_bytes consecutive bytes from memory at the given address,
+        composing them into a single bitvector (little-endian).
+        """
+        result_sort = self._type_to_sort(inst.type) if inst.type else z3.BitVecSort(32)
         name = f"{prefix}{inst.name or ctx.fresh('load')}"
-        if z3.is_bv_sort(sort):
-            return ctx.declare_bv(name, sort.size())
+
+        addr_expr = self._resolve_value(inst.address, ctx, prefix)
+        if not z3.is_bv(addr_expr) or addr_expr.size() != ctx.pointer_width:
+            # Fallback: unconstrained symbolic value
+            if z3.is_bv_sort(result_sort):
+                return ctx.declare_bv(name, result_sort.size())
+            return ctx.declare_bool(name)
+
+        mem = ctx.get_memory(prefix)
+        if z3.is_bv_sort(result_sort):
+            width_bytes = result_sort.size() // 8
+            if width_bytes < 1:
+                width_bytes = 1
+            # Little-endian multi-byte read
+            result = z3.Select(mem, addr_expr)  # byte 0
+            for i in range(1, width_bytes):
+                byte_i = z3.Select(mem, addr_expr + z3.BitVecVal(i, ctx.pointer_width))
+                result = z3.Concat(byte_i, result)
+            # result is now width_bytes*8 bits wide
+            actual_bits = width_bytes * 8
+            target_bits = result_sort.size()
+            if actual_bits > target_bits:
+                result = z3.Extract(target_bits - 1, 0, result)
+            elif actual_bits < target_bits:
+                result = z3.ZeroExt(target_bits - actual_bits, result)
+            ctx.set(name, result)
+            return result
         return ctx.declare_bool(name)
+
+    def _encode_store(self, inst: StoreInst, ctx: AutoEncodingContext,
+                      prefix: str) -> None:
+        """Encode a store instruction by updating the memory array.
+
+        Writes width_bytes consecutive bytes to memory at the given address
+        (little-endian). Returns None since store produces no value.
+        """
+        val_expr = self._resolve_value(inst.value, ctx, prefix)
+        addr_expr = self._resolve_value(inst.address, ctx, prefix)
+
+        if not z3.is_bv(addr_expr) or addr_expr.size() != ctx.pointer_width:
+            return None
+        if not z3.is_bv(val_expr):
+            return None
+
+        mem = ctx.get_memory(prefix)
+        width_bytes = val_expr.size() // 8
+        if width_bytes < 1:
+            width_bytes = 1
+
+        # Little-endian multi-byte write
+        new_mem = mem
+        for i in range(width_bytes):
+            byte_val = z3.Extract(i * 8 + 7, i * 8, val_expr) if val_expr.size() > 8 else val_expr
+            a = addr_expr + z3.BitVecVal(i, ctx.pointer_width) if i > 0 else addr_expr
+            new_mem = z3.Store(new_mem, a, byte_val)
+
+        ctx.update_memory(prefix, new_mem)
+        return None
+
+    def _encode_alloca(self, inst: AllocaInst, ctx: AutoEncodingContext,
+                       prefix: str) -> z3.ExprRef:
+        """Encode an alloca instruction as a fresh non-overlapping allocation."""
+        elem_size = self._type_size_bytes(inst.alloc_type)
+        total_size = elem_size * inst.num_elements
+        align = inst.alignment if inst.alignment > 0 else max(elem_size, 1)
+
+        base = ctx.alloc_stack(prefix, total_size, align)
+        name = f"{prefix}{inst.name or ctx.fresh('alloca')}"
+        ctx.set(name, base)
+        # Track provenance
+        aid = ctx._alloc_counter.get(prefix, 1) - 1
+        ctx._ptr_provenance.setdefault(prefix, {})[name] = aid
+        return base
+
+    def _encode_gep(self, inst: GetElementPtrInst, ctx: AutoEncodingContext,
+                    prefix: str, config: SemanticConfig) -> z3.ExprRef:
+        """Encode a GEP (GetElementPtr) instruction.
+
+        Computes: base + sum(index_i * stride_i) where strides depend on
+        the source element type structure (array element size, struct field offsets).
+        """
+        base_expr = self._resolve_value(inst.base, ctx, prefix)
+        if not z3.is_bv(base_expr):
+            base_expr = z3.BitVec(f"{prefix}{inst.name or ctx.fresh('gep')}", ctx.pointer_width)
+
+        if base_expr.size() != ctx.pointer_width:
+            if base_expr.size() < ctx.pointer_width:
+                base_expr = z3.ZeroExt(ctx.pointer_width - base_expr.size(), base_expr)
+            else:
+                base_expr = z3.Extract(ctx.pointer_width - 1, 0, base_expr)
+
+        offset = z3.BitVecVal(0, ctx.pointer_width)
+        current_type = inst.source_element_type
+
+        for i, idx_val in enumerate(inst.indices):
+            idx_expr = self._resolve_value(idx_val, ctx, prefix)
+            if not z3.is_bv(idx_expr):
+                idx_expr = z3.BitVecVal(0, ctx.pointer_width)
+            if idx_expr.size() != ctx.pointer_width:
+                if idx_expr.size() < ctx.pointer_width:
+                    idx_expr = z3.SignExt(ctx.pointer_width - idx_expr.size(), idx_expr)
+                else:
+                    idx_expr = z3.Extract(ctx.pointer_width - 1, 0, idx_expr)
+
+            if i == 0:
+                # First index: scale by element size
+                elem_sz = self._type_size_bytes(current_type)
+                offset = offset + idx_expr * z3.BitVecVal(elem_sz, ctx.pointer_width)
+            else:
+                if isinstance(current_type, ArrayType):
+                    elem_sz = self._type_size_bytes(current_type.element)
+                    offset = offset + idx_expr * z3.BitVecVal(elem_sz, ctx.pointer_width)
+                    current_type = current_type.element
+                elif isinstance(current_type, StructType):
+                    # Struct index must be constant
+                    if isinstance(idx_val, Constant) and isinstance(idx_val.value, int):
+                        field_idx = idx_val.value
+                        field_offset = self._struct_field_offset(current_type, field_idx)
+                        offset = offset + z3.BitVecVal(field_offset, ctx.pointer_width)
+                        if 0 <= field_idx < len(current_type.fields):
+                            current_type = current_type.fields[field_idx].type
+                    else:
+                        # Non-constant struct index: model as offset * avg field size
+                        avg_sz = max(self._type_size_bytes(current_type) // max(len(current_type.fields), 1), 1)
+                        offset = offset + idx_expr * z3.BitVecVal(avg_sz, ctx.pointer_width)
+                else:
+                    # Scalar: treat as byte offset
+                    offset = offset + idx_expr
+
+        result = base_expr + offset
+        name = f"{prefix}{inst.name or ctx.fresh('gep')}"
+        ctx.set(name, result)
+
+        # Bounds check for inbounds GEP (C UB if out of bounds)
+        if inst.inbounds and prefix.startswith("c_"):
+            # Track as assumption: the pointer must remain within its allocation
+            src_name = inst.base.name or ""
+            prov_key = f"{prefix}{src_name}"
+            aid = ctx._ptr_provenance.get(prefix, {}).get(prov_key)
+            if aid is not None and aid in ctx._alloc_bases.get(prefix, {}):
+                alloc_base = ctx._alloc_bases[prefix][aid]
+                alloc_size = ctx._alloc_sizes[prefix][aid]
+                in_bounds = z3.And(
+                    z3.UGE(result, alloc_base),
+                    z3.ULE(result, alloc_base + alloc_size)
+                )
+                ctx.assumptions.append(in_bounds)
+
+        return result
 
     def _encode_call(self, inst: CallInst, ctx: AutoEncodingContext,
                      prefix: str, config: SemanticConfig) -> z3.ExprRef:
+        """Encode a call instruction, with special handling for memory intrinsics."""
+        callee = inst.callee_name if hasattr(inst, 'callee_name') else (inst.name or "")
+        # Check for memory allocation functions
+        if isinstance(callee, str):
+            callee_lower = callee.lower()
+            if callee_lower in ("malloc", "calloc", "alloc"):
+                # Model as heap allocation
+                size_arg = inst.operands[0] if inst.operands else None
+                size_val = 64  # default
+                if size_arg and isinstance(size_arg, Constant) and isinstance(size_arg.value, int):
+                    size_val = size_arg.value
+                base = ctx.alloc_stack(prefix, size_val, 8)
+                if callee_lower == "calloc":
+                    # Zero-initialize
+                    mem = ctx.get_memory(prefix)
+                    for i in range(size_val):
+                        a = base + z3.BitVecVal(i, ctx.pointer_width) if i > 0 else base
+                        mem = z3.Store(mem, a, z3.BitVecVal(0, 8))
+                    ctx.update_memory(prefix, mem)
+                name = f"{prefix}{inst.name or ctx.fresh('call')}"
+                ctx.set(name, base)
+                return base
+            if callee_lower == "free":
+                # Model free as no-op for equivalence (but track for UB detection)
+                return z3.BoolVal(True)
+            if callee_lower in ("memcpy", "memmove"):
+                # Model as array copy
+                if len(inst.operands) >= 3:
+                    dst = self._resolve_value(inst.operands[0], ctx, prefix)
+                    src = self._resolve_value(inst.operands[1], ctx, prefix)
+                    n_arg = inst.operands[2]
+                    n_val = 0
+                    if isinstance(n_arg, Constant) and isinstance(n_arg.value, int):
+                        n_val = n_arg.value
+                    if z3.is_bv(dst) and z3.is_bv(src) and n_val > 0:
+                        mem = ctx.get_memory(prefix)
+                        for i in range(min(n_val, 64)):  # cap at 64 bytes
+                            s = src + z3.BitVecVal(i, ctx.pointer_width) if i > 0 else src
+                            d = dst + z3.BitVecVal(i, ctx.pointer_width) if i > 0 else dst
+                            byte_val = z3.Select(mem, s)
+                            mem = z3.Store(mem, d, byte_val)
+                        ctx.update_memory(prefix, mem)
+                    return dst if z3.is_bv(dst) else z3.BoolVal(True)
+            if callee_lower == "memset":
+                if len(inst.operands) >= 3:
+                    dst = self._resolve_value(inst.operands[0], ctx, prefix)
+                    val_arg = self._resolve_value(inst.operands[1], ctx, prefix)
+                    n_arg = inst.operands[2]
+                    n_val = 0
+                    if isinstance(n_arg, Constant) and isinstance(n_arg.value, int):
+                        n_val = n_arg.value
+                    if z3.is_bv(dst) and n_val > 0:
+                        mem = ctx.get_memory(prefix)
+                        byte_val = z3.Extract(7, 0, val_arg) if z3.is_bv(val_arg) and val_arg.size() >= 8 else z3.BitVecVal(0, 8)
+                        for i in range(min(n_val, 64)):
+                            d = dst + z3.BitVecVal(i, ctx.pointer_width) if i > 0 else dst
+                            mem = z3.Store(mem, d, byte_val)
+                        ctx.update_memory(prefix, mem)
+                    return dst if z3.is_bv(dst) else z3.BoolVal(True)
+
         if inst.type and not isinstance(inst.type, VoidType):
             sort = self._type_to_sort(inst.type)
             name = f"{prefix}{inst.name or ctx.fresh('call')}"
@@ -834,7 +1115,7 @@ class AutoSMTEncoder:
         if isinstance(ty, PointerType):
             return z3.BitVecSort(self.pointer_width)
         if isinstance(ty, ArrayType):
-            return z3.ArraySort(z3.BitVecSort(64), self._type_to_sort(ty.element_type))
+            return z3.ArraySort(z3.BitVecSort(64), self._type_to_sort(ty.element))
         return z3.BitVecSort(32)
 
     def _float_sort(self, ty: Optional[IRType]) -> z3.FPSortRef:
@@ -865,6 +1146,62 @@ class AutoSMTEncoder:
             else:
                 b = z3.SignExt(a.size() - b.size(), b)
         return a, b
+
+    # -----------------------------------------------------------------------
+    # Type size computation (for memory model)
+    # -----------------------------------------------------------------------
+
+    def _type_size_bytes(self, ty: IRType) -> int:
+        """Compute the size of an IR type in bytes."""
+        if isinstance(ty, IntType):
+            return max(ty.width // 8, 1)
+        if isinstance(ty, FloatType):
+            return 4 if ty.kind == FloatKind.F32 else 8
+        if isinstance(ty, PointerType):
+            return self.pointer_width // 8
+        if isinstance(ty, ArrayType):
+            return self._type_size_bytes(ty.element) * (ty.length if ty.length > 0 else 1)
+        if isinstance(ty, StructType):
+            total = 0
+            for f in ty.fields:
+                f_size = self._type_size_bytes(f.type)
+                f_align = self._type_align(f.type)
+                # Pad to alignment
+                if f_align > 0 and total % f_align != 0:
+                    total += f_align - (total % f_align)
+                total += f_size
+            return max(total, 1)
+        if isinstance(ty, VoidType):
+            return 0
+        return 4  # default
+
+    def _type_align(self, ty: IRType) -> int:
+        """Compute natural alignment of a type in bytes."""
+        if isinstance(ty, IntType):
+            return max(ty.width // 8, 1)
+        if isinstance(ty, FloatType):
+            return 4 if ty.kind == FloatKind.F32 else 8
+        if isinstance(ty, PointerType):
+            return self.pointer_width // 8
+        if isinstance(ty, ArrayType):
+            return self._type_align(ty.element)
+        if isinstance(ty, StructType):
+            if not ty.fields:
+                return 1
+            return max(self._type_align(f.type) for f in ty.fields)
+        return 4
+
+    def _struct_field_offset(self, sty: StructType, field_idx: int) -> int:
+        """Compute byte offset of a field within a struct."""
+        offset = 0
+        for i, f in enumerate(sty.fields):
+            f_align = self._type_align(f.type)
+            if f_align > 0 and offset % f_align != 0:
+                offset += f_align - (offset % f_align)
+            if i == field_idx:
+                return offset
+            offset += self._type_size_bytes(f.type)
+        return offset
 
     def _extract_witness(
         self, model: z3.ModelRef, shared_inputs: Dict[str, z3.ExprRef],

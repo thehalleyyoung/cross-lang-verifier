@@ -1,0 +1,126 @@
+{
+  "summary": {
+    "tag": "c2rust_realistic",
+    "total_pairs": 11,
+    "correct": 2,
+    "accuracy": 18.2,
+    "accuracy_ci_95": [
+      5.1,
+      47.7
+    ],
+    "errors": 1,
+    "mean_time_ms": 10.7,
+    "median_time_ms": 9.4,
+    "p95_time_ms": 26.1,
+    "total_time_ms": 118.1,
+    "by_category": {
+      "c2rust_realistic": {
+        "accuracy": 18.2,
+        "total": 11,
+        "correct": 2,
+        "errors": 1
+      }
+    }
+  },
+  "results": [
+    {
+      "name": "c2rust_error_cleanup",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 16.81,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_state_machine",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 12.16,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_gcd",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 16.83,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_isqrt",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 9.98,
+      "smt_queries": 2
+    },
+    {
+      "name": "c2rust_popcount",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.46,
+      "smt_queries": 0
+    },
+    {
+      "name": "c2rust_reverse_bits",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 4.31,
+      "smt_queries": 0
+    },
+    {
+      "name": "c2rust_next_power_of_two",
+      "category": "c2rust_realistic",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 26.07,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_atoi_simple",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 8.4,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_hash_combine",
+      "category": "c2rust_realistic",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 9.45,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_errno_to_result",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 8.24,
+      "smt_queries": 3
+    },
+    {
+      "name": "c2rust_crc8",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 2.45,
+      "smt_queries": 0
+    }
+  ]
+}

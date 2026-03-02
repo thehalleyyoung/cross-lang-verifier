@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  1 MAR 2026 19:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  1 MAR 2026 20:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1126,16 +1126,16 @@ File: lstlang1.sty 2024/09/23 1.10c listings language file
 File: lstmisc.sty 2024/09/23 1.10c (Carsten Heinz)
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 236.
+nput line 235.
 LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 237.
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 236.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/bx/sc' undefined
-(Font)              using `OT1/cmr/bx/n' instead on input line 273.
+(Font)              using `OT1/cmr/bx/n' instead on input line 272.
 
 
-Overfull \hbox (195.04338pt too wide) in paragraph at lines 304--307
+Overfull \hbox (195.04338pt too wide) in paragraph at lines 303--306
  [][] 
  []
 
@@ -1144,79 +1144,89 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 310.
+(hyperref)                removing `math shift' on input line 309.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 310.
+(hyperref)                removing `\sigma' on input line 309.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 310.
+(hyperref)                removing `math shift' on input line 309.
 
 
 
 [3]
+Overfull \hbox (3.8704pt too wide) in paragraph at lines 387--391
+\OT1/cmr/m/n/10.95 We ex-tend the $\OML/cmm/m/it/10.95 ^^[$\OT1/cmr/m/n/10.95 -
+bridge to han-dle pointer and mem-ory op-er-a-tions us-ing Z3's ar-ray the-ory 
+(QF[]ABV).
+ []
+
+
 
 [4]
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/scit' undefined
-(Font)              using `OT1/cmr/m/sc' instead on input line 394.
+(Font)              using `OT1/cmr/m/sc' instead on input line 437.
 
+
+
+[5]
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/scit' undefined
-(Font)              using `OT1/cmr/m/sc' instead on input line 424.
+(Font)              using `OT1/cmr/m/sc' instead on input line 468.
 
 
-Overfull \hbox (11.02866pt too wide) in paragraph at lines 428--431
+Overfull \hbox (11.02866pt too wide) in paragraph at lines 472--475
 []$[] [] \OMS/cmsy/m/n/10.95 D[]$ \OT1/cmr/m/it/10.95 and the di-ver-gence is d
 ue to C UB (the or-a-cle clas-si-fies this as \OT1/cmtt/m/it/10.95 undefined[]b
 ehavior\OT1/cmr/m/it/10.95 ). 
  []
 
 LaTeX Font Info:    Font shape `OT1/cmss/m/it' in size <10.95> not available
-(Font)              Font shape `OT1/cmss/m/sl' tried instead on input line 435.
+(Font)              Font shape `OT1/cmss/m/sl' tried instead on input line 479.
 
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
 
-[5]
-
 [6]
 
-LaTeX Warning: Reference `tab:bench-expanded' on page 7 undefined on input line
- 558.
-
-Package pgfplots info on input line 628: Using 'lua backend=false' for axis: x 
+[7]
+Package pgfplots info on input line 679: Using 'lua backend=false' for axis: x 
 coord trafo unsupported.
 
-
-[7]
 
 [8]
-Underfull \hbox (badness 4805) in paragraph at lines 704--706
+Underfull \hbox (badness 4805) in paragraph at lines 762--764
 []|\OT1/cmtt/m/n/10.95 abs(INT[]MIN) \OT1/cmr/m/n/10.95 is UB in C; Rust
  []
-
-Package pgfplots info on input line 743: Using 'lua backend=false' for axis: x 
-coord trafo unsupported.
-Package pgfplots info on input line 799: Using 'lua backend=false' for axis: x 
-coord trafo unsupported.
-
-Package enumitem Warning: Negative labelwidth. This does not make much
-(enumitem)                sense, on input line 834.
 
 
 
 [9]
-Package pgfplots info on input line 872: Using 'lua backend=false' for axis: x 
+Package pgfplots info on input line 801: Using 'lua backend=false' for axis: x 
 coord trafo unsupported.
 
 
 [10]
 
+Package enumitem Warning: Negative labelwidth. This does not make much
+(enumitem)                sense, on input line 883.
+
+
+Overfull \hbox (35.5419pt too wide) in paragraph at lines 887--891
+[]\OT1/cmr/m/n/10.95 Functions where the LLM cor-rectly uses wrap-ping arith-me
+tic (\OT1/cmtt/m/n/10.95 wrapping[]add\OT1/cmr/m/n/10.95 ,
+ []
+
+
+
 [11]
+Package pgfplots info on input line 944: Using 'lua backend=false' for axis: x 
+coord trafo unsupported.
+
 
 [12]
 
@@ -1225,11 +1235,11 @@ coord trafo unsupported.
 [14]
 
 [15]
+
+[16]
 Overfull \vbox (34.96999pt too high) has occurred while \output is active []
 
 
-
-[16]
 
 [17]
 
@@ -1244,20 +1254,22 @@ Overfull \vbox (34.96999pt too high) has occurred while \output is active []
 [22]
 
 [23]
+
+[24]
 LaTeX Font Info:    Trying to load font information for OMS+cmtt on input line 
-1681.
-LaTeX Font Info:    No file OMScmtt.fd. on input line 1681.
+1759.
+LaTeX Font Info:    No file OMScmtt.fd. on input line 1759.
 
 
 LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
 (Font)              using `OMS/cmsy/m/n' instead
-(Font)              for symbol `textbraceleft' on input line 1681.
+(Font)              for symbol `textbraceleft' on input line 1759.
 
 
 
-[24]
+[25]
 LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 1753.
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 1831.
 
  (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
@@ -1266,28 +1278,28 @@ File: lstlang1.sty 2024/09/23 1.10c listings language file
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
 
-[25]
-
 [26]
 
 [27]
-Overfull \hbox (5.04411pt too wide) detected at line 1916
+
+[28]
+Overfull \hbox (5.04411pt too wide) detected at line 1994
 []
  []
 
 
 
-[28]
-Overfull \hbox (9.2967pt too wide) in paragraph at lines 1989--1992
+[29]
+Overfull \hbox (9.2967pt too wide) in paragraph at lines 2067--2070
 \OT1/cmr/m/n/10.95 mod-els may achieve higher re-pair rates. How-ever, the fun-
-da-men-tal UB ir-repara-bil-ity re-sult (Lemma [][]7[][])
+da-men-tal UB ir-repara-bil-ity re-sult (Lemma [][]8[][])
  []
 
 
 
-[29]
+[30]
 
-[30] (./paper.aux)
+[31] (./paper.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
@@ -1297,67 +1309,53 @@ L3 programming layer <2025-01-18>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 
-LaTeX Warning: There were undefined references.
-
-
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: 7E18293CB978C8F92E31C1DB2F8874C7;14354.
+(rerunfilecheck)             Checksum: 09E43AE355FDF5F0F74EC854EBA4C08D;14604.
  ) 
 Here is how much of TeX's memory you used:
- 37966 strings out of 474662
- 851003 string characters out of 5751110
- 1791562 words of memory out of 5000000
- 60019 multiletter control sequences out of 15000+600000
- 576343 words of font info for 103 fonts, out of 8000000 for 9000
+ 37970 strings out of 474662
+ 850952 string characters out of 5751110
+ 1791401 words of memory out of 5000000
+ 60014 multiletter control sequences out of 15000+600000
+ 577302 words of font info for 106 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
  99i,13n,101p,726b,2335s stack positions out of 10000i,1000n,20000p,200000b,200000s
-
-pdfTeX warning (dest): name{table.caption.31} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.19} has been referenced but does not 
-exist, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{table.caption.17} has been referenced but does not 
-exist, replaced by a fixed one
-
- </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknapp
-en/ec/tcrm1095.600pk></usr/local/texlive/2025basic/texmf-dist/fonts/type1/publi
-c/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmbx8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2025basic/texmf-dist/f
-onts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2025basic/texmf-di
-st/fonts/type1/public/amsfonts/cm/cmitt10.pfb></usr/local/texlive/2025basic/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2025basic
-/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2025b
-asic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/20
-25basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive
-/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texl
-ive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/t
-exlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/loca
-l/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/lo
-cal/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/
-local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></us
-r/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmss10.pfb>
-</usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx1
-0.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/c
-mssi10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmsy10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmsy8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmti10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmti8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2025basic/texmf-dist/fonts
-/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on paper.pdf (30 pages, 420790 bytes).
+ </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jkna
+ppen/ec/tcrm1095.600pk></usr/local/texlive/2025basic/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1
+/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmbx8.pfb></usr/local/texlive/2025basic/texmf-dist/font
+s/type1/public/amsfonts/cm/cmbxti10.pfb></usr/local/texlive/2025basic/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2025basic/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2025basic/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb></usr/local/texlive/2025b
+asic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2
+025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texli
+ve/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/te
+xlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local
+/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/lo
+cal/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr
+/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></
+usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb>
+</usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pf
+b></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.
+pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cms
+s10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm
+/cmssbx10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmssi10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmsy10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmti8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2025basic/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2025basic/texmf-di
+st/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on paper.pdf (31 pages, 440284 bytes).
 PDF statistics:
- 1026 PDF objects out of 1200 (max. 8388607)
- 930 compressed objects within 10 object streams
- 423 named destinations out of 1000 (max. 500000)
- 613 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1048 PDF objects out of 1200 (max. 8388607)
+ 949 compressed objects within 10 object streams
+ 431 named destinations out of 1000 (max. 500000)
+ 621 words of extra memory for PDF output out of 10000 (max. 10000000)
 

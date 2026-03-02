@@ -1,5 +1,5 @@
 {
   "category": "B",
-  "key_quote": "The supported fragment severely limits practical applicability: no pointers, heap, structs, strings, floating point, or concurrency — exactly the features that make C-to-Rust translation difficult.",
-  "rationale": "The σ-bridge concept is acknowledged as novel and well-motivated by all reviewers. The problems are all about insufficient depth: the fragment is too narrow (0% on Memory/String categories), CEGAR convergence is too low (16.7%), parsers are unvalidated, and comparison with c2rust is missing. Expanding the supported fragment would transform this from proof-of-concept to practical tool."
+  "key_quote": "No pointer/memory handling... addresses 'the easy half of C-to-Rust verification while leaving the hard half untouched'",
+  "rationale": "All reviewers praise the σ-bridge abstraction and QF_BV encoding as clean, extensible, and novel. The critiques focus on execution depth: missing pointer/memory handling, 0% CEGAR success on UB, synthetic-only benchmarks, and uncharacterized scalability — all depth/completeness issues."
 }

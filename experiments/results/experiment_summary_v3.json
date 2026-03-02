@@ -1,0 +1,197 @@
+{
+  "full_suite": {
+    "tag": "full_suite",
+    "total_pairs": 212,
+    "correct": 63,
+    "accuracy": 29.7,
+    "accuracy_ci_95": [
+      24.0,
+      36.2
+    ],
+    "errors": 36,
+    "mean_time_ms": 186.3,
+    "median_time_ms": 5.1,
+    "p95_time_ms": 43.4,
+    "total_time_ms": 39485.3,
+    "by_category": {
+      "arithmetic": {
+        "accuracy": 83.3,
+        "total": 12,
+        "correct": 10,
+        "errors": 0
+      },
+      "bitwise": {
+        "accuracy": 50.0,
+        "total": 8,
+        "correct": 4,
+        "errors": 0
+      },
+      "c2rust": {
+        "accuracy": 18.5,
+        "total": 27,
+        "correct": 5,
+        "errors": 2
+      },
+      "c2rust_realistic": {
+        "accuracy": 18.2,
+        "total": 11,
+        "correct": 2,
+        "errors": 1
+      },
+      "cast": {
+        "accuracy": 60.0,
+        "total": 15,
+        "correct": 9,
+        "errors": 1
+      },
+      "compound": {
+        "accuracy": 13.3,
+        "total": 15,
+        "correct": 2,
+        "errors": 0
+      },
+      "control_flow": {
+        "accuracy": 0.0,
+        "total": 10,
+        "correct": 0,
+        "errors": 0
+      },
+      "division": {
+        "accuracy": 60.0,
+        "total": 5,
+        "correct": 3,
+        "errors": 0
+      },
+      "enum": {
+        "accuracy": 15.0,
+        "total": 20,
+        "correct": 3,
+        "errors": 3
+      },
+      "error_handling": {
+        "accuracy": 50.0,
+        "total": 8,
+        "correct": 4,
+        "errors": 1
+      },
+      "float": {
+        "accuracy": 40.0,
+        "total": 15,
+        "correct": 6,
+        "errors": 7
+      },
+      "iterator": {
+        "accuracy": 40.0,
+        "total": 15,
+        "correct": 6,
+        "errors": 0
+      },
+      "loops": {
+        "accuracy": 25.0,
+        "total": 8,
+        "correct": 2,
+        "errors": 0
+      },
+      "memory": {
+        "accuracy": 28.6,
+        "total": 14,
+        "correct": 4,
+        "errors": 2
+      },
+      "memory_scaled": {
+        "accuracy": 0.0,
+        "total": 4,
+        "correct": 0,
+        "errors": 0
+      },
+      "shift": {
+        "accuracy": 100.0,
+        "total": 3,
+        "correct": 3,
+        "errors": 0
+      },
+      "string": {
+        "accuracy": 0.0,
+        "total": 2,
+        "correct": 0,
+        "errors": 0
+      },
+      "struct": {
+        "accuracy": 0.0,
+        "total": 20,
+        "correct": 0,
+        "errors": 19
+      }
+    }
+  },
+  "memory": {
+    "tag": "memory",
+    "total_pairs": 19,
+    "correct": 5,
+    "accuracy": 26.3,
+    "accuracy_ci_95": [
+      11.8,
+      48.8
+    ],
+    "errors": 1,
+    "mean_time_ms": 801.8,
+    "median_time_ms": 10.0,
+    "p95_time_ms": 15057.4,
+    "total_time_ms": 15233.5,
+    "by_category": {
+      "c2rust": {
+        "accuracy": 14.3,
+        "total": 7,
+        "correct": 1,
+        "errors": 0
+      },
+      "memory": {
+        "accuracy": 50.0,
+        "total": 8,
+        "correct": 4,
+        "errors": 1
+      },
+      "memory_scaled": {
+        "accuracy": 0.0,
+        "total": 4,
+        "correct": 0,
+        "errors": 0
+      }
+    }
+  },
+  "c2rust_realistic": {
+    "tag": "c2rust_realistic",
+    "total_pairs": 11,
+    "correct": 2,
+    "accuracy": 18.2,
+    "accuracy_ci_95": [
+      5.1,
+      47.7
+    ],
+    "errors": 1,
+    "mean_time_ms": 10.7,
+    "median_time_ms": 9.4,
+    "p95_time_ms": 26.1,
+    "total_time_ms": 118.1,
+    "by_category": {
+      "c2rust_realistic": {
+        "accuracy": 18.2,
+        "total": 11,
+        "correct": 2,
+        "errors": 1
+      }
+    }
+  },
+  "scalability": {
+    "total_benchmarks": 212,
+    "min_loc": 2,
+    "max_loc": 39,
+    "min_time_ms": 0.3,
+    "max_time_ms": 15067.5
+  },
+  "regression": {
+    "slope_ms_per_loc": -3.674,
+    "intercept_ms": 192.0,
+    "r_squared": 0.0002
+  }
+}

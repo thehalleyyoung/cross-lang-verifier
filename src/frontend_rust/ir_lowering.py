@@ -374,7 +374,7 @@ class RustIRLowering:
             length = 0
             if isinstance(ty.length, LitExpr) and ty.length.int_value is not None:
                 length = ty.length.int_value
-            return ArrayType(element=elem, count=length)
+            return ArrayType(element=elem, length=length)
 
         if isinstance(ty, SliceType):
             # Fat pointer: lower as struct { *elem, usize }
@@ -1328,7 +1328,7 @@ class RustIRLowering:
         if not expr.elements:
             return Constant.undef(VoidType())
         elem_type = self._infer_expr_type(expr.elements[0])
-        arr_type = ArrayType(element=elem_type, count=len(expr.elements))
+        arr_type = ArrayType(element=elem_type, length=len(expr.elements))
         alloca = self._builder.alloca(arr_type, name="array")
         zero = Constant.int_const(IntType(64, Signedness.SIGNED), 0)
 

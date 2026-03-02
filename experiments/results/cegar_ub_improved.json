@@ -1,0 +1,1455 @@
+{
+  "analysis": {
+    "total_pairs": 20,
+    "converged": 7,
+    "convergence_rate": 35.0,
+    "equivalent_on_first_try": 2,
+    "remained_divergent": 9,
+    "errors": 3,
+    "avg_iterations": 3.4,
+    "avg_time_ms": 3314.0,
+    "bug_classification": {
+      "other": 9
+    },
+    "repairability_breakdown": {
+      "easy": {},
+      "medium": {},
+      "hard": {
+        "other": 9
+      }
+    },
+    "convergence_curve": {
+      "1": 7
+    },
+    "repair_by_class": {
+      "none": {
+        "total": 11,
+        "repaired": 7
+      },
+      "other": {
+        "total": 9,
+        "repaired": 0
+      }
+    }
+  },
+  "individual_results": [
+    {
+      "func_name": "add_overflow",
+      "c_code": "\nint add_overflow(int a, int b) {\n    return a + b;\n}\n",
+      "converged": true,
+      "final_verdict": "conditionally_equivalent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn add_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_add(b)\n}",
+          "verdict": "conditionally_equivalent",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 130.51819801330566,
+          "llm_prompt_tokens": 280,
+          "llm_completion_tokens": 31
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 2743.0317401885986,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "repair_iterations": 1
+    },
+    {
+      "func_name": "mul_overflow",
+      "c_code": "\nint mul_overflow(int a, int b) {\n    return a * b;\n}\n",
+      "converged": true,
+      "final_verdict": "conditionally_equivalent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn mul_overflow(a: i32, b: i32) -> i32 {\n    a.wrapping_mul(b)\n}",
+          "verdict": "conditionally_equivalent",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 6368.760108947754,
+          "llm_prompt_tokens": 280,
+          "llm_completion_tokens": 31
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 6916.123867034912,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "repair_iterations": 1
+    },
+    {
+      "func_name": "negate",
+      "c_code": "\nint negate(int x) {\n    return -x;\n}\n",
+      "converged": true,
+      "final_verdict": "conditionally_equivalent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn negate(x: i32) -> i32 {\n    x.wrapping_neg()\n}",
+          "verdict": "conditionally_equivalent",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 7.395029067993164,
+          "llm_prompt_tokens": 274,
+          "llm_completion_tokens": 23
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 761.9330883026123,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "repair_iterations": 1
+    },
+    {
+      "func_name": "abs_val",
+      "c_code": "\nint abs_val(int x) {\n    if (x < 0) return -x;\n    return x;\n}\n",
+      "converged": true,
+      "final_verdict": "conditionally_equivalent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn abs_val(x: i32) -> i32 {\n    if x < 0 {\n        x.wrapping_neg()\n    } else {\n        x\n    }\n}",
+          "verdict": "conditionally_equivalent",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 3.8459300994873047,
+          "llm_prompt_tokens": 286,
+          "llm_completion_tokens": 40
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 958.9951038360596,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "repair_iterations": 1
+    },
+    {
+      "func_name": "div_safe",
+      "c_code": "\nint div_safe(int a, int b) {\n    return a / b;\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn div_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    if a == i32::MIN && b == -1 {\n        return i32::MIN;\n    }\n    a.wrapping_div(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 3.4439563751220703,
+          "llm_prompt_tokens": 410,
+          "llm_completion_tokens": 67
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn div_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    if a == i32::MIN && b == -1 {\n        return i32::MIN;\n    }\n    a.wrapping_div(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 3.5619735717773438,
+          "llm_prompt_tokens": 410,
+          "llm_completion_tokens": 67
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn div_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    if a == i32::MIN && b == -1 {\n        return i32::MIN;\n    }\n    a.wrapping_div(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 3.72314453125,
+          "llm_prompt_tokens": 410,
+          "llm_completion_tokens": 67
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn div_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    if a == i32::MIN && b == -1 {\n        return i32::MIN;\n    }\n    a.wrapping_div(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 3.8132667541503906,
+          "llm_prompt_tokens": 410,
+          "llm_completion_tokens": 67
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn div_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    if a == i32::MIN && b == -1 {\n        return i32::MIN;\n    }\n    a.wrapping_div(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 14.106035232543945,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4278.178691864014,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "mod_safe",
+      "c_code": "\nint mod_safe(int a, int b) {\n    return a % b;\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn mod_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    a.wrapping_rem(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 27.858257293701172,
+          "llm_prompt_tokens": 390,
+          "llm_completion_tokens": 44
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn mod_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    a.wrapping_rem(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "1073741825",
+              "input_1": "1073741824"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 26.359081268310547,
+          "llm_prompt_tokens": 393,
+          "llm_completion_tokens": 44
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn mod_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    a.wrapping_rem(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "1282998272",
+              "input_1": "1282998271"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 27.842283248901367,
+          "llm_prompt_tokens": 393,
+          "llm_completion_tokens": 44
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn mod_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    a.wrapping_rem(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "1675624449",
+              "input_1": "1675624448"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 25.068044662475586,
+          "llm_prompt_tokens": 393,
+          "llm_completion_tokens": 44
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn mod_safe(a: i32, b: i32) -> i32 {\n    if b == 0 {\n        return 0;\n    }\n    a.wrapping_rem(b)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "90570753",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 23.515939712524414,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 3933.482885360718,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "shift_left",
+      "c_code": "\nint shift_left(int x, int n) {\n    return x << n;\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn shift_left(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        // Negative shift counts are undefined in C; handle as no shift or return 0\n        return 0;\n    }\n    // Mask shift count to 0..31 to avoid undefined behavior\n    let shift = (n as u32) & 31;\n    x.wrapping_shl(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "65535",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 5.616903305053711,
+          "llm_prompt_tokens": 438,
+          "llm_completion_tokens": 94
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn shift_left(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        // Negative shift counts are undefined in C; handle as no shift or return 0\n        return 0;\n    }\n    // Mask shift count to 0..31 to avoid undefined behavior\n    let shift = (n as u32) & 31;\n    x.wrapping_shl(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "65535",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 6.157159805297852,
+          "llm_prompt_tokens": 438,
+          "llm_completion_tokens": 60
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn shift_left(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        return 0;\n    }\n    let shift = (n as u32) & 31;\n    x.wrapping_shl(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "65535",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 4.734992980957031,
+          "llm_prompt_tokens": 404,
+          "llm_completion_tokens": 60
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn shift_left(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        return 0;\n    }\n    let shift = (n as u32) & 31;\n    x.wrapping_shl(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "4087",
+              "input_1": "4"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 13.476133346557617,
+          "llm_prompt_tokens": 404,
+          "llm_completion_tokens": 60
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn shift_left(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        return 0;\n    }\n    let shift = (n as u32) & 31;\n    x.wrapping_shl(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "65535",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 6.142854690551758,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4039.9508476257324,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "shift_right",
+      "c_code": "\nint shift_right(int x, int n) {\n    return x >> n;\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn shift_right(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        // Negative shift count is undefined in C; handle gracefully\n        return x;\n    }\n    // Mask shift amount to 0..31 to avoid undefined behavior\n    let shift = (n as u32) & 31;\n    x.wrapping_shr(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 6.999969482421875,
+          "llm_prompt_tokens": 433,
+          "llm_completion_tokens": 87
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn shift_right(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        // Negative shift count is undefined in C; handle gracefully\n        return x;\n    }\n    // Mask shift amount to 0..31 to avoid undefined behavior\n    let shift = (n as u32) & 31;\n    x.wrapping_shr(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 4.953145980834961,
+          "llm_prompt_tokens": 433,
+          "llm_completion_tokens": 87
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn shift_right(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        // Negative shift count is undefined in C; handle gracefully\n        return x;\n    }\n    // Mask shift amount to 0..31 to avoid undefined behavior\n    let shift = (n as u32) & 31;\n    x.wrapping_shr(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 4.941701889038086,
+          "llm_prompt_tokens": 433,
+          "llm_completion_tokens": 87
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn shift_right(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        // Negative shift count is undefined in C; handle gracefully\n        return x;\n    }\n    // Mask shift amount to 0..31 to avoid undefined behavior\n    let shift = (n as u32) & 31;\n    x.wrapping_shr(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 5.172252655029297,
+          "llm_prompt_tokens": 433,
+          "llm_completion_tokens": 87
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn shift_right(x: i32, n: i32) -> i32 {\n    if n < 0 {\n        // Negative shift count is undefined in C; handle gracefully\n        return x;\n    }\n    // Mask shift amount to 0..31 to avoid undefined behavior\n    let shift = (n as u32) & 31;\n    x.wrapping_shr(shift)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-2147483648",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 4.7130584716796875,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4980.104923248291,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "sum_to_n",
+      "c_code": "\nint sum_to_n(int n) {\n    int sum = 0;\n    int i;\n    for (i = 0; i < n && i < 100; i++) {\n        sum += i;\n    }\n    return sum;\n}\n",
+      "converged": false,
+      "final_verdict": "error",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn sum_to_n(n: i32) -> i32 {\n    let mut sum: i32 = 0;\n    let mut i: i32 = 0;\n    while i < n && i < 100 {\n        sum = sum.wrapping_add(i);\n        i = i.wrapping_add(1);\n    }\n    return sum;\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 1.1959075927734375,
+          "llm_prompt_tokens": 275,
+          "llm_completion_tokens": 78
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn sum_to_n(n: i32) -> i32 {\n    let mut sum: i32 = 0;\n    let mut i: i32 = 0;\n    while i < n && i < 100 {\n        sum = sum.wrapping_add(i);\n        i = i.wrapping_add(1);\n    }\n    sum\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 1.1987686157226562,
+          "llm_prompt_tokens": 276,
+          "llm_completion_tokens": 77
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn sum_to_n(n: i32) -> i32 {\n    let mut sum: i32 = 0;\n    let mut i: i32 = 0;\n    while i < n && i < 100 {\n        sum = sum.wrapping_add(i);\n        i = i.wrapping_add(1);\n    }\n    return sum;\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 1.1782646179199219,
+          "llm_prompt_tokens": 275,
+          "llm_completion_tokens": 78
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn sum_to_n(n: i32) -> i32 {\n    let mut sum: i32 = 0;\n    let mut i: i32 = 0;\n    while i < n && i < 100 {\n        sum = sum.wrapping_add(i);\n        i = i.wrapping_add(1);\n    }\n    sum\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 2.6121139526367188,
+          "llm_prompt_tokens": 276,
+          "llm_completion_tokens": 77
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn sum_to_n(n: i32) -> i32 {\n    let mut sum: i32 = 0;\n    let mut i: i32 = 0;\n    while i < n && i < 100 {\n        sum = sum.wrapping_add(i);\n        i = i.wrapping_add(1);\n    }\n    sum\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 1.2748241424560547,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4669.042110443115,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "factorial",
+      "c_code": "\nint factorial(int n) {\n    if (n <= 1) return 1;\n    return n * factorial(n - 1);\n}\n",
+      "converged": false,
+      "final_verdict": "error",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn factorial(n: i32) -> i32 {\n    if n <= 1 {\n        1\n    } else {\n        let n_minus_one = n.wrapping_sub(1);\n        let recursive_result = factorial(n_minus_one);\n        let result = n.wrapping_mul(recursive_result);\n        result\n    }\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'Function' object has no attribute 'type'",
+          "divergence_class": "",
+          "time_ms": 0.965118408203125,
+          "llm_prompt_tokens": 241,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn factorial(n: i32) -> i32 {\n    if n <= 1 {\n        1\n    } else {\n        let n_minus_one = n.wrapping_sub(1);\n        let recursive_result = factorial(n_minus_one);\n        let result = n.wrapping_mul(recursive_result);\n        result\n    }\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'Function' object has no attribute 'type'",
+          "divergence_class": "",
+          "time_ms": 0.9930133819580078,
+          "llm_prompt_tokens": 248,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn factorial(n: i32) -> i32 {\n    if n <= 1 {\n        1\n    } else {\n        let n_minus_one = n.wrapping_sub(1);\n        let recursive_result = factorial(n_minus_one);\n        let result = n.wrapping_mul(recursive_result);\n        result\n    }\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'Function' object has no attribute 'type'",
+          "divergence_class": "",
+          "time_ms": 1.0101795196533203,
+          "llm_prompt_tokens": 248,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn factorial(n: i32) -> i32 {\n    if n <= 1 {\n        1\n    } else {\n        let n_minus_one = n.wrapping_sub(1);\n        let recursive_result = factorial(n_minus_one);\n        let result = n.wrapping_mul(recursive_result);\n        result\n    }\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'Function' object has no attribute 'type'",
+          "divergence_class": "",
+          "time_ms": 0.9391307830810547,
+          "llm_prompt_tokens": 248,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn factorial(n: i32) -> i32 {\n    if n <= 1 {\n        1\n    } else {\n        let n_minus_one = n.wrapping_sub(1);\n        let recursive_result = factorial(n_minus_one);\n        let result = n.wrapping_mul(recursive_result);\n        result\n    }\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 1.0218620300292969,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4497.96986579895,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "power",
+      "c_code": "\nint power(int base, int exp) {\n    int result = 1;\n    int i;\n    for (i = 0; i < exp && i < 30; i++) {\n        result *= base;\n    }\n    return result;\n}\n",
+      "converged": false,
+      "final_verdict": "error",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn power(base: i32, exp: i32) -> i32 {\n    let mut result: i32 = 1;\n    let mut i: i32 = 0;\n    while i < exp && i < 30 {\n        result = result.wrapping_mul(base);\n        i = i.wrapping_add(1);\n    }\n    result\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 1.5637874603271484,
+          "llm_prompt_tokens": 279,
+          "llm_completion_tokens": 80
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn power(base: i32, exp: i32) -> i32 {\n    let mut result: i32 = 1;\n    let mut i: i32 = 0;\n    while i < exp && i < 30 {\n        result = result.wrapping_mul(base);\n        i = i.wrapping_add(1);\n    }\n    result\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 1.2199878692626953,
+          "llm_prompt_tokens": 279,
+          "llm_completion_tokens": 80
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn power(base: i32, exp: i32) -> i32 {\n    let mut result: i32 = 1;\n    let mut i: i32 = 0;\n    while i < exp && i < 30 {\n        result = result.wrapping_mul(base);\n        i = i.wrapping_add(1);\n    }\n    result\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 1.2311935424804688,
+          "llm_prompt_tokens": 279,
+          "llm_completion_tokens": 80
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn power(base: i32, exp: i32) -> i32 {\n    let mut result: i32 = 1;\n    let mut i: i32 = 0;\n    while i < exp && i < 30 {\n        result = result.wrapping_mul(base);\n        i = i.wrapping_add(1);\n    }\n    result\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "syntax fix: Rust IR lowering failed: 'NoneType' object has no attribute 'users'",
+          "divergence_class": "",
+          "time_ms": 1.3189315795898438,
+          "llm_prompt_tokens": 279,
+          "llm_completion_tokens": 80
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn power(base: i32, exp: i32) -> i32 {\n    let mut result: i32 = 1;\n    let mut i: i32 = 0;\n    while i < exp && i < 30 {\n        result = result.wrapping_mul(base);\n        i = i.wrapping_add(1);\n    }\n    result\n}",
+          "verdict": "error",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 1.27410888671875,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 5112.04195022583,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "average",
+      "c_code": "\nint average(int a, int b) {\n    return (a + b) / 2;\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn average(a: i32, b: i32) -> i32 {\n    let sum = a.wrapping_add(b);\n    sum / 2\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "570425346"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 6.839752197265625,
+          "llm_prompt_tokens": 387,
+          "llm_completion_tokens": 41
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn average(a: i32, b: i32) -> i32 {\n    let sum = a.wrapping_add(b);\n    sum.wrapping_div(2)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-402653184",
+              "input_1": "436207616"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 11.508941650390625,
+          "llm_prompt_tokens": 392,
+          "llm_completion_tokens": 41
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn average(a: i32, b: i32) -> i32 {\n    let sum = a.wrapping_add(b);\n    sum.wrapping_div(2)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1073872777",
+              "input_1": "1612841355"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 8.682012557983398,
+          "llm_prompt_tokens": 394,
+          "llm_completion_tokens": 41
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn average(a: i32, b: i32) -> i32 {\n    let sum = a.wrapping_add(b);\n    sum.wrapping_div(2)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1494127620",
+              "input_1": "1590893966"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 7.484197616577148,
+          "llm_prompt_tokens": 394,
+          "llm_completion_tokens": 41
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn average(a: i32, b: i32) -> i32 {\n    let sum = a.wrapping_add(b);\n    sum.wrapping_div(2)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-959353092",
+              "input_1": "1578311055"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 5.854129791259766,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 3073.4899044036865,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "clamp",
+      "c_code": "\nint clamp(int x, int lo, int hi) {\n    if (x < lo) return lo;\n    if (x > hi) return hi;\n    return x;\n}\n",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn clamp(x: i32, lo: i32, hi: i32) -> i32 {\n    if x < lo {\n        lo\n    } else if x > hi {\n        hi\n    } else {\n        x\n    }\n}",
+          "verdict": "equivalent",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 8.496284484863281,
+          "llm_prompt_tokens": 299,
+          "llm_completion_tokens": 55
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 708.9297771453857,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "repair_iterations": 1
+    },
+    {
+      "func_name": "bit_count",
+      "c_code": "\nint bit_count(unsigned int x) {\n    int count = 0;\n    while (x) {\n        count += x & 1;\n        x >>= 1;\n    }\n    return count;\n}\n",
+      "converged": false,
+      "final_verdict": "unknown",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn bit_count(mut x: u32) -> i32 {\n    let mut count = 0;\n    while x != 0 {\n        count += (x & 1) as i32;\n        x = x.wrapping_shr(1);\n    }\n    count\n}",
+          "verdict": "unknown",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 3.2758712768554688,
+          "llm_prompt_tokens": 304,
+          "llm_completion_tokens": 63
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 729.8178672790527,
+      "bug_class": "none",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "gcd",
+      "c_code": "\nint gcd(int a, int b) {\n    if (b == 0) return a;\n    return gcd(b, a % b);\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let temp_b = b;\n        // Handle division by zero (though in this loop, b != 0)\n        if b == 0 {\n            return a;\n        }\n        // Compute a % b with wrapping to match C behavior\n        let r = {\n            if b == 0 {\n                0\n            } else {\n                a.wrapping_rem(b)\n            }\n        };\n        a = b;\n        b = r;\n    }\n    a\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "-1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 4.960060119628906,
+          "llm_prompt_tokens": 483,
+          "llm_completion_tokens": 56
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let r = a.wrapping_rem(b);\n        a = b;\n        b = r;\n    }\n    a\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 4.543066024780273,
+          "llm_prompt_tokens": 412,
+          "llm_completion_tokens": 56
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let r = a.wrapping_rem(b);\n        a = b;\n        b = r;\n    }\n    a\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 11.654138565063477,
+          "llm_prompt_tokens": 412,
+          "llm_completion_tokens": 56
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let r = a.wrapping_rem(b);\n        a = b;\n        b = r;\n    }\n    a\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 10.200977325439453,
+          "llm_prompt_tokens": 412,
+          "llm_completion_tokens": 56
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn gcd(mut a: i32, mut b: i32) -> i32 {\n    while b != 0 {\n        let r = a.wrapping_rem(b);\n        a = b;\n        b = r;\n    }\n    a\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1",
+              "input_1": "0"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 7.213115692138672,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4480.088949203491,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "max3",
+      "c_code": "\nint max3(int a, int b, int c) {\n    int m = a;\n    if (b > m) m = b;\n    if (c > m) m = c;\n    return m;\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b > m {\n        m = b;\n    }\n    if c > m {\n        m = c;\n    }\n    m\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0",
+              "input_2": "-1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 8.431196212768555,
+          "llm_prompt_tokens": 444,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b.wrapping_gt(&m) {\n        m = b;\n    }\n    if c.wrapping_gt(&m) {\n        m = c;\n    }\n    m\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0",
+              "input_2": "-1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 7.956027984619141,
+          "llm_prompt_tokens": 454,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b.wrapping_gt(&m) {\n        m = b;\n    }\n    if c.wrapping_gt(&m) {\n        m = c;\n    }\n    m\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0",
+              "input_2": "-1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 5.20014762878418,
+          "llm_prompt_tokens": 454,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b.wrapping_gt(&m) {\n        m = b;\n    }\n    if c.wrapping_gt(&m) {\n        m = c;\n    }\n    m\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0",
+              "input_2": "-1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 9.459972381591797,
+          "llm_prompt_tokens": 454,
+          "llm_completion_tokens": 73
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn max3(a: i32, b: i32, c: i32) -> i32 {\n    let mut m = a;\n    if b.wrapping_gt(&m) {\n        m = b;\n    }\n    if c.wrapping_gt(&m) {\n        m = c;\n    }\n    m\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "0",
+              "input_1": "0",
+              "input_2": "-1"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 9.566068649291992,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4341.240882873535,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "sign",
+      "c_code": "\nint sign(int x) {\n    if (x > 0) return 1;\n    if (x < 0) return -1;\n    return 0;\n}\n",
+      "converged": true,
+      "final_verdict": "equivalent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn sign(x: i32) -> i32 {\n    if x > 0 {\n        1\n    } else if x < 0 {\n        -1\n    } else {\n        0\n    }\n}",
+          "verdict": "equivalent",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 10.184049606323242,
+          "llm_prompt_tokens": 298,
+          "llm_completion_tokens": 50
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 647.5808620452881,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "repair_iterations": 1
+    },
+    {
+      "func_name": "hash_combine",
+      "c_code": "\nint hash_combine(int seed, int value) {\n    seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);\n    return seed;\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn hash_combine(mut seed: i32, value: i32) -> i32 {\n    seed ^= value\n        .wrapping_add(0x9e3779b9)\n        .wrapping_add(seed.wrapping_shl(6))\n        .wrapping_add(seed.wrapping_shr(2));\n    seed\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1650775196",
+              "input_1": "155197835"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 15.569925308227539,
+          "llm_prompt_tokens": 450,
+          "llm_completion_tokens": 75
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn hash_combine(mut seed: i32, value: i32) -> i32 {\n    seed ^= value\n        .wrapping_add(0x9e3779b9)\n        .wrapping_add(seed.wrapping_shl(6))\n        .wrapping_add(seed.wrapping_shr(2));\n    seed\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1799302825",
+              "input_1": "281191992"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 10.659217834472656,
+          "llm_prompt_tokens": 450,
+          "llm_completion_tokens": 75
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn hash_combine(mut seed: i32, value: i32) -> i32 {\n    seed ^= value\n        .wrapping_add(0x9e3779b9)\n        .wrapping_add(seed.wrapping_shl(6))\n        .wrapping_add(seed.wrapping_shr(2));\n    seed\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1816111636",
+              "input_1": "2119500039"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 10.230064392089844,
+          "llm_prompt_tokens": 451,
+          "llm_completion_tokens": 75
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn hash_combine(mut seed: i32, value: i32) -> i32 {\n    seed ^= value\n        .wrapping_add(0x9e3779b9)\n        .wrapping_add(seed.wrapping_shl(6))\n        .wrapping_add(seed.wrapping_shr(2));\n    seed\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1389519184",
+              "input_1": "2030675829"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 13.165950775146484,
+          "llm_prompt_tokens": 451,
+          "llm_completion_tokens": 75
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn hash_combine(mut seed: i32, value: i32) -> i32 {\n    seed ^= value\n        .wrapping_add(0x9e3779b9)\n        .wrapping_add(seed.wrapping_shl(6))\n        .wrapping_add(seed.wrapping_shr(2));\n    seed\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1446505122",
+              "input_1": "1656753159"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 11.384248733520508,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 4694.438219070435,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    },
+    {
+      "func_name": "subtract_clamp",
+      "c_code": "\nint subtract_clamp(int a, int b) {\n    int result = a - b;\n    if (result < 0) result = 0;\n    return result;\n}\n",
+      "converged": true,
+      "final_verdict": "conditionally_equivalent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn subtract_clamp(a: i32, b: i32) -> i32 {\n    let result = a.wrapping_sub(b);\n    if result < 0 {\n        0\n    } else {\n        result\n    }\n}",
+          "verdict": "conditionally_equivalent",
+          "counterexample": null,
+          "repair_hint": "",
+          "divergence_class": "",
+          "time_ms": 14.80412483215332,
+          "llm_prompt_tokens": 299,
+          "llm_completion_tokens": 54
+        }
+      ],
+      "total_iterations": 1,
+      "total_time_ms": 721.9111919403076,
+      "bug_class": "none",
+      "llm_repairable": true,
+      "repair_iterations": 1
+    },
+    {
+      "func_name": "rotate_left",
+      "c_code": "\nunsigned int rotate_left(unsigned int x, int n) {\n    n = n & 31;\n    return (x << n) | (x >> (32 - n));\n}\n",
+      "converged": false,
+      "final_verdict": "divergent",
+      "iterations": [
+        {
+          "iteration": 0,
+          "rust_code": "fn rotate_left(x: u32, n: i32) -> u32 {\n    let n = n & 31;\n    x.wrapping_shl(n as u32) | x.wrapping_shr(32 - n as u32)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-166131660",
+              "input_1": "1077292365"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 11.542081832885742,
+          "llm_prompt_tokens": 426,
+          "llm_completion_tokens": 57
+        },
+        {
+          "iteration": 1,
+          "rust_code": "fn rotate_left(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    x.wrapping_shl(n) | x.wrapping_shr(32 - n)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-727400213",
+              "input_1": "-323223522"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 10.664939880371094,
+          "llm_prompt_tokens": 424,
+          "llm_completion_tokens": 57
+        },
+        {
+          "iteration": 2,
+          "rust_code": "fn rotate_left(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    x.wrapping_shl(n) | x.wrapping_shr(32 - n)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1735107487",
+              "input_1": "2079"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 10.576963424682617,
+          "llm_prompt_tokens": 424,
+          "llm_completion_tokens": 57
+        },
+        {
+          "iteration": 3,
+          "rust_code": "fn rotate_left(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    x.wrapping_shl(n) | x.wrapping_shr(32 - n)\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "539621314",
+              "input_1": "-2147483630"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 10.43391227722168,
+          "llm_prompt_tokens": 425,
+          "llm_completion_tokens": 62
+        },
+        {
+          "iteration": 4,
+          "rust_code": "fn rotate_left(x: u32, n: i32) -> u32 {\n    let n = (n & 31) as u32;\n    x.wrapping_shl(n) | x.wrapping_shr(32u32.wrapping_sub(n))\n}",
+          "verdict": "divergent",
+          "counterexample": {
+            "inputs": {
+              "input_0": "-1811917351",
+              "input_1": "-1552941042"
+            },
+            "c_behavior": null,
+            "rust_behavior": null,
+            "reason": "output_mismatch",
+            "divergence_class": "other"
+          },
+          "repair_hint": "Output differs on specific inputs \u2014 likely unsigned overflow semantics.",
+          "divergence_class": "other",
+          "time_ms": 10.736703872680664,
+          "llm_prompt_tokens": 0,
+          "llm_completion_tokens": 0
+        }
+      ],
+      "total_iterations": 5,
+      "total_time_ms": 3990.7870292663574,
+      "bug_class": "other",
+      "llm_repairable": false,
+      "repair_iterations": 0
+    }
+  ]
+}

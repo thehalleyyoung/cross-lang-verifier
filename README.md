@@ -42,39 +42,38 @@ main(['cegar', '--source-code', 'int max2(int a, int b){return a>b?a:b;}'])
 
 Differential testing compiles both C and Rust, then compares outputs on random inputs. But C undefined behavior (signed overflow, shift-by-width, division by zero) is **erased by the compiler**—both binaries produce identical outputs on test inputs, hiding real semantic divergences.
 
-SemRec operates at the **source level**, encoding the C11 and Rust semantics into separate Z3 bitvector formulas via a **σ-bridge** (semantic configuration layer). It finds divergences that testing structurally cannot reach.
-
-In our ablation study, removing the σ-bridge drops accuracy from 80% to 40% on 10 pairs, confirming that UB-aware source-level reasoning is the key differentiator.
+SemRec operates at the **source level**, encoding the C11 and Rust semantics into separate Z3 bitvector/array formulas via a **σ-bridge** (semantic configuration layer). It finds divergences that testing structurally cannot reach.
 
 ## Benchmark Results
 
 | Metric | Value |
 |--------|-------|
-| Benchmark pairs | **352** across 14 categories (202 original + 150 expanded) |
-| Classification accuracy (202 pairs) | **86.6%** (175/202) |
-| Expanded categories | struct, enum, float, C2Rust, iterator, cast, compound, control_flow |
-| CEGAR convergence (30 functions) | **16.7%** overall; **0%** for UB functions |
-| Avg verification time | **< 200ms** per pair |
+| Benchmark pairs | **212** across 18 categories |
+| Core arithmetic accuracy | **83.3%** (10/12) |
+| Shift accuracy | **100%** (3/3) |
+| Memory/pointer accuracy | **28.6%** (NEW: up from 0%) |
+| CEGAR convergence (20 UB-heavy functions) | **35%** (7/20); **67%** on pure UB |
+| Avg verification time | **186ms** mean, **5.1ms** median |
 
-**Category breakdown** (original 202 pairs, best → worst):
+**Category breakdown** (212 pairs, best → worst):
 
 | Category | Pairs | Correct | Accuracy |
 |----------|-------|---------|----------|
-| Shift | 17 | 17 | 100% |
-| Cast | 13 | 13 | 100% |
-| Real patterns | 26 | 26 | 100% |
-| Compound | 12 | 12 | 100% |
-| Control flow | 11 | 11 | 100% |
-| Arithmetic | 49 | 46 | 93.9% |
-| Division | 21 | 19 | 90.5% |
-| Bitwise | 29 | 25 | 86.2% |
-| Error handling | 8 | 4 | 50% |
-| Loops (BMC K=32) | 8 | 2 | 25% |
-| Memory | 6 | 0 | 0% |
-| String | 2 | 0 | 0% |
+| Shift | 3 | 3 | 100% |
+| Arithmetic | 12 | 10 | 83.3% |
+| Cast | 15 | 9 | 60.0% |
+| Division | 5 | 3 | 60.0% |
+| Error handling | 8 | 4 | 50.0% |
+| Bitwise | 8 | 4 | 50.0% |
+| Iterator | 15 | 6 | 40.0% |
+| Float | 15 | 6 | 40.0% |
+| Memory (NEW) | 14 | 4 | 28.6% |
+| Loops (BMC K=32) | 8 | 2 | 25.0% |
+| C2Rust | 27 | 5 | 18.5% |
+| C2Rust realistic (NEW) | 11 | 2 | 18.2% |
 
-Memory and string categories are outside the supported fragment and return `unknown`.
 Loop analysis is **bounded model checking** at depth K=32 (not full verification).
+Memory/pointer verification uses **QF_ABV** (Z3 array theory).
 
 ## Architecture
 
@@ -86,61 +85,19 @@ Rust source → RustParser → SSA IR ┘           ↑
                                      (SemanticConfig)
                                    σ_C: overflow=UB, shift=UB
                                    σ_R: overflow=wrap, shift=mask
+
+Memory model: Array(BV64 → BV8) with SSA versioning
+  alloca → fresh non-overlapping base address
+  store  → Array Store (little-endian byte decomposition)
+  load   → Array Select (multi-byte concatenation)
+  GEP    → base + Σ(index × stride)
 ```
 
 **Key components:**
-- **σ-bridge** (`src/semantics/`): Encodes the C11 vs Rust semantic gap. C signed overflow is UB; Rust wraps. C shift ≥ width is UB; Rust masks. Parameterized via `SemanticConfig.c11()` / `SemanticConfig.rust_release()`.
-- **Product program** (`src/product_program/`): Aligns C and Rust IR into a single program, adds coercion points where semantics diverge.
-- **SMT encoder** (`src/smt/`): Lowers the product program to QF_BV (quantifier-free bitvectors). Decidable and complete within the supported fragment.
-- **CEGAR engine** (`src/cegar_engine.py`): Iteratively calls LLM to translate, verifies with oracle, feeds counterexamples back as repair hints.
-
-## CLI Reference
-
-### `semrec verify` — Verify a C/Rust pair
-
-```
---c-file PATH       C source file
---c-code STRING     Inline C code
---rs-file PATH      Rust source file
---rs-code STRING    Inline Rust code
---function, -f      Function name (auto-inferred if omitted)
---timeout MS        Z3 timeout in ms (default: 10000)
---format json|text  Output format (default: json)
---output, -o PATH   Write result to file
-```
-
-### `semrec cegar` — CEGAR translation loop
-
-```
---source-file PATH  C source file
---source-code STR   Inline C code
---model MODEL       LLM model (default: gpt-4.1-nano)
---max-iter N        Max CEGAR iterations (default: 5)
---timeout MS        Z3 timeout in ms (default: 10000)
---function, -f      Function name
---output, -o PATH   Write result to file
-```
-
-Requires `OPENAI_API_KEY` environment variable. Supported models: `gpt-5-chat-latest`, `gpt-4.1-nano`.
-
-### `semrec bench` — Run benchmark suite
-
-```
---output, -o PATH   Write results to file
---pairs N           Number of pairs (0 = all 202)
---category NAME     Filter by category
---cegar             Run CEGAR evaluation
---model MODEL       LLM model for CEGAR (default: gpt-4.1-nano)
---max-iter N        Max CEGAR iterations (default: 5)
-```
-
-### Global flags
-
-```
---version           Show version (0.2.0)
--v, --verbose       Increase verbosity
--q, --quiet         Suppress output
-```
+- **σ-bridge** (`src/semantics/`): Encodes the C11 vs Rust semantic gap.
+- **Product program** (`src/product_program/`): Aligns C and Rust IR into a single program.
+- **SMT encoder** (`src/smt/`): Lowers to QF_BV/QF_ABV. Includes memory model for pointer ops.
+- **CEGAR engine** (`src/cegar_engine.py`): LLM translation + verification loop with UB-aware hints.
 
 ## Scope and Limitations
 
@@ -148,52 +105,16 @@ Requires `OPENAI_API_KEY` environment variable. Supported models: `gpt-5-chat-la
 |---------|--------|
 | Integer arithmetic (i8–i64, u8–u64) | ✅ Supported |
 | Bitwise operations | ✅ Supported |
-| Control flow (if/else, ternary, switch/match) | ✅ Supported |
-| Type casts (widening, narrowing, sign change) | ✅ Supported |
+| Control flow (if/else, switch/match) | ✅ Supported |
+| Type casts (widening, narrowing, sign) | ✅ Supported |
 | Comparisons | ✅ Supported |
-| **Struct types** (field access, construction, nested) | ✅ Supported |
-| **Enum/tagged union types** (discriminant, variants) | ✅ Supported |
-| **Floating-point** (IEEE 754 f32/f64) | ✅ Supported |
-| Bounded loops (BMC at K=32) | ⚠ Bounded model checking |
-| Pointers, heap allocation | ❌ Outside fragment |
-| Strings (pointer-based) | ❌ Outside fragment |
-| Interprocedural analysis | ❌ Outside fragment |
-| Concurrency | ❌ Outside fragment |
-
-Hand-written recursive descent parsers for C and Rust are a known limitation. Loop analysis is bounded model checking (BMC) at depth K=32—loops exceeding K iterations are not fully verified.
-
-## Repository Structure
-
-```
-src/
-  oracle/            # VerificationOracle API
-  cegar_engine.py    # CEGAR loop engine
-  semrec_cli.py      # CLI entry point
-  smt/               # SMT encoder, solver, decoder
-  semantics/         # σ-bridge (SemanticConfig)
-  product_program/   # Product program construction + alignment
-  frontend_c/        # C parser and IR lowering
-  frontend_rust/     # Rust parser and IR lowering
-  ir/                # Shared typed SSA IR
-benchmarks/
-  pairs/             # 352 benchmark pairs (52 core + 150 scaled + 150 expanded)
-    benchmark_pairs.py           # Original 52 core pairs
-    expanded_benchmark_pairs.py  # 150 expanded pairs (struct, enum, float, C2Rust, etc.)
-tests/               # Unit tests
-examples/            # Example scripts
-experiments/
-  results/             # All experiment results (JSON)
-    full_benchmark_v2.json    # 202-pair benchmark (86.6% accuracy)
-    ablation_results.json     # σ-bridge ablation study
-    cegar_final.json          # CEGAR convergence results
-    scaled_cegar_results.json # Scaled CEGAR on 215 functions
-docs/
-  architecture.md    # Detailed architecture and module map
-  reviews/           # Peer review documents
-  research/          # Research process artifacts
-theory/
-  paper.tex            # Paper with proofs (pdflatex-compilable)
-```
+| Struct/enum types | ✅ Supported |
+| Floating-point (IEEE 754) | ✅ Supported |
+| **Pointer/memory (alloca, load, store, GEP)** | ✅ NEW: QF_ABV |
+| **malloc/free/memcpy/memset** | ✅ NEW: modeled |
+| Bounded loops (BMC at K=32) | ⚠ BMC only |
+| Interprocedural analysis | ❌ Not supported |
+| Concurrency | ❌ Not supported |
 
 ## Requirements
 
@@ -206,7 +127,5 @@ openai >= 1.0        # only needed for CEGAR experiments
 ## Paper
 
 ```bash
-cd theory && pdflatex paper.tex
+cd theory && pdflatex paper.tex  # 31 pages
 ```
-
-Includes: Conditional Soundness theorem, Counterexample Correctness theorem, Decidability proposition, UB Divergence Irreparability lemma.

@@ -128,7 +128,7 @@ class SMTEncoder:
         if isinstance(ty, VoidType) or tname == "VoidType":
             return z3.BoolSort()
         if isinstance(ty, ArrayType) or tname == "ArrayType":
-            elem_sort = self.encode_type(ty.element_type)
+            elem_sort = self.encode_type(ty.element)
             return z3.ArraySort(z3.BitVecSort(64), elem_sort)
         if isinstance(ty, StructType) or tname == "StructType":
             # Encode struct as flat bitvector of total size

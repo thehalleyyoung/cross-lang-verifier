@@ -1,0 +1,210 @@
+{
+  "summary": {
+    "tag": "memory",
+    "total_pairs": 19,
+    "correct": 5,
+    "accuracy": 26.3,
+    "accuracy_ci_95": [
+      11.8,
+      48.8
+    ],
+    "errors": 1,
+    "mean_time_ms": 801.8,
+    "median_time_ms": 10.0,
+    "p95_time_ms": 15057.4,
+    "total_time_ms": 15233.5,
+    "by_category": {
+      "c2rust": {
+        "accuracy": 14.3,
+        "total": 7,
+        "correct": 1,
+        "errors": 0
+      },
+      "memory": {
+        "accuracy": 50.0,
+        "total": 8,
+        "correct": 4,
+        "errors": 1
+      },
+      "memory_scaled": {
+        "accuracy": 0.0,
+        "total": 4,
+        "correct": 0,
+        "errors": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "name": "array_sum",
+      "category": "memory",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.29,
+      "smt_queries": 0
+    },
+    {
+      "name": "array_write_read",
+      "category": "memory",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 12.54,
+      "smt_queries": 1
+    },
+    {
+      "name": "array_swap",
+      "category": "memory",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 21.71,
+      "smt_queries": 1
+    },
+    {
+      "name": "ptr_offset_ub",
+      "category": "memory",
+      "expected": "divergent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 2.34,
+      "smt_queries": 0
+    },
+    {
+      "name": "null_deref_guard",
+      "category": "memory",
+      "expected": "divergent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 2.1,
+      "smt_queries": 0
+    },
+    {
+      "name": "struct_field_access",
+      "category": "memory",
+      "expected": "divergent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.32,
+      "smt_queries": 0
+    },
+    {
+      "name": "struct_modify",
+      "category": "memory",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 11.55,
+      "smt_queries": 1
+    },
+    {
+      "name": "heap_alloc_use",
+      "category": "memory",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.78,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_array_init",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 16.14,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_conditional_ptr",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 9.97,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_buffer_fill",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 9.42,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_goto_elimination",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 5.73,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_macro_expand",
+      "category": "c2rust",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 10.47,
+      "smt_queries": 1
+    },
+    {
+      "name": "c2rust_strlen_simple",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 9.87,
+      "smt_queries": 0
+    },
+    {
+      "name": "c2rust_bitfield_extract",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 19.59,
+      "smt_queries": 2
+    },
+    {
+      "name": "matrix_multiply_2x2",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 15057.38,
+      "smt_queries": 1
+    },
+    {
+      "name": "ring_buffer_insert",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 11.99,
+      "smt_queries": 0
+    },
+    {
+      "name": "bubble_sort_3",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 16.31,
+      "smt_queries": 1
+    },
+    {
+      "name": "linked_list_sum_unrolled",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 6.04,
+      "smt_queries": 0
+    }
+  ]
+}

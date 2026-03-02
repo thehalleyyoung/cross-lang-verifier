@@ -8,7 +8,7 @@ Documents only features that are implemented in `src/`.
 
 The primary API. Returns structured (verdict, counterexample, repair_hint) triples.
 
-### `VerificationOracle(timeout_ms=10000, func_name="")`
+### `VerificationOracle(timeout_ms=10000, func_name="", cegar_mode=False)`
 
 Create a verification oracle instance.
 
@@ -16,6 +16,7 @@ Create a verification oracle instance.
 |-----------|------|---------|-------------|
 | `timeout_ms` | `int` | `10000` | Z3 solver timeout in milliseconds |
 | `func_name` | `str` | `""` | Default function name for verification |
+| `cegar_mode` | `bool` | `False` | When True, UB-only divergences return `"conditionally_equivalent"` instead of `"divergent"` |
 
 ### `oracle.verify(c_code, rust_code, func_name=None) → OracleResult`
 
@@ -107,7 +108,7 @@ Run CEGAR on a batch of functions.
 ```python
 @dataclass
 class OracleResult:
-    verdict: str                              # "equivalent" | "divergent" | "unknown" | "error"
+    verdict: str                              # "equivalent" | "divergent" | "conditionally_equivalent" | "unknown" | "error"
     counterexample: Optional[CounterexampleInfo] = None
     repair_hint: Optional[RepairHint] = None
     time_ms: float = 0.0                      # Wall-clock verification time
@@ -367,14 +368,14 @@ shape._effective_tag_width() # 8
 
 ---
 
-## Expanded Benchmarks (`benchmarks/pairs/expanded_benchmark_pairs.py`)
+## Expanded Benchmarks (`benchmarks/pairs/`)
 
-150 new benchmark pairs across 8 categories.
+212 benchmark pairs across 18 categories.
 
 ```python
 from benchmarks.pairs import COMBINED_BENCHMARKS, get_expanded_by_category
 
-# All 352 pairs (original + expanded)
+# All 232 pairs (original + expanded + memory + C2Rust-realistic)
 all_pairs = COMBINED_BENCHMARKS
 
 # Filter by category
@@ -385,4 +386,4 @@ c2rust_pairs = get_expanded_by_category("c2rust")    # 20 pairs
 iter_pairs = get_expanded_by_category("iterator")    # 15 pairs
 ```
 
-Categories: `struct`, `enum`, `float`, `c2rust`, `iterator`, `cast`, `compound`, `control_flow`
+Categories: `struct`, `enum`, `float`, `c2rust`, `c2rust_realistic`, `iterator`, `cast`, `compound`, `control_flow`, `memory`, `scaled_memory`
