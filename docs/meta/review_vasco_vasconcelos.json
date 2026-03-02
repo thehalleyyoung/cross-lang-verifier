@@ -1,0 +1,41 @@
+{
+  "reviewer": "Vasco Vasconcelos",
+  "affiliation": "University of Lisbon",
+  "persona": "probabilistic_models_and_formal_methods_expert",
+  "date": "2026-03-02",
+  "scores": {
+    "novelty": 7,
+    "rigor": 7,
+    "empirical_strength": 5,
+    "presentation": 7,
+    "reproducibility": 6,
+    "overall": 6
+  },
+  "summary_of_contributions": "The paper presents SemRec, a source-level equivalence checker for C and Rust translations using a σ-bridge semantic configuration layer that encodes per-language treatment of undefined behavior. The system constructs product programs, encodes them in QF_BV, and uses Z3 for decidable equivalence checking. Results show 86.6% accuracy on 202 pairs, with 100% on arithmetic and control flow categories but 0% on memory and string operations.",
+  "strengths": [
+    "The formalization of language-specific semantics via the σ-bridge is mathematically clean. The configuration vector σ = (σ_overflow, σ_shift, σ_div, σ_cast) provides a concise parameterization that captures the key semantic differences. The conditional soundness theorem is properly conditioned on the C function's defined behavior domain.",
+    "The decidability argument is correct and important: QF_BV is decidable, and loop unrolling at a fixed bound K produces a finite formula. This guarantees termination, which is essential for CI/CD integration. The choice of bitvector theory (rather than integer arithmetic) correctly models machine-level semantics.",
+    "The separation of concerns between 'output divergence on well-defined input' and 'C UB triggered' in SAT results is a useful contribution to equivalence checking methodology. This distinction enables different remediation strategies: output divergence requires code repair, while UB triggering requires hardening the C source.",
+    "The benchmark design with 12 categories covering different aspects of C/Rust semantic divergence provides a systematic evaluation framework that future tools can reuse and extend.",
+    "The negative CEGAR-LLM result, while discouraging for automated repair, is important for calibrating expectations about LLM capabilities in formal settings."
+  ],
+  "weaknesses": [
+    "The loop unrolling bound K=32 introduces unsoundness for loops with data-dependent iteration counts. The paper should clearly label this as bounded model checking, not verification, and discuss the gap between BMC and full verification for the loop-containing benchmark pairs.",
+    "The hand-written parsers for C and Rust are a major engineering concern. C parsing is notoriously difficult (the 'lexer hack', preprocessor interaction, declaration vs. expression ambiguity), and Rust's syntax is complex (lifetime annotations, trait bounds, async/await). Without validation against a reference parser or a grammar conformance test suite, parser bugs could cause both false positives and false negatives.",
+    "The product program construction's alignment algorithm is underdescribed. The paper should specify: (a) how control flow divergences are handled (different loop structures, early returns), (b) how variable renaming/reordering is resolved, and (c) what happens when alignment fails. This is a critical component that affects both soundness and completeness.",
+    "The 202-pair benchmark is small and self-constructed. The paper should validate on at least one external benchmark, such as functions from the C2Rust transpiler's test suite or curated examples from the Rust Unsafe Code Guidelines working group.",
+    "The paper does not address the semantics of C integer promotion rules, which interact subtly with the σ-bridge. For example, integer promotion from char to int before arithmetic can change the overflow behavior in ways that the simple σ_overflow parameter may not capture."
+  ],
+  "questions_for_authors": [
+    "Can the σ-bridge be extended to capture floating-point semantics? The IEEE 754 standard allows certain freedoms (FMA contraction, NaN propagation) that C exploits but Rust does not.",
+    "What happens when the product program alignment fails? Does the tool report 'unable to verify' or does it conservatively report a divergence?",
+    "How sensitive is the accuracy to the choice of K=32? Have you measured accuracy at K=16, K=64, K=128 to assess whether the bound is sufficient for the benchmark suite?",
+    "The conditional soundness theorem requires that the C function has defined behavior on the tested input. How does the tool determine the defined behavior domain? Is this computed automatically or specified manually?"
+  ],
+  "missing_references": [
+    "Godlin and Strichman (2009) — 'Regression verification' (DAC). Foundational work on cross-version equivalence checking with product programs.",
+    "Lahiri, Hawblitzel, Kawaguchi, and Rebêlo (2012) — 'SYMDIFF: A language-agnostic semantic diff tool' (CAV). Language-agnostic equivalence checking approach.",
+    "Fonseca, Zhang, and Seltzer (2017) — 'An empirical study on the correctness of formally verified distributed systems' (EuroSys). Relevant for understanding the gap between formal guarantees and practical correctness."
+  ],
+  "recommendation": "weak_accept"
+}

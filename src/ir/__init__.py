@@ -25,6 +25,7 @@ from .types import (
     StructType,
     StructField,
     UnionType,
+    EnumType,
     FunctionType,
     VoidType,
     Signedness,
@@ -50,7 +51,7 @@ from .validator import IRValidator
 
 __all__ = [
     "IRType", "IntType", "FloatType", "PointerType", "ArrayType",
-    "StructType", "StructField", "UnionType", "FunctionType", "VoidType",
+    "StructType", "StructField", "UnionType", "EnumType", "FunctionType", "VoidType",
     "Signedness", "FloatKind", "ProvenanceTag", "OverflowBehavior", "Language",
     "TypeCompatibility", "check_compatibility", "compute_common_type",
     "type_join", "type_meet", "are_layout_compatible", "type_from_dict",

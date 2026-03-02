@@ -1,0 +1,74 @@
+{
+  "project": "SemRec: Cross-Language Equivalence Verifier",
+  "version": "2.0",
+  "grounding_date": "2025-01-01",
+  "claims": {
+    "accuracy_202_pairs": {
+      "value": "86.6%",
+      "basis": "SMT-based verification on 202 function pairs (52 core + 150 scaled)",
+      "methodology": "Each pair encoded via σ-bridge into QF_BV constraints, solved with Z3",
+      "limitations": [
+        "Loop analysis is bounded model checking (BMC) at K=32, not full verification",
+        "Memory/string categories achieve 0% due to pointer exclusion from fragment",
+        "Error handling (50%) limited by lack of interprocedural analysis"
+      ]
+    },
+    "expanded_benchmark": {
+      "value": "352 total pairs across 14 categories",
+      "basis": "130 new pairs added covering struct, enum, float, C2Rust, iterator, cast, compound, control_flow",
+      "methodology": "Hand-written pairs with known expected results"
+    },
+    "differential_testing_comparison": {
+      "value": "32.7% accuracy for differential testing",
+      "basis": "Random testing with 10,000 inputs per pair on 52 core pairs",
+      "methodology": "Cannot detect 8 UB-related divergences by construction"
+    },
+    "cegar_convergence": {
+      "value": "16.7% (5/30)",
+      "basis": "CEGAR loop with GPT-4.1-nano, 5 iterations each",
+      "methodology": "Converges only when LLM produces correct translation on first attempt"
+    }
+  },
+  "supported_fragment": {
+    "includes": [
+      "Integer arithmetic (i8-i64, u8-u64) with overflow semantics",
+      "Bitwise operations (AND, OR, XOR, NOT, SHL, SHR)",
+      "Comparisons (signed and unsigned)",
+      "Control flow (if/else, bounded loops via BMC at K=32, switch/match)",
+      "Type casts (widening, narrowing, sign change, float conversion)",
+      "Struct types (field access, construction, nested structs)",
+      "Enum/tagged union types (discriminant extraction, variant construction)",
+      "Floating-point (IEEE 754 f32/f64 via QF_FP)"
+    ],
+    "excludes": [
+      "Pointers and heap allocation (requires separation logic)",
+      "String operations (pointer-based)",
+      "Interprocedural analysis",
+      "Concurrency"
+    ]
+  },
+  "honest_scoping": {
+    "loop_analysis": "Bounded model checking (BMC) at depth K=32, NOT full verification. Exact for bounded loops, best-effort for unbounded.",
+    "struct_encoding": "Flat bitvector concatenation — correct for value semantics, does not model pointer-to-struct or heap-allocated structs",
+    "enum_encoding": "Tagged bitvector union — correct for discriminant + payload, does not model enum layout optimizations (niche filling)",
+    "float_encoding": "IEEE 754 via Z3 QF_FP — correct for standard operations, does not model platform-specific behavior or -ffast-math"
+  },
+  "key_theorems": {
+    "conditional_soundness": {
+      "statement": "For functions in F: UNSAT ⟹ ∀x∈D_¬UB. f_C(x) = f_R(x)",
+      "conditions": [
+        "Functions must be in supported fragment F",
+        "Loops must have ≤ K iterations for exact results",
+        "No pointer/heap operations"
+      ]
+    },
+    "counterexample_correctness": {
+      "statement": "SAT with model x₀ ⟹ either output divergence or C UB",
+      "conditions": ["Same conditions as soundness theorem"]
+    },
+    "decidability": {
+      "statement": "For F, the verification problem is decidable (QF_BV + BMC)",
+      "conditions": ["Finite unrolling bound K"]
+    }
+  }
+}

@@ -50,15 +50,13 @@ In our ablation study, removing the σ-bridge drops accuracy from 80% to 40% on 
 
 | Metric | Value |
 |--------|-------|
-| Benchmark pairs | **202** across 12 categories |
-| Classification accuracy | **86.6%** (175/202) |
-| Equivalent verdicts | 64 |
-| Divergent verdicts | 97 |
-| Unknown / Error | 32 / 9 |
+| Benchmark pairs | **352** across 14 categories (202 original + 150 expanded) |
+| Classification accuracy (202 pairs) | **86.6%** (175/202) |
+| Expanded categories | struct, enum, float, C2Rust, iterator, cast, compound, control_flow |
 | CEGAR convergence (30 functions) | **16.7%** overall; **0%** for UB functions |
 | Avg verification time | **< 200ms** per pair |
 
-**Category breakdown** (best → worst):
+**Category breakdown** (original 202 pairs, best → worst):
 
 | Category | Pairs | Correct | Accuracy |
 |----------|-------|---------|----------|
@@ -66,16 +64,17 @@ In our ablation study, removing the σ-bridge drops accuracy from 80% to 40% on 
 | Cast | 13 | 13 | 100% |
 | Real patterns | 26 | 26 | 100% |
 | Compound | 12 | 12 | 100% |
+| Control flow | 11 | 11 | 100% |
 | Arithmetic | 49 | 46 | 93.9% |
 | Division | 21 | 19 | 90.5% |
 | Bitwise | 29 | 25 | 86.2% |
-| Control flow | 11 | 11 | 100% |
 | Error handling | 8 | 4 | 50% |
-| Loops | 8 | 2 | 25% |
+| Loops (BMC K=32) | 8 | 2 | 25% |
 | Memory | 6 | 0 | 0% |
 | String | 2 | 0 | 0% |
 
 Memory and string categories are outside the supported fragment and return `unknown`.
+Loop analysis is **bounded model checking** at depth K=32 (not full verification).
 
 ## Architecture
 
@@ -149,16 +148,19 @@ Requires `OPENAI_API_KEY` environment variable. Supported models: `gpt-5-chat-la
 |---------|--------|
 | Integer arithmetic (i8–i64, u8–u64) | ✅ Supported |
 | Bitwise operations | ✅ Supported |
-| Control flow (if/else, ternary) | ✅ Supported |
+| Control flow (if/else, ternary, switch/match) | ✅ Supported |
 | Type casts (widening, narrowing, sign change) | ✅ Supported |
 | Comparisons | ✅ Supported |
-| Bounded loops (K=32 unrolling) | ⚠ Bounded |
-| Pointers, heap, structs | ❌ Outside fragment |
-| Strings, floating point | ❌ Outside fragment |
+| **Struct types** (field access, construction, nested) | ✅ Supported |
+| **Enum/tagged union types** (discriminant, variants) | ✅ Supported |
+| **Floating-point** (IEEE 754 f32/f64) | ✅ Supported |
+| Bounded loops (BMC at K=32) | ⚠ Bounded model checking |
+| Pointers, heap allocation | ❌ Outside fragment |
+| Strings (pointer-based) | ❌ Outside fragment |
 | Interprocedural analysis | ❌ Outside fragment |
 | Concurrency | ❌ Outside fragment |
 
-Hand-written recursive descent parsers for C and Rust are a known limitation. They cover the supported fragment reliably (86.6% accuracy across 202 pairs) but are not production-grade compiler frontends.
+Hand-written recursive descent parsers for C and Rust are a known limitation. Loop analysis is bounded model checking (BMC) at depth K=32—loops exceeding K iterations are not fully verified.
 
 ## Repository Structure
 
@@ -174,7 +176,9 @@ src/
   frontend_rust/     # Rust parser and IR lowering
   ir/                # Shared typed SSA IR
 benchmarks/
-  pairs/             # 202 benchmark pairs (C + Rust + ground truth)
+  pairs/             # 352 benchmark pairs (52 core + 150 scaled + 150 expanded)
+    benchmark_pairs.py           # Original 52 core pairs
+    expanded_benchmark_pairs.py  # 150 expanded pairs (struct, enum, float, C2Rust, etc.)
 tests/               # Unit tests
 examples/            # Example scripts
 experiments/

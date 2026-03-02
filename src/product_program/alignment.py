@@ -12,11 +12,12 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import List, Optional, Tuple, Dict, Sequence
 
-from ..ir.types import IRType, IntType, FloatType, VoidType, PointerType
+from ..ir.types import IRType, IntType, FloatType, VoidType, PointerType, StructType, EnumType
 from ..ir.instructions import (
     Instruction, BinaryOp, UnaryOp, CompareOp, LoadInst, StoreInst,
     CastInst, CallInst, ReturnInst, BranchInst, PhiInst, SelectInst,
-    AllocaInst, GetElementPtrInst, Value,
+    AllocaInst, GetElementPtrInst, ExtractValueInst, InsertValueInst,
+    SwitchInst, Value,
 )
 from ..ir.basic_block import BasicBlock
 from ..ir.function import Function
@@ -246,11 +247,17 @@ def _inst_summary(inst: Instruction) -> str:
         if inst.is_conditional:
             return f"br {inst._operands[0].name}, {inst._true_target.name}, {inst._false_target.name}"
         return f"br {inst._true_target.name}"
+    if isinstance(inst, SwitchInst):
+        return f"switch {inst.condition.name}, {len(inst.cases)} cases"
     if isinstance(inst, PhiInst):
         srcs = ", ".join(f"{v.name}:{bb.name}" for v, bb in inst.incoming)
         return f"{name} = phi [{srcs}]"
     if isinstance(inst, CallInst):
         return f"{name} = call {inst.callee_name}(...)"
+    if isinstance(inst, ExtractValueInst):
+        return f"{name} = extractvalue {inst.aggregate.name}, {inst.indices}"
+    if isinstance(inst, InsertValueInst):
+        return f"{name} = insertvalue {inst.aggregate.name}, {inst.inserted_value.name}, {inst.indices}"
     return f"{name} = {cls_name}"
 
 
@@ -299,12 +306,18 @@ def _instruction_opcode_tag(inst: Instruction) -> str:
         return "alloca"
     if isinstance(inst, GetElementPtrInst):
         return "gep"
+    if isinstance(inst, ExtractValueInst):
+        return "extractvalue"
+    if isinstance(inst, InsertValueInst):
+        return "insertvalue"
     if isinstance(inst, CallInst):
         return f"call.{inst.callee_name}"
     if isinstance(inst, ReturnInst):
         return "ret"
     if isinstance(inst, BranchInst):
         return "br.cond" if inst.is_conditional else "br"
+    if isinstance(inst, SwitchInst):
+        return "switch"
     if isinstance(inst, PhiInst):
         return "phi"
     if isinstance(inst, SelectInst):
@@ -325,12 +338,31 @@ def _type_similarity(t1: Optional[IRType], t2: Optional[IRType]) -> float:
             return 1.0 if t1.kind == t2.kind else 0.7
         if isinstance(t1, PointerType) and isinstance(t2, PointerType):
             return 0.8 + 0.2 * _type_similarity(t1.pointee, t2.pointee)
+        if isinstance(t1, StructType) and isinstance(t2, StructType):
+            if t1.num_fields == t2.num_fields and t1.num_fields > 0:
+                field_sims = [
+                    _type_similarity(f1.type, f2.type)
+                    for f1, f2 in zip(t1.fields, t2.fields)
+                ]
+                return 0.7 + 0.3 * (sum(field_sims) / len(field_sims))
+            return 0.5
+        if isinstance(t1, EnumType) and isinstance(t2, EnumType):
+            if t1.num_variants == t2.num_variants:
+                return 0.8
+            return 0.5
         if isinstance(t1, VoidType):
             return 1.0
         return 0.8
-    # Different type families
+    # Cross-type similarities for common C-to-Rust patterns
     if isinstance(t1, IntType) and isinstance(t2, IntType):
         return 0.5
+    # switch (int) vs match (enum) — partial similarity
+    if (isinstance(t1, IntType) and isinstance(t2, EnumType)) or \
+       (isinstance(t1, EnumType) and isinstance(t2, IntType)):
+        return 0.4
+    # C struct vs Rust struct — high similarity if same category
+    if (isinstance(t1, StructType) and isinstance(t2, StructType)):
+        return 0.6
     return 0.0
 
 
@@ -344,7 +376,8 @@ def _instruction_similarity(left: Instruction, right: Instruction) -> float:
     elif tag_l.split(".")[0] == tag_r.split(".")[0]:
         opcode_sim = 0.6
     else:
-        opcode_sim = 0.0
+        # Cross-language structural translation patterns
+        opcode_sim = _structural_pattern_similarity(tag_l, tag_r, left, right)
 
     type_sim = _type_similarity(left.type, right.type)
 
@@ -360,6 +393,50 @@ def _instruction_similarity(left: Instruction, right: Instruction) -> float:
         operand_sim = min_ops / max_ops
 
     return 0.5 * opcode_sim + 0.3 * type_sim + 0.2 * operand_sim
+
+
+# ---------------------------------------------------------------------------
+# Structural translation pattern matching
+# ---------------------------------------------------------------------------
+
+# Common cross-language patterns: C switch ↔ Rust match, C error codes ↔
+# Rust Result, C for-loop ↔ Rust iterator, etc.
+_STRUCTURAL_EQUIVALENCES = {
+    # switch ↔ extractvalue (match discriminant extraction)
+    ("switch", "extractvalue"): 0.5,
+    ("extractvalue", "switch"): 0.5,
+    # switch ↔ branch (match arm → conditional branch)
+    ("switch", "br.cond"): 0.4,
+    ("br.cond", "switch"): 0.4,
+    # C error return ↔ Rust Result construction
+    ("ret", "insertvalue"): 0.3,
+    ("insertvalue", "ret"): 0.3,
+    # GEP ↔ extractvalue (struct field access patterns)
+    ("gep", "extractvalue"): 0.5,
+    ("extractvalue", "gep"): 0.5,
+    # Load from struct ↔ extractvalue
+    ("load", "extractvalue"): 0.4,
+    ("extractvalue", "load"): 0.4,
+    # Store to struct ↔ insertvalue
+    ("store", "insertvalue"): 0.4,
+    ("insertvalue", "store"): 0.4,
+    # C comparison+branch ↔ Rust match
+    ("cmp", "extractvalue"): 0.3,
+    ("extractvalue", "cmp"): 0.3,
+}
+
+
+def _structural_pattern_similarity(
+    tag_l: str, tag_r: str,
+    left: Instruction, right: Instruction,
+) -> float:
+    """Score similarity for cross-language structural translations."""
+    base_l = tag_l.split(".")[0]
+    base_r = tag_r.split(".")[0]
+    key = (base_l, base_r)
+    if key in _STRUCTURAL_EQUIVALENCES:
+        return _STRUCTURAL_EQUIVALENCES[key]
+    return 0.0
 
 
 def _block_similarity(left: BasicBlock, right: BasicBlock) -> float:

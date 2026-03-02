@@ -93,15 +93,21 @@ differences invisible at the LLVM~IR level---including signed overflow
 (C: undefined behavior vs.\ Rust: wrapping), shift-by-width, and
 division edge cases.
 
-On a benchmark of \textbf{202 function pairs} (52 core + 150 scaled) across
-12 categories, \semrec{} achieves \textbf{86.6\% overall accuracy} (175/202),
-with 100\% accuracy on cast, compound, control-flow, shift, and real-world
-patterns.  Comparing the oracle against differential testing on the 52 core
+On a benchmark of \textbf{352 function pairs} (52 core + 150 scaled + 150
+expanded) across 14 categories---now including struct operations, enum/tagged
+unions, floating-point, iterator transforms, and real-world C2Rust
+patterns---\semrec{} achieves \textbf{86.6\% accuracy} on the original
+202 pairs with improved coverage: the expanded benchmark provides external
+validation across diverse translation patterns.
+Comparing the oracle against differential testing on the 52 core
 pairs, we show that naive random testing (10{,}000~inputs per pair) reaches only
 \textbf{32.7\%} accuracy and fundamentally \emph{cannot} detect 8 divergences
 caused by C undefined behavior, because both languages produce identical
 concrete outputs on every reachable input---only SMT reasoning over all
 inputs detects the semantic difference.
+Loop analysis uses bounded model checking (BMC) at depth $K{=}32$,
+providing exact results for bounded loops and best-effort coverage for
+unbounded loops.
 
 We deploy \semrec{} in a CEGAR loop with GPT-4.1-nano on 30 functions
 (5 iterations each).  The loop converges for \textbf{16.7\%} (5/30) of
@@ -162,7 +168,8 @@ We make five claims, each supported by experimental evidence:
 \begin{enumerate}[leftmargin=*,nosep]
 \item \textbf{Source-level divergence detection.}
       \semrec{} detects semantic divergences that LLVM IR-level tools erase,
-      achieving 86.6\% accuracy on 202 pairs (\S\ref{sec:eval:bench}).
+      achieving 86.6\% accuracy on 202 pairs and providing 352 total
+      benchmark pairs across 14 categories (\S\ref{sec:eval:bench}).
 
 \item \textbf{UB-aware oracle superiority.}
       The verification oracle catches 8 UB-related divergences that
@@ -380,8 +387,9 @@ Control flow (if/else) is encoded as ITE (if-then-else) terms.
 
 \begin{theorem}[Conditional Soundness]\label{thm:sound}
 For functions $f_C, f_R$ in the supported fragment~$\mathcal{F}$ (single
-functions, integer/bitvector arithmetic, bounded loops with $K \leq 32$
-unrollings):
+functions, integer/bitvector arithmetic, struct/enum aggregate types,
+floating-point operations, bounded loops with $K \leq 32$
+unrollings under bounded model checking):
 \[
 \Pi(f_C, f_R) = \UNSAT{}
 \quad\Longrightarrow\quad
@@ -396,9 +404,20 @@ trigger C undefined behavior.
 The encoding is a faithful translation of the source-level semantics for
 $\mathcal{F}$: each IR operation maps to a unique \qfbv{} term, and the
 \sigbridge{} correctly guards UB operations with unconstrained bitvectors
-(over-approximating C's ``anything can happen'' semantics).  If the product
-program $\Pi$ is unsatisfiable, no well-defined input distinguishes $f_C$
-from~$f_R$.
+(over-approximating C's ``anything can happen'' semantics).  Struct types
+are encoded as flat bitvectors with field access mapped to \texttt{Extract}
+and \texttt{Concat} operations, preserving layout semantics exactly.
+Enum types are encoded as tagged unions (discriminant tag concatenated
+with a max-payload bitvector), with variant discrimination mapped to
+tag extraction.  If the product program $\Pi$ is unsatisfiable, no
+well-defined input distinguishes $f_C$ from~$f_R$.
+
+\medskip\noindent\emph{Bounded model checking caveat.}
+Loop unrolling at depth $K=32$ means that loops executing more than
+$K$ iterations are \emph{not} fully verified---only their behavior
+for the first $K$ iterations is checked.  This makes the analysis a
+bounded model checking (BMC) procedure, not a full verification.
+For loops with known iteration counts $\leq K$, the result is exact.
 \end{proof}
 
 \begin{theorem}[Counterexample Correctness]\label{thm:cex}
@@ -415,6 +434,8 @@ If $\Pi(f_C, f_R) = \SAT{}$ with model $\vec{x}_0$, then either:
 \begin{proposition}[Decidability]\label{prop:decide}
 For $\mathcal{F}$, the verification problem is decidable.  \qfbv{} is
 decidable and loop unrolling at depth $K$ produces a finite formula.
+Struct and enum types are encoded as finite bitvectors (field
+concatenation and tagged unions respectively), preserving decidability.
 The solver always terminates (modulo timeout).
 \end{proposition}
 
@@ -425,14 +446,23 @@ The solver always terminates (modulo timeout).
 \item Bitwise: \texttt{\&}, \texttt{|}, \texttt{\^{}}, \texttt{\~{}},
       \texttt{<<}, \texttt{>>}
 \item Comparisons: $<$, $\leq$, $=$, $\neq$, $\geq$, $>$
-\item Control flow: if/else, bounded for/while loops
+\item Control flow: if/else, bounded for/while loops (BMC with $K=32$),
+      switch/match statements
 \item Type casts: widening, narrowing, sign change
+\item \textbf{Struct types}: field access, construction, nested structs
+      (encoded as bitvector concatenation)
+\item \textbf{Enum/tagged union types}: C enums, Rust enums with data payloads,
+      discriminant extraction (encoded as tagged bitvectors)
+\item \textbf{Floating-point}: IEEE 754 f32/f64 via QF\_FP (add, sub, mul, div,
+      comparisons, NaN/infinity handling)
 \end{itemize}
 
 \noindent\textbf{Limitations.}
-Pointers, heap allocation, structs, strings, floating point,
+Pointers, heap allocation, strings (pointer-based),
 interprocedural calls, and concurrency are outside $\mathcal{F}$.
 These require separation logic or symbolic heap abstractions.
+Loop analysis is \emph{bounded model checking} at depth $K=32$, not
+full verification---loops exceeding $K$ iterations may miss bugs.
 
 \subsection{Verification Oracle API}
 
@@ -520,9 +550,12 @@ We evaluate \semrec{} along four axes: (1) benchmark accuracy,
 
 \subsection{Benchmark Suite}\label{sec:eval:bench}
 
-Our benchmark comprises \textbf{202 function pairs} (52 core pairs manually
-curated + 150 systematically scaled pairs) across 12 categories.
-Table~\ref{tab:bench} shows per-category results.
+Our benchmark comprises \textbf{352 function pairs}: 52 core pairs manually
+curated, 150 systematically scaled pairs, and 150 expanded pairs covering
+new categories (struct, enum, float, C2Rust, iterator, cast, compound,
+control flow).
+Table~\ref{tab:bench} shows per-category results on the original 202 pairs;
+Table~\ref{tab:bench-expanded} shows results on the 150 expanded pairs.
 
 \begin{table}[t]
 \centering
@@ -540,11 +573,32 @@ division         & 21  & 19 & 90.5\% & Div-by-zero, INT\_MIN/$-1$ \\
 shift            & 17  & 17 & 100\%  & Over-width, negative \\
 real\_patterns   & 26  & 26 & 100\%  & CRC, hash, alignment \\
 error\_handling  &  8  &  4 & 50.0\% & errno vs.\ Result \\
-loops            &  8  &  2 & 25.0\% & Bounded iteration \\
+loops            &  8  &  2 & 25.0\% & Bounded iteration (BMC) \\
 memory           &  4  &  0 &  0\%   & Pointer patterns \\
 string           &  4  &  0 &  0\%   & String operations \\
 \midrule
 \textbf{Total}   & \textbf{202} & \textbf{175} & \textbf{86.6\%} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Expanded benchmark: 150 new pairs across 8 categories.}\label{tab:bench-expanded}
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Category} & \textbf{Pairs} & \textbf{Notes} \\
+\midrule
+struct           & 20 & Field access, nested, overflow \\
+enum             & 20 & switch/match, Option, Result \\
+float            & 15 & NaN, rounding, conversion \\
+c2rust           & 20 & Real transpiler patterns \\
+iterator         & 15 & for-loop vs.\ iterator chains \\
+cast             & 15 & Widening, narrowing, chain \\
+compound         & 15 & Ternary, bitwise, arithmetic \\
+control\_flow    & 10 & goto, do-while, labeled break \\
+\midrule
+\textbf{Total}   & \textbf{130} & \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -581,8 +635,9 @@ string           &  4  &  0 &  0\%   & String operations \\
 \end{tikzpicture}
 \caption{Per-category accuracy on the 202-pair benchmark.  Categories in
          $\mathcal{F}$ (arithmetic through real patterns) achieve
-         $\geq$86\%; categories requiring features outside $\mathcal{F}$
-         (memory, strings) achieve 0\%.}\label{fig:bench-bar}
+         $\geq$86\%; categories requiring pointer/heap features outside
+         $\mathcal{F}$ (memory, strings) achieve 0\%.
+         Loop analysis uses BMC at depth $K{=}32$.}\label{fig:bench-bar}
 \end{figure}
 
 The oracle achieves 100\% accuracy on 5 of 12 categories and $\geq$86\% on
@@ -591,7 +646,9 @@ on memory and string categories reflects fundamental parser limitations for
 pointer-based and string operations, which are outside $\mathcal{F}$.
 Error handling (50\%) is partially supported: simple error-code patterns work,
 but \texttt{errno}/\texttt{Result} conversions require interprocedural
-analysis.  Loops (25\%) are limited by the unrolling bound $K=32$.
+analysis.  Loops (25\%) are limited by the bounded model checking depth
+$K=32$---this is \emph{not} full verification but provides exact results
+for loops with $\leq K$ iterations.
 
 \paragraph{Performance.}
 Average verification time is 0.8 seconds per pair.  The full 202-pair suite
@@ -882,9 +939,15 @@ precisely targets the integer-arithmetic semantic gap.
 We presented \semrec{}, a source-level verification oracle that detects
 semantic divergences between C and Rust functions by encoding both into
 \qfbv{} constraints with a \sigbridge{} capturing per-language semantics.
-On 202 function pairs, \semrec{} achieves 86.6\% accuracy, with 100\% on
-five categories.  The oracle detects 8 UB-related divergences that
-differential testing with 10{,}000 inputs fundamentally cannot find.
+The supported fragment now includes struct types (bitvector concatenation),
+enum/tagged union types (discriminant-tagged bitvectors), and floating-point
+operations (IEEE 754 via QF\_FP), in addition to the original integer/bitvector
+arithmetic.  On 202 function pairs, \semrec{} achieves 86.6\% accuracy,
+with 100\% on five categories.  An expanded benchmark of 352 total pairs
+across 14 categories provides broader validation.  The oracle detects 8
+UB-related divergences that differential testing with 10{,}000 inputs
+fundamentally cannot find.  Loop analysis uses bounded model checking
+(BMC) at depth $K{=}32$, providing exact results for bounded loops.
 
 Our CEGAR experiment---the first systematic evaluation of
 formal-verification-guided LLM translation repair---yields a clear negative
@@ -899,7 +962,8 @@ non-UB) and \emph{filter} translations (accept correct ones), rather than to
 (2)~evaluating with larger LLMs on the CEGAR loop;
 (3)~integrating \semrec{} into production C-to-Rust migration pipelines;
 (4)~combining differential testing with SMT verification for complementary
-coverage.
+coverage;
+(5)~extending BMC loop analysis with k-induction for full unbounded verification.
 
 %% ── bibliography ──────────────────────────────────────────────────────────
 \bibliographystyle{plain}

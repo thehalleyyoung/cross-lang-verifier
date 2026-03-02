@@ -1,0 +1,41 @@
+{
+  "reviewer": "Roderick Bloem",
+  "affiliation": "Graz University of Technology",
+  "persona": "machine_learning_specification_safety_researcher",
+  "date": "2026-03-02",
+  "scores": {
+    "novelty": 7,
+    "rigor": 6,
+    "empirical_strength": 6,
+    "presentation": 7,
+    "reproducibility": 7,
+    "overall": 6
+  },
+  "summary_of_contributions": "SemRec provides a verification oracle for C-to-Rust translation correctness operating at source level, using a σ-bridge to encode per-language semantics for SMT-based equivalence checking. The system detects divergences invisible to both differential testing and IR-level tools, achieving 86.6% accuracy on 202 pairs. A CEGAR loop with LLM-driven repair demonstrates that current LLMs cannot exploit formal counterexamples (0% repair success on UB bugs).",
+  "strengths": [
+    "The practical motivation is compelling. C-to-Rust migration is an active area (Android, Linux kernel, Windows), and the semantic gap between C and Rust is a genuine source of bugs. A tool that catches divergences invisible to testing addresses a real market need.",
+    "The finding that 10K random inputs achieve only 32.7% accuracy where SemRec achieves 86.6% provides strong evidence for the value of formal methods over testing for this domain. The 8 specific divergences that testing misses are concrete examples practitioners can relate to.",
+    "The negative CEGAR-LLM result is a valuable contribution to the growing literature on LLM-formal methods integration. The finding that LLMs cannot reliably repair even simple arithmetic UB bugs despite receiving exact counterexamples with concrete input/output values suggests that formal reasoning about undefined behavior requires capabilities beyond current LLMs.",
+    "The per-category accuracy breakdown (100% on 5 categories, 0% on 2) is transparent and enables practitioners to make informed decisions about tool applicability. This is more useful than a single aggregate number.",
+    "The <200ms per pair verification time makes the tool practical for CI/CD integration, where verification must not significantly delay build pipelines."
+  ],
+  "weaknesses": [
+    "The scope limitation to arithmetic and control flow excludes the primary challenge in C-to-Rust translation: memory safety. The ownership/borrowing model in Rust vs. manual memory management in C is where most semantic divergences occur in practice. A tool that cannot verify pointer-level equivalence addresses a secondary concern.",
+    "The evaluation benchmark of 202 pairs is relatively small and appears to be manually constructed. The paper should evaluate on real-world LLM-generated translations from production codebases or established benchmarks (e.g., from the C2Rust transpiler output or the RustSec advisory database).",
+    "The product program approach assumes functional correspondence between C and Rust functions, but real translations often involve structural changes: splitting one C function into multiple Rust functions, introducing error handling with Result types, or replacing mutable state with iterators. The paper does not address how structural translations are handled.",
+    "The CEGAR-LLM loop is tested with only one LLM and a fixed prompt strategy. The negative result would be more convincing with: (a) multiple LLMs, (b) chain-of-thought prompting, (c) few-shot examples of UB repair, and (d) iterative refinement beyond a single CEGAR round.",
+    "The paper does not address floating-point semantics, which differ between C (implementation-defined rounding, extended precision) and Rust (IEEE 754 required). This is a significant semantic gap for numerical code that the σ-bridge should ideally capture."
+  ],
+  "questions_for_authors": [
+    "What is the engineering effort required to extend the supported fragment to include structs and enums (without pointers)? These are common in C-to-Rust translations and seem tractable for SMT encoding.",
+    "Can the σ-bridge be parameterized by compiler flags? For example, -fwrapv in GCC/Clang defines signed overflow to wrap, which would change the C semantic configuration and potentially eliminate some divergences.",
+    "How does the tool handle C code with implementation-defined behavior (e.g., right-shift of signed integers)? Is this treated as UB, defined, or configurable?",
+    "What percentage of real C-to-Rust translations in open-source projects fall within the supported fragment? Even an informal analysis would help assess practical coverage."
+  ],
+  "missing_references": [
+    "Mehta, Sannidhanam, Garber, et al. (2024) — 'Towards automated C-to-Rust migration using AI techniques'. Recent industry perspective on LLM-assisted migration challenges.",
+    "Hong, Zhang, Li, and Tan (2023) — 'C2Rust translation quality: A study with SPEC CPU benchmarks'. Empirical analysis of translation quality relevant to benchmark design.",
+    "Churchill, Padon, Sharma, and Aiken (2019) — 'Semantic Program Alignment for Equivalence Checking' (PLDI). Directly relevant product program construction technique."
+  ],
+  "recommendation": "weak_accept"
+}

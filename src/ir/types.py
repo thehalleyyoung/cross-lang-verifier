@@ -121,7 +121,7 @@ class IRType(ABC):
         return isinstance(self, VoidType)
 
     def is_aggregate(self) -> bool:
-        return isinstance(self, (ArrayType, StructType, UnionType))
+        return isinstance(self, (ArrayType, StructType, UnionType, EnumType))
 
     def is_function(self) -> bool:
         return isinstance(self, FunctionType)
@@ -603,6 +603,118 @@ class UnionType(IRType):
 
 
 @dataclass(frozen=True)
+class EnumType(IRType):
+    """Tagged union / enum type (Rust enum, C tagged union).
+
+    Modeled as a discriminant tag (integer) plus a payload that is the
+    maximum-sized variant.  The tag width is chosen to fit the number of
+    variants.
+
+    Attributes:
+        name: optional enum name.
+        variants: ordered sequence of (variant_name, payload_type) pairs.
+                  Use VoidType() for unit variants.
+        tag_width: bit-width of the discriminant (default: auto).
+    """
+    name: Optional[str]
+    variants: tuple[tuple[str, IRType], ...]
+    tag_width: int = 0  # 0 = auto
+
+    def _effective_tag_width(self) -> int:
+        if self.tag_width > 0:
+            return self.tag_width
+        n = len(self.variants)
+        if n <= 1:
+            return 0
+        if n <= 256:
+            return 8
+        if n <= 65536:
+            return 16
+        return 32
+
+    def _max_payload_bits(self, pointer_size: int = 64) -> int:
+        if not self.variants:
+            return 0
+        return max(
+            (t.size_bits(pointer_size) if t.is_sized() else 0)
+            for _, t in self.variants
+        )
+
+    def size_bits(self, pointer_size: int = 64) -> int:
+        tw = self._effective_tag_width()
+        payload = self._max_payload_bits(pointer_size)
+        if payload == 0 and tw == 0:
+            return 0
+        payload_align = max(
+            (t.align_bits(pointer_size) for _, t in self.variants if t.is_sized()),
+            default=8,
+        )
+        total = _align_up(tw, payload_align) + payload
+        overall_align = self.align_bits(pointer_size)
+        return _align_up(total, overall_align)
+
+    def align_bits(self, pointer_size: int = 64) -> int:
+        tw = self._effective_tag_width()
+        aligns = [tw] if tw > 0 else [8]
+        for _, t in self.variants:
+            if t.is_sized():
+                aligns.append(t.align_bits(pointer_size))
+        return max(aligns)
+
+    def is_sized(self) -> bool:
+        return all(t.is_sized() or isinstance(t, VoidType) for _, t in self.variants)
+
+    def variant_index(self, name: str) -> int:
+        for i, (vn, _) in enumerate(self.variants):
+            if vn == name:
+                return i
+        raise KeyError(f"No variant named '{name}' in enum {self.name}")
+
+    def variant_type(self, name: str) -> IRType:
+        for vn, vt in self.variants:
+            if vn == name:
+                return vt
+        raise KeyError(f"No variant named '{name}' in enum {self.name}")
+
+    @property
+    def num_variants(self) -> int:
+        return len(self.variants)
+
+    @property
+    def variant_names(self) -> tuple[str, ...]:
+        return tuple(n for n, _ in self.variants)
+
+    @property
+    def is_c_like(self) -> bool:
+        """True if all variants have VoidType payload (C-style enum)."""
+        return all(isinstance(t, VoidType) for _, t in self.variants)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EnumType):
+            return NotImplemented
+        return self.name == other.name and self.variants == other.variants
+
+    def __hash__(self) -> int:
+        return hash(("enum", self.name, self.variants))
+
+    def __str__(self) -> str:
+        inner = " | ".join(
+            f"{n}" if isinstance(t, VoidType) else f"{n}({t})"
+            for n, t in self.variants
+        )
+        prefix = f"%{self.name}" if self.name else ""
+        return f"{prefix}enum{{{inner}}}"
+
+    def to_dict(self) -> dict:
+        return {
+            "kind": "enum",
+            "name": self.name,
+            "variants": [{"name": n, "type": t.to_dict()} for n, t in self.variants],
+            "tag_width": self.tag_width,
+        }
+
+
+@dataclass(frozen=True)
 class FunctionType(IRType):
     """Function (callable) type.
 
@@ -992,6 +1104,12 @@ def type_from_dict(data: dict) -> IRType:
                 for v in data["variants"]
             )
             return UnionType(data.get("name"), variants)
+        case "enum":
+            variants = tuple(
+                (v["name"], type_from_dict(v["type"]))
+                for v in data["variants"]
+            )
+            return EnumType(data.get("name"), variants, data.get("tag_width", 0))
         case "function":
             ret = type_from_dict(data["return_type"])
             params = tuple(type_from_dict(p) for p in data["param_types"])
@@ -1045,6 +1163,8 @@ class TypeVisitor:
                 self.visit_struct(ty)
             case UnionType():
                 self.visit_union(ty)
+            case EnumType():
+                self.visit_enum(ty)
             case FunctionType():
                 self.visit_function(ty)
             case _:
@@ -1067,6 +1187,11 @@ class TypeVisitor:
     def visit_union(self, ty: UnionType) -> None:
         for _, vt in ty.variants:
             self.visit(vt)
+
+    def visit_enum(self, ty: "EnumType") -> None:
+        for _, vt in ty.variants:
+            if not isinstance(vt, VoidType):
+                self.visit(vt)
 
     def visit_function(self, ty: FunctionType) -> None:
         self.visit(ty.return_type)
@@ -1106,6 +1231,10 @@ class TypeCollector(TypeVisitor):
     def visit_union(self, ty: UnionType) -> None:
         self.types.append(ty)
         super().visit_union(ty)
+
+    def visit_enum(self, ty: "EnumType") -> None:
+        self.types.append(ty)
+        super().visit_enum(ty)
 
     def visit_function(self, ty: FunctionType) -> None:
         self.types.append(ty)

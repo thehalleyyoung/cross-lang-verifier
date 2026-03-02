@@ -254,3 +254,135 @@ Run the benchmark suite.
 -v, --verbose        Increase verbosity (can repeat: -vv)
 -q, --quiet          Suppress all output
 ```
+
+
+---
+
+## SMT Encoder — Struct/Enum Support (`src/smt/encoder.py`)
+
+### Struct Encoding
+
+Structs are encoded as flat bitvectors with field access via `Extract`/`Concat`.
+
+```python
+from src.smt.encoder import SMTEncoder, EncodingContext
+from src.ir.types import StructType, StructField, IntType
+
+encoder = SMTEncoder()
+ctx = EncodingContext()
+
+# Define a struct type
+st = StructType("Point", (
+    StructField("x", IntType(32)),
+    StructField("y", IntType(32)),
+))
+
+# Encode type → BitVecSort(64)
+sort = encoder.encode_type(st)
+
+# Construct struct literal from field values
+import z3
+fields = [z3.BitVecVal(10, 32), z3.BitVecVal(20, 32)]
+struct_bv = encoder.encode_struct_literal(st, fields, ctx)
+```
+
+### Enum Encoding
+
+Enums are encoded as tagged bitvectors: discriminant tag + max-payload.
+
+```python
+from src.ir.types import EnumType, VoidType
+
+# Define Rust-style enum
+et = EnumType("Option", (
+    ("Some", IntType(32)),
+    ("None", VoidType()),
+))
+
+# Construct variant
+some_val = encoder.encode_enum_construct(et, "Some", z3.BitVecVal(42, 32), ctx)
+none_val = encoder.encode_enum_construct(et, "None", None, ctx)
+
+# Extract discriminant
+tag = encoder.encode_enum_discriminant(some_val, et)
+```
+
+### New Instructions
+
+| Instruction | SMT Encoding | Description |
+|-------------|-------------|-------------|
+| `ExtractValueInst` | `z3.Extract(hi, lo, bv)` | Extract struct field by bit offset |
+| `InsertValueInst` | `Concat(prefix, new_val, suffix)` | Replace field bits in struct |
+| `SwitchInst` | ITE chain over case equality | Sets path conditions for case targets |
+
+---
+
+## EnumType (`src/ir/types.py`)
+
+New IR type for tagged unions / Rust enums.
+
+```python
+from src.ir.types import EnumType, VoidType, IntType, StructType, StructField
+
+# C-like enum (unit variants)
+color = EnumType("Color", (
+    ("Red", VoidType()),
+    ("Green", VoidType()),
+    ("Blue", VoidType()),
+))
+color.is_c_like          # True
+color.variant_index("Red")  # 0
+
+# Rust-style data enum
+shape = EnumType("Shape", (
+    ("Circle", IntType(32)),                    # radius
+    ("Rect", StructType("R", (
+        StructField("w", IntType(32)),
+        StructField("h", IntType(32)),
+    ))),
+    ("None", VoidType()),
+))
+shape.is_c_like             # False
+shape.variant_type("Circle") # IntType(32)
+shape._effective_tag_width() # 8
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `num_variants` | `int` | Number of variants |
+| `variant_names` | `tuple[str, ...]` | Ordered variant names |
+| `is_c_like` | `bool` | True if all variants have VoidType payload |
+| `tag_width` | `int` | Discriminant bit-width (0=auto) |
+
+### Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `variant_index(name)` | `int` | Index of variant by name |
+| `variant_type(name)` | `IRType` | Payload type of variant |
+| `size_bits()` | `int` | Total size including tag + max payload + alignment |
+| `to_dict()` | `dict` | Serialization for JSON |
+
+---
+
+## Expanded Benchmarks (`benchmarks/pairs/expanded_benchmark_pairs.py`)
+
+150 new benchmark pairs across 8 categories.
+
+```python
+from benchmarks.pairs import COMBINED_BENCHMARKS, get_expanded_by_category
+
+# All 352 pairs (original + expanded)
+all_pairs = COMBINED_BENCHMARKS
+
+# Filter by category
+struct_pairs = get_expanded_by_category("struct")    # 20 pairs
+enum_pairs = get_expanded_by_category("enum")        # 20 pairs
+float_pairs = get_expanded_by_category("float")      # 15 pairs
+c2rust_pairs = get_expanded_by_category("c2rust")    # 20 pairs
+iter_pairs = get_expanded_by_category("iterator")    # 15 pairs
+```
+
+Categories: `struct`, `enum`, `float`, `c2rust`, `iterator`, `cast`, `compound`, `control_flow`

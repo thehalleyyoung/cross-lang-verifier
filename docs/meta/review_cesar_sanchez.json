@@ -1,0 +1,41 @@
+{
+  "reviewer": "Cesar Sanchez",
+  "affiliation": "IMDEA Software Institute",
+  "persona": "formal_verification_AI_researcher",
+  "date": "2026-03-02",
+  "scores": {
+    "novelty": 8,
+    "rigor": 7,
+    "empirical_strength": 6,
+    "presentation": 7,
+    "reproducibility": 7,
+    "overall": 7
+  },
+  "summary_of_contributions": "SemRec presents a formal verification oracle for detecting semantic divergences between C and Rust function translations by operating at the source level rather than LLVM IR. The key innovation is the σ-bridge — a semantic configuration layer that explicitly encodes per-language semantics (C undefined behavior vs. Rust wrapping/panicking behavior) — enabling detection of divergences that are invisible at the IR level. The tool achieves 86.6% accuracy on 202 pairs across 12 categories and demonstrates that LLMs cannot exploit formal counterexamples for repair (0% CEGAR convergence on UB bugs).",
+  "strengths": [
+    "The σ-bridge concept is the paper's strongest contribution. The observation that LLVM IR erases the semantic distinction between C undefined behavior and Rust defined-but-different behavior is precisely correct, and the solution — parameterizing the SMT encoding by a semantic configuration vector — is elegant and general. This could extend beyond C/Rust to any pair of languages with different undefined behavior models.",
+    "The LLVM IR erasure problem is well-articulated and demonstrates genuine novelty. Showing that Alive2 and Kani report false equivalence because they operate post-compilation, where C UB has already been erased, identifies a real blind spot in existing verification tools.",
+    "The conditional soundness theorem is cleanly stated: UNSAT implies agreement on all inputs where C has defined behavior. The separation of 'output divergence on well-defined input' from 'C UB triggered' in the SAT case is a useful distinction for practitioners assessing translation correctness.",
+    "The negative result on CEGAR-LLM repair (0% convergence on UB bugs despite exact counterexamples) is valuable and honest. This is the first systematic evidence that current LLMs cannot reliably exploit formal verification feedback for semantic bug repair, which has important implications for the LLM-assisted migration community.",
+    "The 100% accuracy on shift, cast, control flow, compound, and real patterns categories demonstrates that the approach is highly reliable within its supported fragment. The per-category breakdown enables practitioners to assess applicability to their specific translation tasks."
+  ],
+  "weaknesses": [
+    "The supported fragment is severely limited: integer arithmetic, bitwise operations, control flow, and type casts. No pointers, heap, structs, strings, floats, or interprocedural analysis. This excludes the vast majority of real C-to-Rust translation challenges, which are dominated by pointer aliasing, memory management, and struct layout. The 0% accuracy on Memory and String categories confirms this limitation.",
+    "The 86.6% aggregate accuracy masks significant variation: 100% on easy categories but 0% on memory and string operations. The aggregate number is misleading because real C-to-Rust translations overwhelmingly involve memory operations. A weighted accuracy reflecting real-world translation task distribution would be more informative.",
+    "The product program construction requires syntactic alignment between C and Rust functions, but the paper does not describe how alignment is performed. For LLM-generated translations that may restructure control flow, reorder operations, or factor differently, syntactic alignment may fail. The tool appears to assume a nearly line-by-line correspondence.",
+    "Loop unrolling at K=32 introduces both unsoundness (loops executing >32 iterations may harbor divergences) and scalability issues (formula size grows exponentially with K). The choice of K=32 is not justified empirically, and the paper does not report the distribution of loop iteration counts in the benchmark suite.",
+    "The hand-written recursive descent parsers for both C and Rust are a significant engineering risk. Production C has preprocessor directives, complex declarator syntax, and implementation-defined behavior that no hand-written parser handles correctly. The paper should validate parser coverage on a corpus beyond the 202 benchmark pairs."
+  ],
+  "questions_for_authors": [
+    "Can the σ-bridge framework be extended to handle pointer semantics? C's pointer provenance model (N2676) and Rust's ownership/borrowing model represent a deeper semantic gap — is there a principled way to encode this in the bridge?",
+    "What is the distribution of Z3 solving times across the 202 benchmark pairs? The '<200ms per pair' claim is an average — are there outliers that approach timeout for complex arithmetic expressions?",
+    "How does the product program handle translations where the Rust code uses pattern matching (match) while the C code uses switch-case? Are these automatically aligned, or does alignment require structural similarity?",
+    "The negative CEGAR result uses a single LLM (GPT-4). Have you tested with models specifically fine-tuned for code repair (e.g., CodeLlama, DeepSeek-Coder)? The failure might be LLM-specific rather than fundamental."
+  ],
+  "missing_references": [
+    "Emre, Schroeder, Dewey, and Hardekopf (2021) — 'Translating C to safer Rust' (OOPSLA). The most relevant C-to-Rust translation tool that should be the primary comparison.",
+    "Lopes, Lee, Hur, Liu, and Regehr (2015) — 'Provably correct peephole optimizations with Alive' (PLDI). The predecessor to Alive2 that establishes IR-level verification methodology.",
+    "Matsushita, Tsukada, and Kobayashi (2021) — 'RustHorn: CHC-based verification for Rust programs' (TOPLAS). Relevant verification technique for Rust that addresses ownership semantics."
+  ],
+  "recommendation": "accept"
+}

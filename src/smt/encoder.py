@@ -16,13 +16,14 @@ import z3
 
 from ..ir.types import (
     IRType, IntType, FloatType, PointerType, VoidType,
-    ArrayType, StructType, FunctionType, Signedness, FloatKind,
-    OverflowBehavior, Language,
+    ArrayType, StructType, EnumType, FunctionType, UnionType,
+    Signedness, FloatKind, OverflowBehavior, Language,
 )
 from ..ir.instructions import (
     Instruction, BinaryOp, UnaryOp, CompareOp, CastInst,
     LoadInst, StoreInst, CallInst, ReturnInst, BranchInst,
     PhiInst, SelectInst, AllocaInst, GetElementPtrInst,
+    ExtractValueInst, InsertValueInst, SwitchInst,
     Value, Constant, Argument, BinOpKind, CmpPredicate, CastKind,
 )
 from ..ir.basic_block import BasicBlock
@@ -129,6 +130,17 @@ class SMTEncoder:
         if isinstance(ty, ArrayType) or tname == "ArrayType":
             elem_sort = self.encode_type(ty.element_type)
             return z3.ArraySort(z3.BitVecSort(64), elem_sort)
+        if isinstance(ty, StructType) or tname == "StructType":
+            # Encode struct as flat bitvector of total size
+            total_bits = ty.size_bits(self.pointer_width)
+            return z3.BitVecSort(max(total_bits, 8))
+        if isinstance(ty, EnumType) or tname == "EnumType":
+            # Encode enum as flat bitvector: tag + max payload
+            total_bits = ty.size_bits(self.pointer_width)
+            return z3.BitVecSort(max(total_bits, 8))
+        if isinstance(ty, UnionType) or tname == "UnionType":
+            total_bits = ty.size_bits(self.pointer_width)
+            return z3.BitVecSort(max(total_bits, 8))
         # Default
         return z3.BitVecSort(32)
 
@@ -201,6 +213,12 @@ class SMTEncoder:
             return self.encode_call(inst, ctx)
         if isinstance(inst, ReturnInst) or tname == "ReturnInst":
             return self.encode_return(inst, ctx)
+        if isinstance(inst, ExtractValueInst) or tname == "ExtractValueInst":
+            return self.encode_extract_value(inst, ctx)
+        if isinstance(inst, InsertValueInst) or tname == "InsertValueInst":
+            return self.encode_insert_value(inst, ctx)
+        if isinstance(inst, SwitchInst) or tname == "SwitchInst":
+            return self.encode_switch(inst, ctx)
         # Unknown instruction: create unconstrained
         if inst.name and inst.type:
             sort = self.encode_type(inst.type)
@@ -721,6 +739,293 @@ class SMTEncoder:
             result = ctx.declare(name, sort)
             return result
         return z3.BoolVal(True)
+
+    # -- Struct/Enum aggregate operations --
+
+    def encode_extract_value(self, inst: ExtractValueInst, ctx: EncodingContext) -> z3.ExprRef:
+        """Encode extractvalue: extract a field from a struct/enum bitvector.
+
+        For structs, fields are packed into a single bitvector.  Extracting
+        field *i* corresponds to ``Extract(hi, lo, aggregate_bv)`` where
+        ``lo = field_offset(i)`` and ``hi = lo + field_size - 1``.
+        """
+        aggregate = self.encode_value(inst.aggregate, ctx)
+        result_sort = self.encode_type(inst.type) if inst.type else z3.BitVecSort(32)
+
+        agg_ty = inst.aggregate.type
+        if not z3.is_bv(aggregate):
+            name = inst.name or ctx.fresh("ev")
+            result = ctx.declare(name, result_sort)
+            return result
+
+        # Walk the index chain to find the offset and width
+        current_ty = agg_ty
+        bit_offset = 0
+        for idx in inst.indices:
+            tname = type(current_ty).__name__
+            if isinstance(current_ty, StructType) or tname == "StructType":
+                bit_offset += current_ty.field_offset(idx, self.pointer_width)
+                current_ty = current_ty.fields[idx].type
+            elif isinstance(current_ty, EnumType) or tname == "EnumType":
+                # For enum, index 0 = tag, index 1 = payload
+                if idx == 0:
+                    tw = current_ty._effective_tag_width()
+                    current_ty = IntType(tw)
+                else:
+                    tw = current_ty._effective_tag_width()
+                    payload_align = max(
+                        (t.align_bits(self.pointer_width) for _, t in current_ty.variants if t.is_sized()),
+                        default=8,
+                    )
+                    from ..ir.types import _align_up
+                    bit_offset += _align_up(tw, payload_align)
+                    # Payload type depends on context; use result type
+                    current_ty = inst.type
+            elif isinstance(current_ty, ArrayType) or tname == "ArrayType":
+                stride = current_ty.element.size_bits(self.pointer_width)
+                align = current_ty.element.align_bits(self.pointer_width)
+                from ..ir.types import _align_up
+                stride = _align_up(stride, align)
+                bit_offset += stride * idx
+                current_ty = current_ty.element
+            else:
+                break
+
+        field_width = current_ty.size_bits(self.pointer_width) if hasattr(current_ty, 'size_bits') else 32
+        agg_width = aggregate.size()
+
+        if bit_offset + field_width > agg_width:
+            name = inst.name or ctx.fresh("ev")
+            result = ctx.declare(name, result_sort)
+            return result
+
+        lo = bit_offset
+        hi = bit_offset + field_width - 1
+        result = z3.Extract(hi, lo, aggregate)
+
+        if inst.name:
+            ctx.declarations[inst.name] = result
+        return result
+
+    def encode_insert_value(self, inst: InsertValueInst, ctx: EncodingContext) -> z3.ExprRef:
+        """Encode insertvalue: insert a value into a struct/enum bitvector.
+
+        Replaces the bits at the field's position with the new value while
+        preserving all other bits.
+        """
+        aggregate = self.encode_value(inst.aggregate, ctx)
+        new_val = self.encode_value(inst.inserted_value, ctx)
+
+        agg_ty = inst.aggregate.type
+        if not z3.is_bv(aggregate):
+            name = inst.name or ctx.fresh("iv")
+            sort = self.encode_type(inst.type) if inst.type else z3.BitVecSort(32)
+            result = ctx.declare(name, sort)
+            return result
+
+        current_ty = agg_ty
+        bit_offset = 0
+        for idx in inst.indices:
+            tname = type(current_ty).__name__
+            if isinstance(current_ty, StructType) or tname == "StructType":
+                bit_offset += current_ty.field_offset(idx, self.pointer_width)
+                current_ty = current_ty.fields[idx].type
+            elif isinstance(current_ty, EnumType) or tname == "EnumType":
+                if idx == 0:
+                    tw = current_ty._effective_tag_width()
+                    current_ty = IntType(tw)
+                else:
+                    tw = current_ty._effective_tag_width()
+                    payload_align = max(
+                        (t.align_bits(self.pointer_width) for _, t in current_ty.variants if t.is_sized()),
+                        default=8,
+                    )
+                    from ..ir.types import _align_up
+                    bit_offset += _align_up(tw, payload_align)
+                    current_ty = inst.inserted_value.type if inst.inserted_value.type else IntType(32)
+            elif isinstance(current_ty, ArrayType) or tname == "ArrayType":
+                stride = current_ty.element.size_bits(self.pointer_width)
+                align = current_ty.element.align_bits(self.pointer_width)
+                from ..ir.types import _align_up
+                stride = _align_up(stride, align)
+                bit_offset += stride * idx
+                current_ty = current_ty.element
+            else:
+                break
+
+        field_width = current_ty.size_bits(self.pointer_width) if hasattr(current_ty, 'size_bits') else 32
+        agg_width = aggregate.size()
+
+        if bit_offset + field_width > agg_width:
+            name = inst.name or ctx.fresh("iv")
+            sort = self.encode_type(inst.type) if inst.type else z3.BitVecSort(32)
+            result = ctx.declare(name, sort)
+            return result
+
+        # Coerce new_val to field width
+        if z3.is_bv(new_val):
+            if new_val.size() < field_width:
+                new_val = z3.ZeroExt(field_width - new_val.size(), new_val)
+            elif new_val.size() > field_width:
+                new_val = z3.Extract(field_width - 1, 0, new_val)
+        else:
+            new_val = z3.BitVecVal(0, field_width)
+
+        # Build result: prefix | new_val | suffix
+        lo = bit_offset
+        hi = bit_offset + field_width - 1
+
+        parts = []
+        if hi + 1 < agg_width:
+            parts.append(z3.Extract(agg_width - 1, hi + 1, aggregate))
+        parts.append(new_val)
+        if lo > 0:
+            parts.append(z3.Extract(lo - 1, 0, aggregate))
+
+        if len(parts) == 1:
+            result = parts[0]
+        else:
+            result = z3.Concat(*parts)
+
+        if inst.name:
+            ctx.declarations[inst.name] = result
+        return result
+
+    def encode_switch(self, inst: SwitchInst, ctx: EncodingContext) -> None:
+        """Encode a switch instruction as branch conditions for each case.
+
+        Sets path conditions for case targets and the default target,
+        mirroring how encode_function handles BranchInst conditions.
+        """
+        cond = self.encode_value(inst.condition, ctx)
+        if not z3.is_bv(cond):
+            return None
+
+        case_conds = []
+        for case_val, target in inst.cases:
+            case_bv = self.encode_constant(case_val, ctx) if isinstance(case_val, Constant) else self.encode_value(case_val, ctx)
+            if z3.is_bv(case_bv):
+                cond_bv, case_bv = self._coerce_bv(cond, case_bv)
+            else:
+                cond_bv = cond
+            eq_cond = cond_bv == case_bv
+            case_conds.append(eq_cond)
+
+            if hasattr(target, 'name') and target.name:
+                ctx.declarations[f"_branch_cond_{target.name}"] = eq_cond
+                ctx.declarations[f"_path_cond_{target.name}"] = eq_cond
+
+        # Default target gets negation of all case conditions
+        if case_conds:
+            default_cond = z3.And(*[z3.Not(c) for c in case_conds])
+        else:
+            default_cond = z3.BoolVal(True)
+
+        default_target = inst.default_target
+        if hasattr(default_target, 'name') and default_target.name:
+            ctx.declarations[f"_branch_cond_{default_target.name}"] = default_cond
+            ctx.declarations[f"_path_cond_{default_target.name}"] = default_cond
+
+        return None
+
+    def encode_struct_literal(
+        self,
+        struct_ty: StructType,
+        field_values: List[z3.ExprRef],
+        ctx: EncodingContext,
+    ) -> z3.BitVecRef:
+        """Construct a struct bitvector from individual field values.
+
+        Fields are laid out low-to-high: field 0 occupies the lowest bits.
+        Padding bits between fields are set to zero.
+        """
+        total_bits = struct_ty.size_bits(self.pointer_width)
+        if total_bits == 0:
+            return z3.BitVecVal(0, 8)
+
+        result = z3.BitVecVal(0, total_bits)
+        offsets = struct_ty._compute_layout(self.pointer_width)
+
+        for i, fld in enumerate(struct_ty.fields):
+            if i >= len(field_values):
+                break
+            fld_width = fld.type.size_bits(self.pointer_width)
+            val = field_values[i]
+
+            if z3.is_bv(val):
+                if val.size() < fld_width:
+                    val = z3.ZeroExt(fld_width - val.size(), val)
+                elif val.size() > fld_width:
+                    val = z3.Extract(fld_width - 1, 0, val)
+            else:
+                val = z3.BitVecVal(0, fld_width)
+
+            # Shift field into position and OR into result
+            if fld_width < total_bits:
+                padded = z3.ZeroExt(total_bits - fld_width, val)
+            else:
+                padded = val
+            if offsets[i] > 0:
+                padded = padded << offsets[i]
+            result = result | padded
+
+        return result
+
+    def encode_enum_construct(
+        self,
+        enum_ty: EnumType,
+        variant_name: str,
+        payload: Optional[z3.ExprRef],
+        ctx: EncodingContext,
+    ) -> z3.BitVecRef:
+        """Construct an enum bitvector with the given variant tag and payload."""
+        total_bits = enum_ty.size_bits(self.pointer_width)
+        if total_bits == 0:
+            return z3.BitVecVal(0, 8)
+
+        tw = enum_ty._effective_tag_width()
+        tag_val = enum_ty.variant_index(variant_name)
+        result = z3.BitVecVal(0, total_bits)
+
+        # Set tag
+        if tw > 0:
+            tag_bv = z3.BitVecVal(tag_val, tw)
+            if tw < total_bits:
+                tag_padded = z3.ZeroExt(total_bits - tw, tag_bv)
+            else:
+                tag_padded = tag_bv
+            result = result | tag_padded
+
+        # Set payload
+        if payload is not None and z3.is_bv(payload):
+            from ..ir.types import _align_up
+            payload_align = max(
+                (t.align_bits(self.pointer_width) for _, t in enum_ty.variants if t.is_sized()),
+                default=8,
+            )
+            payload_offset = _align_up(tw, payload_align)
+            payload_width = payload.size()
+            if payload_width + payload_offset <= total_bits:
+                if payload_width < total_bits:
+                    payload_padded = z3.ZeroExt(total_bits - payload_width, payload)
+                else:
+                    payload_padded = payload
+                if payload_offset > 0:
+                    payload_padded = payload_padded << payload_offset
+                result = result | payload_padded
+
+        return result
+
+    def encode_enum_discriminant(
+        self,
+        enum_bv: z3.BitVecRef,
+        enum_ty: EnumType,
+    ) -> z3.BitVecRef:
+        """Extract the discriminant tag from an enum bitvector."""
+        tw = enum_ty._effective_tag_width()
+        if tw == 0:
+            return z3.BitVecVal(0, 8)
+        return z3.Extract(tw - 1, 0, enum_bv)
 
     # -- Return --
 
