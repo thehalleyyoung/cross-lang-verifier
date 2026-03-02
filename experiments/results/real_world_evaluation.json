@@ -1,0 +1,213 @@
+{
+  "description": "Real-world C library evaluation for SemRec",
+  "n_pairs": 15,
+  "accuracy": 0.2667,
+  "by_library": {
+    "musl-libc": {
+      "total": 5,
+      "correct": 2
+    },
+    "zlib": {
+      "total": 2,
+      "correct": 0
+    },
+    "libsodium": {
+      "total": 2,
+      "correct": 2
+    },
+    "SQLite": {
+      "total": 1,
+      "correct": 0
+    },
+    "linux-kernel": {
+      "total": 3,
+      "correct": 0
+    },
+    "redis": {
+      "total": 1,
+      "correct": 0
+    },
+    "generic": {
+      "total": 1,
+      "correct": 0
+    }
+  },
+  "by_category": {
+    "arithmetic": {
+      "total": 6,
+      "correct": 2
+    },
+    "checksum": {
+      "total": 2,
+      "correct": 0
+    },
+    "crypto": {
+      "total": 1,
+      "correct": 1
+    },
+    "encoding": {
+      "total": 1,
+      "correct": 0
+    },
+    "bitwise": {
+      "total": 4,
+      "correct": 1
+    },
+    "cast": {
+      "total": 1,
+      "correct": 0
+    }
+  },
+  "results": [
+    {
+      "name": "musl_abs",
+      "source_lib": "musl-libc",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 203.99,
+      "parser_backend": "hand-written"
+    },
+    {
+      "name": "musl_clamp",
+      "source_lib": "musl-libc",
+      "category": "arithmetic",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 34.67,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "zlib_adler32_step",
+      "source_lib": "zlib",
+      "category": "checksum",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 20.59,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "sodium_verify_4",
+      "source_lib": "libsodium",
+      "category": "crypto",
+      "expected": "divergent",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 7.31,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "sqlite_varint_byte",
+      "source_lib": "SQLite",
+      "category": "encoding",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 13.08,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "kernel_is_power_of_2",
+      "source_lib": "linux-kernel",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 16.85,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "kernel_align_up",
+      "source_lib": "linux-kernel",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.86,
+      "parser_backend": "hand-written"
+    },
+    {
+      "name": "musl_sign",
+      "source_lib": "musl-libc",
+      "category": "arithmetic",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 4.72,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "redis_sds_avail",
+      "source_lib": "redis",
+      "category": "arithmetic",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.51,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "musl_min",
+      "source_lib": "musl-libc",
+      "category": "arithmetic",
+      "expected": "equivalent",
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 8.11,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "sodium_rotl32",
+      "source_lib": "libsodium",
+      "category": "bitwise",
+      "expected": "conditional",
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 10.6,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "zlib_crc_step",
+      "source_lib": "zlib",
+      "category": "checksum",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 2.15,
+      "parser_backend": "hand-written"
+    },
+    {
+      "name": "musl_digit_char",
+      "source_lib": "musl-libc",
+      "category": "cast",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.77,
+      "parser_backend": "tree-sitter"
+    },
+    {
+      "name": "kernel_clz_simple",
+      "source_lib": "linux-kernel",
+      "category": "bitwise",
+      "expected": "equivalent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 4.36,
+      "parser_backend": "hand-written"
+    },
+    {
+      "name": "saturating_add",
+      "source_lib": "generic",
+      "category": "arithmetic",
+      "expected": "divergent",
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.04,
+      "parser_backend": "tree-sitter"
+    }
+  ]
+}

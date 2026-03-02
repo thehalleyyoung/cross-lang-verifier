@@ -387,3 +387,66 @@ iter_pairs = get_expanded_by_category("iterator")    # 15 pairs
 ```
 
 Categories: `struct`, `enum`, `float`, `c2rust`, `c2rust_realistic`, `iterator`, `cast`, `compound`, `control_flow`, `memory`, `scaled_memory`
+
+---
+
+## Tree-Sitter Parsers (NEW)
+
+### C Parser (`src/frontend_c/tree_sitter_parser.py`)
+
+```python
+from src.frontend_c.tree_sitter_parser import TreeSitterCParser
+
+parser = TreeSitterCParser("int add(int a, int b) { return a + b; }")
+ast = parser.parse()  # Returns TranslationUnit
+print(ast.declarations[0].name)  # "add"
+```
+
+### Rust Parser (`src/frontend_rust/tree_sitter_parser.py`)
+
+```python
+from src.frontend_rust.tree_sitter_parser import TreeSitterRustParser
+
+parser = TreeSitterRustParser("fn add(a: i32, b: i32) -> i32 { a + b }")
+ast = parser.parse()  # Returns Crate
+print(ast.items[0].name)  # "add"
+```
+
+Both parsers fall back to the hand-written parsers on conversion errors. The oracle (`src/oracle/oracle.py`) automatically prefers tree-sitter parsers.
+
+---
+
+## Enhanced Memory Model (NEW)
+
+### `src/smt/points_to_analysis.py`
+
+```python
+from src.smt.points_to_analysis import EnhancedMemoryModel
+
+model = EnhancedMemoryModel()
+constraints = model.analyze(c_ir, rust_ir)
+# Returns additional SMT constraints for pointer reasoning
+```
+
+Components:
+- **`PointsToAnalysis`**: Andersen-style flow-insensitive points-to analysis
+- **`OwnershipAxiomEncoder`**: Generates non-aliasing constraints from Rust `&mut` references
+- **`TBAAEncoder`**: Type-based alias analysis (C strict aliasing rule)
+
+---
+
+## Product Program Soundness (NEW)
+
+### `src/product_program/soundness.py`
+
+```python
+from src.product_program.soundness import verify_coercion_soundness, format_proof_appendix
+
+results = verify_coercion_soundness()
+# Returns list of (coercion_name, status, details) tuples
+
+latex = format_proof_appendix()
+# Returns LaTeX string for paper appendix
+```
+
+Provides formal verification of σ-bridge coercion correctness via boundary-value testing on 7 coercion specifications.

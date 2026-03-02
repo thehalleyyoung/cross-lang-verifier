@@ -2,35 +2,35 @@
   "summary": {
     "tag": "memory",
     "total_pairs": 19,
-    "correct": 5,
-    "accuracy": 26.3,
+    "correct": 0,
+    "accuracy": 0.0,
     "accuracy_ci_95": [
-      11.8,
-      48.8
+      0,
+      16.8
     ],
-    "errors": 1,
-    "mean_time_ms": 801.8,
-    "median_time_ms": 10.0,
-    "p95_time_ms": 15057.4,
-    "total_time_ms": 15233.5,
+    "errors": 10,
+    "mean_time_ms": 4.1,
+    "median_time_ms": 1.7,
+    "p95_time_ms": 15.3,
+    "total_time_ms": 77.4,
     "by_category": {
       "c2rust": {
-        "accuracy": 14.3,
+        "accuracy": 0.0,
         "total": 7,
-        "correct": 1,
-        "errors": 0
+        "correct": 0,
+        "errors": 4
       },
       "memory": {
-        "accuracy": 50.0,
+        "accuracy": 0.0,
         "total": 8,
-        "correct": 4,
-        "errors": 1
+        "correct": 0,
+        "errors": 4
       },
       "memory_scaled": {
         "accuracy": 0.0,
         "total": 4,
         "correct": 0,
-        "errors": 0
+        "errors": 2
       }
     }
   },
@@ -48,19 +48,19 @@
       "name": "array_write_read",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 12.54,
-      "smt_queries": 1
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 3.78,
+      "smt_queries": 0
     },
     {
       "name": "array_swap",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 21.71,
-      "smt_queries": 1
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 7.78,
+      "smt_queries": 0
     },
     {
       "name": "ptr_offset_ub",
@@ -68,7 +68,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.34,
+      "time_ms": 2.36,
       "smt_queries": 0
     },
     {
@@ -77,44 +77,44 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.1,
+      "time_ms": 1.73,
       "smt_queries": 0
     },
     {
       "name": "struct_field_access",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 3.32,
+      "time_ms": 0.58,
       "smt_queries": 0
     },
     {
       "name": "struct_modify",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 11.55,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.74,
+      "smt_queries": 0
     },
     {
       "name": "heap_alloc_use",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 5.78,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.69,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_array_init",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 16.14,
-      "smt_queries": 1
+      "time_ms": 1.34,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_conditional_ptr",
@@ -122,17 +122,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 9.97,
+      "time_ms": 6.61,
       "smt_queries": 1
     },
     {
       "name": "c2rust_buffer_fill",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 9.42,
-      "smt_queries": 1
+      "time_ms": 1.17,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_goto_elimination",
@@ -140,17 +140,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 5.73,
+      "time_ms": 4.96,
       "smt_queries": 1
     },
     {
       "name": "c2rust_macro_expand",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 10.47,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.65,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_strlen_simple",
@@ -158,34 +158,34 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 9.87,
+      "time_ms": 8.74,
       "smt_queries": 0
     },
     {
       "name": "c2rust_bitfield_extract",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 19.59,
-      "smt_queries": 2
+      "time_ms": 1.57,
+      "smt_queries": 0
     },
     {
       "name": "matrix_multiply_2x2",
       "category": "memory_scaled",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 15057.38,
-      "smt_queries": 1
+      "time_ms": 1.04,
+      "smt_queries": 0
     },
     {
       "name": "ring_buffer_insert",
       "category": "memory_scaled",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 11.99,
+      "time_ms": 8.97,
       "smt_queries": 0
     },
     {
@@ -194,7 +194,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 16.31,
+      "time_ms": 15.29,
       "smt_queries": 1
     },
     {
@@ -203,7 +203,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 6.04,
+      "time_ms": 8.1,
       "smt_queries": 0
     }
   ]

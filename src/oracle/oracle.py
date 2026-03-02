@@ -357,10 +357,17 @@ class VerificationOracle:
 
         stages = {}
 
-        # Parse C
+        # Parse C — prefer tree-sitter (verified grammar), fall back to hand-written
         try:
-            c_ast = CParser(c_code, f"{name}.c").parse()
-            stages["c_parse"] = True
+            try:
+                from src.frontend_c.tree_sitter_parser import TreeSitterCParser
+                c_ast = TreeSitterCParser(c_code, f"{name}.c").parse()
+                stages["c_parse"] = True
+                stages["c_parser_backend"] = "tree-sitter"
+            except Exception:
+                c_ast = CParser(c_code, f"{name}.c").parse()
+                stages["c_parse"] = True
+                stages["c_parser_backend"] = "hand-written"
         except Exception as e:
             return OracleResult(
                 verdict=Verdict.ERROR.value,
@@ -369,10 +376,17 @@ class VerificationOracle:
                 pipeline_stages=stages, func_name=name,
             )
 
-        # Parse Rust — try harder on failure
+        # Parse Rust — prefer tree-sitter, fall back to hand-written
         try:
-            r_ast = RustParser(rust_code, f"{name}.rs").parse()
-            stages["rust_parse"] = True
+            try:
+                from src.frontend_rust.tree_sitter_parser import TreeSitterRustParser
+                r_ast = TreeSitterRustParser(rust_code, f"{name}.rs").parse()
+                stages["rust_parse"] = True
+                stages["rust_parser_backend"] = "tree-sitter"
+            except Exception:
+                r_ast = RustParser(rust_code, f"{name}.rs").parse()
+                stages["rust_parse"] = True
+                stages["rust_parser_backend"] = "hand-written"
         except Exception as e:
             # Retry: add pub keyword if missing
             import re
@@ -453,12 +467,24 @@ class VerificationOracle:
                 pipeline_stages=stages, func_name=name,
             )
 
-        # SMT verification
+        # SMT verification (with enhanced memory model)
         try:
             verdict_str, cex_raw, n_queries = self._smt_verify(
                 c_func, r_func, c_config, r_config, product
             )
             stages["smt"] = True
+            # Run enhanced memory model analysis when available
+            try:
+                from src.smt.points_to_analysis import EnhancedMemoryModel
+                from src.smt.encoder import EncodingContext as EMCtx
+                emm = EnhancedMemoryModel(EMCtx(), c_config, r_config)
+                emm.analyze_c_function(c_func)
+                emm.analyze_rust_function(r_func)
+                mem_stats = emm.encode_all_constraints()
+                stages["enhanced_memory"] = True
+                stages["memory_stats"] = mem_stats
+            except Exception:
+                stages["enhanced_memory"] = False
         except Exception as e:
             return OracleResult(
                 verdict=Verdict.ERROR.value,

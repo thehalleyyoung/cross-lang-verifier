@@ -20,10 +20,16 @@ from .parser import RustParser, ParseError
 from .type_resolver import RustTypeResolver
 from .ir_lowering import RustIRLowering
 
+try:
+    from .tree_sitter_parser import TreeSitterRustParser
+except ImportError:
+    TreeSitterRustParser = None  # tree-sitter-rust not installed
+
 __all__ = [
     "RustLexer", "Token", "TokenKind", "SourcePos",
     "Crate", "FnItem", "StructItem", "EnumItem", "ImplItem",
     "RustParser", "ParseError",
+    "TreeSitterRustParser",
     "RustTypeResolver",
     "RustIRLowering",
 ]

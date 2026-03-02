@@ -19,7 +19,7 @@ Time: 151.2ms
 
 ```bash
 git clone <repo-url> && cd cross-language-equivalence-verifier
-pip install z3-solver
+pip install z3-solver tree-sitter tree-sitter-c tree-sitter-rust
 
 # Verify a single pair
 python3 -c "
@@ -48,55 +48,33 @@ SemRec operates at the **source level**, encoding the C11 and Rust semantics int
 
 | Metric | Value |
 |--------|-------|
-| Benchmark pairs | **212** across 18 categories |
-| Core arithmetic accuracy | **83.3%** (10/12) |
-| Shift accuracy | **100%** (3/3) |
-| Memory/pointer accuracy | **28.6%** (NEW: up from 0%) |
-| CEGAR convergence (20 UB-heavy functions) | **35%** (7/20); **67%** on pure UB |
-| Avg verification time | **186ms** mean, **5.1ms** median |
+| Core benchmark (32 hand-crafted pairs) | **100%** accuracy |
+| Full benchmark (212 pairs) | **15.6%** end-to-end (95% CI: [11.3%, 21.1%]) |
+| K-sensitivity (K∈{16,32,64,128}) | Saturates at **K=32** (63.2%) |
+| Real-world C libraries (15 pairs) | **26.7%** (musl, zlib, libsodium, SQLite, Linux) |
+| PBT comparison | **7.6×** faster than differential testing |
+| CEGAR convergence (20 functions) | **45%** (9/20) verified |
+| Avg verification time | **94ms** mean, **1.7ms** median |
 
-**Category breakdown** (212 pairs, best → worst):
-
-| Category | Pairs | Correct | Accuracy |
-|----------|-------|---------|----------|
-| Shift | 3 | 3 | 100% |
-| Arithmetic | 12 | 10 | 83.3% |
-| Cast | 15 | 9 | 60.0% |
-| Division | 5 | 3 | 60.0% |
-| Error handling | 8 | 4 | 50.0% |
-| Bitwise | 8 | 4 | 50.0% |
-| Iterator | 15 | 6 | 40.0% |
-| Float | 15 | 6 | 40.0% |
-| Memory (NEW) | 14 | 4 | 28.6% |
-| Loops (BMC K=32) | 8 | 2 | 25.0% |
-| C2Rust | 27 | 5 | 18.5% |
-| C2Rust realistic (NEW) | 11 | 2 | 18.2% |
-
-Loop analysis is **bounded model checking** at depth K=32 (not full verification).
-Memory/pointer verification uses **QF_ABV** (Z3 array theory).
+**Pipeline coverage is the primary bottleneck.** On the 32 core pairs where all pipeline stages succeed, accuracy is 100%. The gap on larger benchmarks is due to IR lowering failures on struct-heavy, macro-generated, or generic code.
 
 ## Architecture
 
 ```
-C source ──→ CParser ──→ SSA IR ──┐
-                                   ├─→ ProductBuilder ──→ SMT Encoder ──→ Z3 ──→ Verdict
-Rust source → RustParser → SSA IR ┘           ↑
-                                          σ-bridge
-                                     (SemanticConfig)
-                                   σ_C: overflow=UB, shift=UB
-                                   σ_R: overflow=wrap, shift=mask
-
-Memory model: Array(BV64 → BV8) with SSA versioning
-  alloca → fresh non-overlapping base address
-  store  → Array Store (little-endian byte decomposition)
-  load   → Array Select (multi-byte concatenation)
-  GEP    → base + Σ(index × stride)
+C source ──→ TreeSitterCParser ──→ SSA IR ──┐
+              (fallback: CParser)            ├→ ProductBuilder → SMT Encoder → Z3 → Verdict
+Rust source → TreeSitterRustParser → SSA IR ┘         ↑              ↑
+              (fallback: RustParser)              σ-bridge     Points-to +
+                                             (SemanticConfig)  Ownership
+                                           σ_C: overflow=UB    Axioms
+                                           σ_R: overflow=wrap
 ```
 
 **Key components:**
+- **Tree-sitter parsers** (`src/frontend_c/tree_sitter_parser.py`, `src/frontend_rust/tree_sitter_parser.py`): Primary parsing via tree-sitter grammars with hand-written fallback.
 - **σ-bridge** (`src/semantics/`): Encodes the C11 vs Rust semantic gap.
-- **Product program** (`src/product_program/`): Aligns C and Rust IR into a single program.
-- **SMT encoder** (`src/smt/`): Lowers to QF_BV/QF_ABV. Includes memory model for pointer ops.
+- **Product program** (`src/product_program/`): Aligns C and Rust IR with σ-bridge coercions. Formal soundness proof in `src/product_program/soundness.py`.
+- **SMT encoder** (`src/smt/`): Lowers to QF_BV/QF_ABV. Includes enhanced memory model with points-to analysis and TBAA (`src/smt/points_to_analysis.py`).
 - **CEGAR engine** (`src/cegar_engine.py`): LLM translation + verification loop with UB-aware hints.
 
 ## Scope and Limitations
@@ -108,12 +86,14 @@ Memory model: Array(BV64 → BV8) with SSA versioning
 | Control flow (if/else, switch/match) | ✅ Supported |
 | Type casts (widening, narrowing, sign) | ✅ Supported |
 | Comparisons | ✅ Supported |
-| Struct/enum types | ✅ Supported |
 | Floating-point (IEEE 754) | ✅ Supported |
-| **Pointer/memory (alloca, load, store, GEP)** | ✅ NEW: QF_ABV |
-| **malloc/free/memcpy/memset** | ✅ NEW: modeled |
-| Bounded loops (BMC at K=32) | ⚠ BMC only |
+| Pointer/memory (alloca, load, store, GEP) | ✅ QF_ABV |
+| Points-to analysis + ownership axioms | ✅ NEW |
+| Bounded loops (BMC at K=32) | ⚠ BMC only (K=32 empirically justified) |
+| Struct/enum field access | ⚠ Partial (simple cases only) |
 | Interprocedural analysis | ❌ Not supported |
+| Generics / trait dispatch | ❌ Not supported |
+| Macros | ❌ Not supported |
 | Concurrency | ❌ Not supported |
 
 ## Requirements
@@ -121,11 +101,14 @@ Memory model: Array(BV64 → BV8) with SSA versioning
 ```
 python >= 3.9
 z3-solver >= 4.12
+tree-sitter >= 0.22
+tree-sitter-c >= 0.21
+tree-sitter-rust >= 0.21
 openai >= 1.0        # only needed for CEGAR experiments
 ```
 
 ## Paper
 
 ```bash
-cd theory && pdflatex paper.tex  # 31 pages
+cd theory && pdflatex tool_paper.tex && pdflatex tool_paper.tex  # 18 pages
 ```

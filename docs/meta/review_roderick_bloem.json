@@ -1,41 +1,41 @@
 {
   "reviewer": "Roderick Bloem",
-  "affiliation": "Graz University of Technology",
+  "affiliation": "TU Graz",
   "persona": "machine_learning_specification_safety_researcher",
-  "date": "2026-03-02",
+  "date": "2026-03-15",
   "scores": {
-    "novelty": 7,
-    "rigor": 6,
-    "empirical_strength": 6,
-    "presentation": 7,
-    "reproducibility": 7,
-    "overall": 6
+    "novelty": 6,
+    "rigor": 5,
+    "empirical_strength": 5,
+    "presentation": 6,
+    "reproducibility": 6,
+    "overall": 5
   },
-  "summary_of_contributions": "SemRec provides a verification oracle for C-to-Rust translation correctness operating at source level, using a σ-bridge to encode per-language semantics for SMT-based equivalence checking. The system detects divergences invisible to both differential testing and IR-level tools, achieving 86.6% accuracy on 202 pairs. A CEGAR loop with LLM-driven repair demonstrates that current LLMs cannot exploit formal counterexamples (0% repair success on UB bugs).",
+  "summary_of_contributions": "SemRec addresses C-to-Rust migration verification through a six-stage pipeline culminating in Z3-based SMT solving over QF_BV formulas. The system introduces σ-bridge coercion points to handle semantic divergences between C undefined behavior and Rust's well-defined wrapping semantics, and includes a CEGAR LLM-in-the-loop refinement mechanism. Evaluation on 212 benchmark pairs reports category-dependent accuracy ranging from 28.6% (memory) to 100% (shifts), with the LLM-assisted CEGAR achieving 45% refinement success. The tool targets functions of approximately 50 lines maximum with no interprocedural analysis.",
   "strengths": [
-    "The practical motivation is compelling. C-to-Rust migration is an active area (Android, Linux kernel, Windows), and the semantic gap between C and Rust is a genuine source of bugs. A tool that catches divergences invisible to testing addresses a real market need.",
-    "The finding that 10K random inputs achieve only 32.7% accuracy where SemRec achieves 86.6% provides strong evidence for the value of formal methods over testing for this domain. The 8 specific divergences that testing misses are concrete examples practitioners can relate to.",
-    "The negative CEGAR-LLM result is a valuable contribution to the growing literature on LLM-formal methods integration. The finding that LLMs cannot reliably repair even simple arithmetic UB bugs despite receiving exact counterexamples with concrete input/output values suggests that formal reasoning about undefined behavior requires capabilities beyond current LLMs.",
-    "The per-category accuracy breakdown (100% on 5 categories, 0% on 2) is transparent and enables practitioners to make informed decisions about tool applicability. This is more useful than a single aggregate number.",
-    "The <200ms per pair verification time makes the tool practical for CI/CD integration, where verification must not significantly delay build pipelines."
+    "The problem framing is timely and practically important. With organizations like Google, Microsoft, and the Linux kernel community actively pursuing C-to-Rust migration, a verification tool that checks semantic equivalence of translated functions fills a genuine gap. The focus on AI-assisted migration — where LLM-generated Rust code may subtly deviate from the original C semantics — addresses a real and growing pain point in software engineering practice.",
+    "The CEGAR LLM-in-the-loop refinement mechanism is an interesting architectural contribution. Using counterexamples from failed verification attempts to prompt an LLM for refined translations creates a feedback loop that could converge on correct translations. The 45% success rate, while modest, establishes a baseline for this hybrid approach and honestly acknowledges that LLMs are not yet reliable enough for autonomous formal-methods-guided repair.",
+    "The repair hint generation alongside verdicts adds practical value beyond binary equivalent/inequivalent classification. For migration engineers, knowing not just that a translation is wrong but where and how it diverges reduces debugging effort. The counterexample generation via Z3 model extraction provides concrete witness inputs that can be used for regression testing.",
+    "The benchmark suite of 212 pairs across 18 categories provides reasonable coverage of the C-to-Rust semantic gap landscape. The category-wise breakdown (shift, arithmetic, memory, control flow) enables targeted analysis of where the approach succeeds and fails."
   ],
   "weaknesses": [
-    "The scope limitation to arithmetic and control flow excludes the primary challenge in C-to-Rust translation: memory safety. The ownership/borrowing model in Rust vs. manual memory management in C is where most semantic divergences occur in practice. A tool that cannot verify pointer-level equivalence addresses a secondary concern.",
-    "The evaluation benchmark of 202 pairs is relatively small and appears to be manually constructed. The paper should evaluate on real-world LLM-generated translations from production codebases or established benchmarks (e.g., from the C2Rust transpiler output or the RustSec advisory database).",
-    "The product program approach assumes functional correspondence between C and Rust functions, but real translations often involve structural changes: splitting one C function into multiple Rust functions, introducing error handling with Result types, or replacing mutable state with iterators. The paper does not address how structural translations are handled.",
-    "The CEGAR-LLM loop is tested with only one LLM and a fixed prompt strategy. The negative result would be more convincing with: (a) multiple LLMs, (b) chain-of-thought prompting, (c) few-shot examples of UB repair, and (d) iterative refinement beyond a single CEGAR round.",
-    "The paper does not address floating-point semantics, which differ between C (implementation-defined rounding, extended precision) and Rust (IEEE 754 required). This is a significant semantic gap for numerical code that the σ-bridge should ideally capture."
+    "The 50-line function size limit and absence of interprocedural analysis severely constrain practical adoption. Real-world C-to-Rust migration targets — such as the C2Rust transpiler output for production codebases — routinely produce functions exceeding 200 lines with complex call graphs. The paper does not provide a scalability analysis showing how verification time grows with function size, nor does it discuss architectural paths toward interprocedural analysis (e.g., modular verification with function summaries). Without a credible scalability roadmap, SemRec remains a research prototype rather than a migration tool.",
+    "The CEGAR LLM-in-the-loop at 45% success rate raises significant safety concerns for deployment. If practitioners rely on LLM-refined translations that pass verification but contain subtle errors in the 55% failure cases, the tool could introduce false confidence. The paper does not analyze failure modes of the LLM refinement — does it sometimes produce translations that pass verification but are semantically incorrect due to memory model limitations? This interaction between LLM unreliability and verification incompleteness (K=32 bound, simplified memory model) could create a dangerous gap.",
+    "The integration story with existing migration tooling is entirely absent. C2Rust, the dominant C-to-Rust transpiler, produces idiomatic unsafe Rust that heavily uses raw pointers. How does SemRec handle unsafe Rust blocks? Does the Rust parser support the full unsafe subset? The paper's silence on unsafe Rust — which is precisely what transpiler output contains — suggests the tool may not handle the most common migration scenario. Similarly, there is no discussion of integration with cargo, clippy, or miri for complementary analysis.",
+    "The 28.6% accuracy on memory operations — the category most critical for C-to-Rust migration safety — is a serious practical limitation that is underemphasized. Memory safety is the primary motivation for C-to-Rust migration. A verification tool that correctly handles only 28.6% of memory-related equivalence checks provides minimal value for its intended use case. The gap between shift operation accuracy (100%) and memory accuracy (28.6%) suggests the tool is well-suited for arithmetic verification but not for the core migration safety challenge.",
+    "The repair hints lack any formal guarantee of correctness or completeness. Are the hints guaranteed to, if followed, produce a correct translation? Can the hint space cover all possible translation errors? Without such guarantees, the repair hints are suggestions rather than verified corrections, and their reliability for practitioner use is unclear."
   ],
   "questions_for_authors": [
-    "What is the engineering effort required to extend the supported fragment to include structs and enums (without pointers)? These are common in C-to-Rust translations and seem tractable for SMT encoding.",
-    "Can the σ-bridge be parameterized by compiler flags? For example, -fwrapv in GCC/Clang defines signed overflow to wrap, which would change the C semantic configuration and potentially eliminate some divergences.",
-    "How does the tool handle C code with implementation-defined behavior (e.g., right-shift of signed integers)? Is this treated as UB, defined, or configurable?",
-    "What percentage of real C-to-Rust translations in open-source projects fall within the supported fragment? Even an informal analysis would help assess practical coverage."
+    "How does SemRec handle unsafe Rust code, which is the primary output of C2Rust and similar transpilers? Does your Rust parser support raw pointer operations, transmute, and union access?",
+    "In the 55% of cases where CEGAR LLM refinement fails, what are the failure modes? Does the LLM produce syntactically invalid Rust, semantically incorrect translations that also fail verification, or translations that appear to pass verification due to memory model limitations?",
+    "Have you tested SemRec on C2Rust output for any real-world C codebase? Even a small case study (e.g., a single C library function and its C2Rust translation) would significantly strengthen the practical relevance claims.",
+    "What is the verification time scaling behavior as function size increases from 10 to 50 lines? Is the growth linear, polynomial, or exponential in the number of SSA variables?"
   ],
   "missing_references": [
-    "Mehta, Sannidhanam, Garber, et al. (2024) — 'Towards automated C-to-Rust migration using AI techniques'. Recent industry perspective on LLM-assisted migration challenges.",
-    "Hong, Zhang, Li, and Tan (2023) — 'C2Rust translation quality: A study with SPEC CPU benchmarks'. Empirical analysis of translation quality relevant to benchmark design.",
-    "Churchill, Padon, Sharma, and Aiken (2019) — 'Semantic Program Alignment for Equivalence Checking' (PLDI). Directly relevant product program construction technique."
+    "Emre, Schroeder, Dewey, and Hardekopf (2021) — 'Translating C to safer Rust' (OOPSLA). The most directly relevant prior work on verified C-to-Rust translation.",
+    "Immunant C2Rust transpiler (2023) — The dominant open-source C-to-Rust migration tool whose output SemRec should be evaluated against.",
+    "Jung, Jourdan, Krebbers, and Dreyer (2018) — 'RustBelt: Securing the foundations of the Rust programming language' (POPL). Foundational formalization of Rust's ownership semantics relevant to the memory model.",
+    "Astrauskas, Müller, Poli, and Summers (2019) — 'Leveraging Rust types for modular specification and verification' (OOPSLA). Prusti verifier for Rust that could complement SemRec's approach."
   ],
   "recommendation": "weak_accept"
 }

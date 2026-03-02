@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  23 FEB 2026 15:21
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  1 MAR 2026 21:41
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -609,59 +609,61 @@ LaTeX Warning: No \author given.
 
 {/usr/local/texlive/2025basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10.95> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 131.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 136.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 143.
+(hyperref)                removing `math shift' on input line 148.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\leftrightarrow' on input line 143.
+(hyperref)                removing `\leftrightarrow' on input line 148.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 143.
+(hyperref)                removing `math shift' on input line 148.
 
 
 
 [2]
-Overfull \hbox (7.5778pt too wide) in paragraph at lines 239--248
+Overfull \hbox (7.5778pt too wide) in paragraph at lines 254--263
 \T1/cmtt/m/n/10.95 BranchInst\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 SelectInst\
 T1/cmr/m/n/10.95 , and \T1/cmtt/m/n/10.95 PhiInst\T1/cmr/m/n/10.95 . Each arith
 -metic in-struc-tion car-ries an \T1/cmtt/m/n/10.95 OverflowBehavior
  []
 
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 253.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 268.
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
-Overfull \hbox (15.327pt too wide) in paragraph at lines 285--290
+
+[3]
+Overfull \hbox (15.327pt too wide) in paragraph at lines 300--305
 []\T1/cmr/m/n/10.95 This de-sign is in-ten-tion-ally a stan-dard se-man-tic enc
 oding---not a novel the-o-ret-i-cal contribution---
  []
 
 
-Overfull \hbox (19.37358pt too wide) in paragraph at lines 293--299
+Overfull \hbox (19.37358pt too wide) in paragraph at lines 337--343
 \T1/cmr/m/n/10.95 that ex-e-cutes both sym-bol-i-cally on shared in-puts $[]$ a
 nd as-serts $[][] \OMS/cmsy/m/n/10.95 6\OT1/cmr/m/n/10.95 = [][]$\T1/cmr/m/n/10
 .95 . The \T1/cmtt/m/n/10.95 CoercionGenerator
  []
 
 
-
-[3]
-
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 315.
+(Font)              using `T1/cmr/m/scsl' instead on input line 369.
 
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 348.
 
 
 [4]
-Overfull \hbox (1.0719pt too wide) in paragraph at lines 447--452
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
+put line 402.
+
+
+[5]
+Overfull \hbox (1.0719pt too wide) in paragraph at lines 512--517
 \T1/cmtt/m/n/10.95 -a; } \T1/cmr/m/n/10.95 vs. Rust: \T1/cmtt/m/n/10.95 fn neg(
 a: i32) -> i32 { a.wrapping_neg() }\T1/cmr/m/n/10.95 ), \T1/cmr/m/sc/10.95 Sem-
 Rec \T1/cmr/m/n/10.95 re-turns the coun-
@@ -669,22 +671,24 @@ Rec \T1/cmr/m/n/10.95 re-turns the coun-
 
 
 
-[5]
-
 [6]
 
 [7]
-Underfull \hbox (badness 10000) in paragraph at lines 680--683
+
+[8]
+
+[9]
+Underfull \hbox (badness 10000) in paragraph at lines 834--837
 []\T1/cmr/m/n/10.95 Chromium Project.  Mem-ory safety.  []$\T1/cmtt/m/n/10.95 h
 ttps : / / www . chromium . org / Home /
  []
 
 
 
-[8]
+[10]
 
-[9]
-Overfull \hbox (2.87865pt too wide) in paragraph at lines 807--812
+[11]
+Overfull \hbox (2.87865pt too wide) in paragraph at lines 971--976
 []\T1/cmr/m/it/10.95 Proof. \T1/cmr/m/n/10.95 Sup-pose for con-tra-dic-tion tha
 t there ex-ists $[]$ with $[]\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 f[]; []\OT
 1/cmr/m/n/10.95 )$ \T1/cmr/m/n/10.95 and $\U/stmry/m/n/10.95 J\OML/cmm/m/it/10.
@@ -693,17 +697,55 @@ t there ex-ists $[]$ with $[]\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 f[]; []\OT
  []
 
 
-Overfull \hbox (3.51346pt too wide) in paragraph at lines 833--837
+Overfull \hbox (3.51346pt too wide) in paragraph at lines 997--1001
 []\T1/cmr/m/it/10.95 (b) WellDe-fined pred-i-cate com-plete-ness. \T1/cmr/m/n/1
 0.95 The $[]$ pred-i-cate en-codes all C11 undefined-
  []
 
 
 
-[10
+[12
 
 ]
-Overfull \hbox (10.58955pt too wide) in paragraph at lines 929--931
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1072.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\sigma' on input line 1072.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1072.
+
+
+Overfull \hbox (27.06812pt too wide) in paragraph at lines 1080--1083
+[][]\T1/cmr/bx/n/10.95 Definition 6 \T1/cmr/m/n/10.95 ($\OML/cmm/m/it/10.95 ^^[
+$\T1/cmr/m/n/10.95 -Bridge Co-er-cion Spec-i-fi-ca-tion)\T1/cmr/bx/n/10.95 . []
+\T1/cmr/m/it/10.95 A $\OML/cmm/m/it/10.95 ^^[$\T1/cmr/m/it/10.95 -bridge co-er-
+cion $\OML/cmm/m/it/10.95 ^^[[]$ \T1/cmr/m/it/10.95 is a triple $\OT1/cmr/m/n/1
+0.95 ([][]\OML/cmm/m/it/10.95 ; [][]; [][]\OT1/cmr/m/n/10.95 )$
+ []
+
+
+Overfull \hbox (72.78923pt too wide) in paragraph at lines 1124--1130
+\T1/cmr/m/n/10.95 test-ing on crit-i-cal in-puts: $\OMS/cmsy/m/n/10.95 f\OT1/cm
+r/m/n/10.95 0\OML/cmm/m/it/10.95 ; \OMS/cmsy/m/n/10.95 ^^F\OT1/cmr/m/n/10.95 1\
+OML/cmm/m/it/10.95 ; \OMS/cmsy/m/n/10.95 ^^F\OT1/cmr/m/n/10.95 (2[] \OMS/cmsy/m
+/n/10.95 ^^@ \OT1/cmr/m/n/10.95 1)\OML/cmm/m/it/10.95 ; \OMS/cmsy/m/n/10.95 ^^@
+\OT1/cmr/m/n/10.95 2[]\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 2[] \OMS/cmsy/m/
+n/10.95 ^^@ \OT1/cmr/m/n/10.95 1\OMS/cmsy/m/n/10.95 g$ \T1/cmr/m/n/10.95 for in
+-te-ger co-er-cions and $\OMS/cmsy/m/n/10.95 f\OT1/cmr/m/n/10.95 0\OML/cmm/m/it
+/10.95 ; \OMS/cmsy/m/n/10.95 ^^F\OML/cmm/m/it/10.95 ^^O; \OMS/cmsy/m/n/10.95 ^^
+F[]\OML/cmm/m/it/10.95 ; \OMS/cmsy/m/n/10.95 ^^F1\OML/cmm/m/it/10.95 ; []\OMS/c
+msy/m/n/10.95 g$
+ []
+
+
+
+[13]
+Overfull \hbox (10.58955pt too wide) in paragraph at lines 1154--1156
 []\T1/cmr/m/n/10.95 An over-flow warn-ing is raised when the re-sult in-ter-val
  ex-ceeds $\OT1/cmr/m/n/10.95 [[]\OML/cmm/m/it/10.95 ; []\OT1/cmr/m/n/10.95 ] =
  [\OMS/cmsy/m/n/10.95 ^^@\OT1/cmr/m/n/10.95 2[]\OML/cmm/m/it/10.95 ; \OT1/cmr/m
@@ -714,42 +756,44 @@ Overfull \hbox (10.58955pt too wide) in paragraph at lines 929--931
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-
-[11]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-
-[12]
-
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-
-[13]
 
 [14]
 
-[15] (./tool_paper.aux)
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+
+[15]
+
+[16]
+
+[17]
+
+[18] (./tool_paper.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `tool_paper.out' has not changed.
-(rerunfilecheck)             Checksum: 546FE61BA991120DA52FD5020D9F276E;5564.
+(rerunfilecheck)             Checksum: A6A01FB36EA9E20395774A2CD451745A;6377.
  ) 
 Here is how much of TeX's memory you used:
- 16239 strings out of 474662
- 249258 string characters out of 5751110
- 963121 words of memory out of 5000000
- 38875 multiletter control sequences out of 15000+600000
- 590870 words of font info for 115 fonts, out of 8000000 for 9000
+ 16283 strings out of 474662
+ 249880 string characters out of 5751110
+ 1037752 words of memory out of 5000000
+ 38896 multiletter control sequences out of 15000+600000
+ 592619 words of font info for 122 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 75i,20n,79p,547b,2130s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,20n,79p,547b,2127s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jkna
 ppen/ec/ecbi1095.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var
 /fonts/pk/ljfour/jknappen/ec/ecsc1095.600pk> </Users/halleyyoung/Library/texliv
@@ -766,33 +810,36 @@ jfour/jknappen/ec/ecrm0700.600pk> </Users/halleyyoung/Library/texlive/2025basic
 ary/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk> </U
 sers/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/e
 c/ecxc1095.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts
-/pk/ljfour/jknappen/ec/ecbx1095.600pk> </Users/halleyyoung/Library/texlive/2025
-basic/texmf-var/fonts/pk/ljfour/jknappen/ec/eccc1095.600pk> </Users/halleyyoung
-/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1095.600pk
+/pk/ljfour/jknappen/ec/ectt1000.600pk> </Users/halleyyoung/Library/texlive/2025
+basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1095.600pk> </Users/halleyyoung
+/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/eccc1095.600pk
 > </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknap
-pen/ec/ecrm1095.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/
-fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </Users/halleyyoung/Library/texlive
-/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600pk> </Users/halley
+pen/ec/ectt1095.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/
+fonts/pk/ljfour/jknappen/ec/ecrm1095.600pk> </Users/halleyyoung/Library/texlive
+/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </Users/halley
 young/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/eccc1000.
 600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/
 jknappen/ec/ecrm1000.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf
 -var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk> </Users/halleyyoung/Library/te
 xlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1728.600pk></usr/loca
 l/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/
-local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></u
-sr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb>
-</usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.p
-fb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7
-.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cm
-r8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/
-cmsy10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmsy8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfo
-nts/symbols/msbm10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/pub
-lic/stmaryrd/stmary10.pfb>
-Output written on tool_paper.pdf (15 pages, 366192 bytes).
+local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></
+usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb
+></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.
+pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
+10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmr7.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmr8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmsy10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmsy5.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmsy7.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/pu
+blic/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts
+/type1/public/stmaryrd/stmary10.pfb>
+Output written on tool_paper.pdf (18 pages, 413013 bytes).
 PDF statistics:
- 1301 PDF objects out of 1440 (max. 8388607)
- 508 compressed objects within 6 object streams
- 172 named destinations out of 1000 (max. 500000)
- 273 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1411 PDF objects out of 1440 (max. 8388607)
+ 571 compressed objects within 6 object streams
+ 195 named destinations out of 1000 (max. 500000)
+ 305 words of extra memory for PDF output out of 10000 (max. 10000000)
 

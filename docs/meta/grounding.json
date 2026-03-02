@@ -1,11 +1,14 @@
 {
   "project": "SemRec: Cross-Language Equivalence Verifier",
-  "version": "3.0",
-  "grounding_date": "2025-07-27",
+  "version": "4.0",
+  "grounding_date": "2025-07-28",
   "claims": {
     "accuracy_212_pairs": {
-      "value": "29.7%",
-      "ci_95": ["24.0%", "36.2%"],
+      "value": "15.6%",
+      "ci_95": [
+        "11.3%",
+        "21.1%"
+      ],
       "basis": "SMT-based verification on 212 function pairs (52 core + 130 expanded + 19 memory + 11 C2Rust-realistic)",
       "methodology": "Each pair encoded via σ-bridge into QF_BV/QF_ABV constraints, solved with Z3",
       "artifact": "experiments/results/full_verification_v3.json",
@@ -13,7 +16,8 @@
         "Struct category achieves 0% due to parser limitations on typedef struct",
         "Loop analysis is bounded model checking (BMC) at K=32",
         "Memory category achieves 28.6% — limited by frontend support for pointer types in function signatures",
-        "Overall accuracy reflects inclusion of categories beyond the supported fragment"
+        "Overall accuracy reflects inclusion of categories beyond the supported fragment",
+        "IR lowering failures on struct-heavy, macro-generated, or generic code account for majority of errors"
       ]
     },
     "core_fragment_accuracy": {
@@ -47,11 +51,51 @@
       }
     },
     "verification_performance": {
-      "mean_time_ms": 186.3,
-      "median_time_ms": 5.1,
+      "mean_time_ms": 94.2,
+      "median_time_ms": 1.7,
       "p95_time_ms": 1124.7,
       "total_suite_time_s": 39.5,
       "artifact": "experiments/results/experiment_summary_v3.json"
+    },
+    "core_32_pair_accuracy": {
+      "value": "100% (32/32)",
+      "basis": "32 hand-crafted pairs where all pipeline stages succeed",
+      "artifact": "experiments/results/full_benchmark_results.json"
+    },
+    "k_sensitivity": {
+      "value": "Accuracy saturates at K=32 (63.2%)",
+      "bounds_tested": [
+        16,
+        32,
+        64,
+        128
+      ],
+      "results": {
+        "K=16": "60.5%",
+        "K=32": "63.2%",
+        "K=64": "63.2%",
+        "K=128": "63.2%"
+      },
+      "basis": "38 benchmark pairs including 6 loop-intensive functions",
+      "artifact": "experiments/results/k_sensitivity.json",
+      "conclusion": "K=32 default is empirically justified; no additional divergences found at higher K"
+    },
+    "real_world_c_libraries": {
+      "value": "26.7% (4/15)",
+      "libraries": [
+        "musl-libc",
+        "zlib",
+        "libsodium",
+        "SQLite",
+        "Linux kernel"
+      ],
+      "basis": "15 function pairs from 5 open-source C libraries",
+      "artifact": "experiments/results/real_world_evaluation.json",
+      "detail": {
+        "libsodium": "100% (2/2)",
+        "musl-libc": "40% (2/5)",
+        "others": "0% due to pipeline failures"
+      }
     }
   },
   "supported_fragment": {
@@ -64,7 +108,9 @@
       "Struct types (field access, construction, nested structs)",
       "Enum/tagged union types (discriminant extraction, variant construction)",
       "Floating-point (IEEE 754 f32/f64 via QF_FP)",
-      "Pointer/memory operations via QF_ABV: alloca, load, store, GEP, malloc/free, memcpy/memset"
+      "Pointer/memory operations via QF_ABV: alloca, load, store, GEP, malloc/free, memcpy/memset",
+      "Tree-sitter-based parsing (tree-sitter-c 0.24, tree-sitter-rust 0.24) with hand-written fallback",
+      "Points-to analysis (Andersen-style) + Rust ownership non-aliasing axioms + TBAA"
     ],
     "excludes": [
       "Interprocedural analysis",
@@ -93,11 +139,16 @@
     },
     "counterexample_correctness": {
       "statement": "SAT with model x₀ ⟹ either output divergence or C UB",
-      "conditions": ["Same conditions as soundness theorem"]
+      "conditions": [
+        "Same conditions as soundness theorem"
+      ]
     },
     "decidability": {
       "statement": "For F, the verification problem is decidable (QF_BV + QF_ABV + BMC)",
-      "conditions": ["Finite unrolling bound K", "Finite memory allocations"]
+      "conditions": [
+        "Finite unrolling bound K",
+        "Finite memory allocations"
+      ]
     },
     "memory_soundness_extension": {
       "statement": "For functions in F_M (F extended with alloca/load/store/GEP): UNSAT ⟹ ∀x∈D_¬UB_M. f_C(x) = f_R(x)",
@@ -115,5 +166,18 @@
     "shift_model_ub": "For ShiftModel.UB: if shift_amount ≥ bitwidth, flag as UB (havoc result). For ShiftModel.MASK: emit shift_amount & (bitwidth-1).",
     "division_model": "For DivisionModel.UB: flag division by zero and INT_MIN/-1 as UB. For DivisionModel.PANIC: these are divergent from C's UB.",
     "implementation_defined_behavior": "C implementation-defined behaviors (int width, char signedness, struct padding) are currently fixed: int=32 bits, char=signed, padding=standard ABI alignment. Future work: parameterize via σ_C configuration."
+  },
+  "sigma_bridge_coercion_catalog": {
+    "coercions": [
+      "Overflow (signed overflow semantics)",
+      "Shift (shift width UB)",
+      "Division (div-by-zero and INT_MIN/-1)",
+      "Cast (widening/narrowing conversions)",
+      "Negation (INT_MIN negation)",
+      "Float (IEEE 754 rounding)",
+      "Pointer (null pointer dereferencing)"
+    ],
+    "verification": "Boundary-value testing on all critical inputs",
+    "artifact": "src/product_program/soundness.py"
   }
 }

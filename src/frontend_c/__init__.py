@@ -23,11 +23,17 @@ from .type_resolver import CTypeResolver
 from .ir_lowering import CIRLowering
 from .preprocessor import CPreprocessor
 
+try:
+    from .tree_sitter_parser import TreeSitterCParser
+except ImportError:
+    TreeSitterCParser = None  # tree-sitter-c not installed
+
 __all__ = [
     "CLexer", "Token", "TokenKind", "SourcePos",
     "TranslationUnit", "FunctionDecl", "VarDecl", "TypedefDecl",
     "StructDecl", "UnionDecl", "EnumDecl",
     "CParser", "ParseError",
+    "TreeSitterCParser",
     "CTypeResolver",
     "CIRLowering",
     "CPreprocessor",

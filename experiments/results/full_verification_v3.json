@@ -2,119 +2,119 @@
   "summary": {
     "tag": "full_suite",
     "total_pairs": 212,
-    "correct": 63,
-    "accuracy": 29.7,
+    "correct": 33,
+    "accuracy": 15.6,
     "accuracy_ci_95": [
-      24.0,
-      36.2
+      11.3,
+      21.1
     ],
-    "errors": 36,
-    "mean_time_ms": 186.3,
-    "median_time_ms": 5.1,
-    "p95_time_ms": 43.4,
-    "total_time_ms": 39485.3,
+    "errors": 119,
+    "mean_time_ms": 94.2,
+    "median_time_ms": 1.7,
+    "p95_time_ms": 42.0,
+    "total_time_ms": 19976.9,
     "by_category": {
       "arithmetic": {
-        "accuracy": 83.3,
+        "accuracy": 25.0,
         "total": 12,
-        "correct": 10,
-        "errors": 0
+        "correct": 3,
+        "errors": 9
       },
       "bitwise": {
-        "accuracy": 50.0,
+        "accuracy": 37.5,
         "total": 8,
-        "correct": 4,
-        "errors": 0
-      },
-      "c2rust": {
-        "accuracy": 18.5,
-        "total": 27,
-        "correct": 5,
+        "correct": 3,
         "errors": 2
       },
+      "c2rust": {
+        "accuracy": 11.1,
+        "total": 27,
+        "correct": 3,
+        "errors": 16
+      },
       "c2rust_realistic": {
-        "accuracy": 18.2,
+        "accuracy": 9.1,
         "total": 11,
-        "correct": 2,
-        "errors": 1
+        "correct": 1,
+        "errors": 5
       },
       "cast": {
         "accuracy": 60.0,
         "total": 15,
         "correct": 9,
-        "errors": 1
+        "errors": 2
       },
       "compound": {
-        "accuracy": 13.3,
+        "accuracy": 0.0,
         "total": 15,
-        "correct": 2,
-        "errors": 0
+        "correct": 0,
+        "errors": 6
       },
       "control_flow": {
         "accuracy": 0.0,
         "total": 10,
         "correct": 0,
-        "errors": 0
+        "errors": 5
       },
       "division": {
-        "accuracy": 60.0,
+        "accuracy": 20.0,
         "total": 5,
-        "correct": 3,
-        "errors": 0
+        "correct": 1,
+        "errors": 2
       },
       "enum": {
         "accuracy": 15.0,
         "total": 20,
         "correct": 3,
-        "errors": 3
+        "errors": 4
       },
       "error_handling": {
         "accuracy": 50.0,
         "total": 8,
         "correct": 4,
-        "errors": 1
+        "errors": 2
       },
       "float": {
         "accuracy": 40.0,
         "total": 15,
         "correct": 6,
-        "errors": 7
+        "errors": 9
       },
       "iterator": {
-        "accuracy": 40.0,
+        "accuracy": 0.0,
         "total": 15,
-        "correct": 6,
-        "errors": 0
+        "correct": 0,
+        "errors": 15
       },
       "loops": {
-        "accuracy": 25.0,
+        "accuracy": 0.0,
         "total": 8,
-        "correct": 2,
-        "errors": 0
+        "correct": 0,
+        "errors": 6
       },
       "memory": {
-        "accuracy": 28.6,
+        "accuracy": 0.0,
         "total": 14,
-        "correct": 4,
-        "errors": 2
+        "correct": 0,
+        "errors": 10
       },
       "memory_scaled": {
         "accuracy": 0.0,
         "total": 4,
         "correct": 0,
-        "errors": 0
+        "errors": 2
       },
       "shift": {
-        "accuracy": 100.0,
+        "accuracy": 0.0,
         "total": 3,
-        "correct": 3,
-        "errors": 0
+        "correct": 0,
+        "errors": 3
       },
       "string": {
         "accuracy": 0.0,
         "total": 2,
         "correct": 0,
-        "errors": 0
+        "errors": 2
       },
       "struct": {
         "accuracy": 0.0,
@@ -129,10 +129,10 @@
       "name": "add_wrapping",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 127.12,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1141.31,
+      "smt_queries": 0
     },
     {
       "name": "add_checked_divergent",
@@ -140,62 +140,62 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 6.1,
+      "time_ms": 58.2,
       "smt_queries": 2
     },
     {
       "name": "mul_overflow",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 6269.47,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.52,
+      "smt_queries": 0
     },
     {
       "name": "sub_overflow",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 8.04,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.3,
+      "smt_queries": 0
     },
     {
       "name": "saturating_add",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 6.18,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.37,
+      "smt_queries": 0
     },
     {
       "name": "negate_min",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 5.81,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.5,
+      "smt_queries": 0
     },
     {
       "name": "abs_function",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 7.65,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.34,
+      "smt_queries": 0
     },
     {
       "name": "unsigned_add",
       "category": "arithmetic",
       "expected": "equivalent",
-      "verdict": "equivalent",
-      "correct": true,
-      "time_ms": 2.39,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.32,
+      "smt_queries": 0
     },
     {
       "name": "mixed_sign_compare",
@@ -203,25 +203,25 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 4.55,
+      "time_ms": 5.24,
       "smt_queries": 1
     },
     {
       "name": "increment_loop",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 2.97,
+      "time_ms": 1.21,
       "smt_queries": 0
     },
     {
       "name": "checked_add_result",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 7.3,
+      "time_ms": 1.58,
       "smt_queries": 0
     },
     {
@@ -230,7 +230,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 15147.22,
+      "time_ms": 15186.88,
       "smt_queries": 2
     },
     {
@@ -239,53 +239,53 @@
       "expected": "divergent",
       "verdict": "equivalent",
       "correct": false,
-      "time_ms": 6.4,
+      "time_ms": 4.75,
       "smt_queries": 1
     },
     {
       "name": "div_int_min",
       "category": "division",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 3.23,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.53,
+      "smt_queries": 0
     },
     {
       "name": "modulo_negative",
       "category": "division",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 45.93,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.82,
+      "smt_queries": 0
     },
     {
       "name": "shift_left_overflow",
       "category": "shift",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 9.71,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.47,
+      "smt_queries": 0
     },
     {
       "name": "shift_right_arithmetic",
       "category": "shift",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 9.46,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.45,
+      "smt_queries": 0
     },
     {
       "name": "shift_negative_amount",
       "category": "shift",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 5.46,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.75,
+      "smt_queries": 0
     },
     {
       "name": "unsigned_div",
@@ -293,7 +293,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 640.97,
+      "time_ms": 317.66,
       "smt_queries": 1
     },
     {
@@ -302,7 +302,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.17,
+      "time_ms": 5.0,
       "smt_queries": 1
     },
     {
@@ -311,61 +311,61 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 6.28,
+      "time_ms": 5.23,
       "smt_queries": 0
     },
     {
       "name": "gcd_loop",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 9.53,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.81,
+      "smt_queries": 0
     },
     {
       "name": "fibonacci",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "equivalent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 13.38,
-      "smt_queries": 2
+      "time_ms": 1.02,
+      "smt_queries": 0
     },
     {
       "name": "binary_search",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 15.61,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.47,
+      "smt_queries": 0
     },
     {
       "name": "reverse_bits_loop",
       "category": "loops",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 3.99,
+      "time_ms": 0.8,
       "smt_queries": 0
     },
     {
       "name": "collatz_steps",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 7.19,
+      "time_ms": 1.27,
       "smt_queries": 0
     },
     {
       "name": "digit_sum",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.26,
+      "time_ms": 1.4,
       "smt_queries": 0
     },
     {
@@ -374,7 +374,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 6.86,
+      "time_ms": 20.22,
       "smt_queries": 1
     },
     {
@@ -383,8 +383,8 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 8.2,
-      "smt_queries": 3
+      "time_ms": 51.27,
+      "smt_queries": 1
     },
     {
       "name": "sqrt_int",
@@ -392,7 +392,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 43.43,
+      "time_ms": 17.03,
       "smt_queries": 1
     },
     {
@@ -401,7 +401,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.14,
+      "time_ms": 1.81,
       "smt_queries": 0
     },
     {
@@ -410,7 +410,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 9.89,
+      "time_ms": 11.9,
       "smt_queries": 1
     },
     {
@@ -419,16 +419,16 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.43,
+      "time_ms": 2.03,
       "smt_queries": 0
     },
     {
       "name": "find_char",
       "category": "error_handling",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.15,
+      "time_ms": 1.18,
       "smt_queries": 0
     },
     {
@@ -437,7 +437,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 6.25,
+      "time_ms": 9.18,
       "smt_queries": 1
     },
     {
@@ -446,17 +446,17 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 7.25,
-      "smt_queries": 2
+      "time_ms": 4.5,
+      "smt_queries": 1
     },
     {
       "name": "is_power_of_two",
       "category": "bitwise",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 9.57,
-      "smt_queries": 1
+      "time_ms": 1.01,
+      "smt_queries": 0
     },
     {
       "name": "rotate_right",
@@ -464,7 +464,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 12.73,
+      "time_ms": 12.42,
       "smt_queries": 1
     },
     {
@@ -473,7 +473,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 11.65,
+      "time_ms": 12.36,
       "smt_queries": 1
     },
     {
@@ -482,7 +482,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 20.05,
+      "time_ms": 15.13,
       "smt_queries": 2
     },
     {
@@ -491,25 +491,25 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 10.56,
+      "time_ms": 8.63,
       "smt_queries": 1
     },
     {
       "name": "parity",
       "category": "bitwise",
       "expected": "equivalent",
-      "verdict": "equivalent",
-      "correct": true,
-      "time_ms": 21.45,
+      "verdict": "divergent",
+      "correct": false,
+      "time_ms": 20.07,
       "smt_queries": 1
     },
     {
       "name": "interleave_bits",
       "category": "bitwise",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 8.52,
+      "time_ms": 1.64,
       "smt_queries": 0
     },
     {
@@ -518,61 +518,61 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 20.8,
+      "time_ms": 68.97,
       "smt_queries": 4
     },
     {
       "name": "hash_djb2",
       "category": "string",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 6.48,
+      "time_ms": 1.17,
       "smt_queries": 0
     },
     {
       "name": "array_sum",
       "category": "string",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 3.65,
+      "time_ms": 3.06,
       "smt_queries": 0
     },
     {
       "name": "memset_pattern",
       "category": "memory",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.19,
+      "time_ms": 1.67,
       "smt_queries": 0
     },
     {
       "name": "array_max",
       "category": "memory",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.02,
+      "time_ms": 1.3,
       "smt_queries": 0
     },
     {
       "name": "copy_array",
       "category": "memory",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 3.94,
+      "time_ms": 1.88,
       "smt_queries": 0
     },
     {
       "name": "dot_product",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.6,
+      "time_ms": 1.38,
       "smt_queries": 0
     },
     {
@@ -581,16 +581,16 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.83,
+      "time_ms": 1.58,
       "smt_queries": 0
     },
     {
       "name": "linear_search",
       "category": "memory",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.03,
+      "time_ms": 0.99,
       "smt_queries": 0
     },
     {
@@ -599,7 +599,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.52,
+      "time_ms": 1.05,
       "smt_queries": 0
     },
     {
@@ -608,7 +608,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.44,
+      "time_ms": 0.42,
       "smt_queries": 0
     },
     {
@@ -617,7 +617,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.43,
+      "time_ms": 0.39,
       "smt_queries": 0
     },
     {
@@ -626,7 +626,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.45,
+      "time_ms": 0.36,
       "smt_queries": 0
     },
     {
@@ -635,7 +635,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.62,
+      "time_ms": 2.47,
       "smt_queries": 0
     },
     {
@@ -644,7 +644,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.57,
+      "time_ms": 0.58,
       "smt_queries": 0
     },
     {
@@ -653,7 +653,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.69,
+      "time_ms": 0.56,
       "smt_queries": 0
     },
     {
@@ -662,7 +662,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.75,
+      "time_ms": 0.68,
       "smt_queries": 0
     },
     {
@@ -671,7 +671,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.48,
+      "time_ms": 0.39,
       "smt_queries": 0
     },
     {
@@ -680,7 +680,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.36,
+      "time_ms": 0.82,
       "smt_queries": 0
     },
     {
@@ -689,7 +689,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.38,
+      "time_ms": 0.56,
       "smt_queries": 0
     },
     {
@@ -698,7 +698,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.26,
+      "time_ms": 0.59,
       "smt_queries": 0
     },
     {
@@ -707,7 +707,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.24,
+      "time_ms": 1.18,
       "smt_queries": 0
     },
     {
@@ -716,7 +716,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.9,
+      "time_ms": 0.76,
       "smt_queries": 0
     },
     {
@@ -725,7 +725,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.63,
+      "time_ms": 0.51,
       "smt_queries": 0
     },
     {
@@ -734,7 +734,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.67,
+      "time_ms": 1.29,
       "smt_queries": 0
     },
     {
@@ -743,7 +743,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.66,
+      "time_ms": 0.79,
       "smt_queries": 0
     },
     {
@@ -752,7 +752,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.68,
+      "time_ms": 0.54,
       "smt_queries": 0
     },
     {
@@ -761,7 +761,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.87,
+      "time_ms": 0.79,
       "smt_queries": 0
     },
     {
@@ -770,7 +770,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.99,
+      "time_ms": 3.9,
       "smt_queries": 0
     },
     {
@@ -779,7 +779,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.66,
+      "time_ms": 2.09,
       "smt_queries": 1
     },
     {
@@ -788,7 +788,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.44,
+      "time_ms": 2.56,
       "smt_queries": 0
     },
     {
@@ -797,7 +797,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.91,
+      "time_ms": 2.08,
       "smt_queries": 0
     },
     {
@@ -806,7 +806,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.94,
+      "time_ms": 1.95,
       "smt_queries": 0
     },
     {
@@ -815,7 +815,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.87,
+      "time_ms": 3.59,
       "smt_queries": 0
     },
     {
@@ -824,7 +824,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.93,
+      "time_ms": 2.39,
       "smt_queries": 0
     },
     {
@@ -833,7 +833,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 5.58,
+      "time_ms": 5.71,
       "smt_queries": 2
     },
     {
@@ -842,7 +842,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.11,
+      "time_ms": 5.19,
       "smt_queries": 1
     },
     {
@@ -851,7 +851,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.46,
+      "time_ms": 1.34,
       "smt_queries": 0
     },
     {
@@ -860,17 +860,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 4.72,
+      "time_ms": 7.29,
       "smt_queries": 2
     },
     {
       "name": "enum_option_map",
       "category": "enum",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 3.17,
-      "smt_queries": 1
+      "time_ms": 1.3,
+      "smt_queries": 0
     },
     {
       "name": "enum_result_chain",
@@ -878,7 +878,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.03,
+      "time_ms": 2.22,
       "smt_queries": 0
     },
     {
@@ -887,7 +887,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 5.3,
+      "time_ms": 6.0,
       "smt_queries": 0
     },
     {
@@ -896,7 +896,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.08,
+      "time_ms": 2.6,
       "smt_queries": 0
     },
     {
@@ -905,7 +905,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 5.38,
+      "time_ms": 5.65,
       "smt_queries": 1
     },
     {
@@ -914,7 +914,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.98,
+      "time_ms": 1.27,
       "smt_queries": 0
     },
     {
@@ -923,7 +923,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 25.39,
+      "time_ms": 20.3,
       "smt_queries": 0
     },
     {
@@ -932,7 +932,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.34,
+      "time_ms": 2.45,
       "smt_queries": 0
     },
     {
@@ -941,7 +941,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 7.16,
+      "time_ms": 2.27,
       "smt_queries": 1
     },
     {
@@ -950,7 +950,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.23,
+      "time_ms": 0.55,
       "smt_queries": 0
     },
     {
@@ -959,7 +959,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 4.15,
+      "time_ms": 2.39,
       "smt_queries": 1
     },
     {
@@ -968,17 +968,17 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.52,
+      "time_ms": 0.57,
       "smt_queries": 0
     },
     {
       "name": "float_inf_arithmetic",
       "category": "float",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.84,
-      "smt_queries": 1
+      "time_ms": 0.63,
+      "smt_queries": 0
     },
     {
       "name": "float_to_int_truncation",
@@ -986,7 +986,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.47,
+      "time_ms": 0.36,
       "smt_queries": 0
     },
     {
@@ -995,7 +995,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 1.96,
+      "time_ms": 3.09,
       "smt_queries": 1
     },
     {
@@ -1004,7 +1004,7 @@
       "expected": "conditional",
       "verdict": "error",
       "correct": false,
-      "time_ms": 4.09,
+      "time_ms": 0.55,
       "smt_queries": 0
     },
     {
@@ -1013,7 +1013,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.87,
+      "time_ms": 0.7,
       "smt_queries": 0
     },
     {
@@ -1022,7 +1022,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.33,
+      "time_ms": 2.03,
       "smt_queries": 1
     },
     {
@@ -1031,7 +1031,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.72,
+      "time_ms": 0.68,
       "smt_queries": 0
     },
     {
@@ -1040,17 +1040,17 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 5.49,
+      "time_ms": 5.29,
       "smt_queries": 1
     },
     {
       "name": "float_compare_epsilon",
       "category": "float",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 26.0,
-      "smt_queries": 1
+      "time_ms": 1.24,
+      "smt_queries": 0
     },
     {
       "name": "float_sum_associativity",
@@ -1058,7 +1058,7 @@
       "expected": "conditional",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 459.77,
+      "time_ms": 1641.19,
       "smt_queries": 1
     },
     {
@@ -1067,7 +1067,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 3.14,
+      "time_ms": 0.77,
       "smt_queries": 0
     },
     {
@@ -1076,7 +1076,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.39,
+      "time_ms": 0.37,
       "smt_queries": 0
     },
     {
@@ -1085,7 +1085,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.94,
+      "time_ms": 13.05,
       "smt_queries": 1
     },
     {
@@ -1094,26 +1094,26 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.98,
+      "time_ms": 2.18,
       "smt_queries": 0
     },
     {
       "name": "c2rust_array_sum",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 4.2,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.26,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_abs_val",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 9.33,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.63,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_min_max",
@@ -1121,7 +1121,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 3.26,
+      "time_ms": 13.73,
       "smt_queries": 1
     },
     {
@@ -1130,26 +1130,26 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 12.17,
+      "time_ms": 41.99,
       "smt_queries": 2
     },
     {
       "name": "c2rust_binary_search",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.67,
+      "time_ms": 1.29,
       "smt_queries": 0
     },
     {
       "name": "c2rust_fibonacci",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "equivalent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 7.14,
-      "smt_queries": 2
+      "time_ms": 0.85,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_gcd",
@@ -1157,7 +1157,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 5.22,
+      "time_ms": 13.01,
       "smt_queries": 1
     },
     {
@@ -1166,16 +1166,16 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.16,
+      "time_ms": 3.89,
       "smt_queries": 0
     },
     {
       "name": "c2rust_reverse_bits",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 3.6,
+      "time_ms": 1.26,
       "smt_queries": 0
     },
     {
@@ -1184,26 +1184,26 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 6.35,
+      "time_ms": 18.71,
       "smt_queries": 2
     },
     {
       "name": "c2rust_power_iterative",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 2.9,
+      "time_ms": 0.92,
       "smt_queries": 0
     },
     {
       "name": "c2rust_is_palindrome_num",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 6.27,
-      "smt_queries": 0
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 5.19,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_array_reverse",
@@ -1211,53 +1211,53 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 14.84,
+      "time_ms": 9.18,
       "smt_queries": 1
     },
     {
       "name": "c2rust_clz",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.19,
+      "time_ms": 1.31,
       "smt_queries": 0
     },
     {
       "name": "c2rust_byte_swap",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.14,
-      "smt_queries": 1
+      "time_ms": 0.51,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_saturating_add",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 11.09,
-      "smt_queries": 2
+      "time_ms": 1.31,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_checked_mul",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.21,
+      "time_ms": 0.96,
       "smt_queries": 0
     },
     {
       "name": "c2rust_rotate_left",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 6.82,
-      "smt_queries": 1
+      "time_ms": 0.62,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_safe_array_access",
@@ -1265,143 +1265,143 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 5.67,
+      "time_ms": 6.47,
       "smt_queries": 1
     },
     {
       "name": "iter_sum",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 2.96,
-      "smt_queries": 1
+      "time_ms": 0.56,
+      "smt_queries": 0
     },
     {
       "name": "iter_count_positive",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "equivalent",
-      "correct": true,
-      "time_ms": 6.58,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.5,
+      "smt_queries": 0
     },
     {
       "name": "iter_find_first",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 6.9,
-      "smt_queries": 1
+      "time_ms": 0.54,
+      "smt_queries": 0
     },
     {
       "name": "iter_any_negative",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.1,
-      "smt_queries": 1
+      "time_ms": 0.52,
+      "smt_queries": 0
     },
     {
       "name": "iter_all_positive",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.76,
-      "smt_queries": 1
+      "time_ms": 0.47,
+      "smt_queries": 0
     },
     {
       "name": "iter_product",
       "category": "iterator",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 2.37,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.43,
+      "smt_queries": 0
     },
     {
       "name": "iter_min_value",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.82,
-      "smt_queries": 1
+      "time_ms": 0.48,
+      "smt_queries": 0
     },
     {
       "name": "iter_sum_of_squares",
       "category": "iterator",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 4.01,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.51,
+      "smt_queries": 0
     },
     {
       "name": "iter_fold_xor",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "equivalent",
-      "correct": true,
-      "time_ms": 2.78,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.39,
+      "smt_queries": 0
     },
     {
       "name": "iter_count_divisible",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "equivalent",
-      "correct": true,
-      "time_ms": 4.85,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.99,
+      "smt_queries": 0
     },
     {
       "name": "iter_max_consecutive",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 7.14,
-      "smt_queries": 2
+      "time_ms": 0.72,
+      "smt_queries": 0
     },
     {
       "name": "iter_enumerate_sum",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "equivalent",
-      "correct": true,
-      "time_ms": 3.66,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.45,
+      "smt_queries": 0
     },
     {
       "name": "iter_zip_sum",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 8.46,
-      "smt_queries": 2
+      "time_ms": 0.55,
+      "smt_queries": 0
     },
     {
       "name": "iter_take_while_sum",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 9.0,
-      "smt_queries": 1
+      "time_ms": 0.45,
+      "smt_queries": 0
     },
     {
       "name": "iter_skip_take",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 11.16,
-      "smt_queries": 1
+      "time_ms": 0.99,
+      "smt_queries": 0
     },
     {
       "name": "cast_signed_to_unsigned",
@@ -1409,7 +1409,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 3.08,
+      "time_ms": 2.06,
       "smt_queries": 1
     },
     {
@@ -1418,7 +1418,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 3.4,
+      "time_ms": 1.99,
       "smt_queries": 1
     },
     {
@@ -1427,7 +1427,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.48,
+      "time_ms": 2.69,
       "smt_queries": 1
     },
     {
@@ -1436,7 +1436,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 1.86,
+      "time_ms": 1.8,
       "smt_queries": 1
     },
     {
@@ -1445,7 +1445,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 213.8,
+      "time_ms": 506.79,
       "smt_queries": 1
     },
     {
@@ -1454,7 +1454,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.7,
+      "time_ms": 2.78,
       "smt_queries": 1
     },
     {
@@ -1463,7 +1463,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.88,
+      "time_ms": 2.89,
       "smt_queries": 0
     },
     {
@@ -1472,7 +1472,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 3.46,
+      "time_ms": 3.87,
       "smt_queries": 1
     },
     {
@@ -1481,16 +1481,16 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.12,
+      "time_ms": 2.1,
       "smt_queries": 1
     },
     {
       "name": "cast_double_to_float",
       "category": "cast",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 2.21,
+      "time_ms": 0.55,
       "smt_queries": 0
     },
     {
@@ -1499,7 +1499,7 @@
       "expected": "conditional",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.17,
+      "time_ms": 1.61,
       "smt_queries": 1
     },
     {
@@ -1508,7 +1508,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 1.81,
+      "time_ms": 2.0,
       "smt_queries": 1
     },
     {
@@ -1517,7 +1517,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 11.13,
+      "time_ms": 10.77,
       "smt_queries": 2
     },
     {
@@ -1526,7 +1526,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.85,
+      "time_ms": 3.61,
       "smt_queries": 1
     },
     {
@@ -1535,17 +1535,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 11.46,
+      "time_ms": 9.79,
       "smt_queries": 1
     },
     {
       "name": "compound_ternary_chain",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 14.89,
-      "smt_queries": 1
+      "time_ms": 0.72,
+      "smt_queries": 0
     },
     {
       "name": "compound_short_circuit_and",
@@ -1553,7 +1553,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 5.69,
+      "time_ms": 6.23,
       "smt_queries": 1
     },
     {
@@ -1562,7 +1562,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.56,
+      "time_ms": 6.66,
       "smt_queries": 1
     },
     {
@@ -1571,7 +1571,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 47.53,
+      "time_ms": 17.78,
       "smt_queries": 1
     },
     {
@@ -1589,7 +1589,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 104.76,
+      "time_ms": 134.98,
       "smt_queries": 2
     },
     {
@@ -1598,44 +1598,44 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 6.9,
+      "time_ms": 6.77,
       "smt_queries": 1
     },
     {
       "name": "compound_mixed_ops",
       "category": "compound",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 9.28,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.75,
+      "smt_queries": 0
     },
     {
       "name": "compound_predicate_combine",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.24,
-      "smt_queries": 1
+      "time_ms": 0.78,
+      "smt_queries": 0
     },
     {
       "name": "compound_abs_diff",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 8.92,
-      "smt_queries": 1
+      "time_ms": 1.41,
+      "smt_queries": 0
     },
     {
       "name": "compound_min3",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 5.16,
-      "smt_queries": 1
+      "time_ms": 0.59,
+      "smt_queries": 0
     },
     {
       "name": "compound_median3",
@@ -1643,17 +1643,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 42.18,
+      "time_ms": 47.53,
       "smt_queries": 1
     },
     {
       "name": "compound_polynomial_eval",
       "category": "compound",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 13.91,
-      "smt_queries": 2
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.86,
+      "smt_queries": 0
     },
     {
       "name": "compound_collatz_step",
@@ -1661,7 +1661,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.18,
+      "time_ms": 8.58,
       "smt_queries": 2
     },
     {
@@ -1670,25 +1670,25 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 4.62,
+      "time_ms": 5.57,
       "smt_queries": 0
     },
     {
       "name": "cf_early_return",
       "category": "control_flow",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.63,
-      "smt_queries": 1
+      "time_ms": 0.85,
+      "smt_queries": 0
     },
     {
       "name": "cf_loop_vs_recursion",
       "category": "control_flow",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 2.93,
+      "time_ms": 0.72,
       "smt_queries": 0
     },
     {
@@ -1697,7 +1697,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 13.89,
+      "time_ms": 8.46,
       "smt_queries": 1
     },
     {
@@ -1706,16 +1706,16 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 6.4,
+      "time_ms": 6.43,
       "smt_queries": 0
     },
     {
       "name": "cf_nested_break",
       "category": "control_flow",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 4.31,
+      "time_ms": 0.88,
       "smt_queries": 0
     },
     {
@@ -1724,25 +1724,25 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.48,
+      "time_ms": 2.27,
       "smt_queries": 0
     },
     {
       "name": "cf_for_vs_while",
       "category": "control_flow",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 3.32,
+      "time_ms": 0.56,
       "smt_queries": 0
     },
     {
       "name": "cf_continue_vs_if",
       "category": "control_flow",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 2.88,
+      "time_ms": 0.54,
       "smt_queries": 0
     },
     {
@@ -1751,7 +1751,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 3.88,
+      "time_ms": 4.22,
       "smt_queries": 2
     },
     {
@@ -1760,7 +1760,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.29,
+      "time_ms": 3.56,
       "smt_queries": 0
     },
     {
@@ -1769,26 +1769,26 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.12,
+      "time_ms": 1.24,
       "smt_queries": 0
     },
     {
       "name": "array_write_read",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 9.14,
-      "smt_queries": 1
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 4.31,
+      "smt_queries": 0
     },
     {
       "name": "array_swap",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 16.07,
-      "smt_queries": 1
+      "verdict": "unknown",
+      "correct": false,
+      "time_ms": 8.21,
+      "smt_queries": 0
     },
     {
       "name": "ptr_offset_ub",
@@ -1796,7 +1796,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.4,
+      "time_ms": 2.27,
       "smt_queries": 0
     },
     {
@@ -1805,44 +1805,44 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.61,
+      "time_ms": 1.77,
       "smt_queries": 0
     },
     {
       "name": "struct_field_access",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 1.48,
+      "time_ms": 0.5,
       "smt_queries": 0
     },
     {
       "name": "struct_modify",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 13.86,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.68,
+      "smt_queries": 0
     },
     {
       "name": "heap_alloc_use",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 6.16,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 0.46,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_array_init",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 22.16,
-      "smt_queries": 1
+      "time_ms": 0.64,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_conditional_ptr",
@@ -1850,17 +1850,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 10.21,
+      "time_ms": 18.19,
       "smt_queries": 1
     },
     {
       "name": "c2rust_buffer_fill",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 11.09,
-      "smt_queries": 1
+      "time_ms": 1.54,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_goto_elimination",
@@ -1868,17 +1868,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 9.19,
+      "time_ms": 15.52,
       "smt_queries": 1
     },
     {
       "name": "c2rust_macro_expand",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 9.65,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 3.32,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_strlen_simple",
@@ -1886,34 +1886,34 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 7.71,
+      "time_ms": 8.13,
       "smt_queries": 0
     },
     {
       "name": "c2rust_bitfield_extract",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 15.91,
-      "smt_queries": 2
+      "time_ms": 1.8,
+      "smt_queries": 0
     },
     {
       "name": "matrix_multiply_2x2",
       "category": "memory_scaled",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 15070.11,
-      "smt_queries": 1
+      "time_ms": 1.01,
+      "smt_queries": 0
     },
     {
       "name": "ring_buffer_insert",
       "category": "memory_scaled",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 34.79,
+      "time_ms": 9.0,
       "smt_queries": 0
     },
     {
@@ -1922,7 +1922,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 19.96,
+      "time_ms": 27.68,
       "smt_queries": 1
     },
     {
@@ -1931,44 +1931,44 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 7.29,
+      "time_ms": 27.11,
       "smt_queries": 0
     },
     {
       "name": "c2rust_error_cleanup",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 26.13,
-      "smt_queries": 1
+      "time_ms": 1.53,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_state_machine",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 15.27,
-      "smt_queries": 1
+      "time_ms": 9.73,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_gcd",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "divergent",
+      "verdict": "error",
       "correct": false,
-      "time_ms": 16.82,
-      "smt_queries": 1
+      "time_ms": 2.29,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_isqrt",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "divergent",
-      "correct": false,
-      "time_ms": 13.54,
-      "smt_queries": 2
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 17.88,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_popcount",
@@ -1976,7 +1976,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.38,
+      "time_ms": 4.06,
       "smt_queries": 0
     },
     {
@@ -1985,17 +1985,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 6.51,
+      "time_ms": 3.94,
       "smt_queries": 0
     },
     {
       "name": "c2rust_next_power_of_two",
       "category": "c2rust_realistic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 32.26,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.39,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_atoi_simple",
@@ -2003,17 +2003,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.88,
+      "time_ms": 18.93,
       "smt_queries": 1
     },
     {
       "name": "c2rust_hash_combine",
       "category": "c2rust_realistic",
       "expected": "divergent",
-      "verdict": "divergent",
-      "correct": true,
-      "time_ms": 11.6,
-      "smt_queries": 1
+      "verdict": "error",
+      "correct": false,
+      "time_ms": 1.47,
+      "smt_queries": 0
     },
     {
       "name": "c2rust_errno_to_result",
@@ -2021,8 +2021,8 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 7.84,
-      "smt_queries": 3
+      "time_ms": 33.19,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_crc8",
@@ -2030,7 +2030,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.6,
+      "time_ms": 1.81,
       "smt_queries": 0
     }
   ]
