@@ -1,0 +1,1341 @@
+{
+  "benchmark": "ub_invisible_divergence",
+  "n_divergent": 30,
+  "n_equivalent": 10,
+  "n_total": 40,
+  "methods": {
+    "semrec": {
+      "tp": 30,
+      "fn": 0,
+      "tn": 8,
+      "fp": 2,
+      "recall": 1.0,
+      "precision": 0.9375,
+      "f1": 0.9677,
+      "accuracy": 0.95,
+      "results": [
+        {
+          "name": "signed_add_overflow",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 1383.02,
+          "counterexample": {
+            "input_0": "-1073741929",
+            "input_1": "-2147480372"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "signed_sub_overflow",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 9.8,
+          "counterexample": {
+            "input_0": "480291",
+            "input_1": "-2147003357"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "signed_mul_overflow",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 102.63,
+          "counterexample": {
+            "input_0": "-3162112",
+            "input_1": "-164794438"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "signed_negate_min",
+          "ub_class": "negate",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 14.71,
+          "counterexample": {
+            "input_0": "-2147483648"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "signed_abs_min",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 8.47,
+          "counterexample": {
+            "input_0": "-2147483648"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "increment_past_max",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 26.35,
+          "counterexample": {
+            "input_0": "2147483647"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "double_then_halve",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 28.74,
+          "counterexample": {
+            "input_0": "-2147483648"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "accumulate_three",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 26.03,
+          "counterexample": {
+            "input_0": "-1073741865",
+            "input_1": "-2147480884",
+            "input_2": "0"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "square_overflow",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 312.39,
+          "counterexample": {
+            "input_0": "-8388872"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "conditional_overflow",
+          "ub_class": "overflow",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 29.17,
+          "counterexample": {
+            "input_0": "2147483645",
+            "input_1": "3",
+            "input_2": "0"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "shift_left_by_width",
+          "ub_class": "shift",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 26.03,
+          "counterexample": {
+            "input_0": "0",
+            "input_1": "32"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "shift_right_by_width",
+          "ub_class": "shift",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 19.25,
+          "counterexample": {
+            "input_0": "-154564672",
+            "input_1": "1"
+          },
+          "smt_queries": 1
+        },
+        {
+          "name": "shift_negative_amount",
+          "ub_class": "shift",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 23.25,
+          "counterexample": {
+            "input_0": "0",
+            "input_1": "32"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "shift_signed_right_neg",
+          "ub_class": "shift",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 18.18,
+          "counterexample": {
+            "input_0": "-2147483648",
+            "input_1": "31"
+          },
+          "smt_queries": 1
+        },
+        {
+          "name": "shift_and_add",
+          "ub_class": "shift",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 8.75,
+          "counterexample": {
+            "input_0": "0",
+            "input_1": "32",
+            "input_2": "0"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "div_int_min_neg1",
+          "ub_class": "division",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 5.18,
+          "counterexample": {
+            "input_0": "0",
+            "input_1": "0"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "mod_int_min_neg1",
+          "ub_class": "division",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 5.75,
+          "counterexample": {
+            "input_0": "0",
+            "input_1": "0"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "div_with_negate",
+          "ub_class": "division",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 5.76,
+          "counterexample": {
+            "input_0": "-2147483648",
+            "input_1": "0"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "div_negative_truncation",
+          "ub_class": "division",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 8.55,
+          "counterexample": {
+            "input_0": "0",
+            "input_1": "0"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "combined_arith_div",
+          "ub_class": "division",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 10.6,
+          "counterexample": {
+            "input_0": "2147483645",
+            "input_1": "3"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "float_to_int_oob",
+          "ub_class": "cast",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 16.93,
+          "counterexample": {
+            "input_0": "1.308561558958933002116964416927658021450042724609375*(2**32)"
+          },
+          "smt_queries": 1
+        },
+        {
+          "name": "double_to_int_oob",
+          "ub_class": "cast",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 20.37,
+          "counterexample": {
+            "input_0": "-oo"
+          },
+          "smt_queries": 1
+        },
+        {
+          "name": "float_to_uint_negative",
+          "ub_class": "cast",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 11.27,
+          "counterexample": {
+            "input_0": "NaN"
+          },
+          "smt_queries": 1
+        },
+        {
+          "name": "int_promotion_mixed",
+          "ub_class": "cast",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 6.93,
+          "counterexample": {
+            "input_0": "-128",
+            "input_1": "-128"
+          },
+          "smt_queries": 1
+        },
+        {
+          "name": "implicit_promotion_overflow",
+          "ub_class": "cast",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 11.97,
+          "counterexample": {
+            "input_0": "32765",
+            "input_1": "3"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "overflow_then_shift",
+          "ub_class": "compound",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 11.31,
+          "counterexample": {
+            "input_0": "2147479551",
+            "input_1": "1075832884"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "mul_then_div",
+          "ub_class": "compound",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 11.78,
+          "counterexample": {
+            "input_0": "-2013265921"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "add_sub_cancel",
+          "ub_class": "compound",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 8.78,
+          "counterexample": {
+            "input_0": "2147479551",
+            "input_1": "1075832884"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "nested_overflow_cond",
+          "ub_class": "compound",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 7.3,
+          "counterexample": {
+            "input_0": "0"
+          },
+          "smt_queries": 1
+        },
+        {
+          "name": "shift_overflow_mixed",
+          "ub_class": "compound",
+          "expected": "divergent",
+          "verdict": "divergent",
+          "correct": true,
+          "time_ms": 14.13,
+          "counterexample": {
+            "input_0": "1073726669",
+            "input_1": "1660414316"
+          },
+          "smt_queries": 3
+        },
+        {
+          "name": "safe_add_guarded",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "unknown",
+          "correct": false,
+          "time_ms": 18.56,
+          "counterexample": null,
+          "smt_queries": 0
+        },
+        {
+          "name": "bitwise_and",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 5.87,
+          "counterexample": null,
+          "smt_queries": 1
+        },
+        {
+          "name": "bitwise_or",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 6.3,
+          "counterexample": null,
+          "smt_queries": 1
+        },
+        {
+          "name": "bitwise_xor",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 14.58,
+          "counterexample": null,
+          "smt_queries": 1
+        },
+        {
+          "name": "unsigned_add",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 3.91,
+          "counterexample": null,
+          "smt_queries": 1
+        },
+        {
+          "name": "identity",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 2.52,
+          "counterexample": null,
+          "smt_queries": 1
+        },
+        {
+          "name": "negate_positive",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "divergent",
+          "correct": false,
+          "time_ms": 8.99,
+          "counterexample": {
+            "input_0": "-2147483648"
+          },
+          "smt_queries": 2
+        },
+        {
+          "name": "comparison",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 5.34,
+          "counterexample": null,
+          "smt_queries": 1
+        },
+        {
+          "name": "min_function",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 6.67,
+          "counterexample": null,
+          "smt_queries": 1
+        },
+        {
+          "name": "safe_shift",
+          "ub_class": "none",
+          "expected": "equivalent",
+          "verdict": "equivalent",
+          "correct": true,
+          "time_ms": 3.74,
+          "counterexample": null,
+          "smt_queries": 2
+        }
+      ]
+    },
+    "diff_testing_naive": {
+      "tp": 0,
+      "fn": 30,
+      "tn": 10,
+      "fp": 0,
+      "recall": 0.0,
+      "precision": 0.0,
+      "f1": 0.0,
+      "accuracy": 0.25,
+      "results": [
+        {
+          "name": "signed_add_overflow",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_sub_overflow",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_mul_overflow",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_negate_min",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_abs_min",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "increment_past_max",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "double_then_halve",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "accumulate_three",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "square_overflow",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "conditional_overflow",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_left_by_width",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_right_by_width",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_negative_amount",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_signed_right_neg",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_and_add",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "div_int_min_neg1",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "mod_int_min_neg1",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "div_with_negate",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "div_negative_truncation",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "combined_arith_div",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "float_to_int_oob",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "double_to_int_oob",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "float_to_uint_negative",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "int_promotion_mixed",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "implicit_promotion_overflow",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "overflow_then_shift",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "mul_then_div",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "add_sub_cancel",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "nested_overflow_cond",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_overflow_mixed",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "safe_add_guarded",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "bitwise_and",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "bitwise_or",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "bitwise_xor",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "unsigned_add",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "identity",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "negate_positive",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "comparison",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "min_function",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "safe_shift",
+          "divergences_found": 0,
+          "total_tested": 10000,
+          "verdict": "equivalent",
+          "correct": true
+        }
+      ]
+    },
+    "diff_testing_ub_aware": {
+      "tp": 0,
+      "fn": 30,
+      "tn": 10,
+      "fp": 0,
+      "recall": 0.0,
+      "precision": 0.0,
+      "f1": 0.0,
+      "accuracy": 0.25,
+      "results": [
+        {
+          "name": "signed_add_overflow",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_sub_overflow",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_mul_overflow",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_negate_min",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "signed_abs_min",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "increment_past_max",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "double_then_halve",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "accumulate_three",
+          "divergences_found": 0,
+          "total_tested": 10512,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "square_overflow",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "conditional_overflow",
+          "divergences_found": 0,
+          "total_tested": 10512,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_left_by_width",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_right_by_width",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_negative_amount",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_signed_right_neg",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_and_add",
+          "divergences_found": 0,
+          "total_tested": 10512,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "div_int_min_neg1",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "mod_int_min_neg1",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "div_with_negate",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "div_negative_truncation",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "combined_arith_div",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "float_to_int_oob",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "double_to_int_oob",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "float_to_uint_negative",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "int_promotion_mixed",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "implicit_promotion_overflow",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "overflow_then_shift",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "mul_then_div",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "add_sub_cancel",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "nested_overflow_cond",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "shift_overflow_mixed",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": false
+        },
+        {
+          "name": "safe_add_guarded",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "bitwise_and",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "bitwise_or",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "bitwise_xor",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "unsigned_add",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "identity",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "negate_positive",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "comparison",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "min_function",
+          "divergences_found": 0,
+          "total_tested": 10289,
+          "verdict": "equivalent",
+          "correct": true
+        },
+        {
+          "name": "safe_shift",
+          "divergences_found": 0,
+          "total_tested": 10017,
+          "verdict": "equivalent",
+          "correct": true
+        }
+      ]
+    },
+    "ir_baseline": {
+      "tp": 0,
+      "fn": 30,
+      "tn": 10,
+      "fp": 0,
+      "recall": 0.0,
+      "precision": 0.0,
+      "f1": 0.0,
+      "accuracy": 0.25,
+      "results": [
+        {
+          "name": "signed_add_overflow",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "signed_sub_overflow",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "signed_mul_overflow",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "signed_negate_min",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "signed_abs_min",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "increment_past_max",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "double_then_halve",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "accumulate_three",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "square_overflow",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "conditional_overflow",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "shift_left_by_width",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "shift_right_by_width",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "shift_negative_amount",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "shift_signed_right_neg",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "shift_and_add",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "div_int_min_neg1",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "mod_int_min_neg1",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "div_with_negate",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "div_negative_truncation",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "combined_arith_div",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "float_to_int_oob",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "cast_semantics_erased"
+        },
+        {
+          "name": "double_to_int_oob",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "cast_semantics_erased"
+        },
+        {
+          "name": "float_to_uint_negative",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "cast_semantics_erased"
+        },
+        {
+          "name": "int_promotion_mixed",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "cast_semantics_erased"
+        },
+        {
+          "name": "implicit_promotion_overflow",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "cast_semantics_erased"
+        },
+        {
+          "name": "overflow_then_shift",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "mul_then_div",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "add_sub_cancel",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "nested_overflow_cond",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "shift_overflow_mixed",
+          "verdict": "equivalent",
+          "correct": false,
+          "reason": "ir_invisible"
+        },
+        {
+          "name": "safe_add_guarded",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "bitwise_and",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "bitwise_or",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "bitwise_xor",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "unsigned_add",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "identity",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "negate_positive",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "comparison",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "min_function",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        },
+        {
+          "name": "safe_shift",
+          "verdict": "equivalent",
+          "correct": true,
+          "reason": "no_ub"
+        }
+      ]
+    }
+  }
+}

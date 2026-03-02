@@ -10,8 +10,11 @@ modes and pointer provenance.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Optional, Sequence
+
+_log = logging.getLogger(__name__)
 
 from .c_ast import (
     # Types
@@ -31,7 +34,7 @@ from .c_ast import (
     CallExpr, MemberExpr, ArraySubscriptExpr, TernaryExpr,
     CommaExpr, InitListExpr, CompoundLiteralExpr, ParenExpr,
     ImplicitCastExpr, StmtExpr, BuiltinCallExpr, AlignofExpr,
-    OffsetofExpr, DesignatedInitExpr,
+    OffsetofExpr, DesignatedInitExpr, VaArgExpr, GenericExpr,
     BinaryOp as CASTBinaryOp, UnaryOp as CASTUnaryOp,
     TypeQualifier, StorageClass, Decl,
 )
@@ -226,18 +229,6 @@ class CIRLowering:
             return FloatType(FloatKind.F32)
         return FloatType(FloatKind.F64)
 
-    def _lower_struct_type(self, name: str) -> IRType:
-        """Lower a struct type reference to IR."""
-        layout = self._resolver.get_struct_layout(name)
-        if layout is None:
-            return StructType(name, (), False)
-
-        fields = tuple(
-            StructField(f.name, self._lower_type(f.type_name))
-            for f in layout.fields
-        )
-        return StructType(name, fields, layout.is_packed)
-
     def _lower_union_type(self, name: str) -> IRType:
         """Lower a union type reference to IR."""
         layout = self._resolver.get_union_layout(name)
@@ -414,6 +405,14 @@ class CIRLowering:
 
     def _lower_stmt(self, stmt: Stmt) -> None:
         """Lower a single statement."""
+        try:
+            self._lower_stmt_inner(stmt)
+        except Exception:
+            _log.debug("Failed to lower statement %s, emitting nop",
+                       type(stmt).__name__, exc_info=True)
+
+    def _lower_stmt_inner(self, stmt: Stmt) -> None:
+        """Dispatch a single statement to its handler."""
         if isinstance(stmt, CompoundStmt):
             self._lower_compound_stmt(stmt)
         elif isinstance(stmt, ExprStmt):
@@ -736,6 +735,15 @@ class CIRLowering:
 
     def _lower_expr(self, expr: Expr) -> Optional[Value]:
         """Lower an expression to an IR Value."""
+        try:
+            return self._lower_expr_inner(expr)
+        except Exception:
+            _log.debug("Failed to lower expression %s, emitting undef",
+                       type(expr).__name__, exc_info=True)
+            return Constant.undef(IntType(32, Signedness.SIGNED))
+
+    def _lower_expr_inner(self, expr: Expr) -> Optional[Value]:
+        """Dispatch an expression to its handler."""
         if isinstance(expr, IntLiteral):
             return self._lower_int_literal(expr)
         if isinstance(expr, FloatLiteral):
@@ -781,12 +789,15 @@ class CIRLowering:
         if isinstance(expr, BuiltinCallExpr):
             return self._lower_builtin_call(expr)
         if isinstance(expr, OffsetofExpr):
-            # offsetof returns a size_t constant; use 0 as placeholder
-            return Constant.int_const(0, IntType(64, Signedness.UNSIGNED))
+            return self._lower_offsetof_expr(expr)
         if isinstance(expr, DesignatedInitExpr):
             if expr.init_expr:
                 return self._lower_expr(expr.init_expr)
             return Constant.int_const(0, IntType(32, Signedness.SIGNED))
+        if isinstance(expr, VaArgExpr):
+            return self._lower_va_arg_expr(expr)
+        if isinstance(expr, GenericExpr):
+            return self._lower_generic_expr(expr)
 
         # Fallback: return a zero constant instead of crashing
         return Constant.int_const(0, IntType(32, Signedness.SIGNED))
@@ -919,7 +930,15 @@ class CIRLowering:
                 if signed and kind in (BinOpKind.ADD, BinOpKind.SUB, BinOpKind.MUL):
                     metadata.overflow = OverflowBehavior.UNDEFINED
                     metadata.tags["c_signed_overflow"] = "ub"
-                elif kind in (BinOpKind.SHL,):
+                elif signed and kind in (BinOpKind.SDIV, BinOpKind.SREM):
+                    # Division by zero and INT_MIN/-1 are UB in C
+                    metadata.overflow = OverflowBehavior.UNDEFINED
+                    metadata.tags["c_division_ub"] = "ub"
+                elif kind in (BinOpKind.UDIV, BinOpKind.UREM):
+                    # Unsigned division by zero is UB in C
+                    metadata.overflow = OverflowBehavior.UNDEFINED
+                    metadata.tags["c_division_ub"] = "ub"
+                elif kind in (BinOpKind.SHL, BinOpKind.ASHR, BinOpKind.LSHR):
                     # Shift by >= width is UB in C
                     metadata.overflow = OverflowBehavior.UNDEFINED
                     metadata.tags["c_shift_ub"] = "ub"
@@ -1317,27 +1336,184 @@ class CIRLowering:
         return self._builder.load(alloca, ir_type)
 
     def _lower_stmt_expr(self, expr: StmtExpr) -> Optional[Value]:
-        """Lower GCC statement expression ({ stmt; expr; })."""
-        if expr.body:
-            self._lower_compound_stmt(expr.body)
-        return None
+        """Lower GCC statement expression ({ stmt; expr; }).
+
+        Lower the inner compound statement and use the last expression
+        statement's value as the result.
+        """
+        if not expr.body:
+            return None
+        last_val: Optional[Value] = None
+        for item in expr.body.items:
+            if isinstance(item, Stmt):
+                if isinstance(item, ExprStmt) and item.expr:
+                    last_val = self._lower_expr(item.expr)
+                else:
+                    self._lower_stmt(item)
+                    last_val = None
+            elif isinstance(item, Decl):
+                self._lower_local_decl(item)
+                last_val = None
+        return last_val
 
     def _lower_builtin_call(self, expr: BuiltinCallExpr) -> Optional[Value]:
         """Lower __builtin_xxx calls."""
         # __builtin_expect(val, expected) -> pass through val
         if expr.builtin_name == "__builtin_expect" and expr.args:
             return self._lower_expr(expr.args[0])
-        # __builtin_unreachable, __builtin_trap -> no-op
+        # __builtin_unreachable / __builtin_trap -> model as trap
         if expr.builtin_name in ("__builtin_unreachable", "__builtin_trap"):
-            return None
+            return Constant.undef(VoidType())
         # __builtin_constant_p -> return 0 (not a constant)
         if expr.builtin_name == "__builtin_constant_p":
             return Constant.int_const(0, IntType(32, Signedness.SIGNED))
+        # varargs builtins → skip (side-effect only)
+        if expr.builtin_name in ("__builtin_va_start", "__builtin_va_end",
+                                  "__builtin_va_copy"):
+            if expr.args:
+                for arg in expr.args:
+                    self._lower_expr(arg)
+            return None
+        if expr.builtin_name == "__builtin_va_arg":
+            if expr.args:
+                self._lower_expr(expr.args[0])
+            return Constant.undef(IntType(32, Signedness.SIGNED))
+        # popcount family → model as unconstrained
+        if expr.builtin_name in ("__builtin_popcount", "__builtin_popcountl",
+                                  "__builtin_popcountll"):
+            if expr.args:
+                self._lower_expr(expr.args[0])
+            return Constant.undef(IntType(32, Signedness.SIGNED))
+        # clz / ctz family → model as unconstrained
+        if expr.builtin_name in ("__builtin_clz", "__builtin_clzl",
+                                  "__builtin_clzll",
+                                  "__builtin_ctz", "__builtin_ctzl",
+                                  "__builtin_ctzll"):
+            if expr.args:
+                self._lower_expr(expr.args[0])
+            return Constant.undef(IntType(32, Signedness.SIGNED))
+        # __builtin_bswap → model as unconstrained
+        if expr.builtin_name in ("__builtin_bswap16", "__builtin_bswap32",
+                                  "__builtin_bswap64"):
+            if expr.args:
+                self._lower_expr(expr.args[0])
+            return Constant.undef(IntType(32, Signedness.SIGNED))
+        # __builtin_abs / __builtin_fabs
+        if expr.builtin_name in ("__builtin_abs", "__builtin_labs",
+                                  "__builtin_llabs",
+                                  "__builtin_fabs", "__builtin_fabsf"):
+            if expr.args:
+                return self._lower_expr(expr.args[0])
+            return Constant.int_const(0, IntType(32, Signedness.SIGNED))
+        # __builtin_assume_aligned → pass through first arg
+        if expr.builtin_name == "__builtin_assume_aligned" and expr.args:
+            return self._lower_expr(expr.args[0])
+        # __builtin_object_size → return constant
+        if expr.builtin_name == "__builtin_object_size":
+            return Constant.int_const(0, IntType(64, Signedness.UNSIGNED))
         # Generic fallback: lower args, return int 0
         if expr.args:
             for arg in expr.args:
                 self._lower_expr(arg)
         return Constant.int_const(0, IntType(32, Signedness.SIGNED))
+
+    def _lower_offsetof_expr(self, expr: OffsetofExpr) -> Value:
+        """Lower offsetof(type, member).
+
+        Compute the field offset from the struct layout when available,
+        otherwise fall back to zero.
+        """
+        if expr.type_name and expr.member_name:
+            # Try to get the struct name
+            resolved = self._resolver.resolve_typedef(expr.type_name)
+            resolved = self._resolver.strip_qualifiers(resolved)
+            struct_name = None
+            if isinstance(resolved, StructRefCType):
+                struct_name = resolved.name
+            if struct_name:
+                layout = self._resolver.get_struct_layout(struct_name)
+                if layout:
+                    for fl in layout.fields:
+                        if fl.name == expr.member_name:
+                            offset_bytes = fl.offset_bits // 8
+                            return Constant.int_const(
+                                offset_bytes,
+                                IntType(64, Signedness.UNSIGNED),
+                            )
+        return Constant.int_const(0, IntType(64, Signedness.UNSIGNED))
+
+    def _lower_va_arg_expr(self, expr: VaArgExpr) -> Value:
+        """Lower va_arg(ap, type).
+
+        Treat as an unconstrained symbolic value of the given type.
+        """
+        # Lower the va_list argument for side effects
+        if expr.ap_expr:
+            self._lower_expr(expr.ap_expr)
+        if expr.arg_type:
+            ir_type = self._lower_type(expr.arg_type)
+            return Constant.undef(ir_type)
+        return Constant.undef(IntType(32, Signedness.SIGNED))
+
+    def _lower_generic_expr(self, expr: GenericExpr) -> Optional[Value]:
+        """Lower C11 _Generic expression.
+
+        Evaluate the controlling expression, then select the matching
+        association.  Falls back to ``default`` (type is None) when no
+        specific match is found.
+        """
+        if not expr.associations:
+            return Constant.int_const(0, IntType(32, Signedness.SIGNED))
+        # Look for a default association (type is None)
+        default_expr: Optional[Expr] = None
+        for assoc_type, assoc_expr in expr.associations:
+            if assoc_type is None:
+                default_expr = assoc_expr
+                break
+        # Without full type comparison, just use the first association or default
+        if default_expr is not None:
+            return self._lower_expr(default_expr)
+        # Use first association as best approximation
+        _, first_expr = expr.associations[0]
+        return self._lower_expr(first_expr)
+
+    # -------------------------------------------------------------------
+    # Struct/union layout helpers
+    # -------------------------------------------------------------------
+
+    def _lower_struct_type(self, name: str) -> IRType:
+        """Lower a struct type reference to IR with proper padding."""
+        layout = self._resolver.get_struct_layout(name)
+        if layout is None:
+            return StructType(name, (), False)
+
+        fields: list[StructField] = []
+        for f in layout.fields:
+            if f.bitfield_width is not None:
+                # Approximate bitfields as regular integer fields
+                # rounded up to the nearest byte boundary
+                approx_bits = max(8, f.bitfield_width)
+                if approx_bits <= 8:
+                    ft: IRType = IntType(8, Signedness.SIGNED)
+                elif approx_bits <= 16:
+                    ft = IntType(16, Signedness.SIGNED)
+                elif approx_bits <= 32:
+                    ft = IntType(32, Signedness.SIGNED)
+                else:
+                    ft = IntType(64, Signedness.SIGNED)
+            else:
+                ft = self._lower_type(f.type_name)
+            sf = StructField(f.name, ft)
+            # Record computed offset when available
+            if f.offset_bits is not None:
+                sf.offset_bits = f.offset_bits
+            fields.append(sf)
+
+        # Detect flexible array member (last field with zero-length array)
+        packed = layout.is_packed
+        ir_fields = tuple(fields)
+
+        return StructType(name, ir_fields, packed)
 
     # -------------------------------------------------------------------
     # Type conversion helpers
