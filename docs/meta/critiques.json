@@ -1,72 +1,163 @@
 {
-  "project": "cross-language-equivalence-verifier",
-  "title": "SemRec: Cross-Language Semantic Equivalence Verification for C↔Rust Migration",
-  "synthesis_date": "2026-03-15",
-  "weighted_average_score": 5.7,
-  "score_range": [
-    5,
-    6
-  ],
+  "project": "SemRec",
+  "title": "Source-Level Semantic Equivalence Verification for C-to-Rust Translation",
+  "date": "2026-03-02",
   "reviewers": [
     {
       "name": "Cesar Sanchez",
       "persona": "formal_verification_AI_researcher",
       "affiliation": "IMDEA Software Institute",
-      "score": 6,
-      "weight": 0.9,
+      "overall_score": 6,
+      "recommendation": "weak_accept",
       "review_file": "review_cesar_sanchez.json"
     },
     {
       "name": "Roderick Bloem",
       "persona": "machine_learning_specification_safety_researcher",
       "affiliation": "TU Graz",
-      "score": 5,
-      "weight": 0.8,
+      "overall_score": 5,
+      "recommendation": "weak_reject",
       "review_file": "review_roderick_bloem.json"
     },
     {
       "name": "Vasco Vasconcelos",
       "persona": "probabilistic_models_and_formal_methods_expert",
       "affiliation": "University of Lisbon",
-      "score": 6,
-      "weight": 0.85,
+      "overall_score": 6,
+      "recommendation": "weak_accept",
       "review_file": "review_vasco_vasconcelos.json"
     }
   ],
   "consensus_recommendation": "weak_accept",
   "synthesis": {
-    "summary": "All three reviewers recognize SemRec's timely contribution to C-to-Rust migration verification, praising the σ-bridge coercion framework and the practical pipeline architecture. However, unanimous concerns emerge around the unverified custom frontends, the unsound memory model (reflected in 28.6% memory accuracy), the unjustified K=32 bound, and the absence of formal soundness proofs for the product program construction. The CEGAR LLM-in-the-loop is viewed as interesting but potentially dangerous without stronger safety analysis. The consensus is a cautious weak accept contingent on addressing the soundness gaps.",
+    "summary": "SemRec addresses a timely and industrially relevant problem — verifying semantic equivalence of C↔Rust function translations at the source level using SMT-based product program analysis. All three reviewers recognize the σ-bridge coercion framework and SemanticConfig parameterization as genuinely novel contributions that provide a principled decomposition of cross-language semantic divergence. However, unanimous concerns emerge around three axes: (1) the absence of a formal soundness proof for the product program construction, (2) the 15.6% overall accuracy that renders the tool impractical in its current state despite the authors' attribution of 85% of failures to pipeline issues, and (3) the IR-erasure thesis being overstated without controlling for optimization levels or comparing against Alive2's actual capabilities. Bloem dissents toward rejection on practical grounds (unsafe Rust omission, CEGAR LLM safety), while Sanchez and Vasconcelos see the theoretical framework as salvageable with significant revision. The consensus is a narrow weak accept contingent on addressing the soundness proof, IR-erasure methodology, and σ-bridge completeness gaps.",
     "agreed_strengths": [
-      "The σ-bridge coercion point abstraction is a genuinely novel mechanism for mediating between C undefined behavior and Rust wrapping semantics, enabling targeted verification at semantic divergence points rather than whole-program equivalence. All reviewers note this as the paper's primary conceptual contribution.",
-      "The six-stage pipeline architecture provides clean modularity with well-defined interfaces between parsing, IR lowering, alignment, product construction, and SMT encoding. This enables incremental improvement and component replacement without systemic redesign.",
-      "The QF_BV SMT encoding achieves practical verification times (186ms mean, 5.1ms median) suitable for interactive migration workflows. The 100% accuracy on shift operations validates the σ-bridge on the most safety-critical category of C/Rust semantic divergence.",
-      "The honest, category-wise evaluation reporting — including the 28.6% memory accuracy and 45% CEGAR success rate — provides actionable failure analysis rather than misleading aggregate metrics."
+      {
+        "point": "σ-bridge coercion framework is a novel and principled contribution",
+        "detail": "The SemanticConfig parameterization across overflow, float, error, and pointer models provides a systematic decomposition of the C↔Rust semantic gap. The coercion points serve as coupling invariants in the product program, extending the Barthe-Crespo-Kunz relational verification tradition to cross-language settings. All reviewers identify this as the paper's primary conceptual advance.",
+        "reviewers": ["Cesar Sanchez", "Roderick Bloem", "Vasco Vasconcelos"]
+      },
+      {
+        "point": "Practical verification performance suitable for CI/CD integration",
+        "detail": "The 94ms mean verification time (7.6× faster than differential testing) with QF_BV encoding and state merging achieves interactive latency. The encoding's restriction to the decidable QF_BV fragment avoids quantifier alternation and ensures predictable solver behavior.",
+        "reviewers": ["Cesar Sanchez", "Roderick Bloem", "Vasco Vasconcelos"]
+      },
+      {
+        "point": "Honest and granular evaluation reporting",
+        "detail": "The per-category breakdown across 18 benchmark categories, the transparent reporting of 15.6% overall accuracy with root-cause attribution, and the inclusion of real-library pairs from musl/zlib/libsodium/SQLite/Linux demonstrate intellectual honesty. The 45% CEGAR convergence rate is reported without inflation.",
+        "reviewers": ["Cesar Sanchez", "Roderick Bloem", "Vasco Vasconcelos"]
+      },
+      {
+        "point": "Counterexample-driven repair hints add practical value",
+        "detail": "Beyond binary equivalence verdicts, SemRec provides concrete witness inputs and localized divergence descriptions via Z3 model extraction. This diagnostic information reduces debugging effort for migration engineers working through large function inventories.",
+        "reviewers": ["Roderick Bloem", "Cesar Sanchez"]
+      }
     ],
     "agreed_weaknesses": [
-      "The custom C and Rust parsers are unverified Python implementations that bypass established, validated frontends (Clang, rustc/syn). The entire verification guarantee rests on parser correctness that is neither formally proven nor extensively tested. All reviewers identify this as the most critical soundness concern.",
-      "The Array(BV64 → BV8) memory model with SSA versioning cannot express pointer aliasing, C's strict aliasing rules, Rust's ownership invariants, or provenance-based pointer semantics. This directly explains the 28.6% memory operation accuracy and constitutes a soundness limitation, not merely an incompleteness.",
-      "Bounded model checking at K=32 lacks theoretical or empirical justification. No analysis of required unrolling depth across benchmarks, no completeness characterization for the function classes targeted, and no exploration of symbolic loop summarization alternatives.",
-      "The product program construction lacks a formal soundness proof connecting the constructed program's verification outcome to the original programs' semantic equivalence. Without such a proof (ideally mechanized), the σ-bridge remains an engineering heuristic."
+      {
+        "point": "Product program construction lacks formal soundness proof",
+        "detail": "No theorem establishes that the product program's (un)satisfiability corresponds to the original programs' semantic (in)equivalence. The relational verification literature (Barthe et al., Zaks-Pnueli CoVaC, Benton's relational Hoare logic) demands such proofs. Without mechanization in a proof assistant, the σ-bridge's 'verified equivalent' verdicts are unsubstantiated claims.",
+        "severity": "high",
+        "reviewers": ["Cesar Sanchez", "Vasco Vasconcelos", "Roderick Bloem"]
+      },
+      {
+        "point": "15.6% accuracy makes the tool impractical in current state",
+        "detail": "The 85% pipeline failure rate means the tool cannot produce any verdict on the vast majority of inputs. The 32-pair core benchmark achieving 100% appears curated to avoid pipeline weaknesses. From a practitioner's perspective, the pipeline coverage is the product — attributing failures to parsing vs. verification is an internal distinction irrelevant to users.",
+        "severity": "high",
+        "reviewers": ["Cesar Sanchez", "Roderick Bloem"]
+      },
+      {
+        "point": "IR-erasure thesis is overstated and insufficiently controlled",
+        "detail": "The 13/16 statistic requires specifying optimization level, LLVM version, and target triple. Alive2 reasons about poison/undef propagation at the IR level and may detect divergences that compile to 'identical' IR at one optimization level but not another. The thesis conflates representation identity with semantic-level equivalence. A comparison with Alive2's actual detection capabilities on these 13 cases is essential.",
+        "severity": "high",
+        "reviewers": ["Cesar Sanchez", "Vasco Vasconcelos", "Roderick Bloem"]
+      },
+      {
+        "point": "σ-bridge completeness is unaddressed",
+        "detail": "The four parameterized dimensions (overflow, float, error, pointer) do not demonstrably span the full C↔Rust divergence space. Volatile semantics, sequence points, setjmp/longjmp vs. panic, VLAs, designated initializers, ABI struct layout, and thread-local storage are all potential divergence sources outside the σ-bridge's scope. False equivalence verdicts for unhandled divergence classes are undetectable by the tool itself.",
+        "severity": "medium",
+        "reviewers": ["Cesar Sanchez", "Vasco Vasconcelos"]
+      },
+      {
+        "point": "BMC K=32 bound lacks justification and sensitivity analysis",
+        "detail": "For string-processing and buffer-manipulation functions in musl/zlib/libsodium, loop iterations depend on input data. K=32 systematically misses divergences on inputs exceeding 32 elements. No sensitivity analysis for K∈{8,16,32,64,128} is provided, and loop acceleration/k-induction alternatives are not discussed.",
+        "severity": "medium",
+        "reviewers": ["Cesar Sanchez", "Vasco Vasconcelos", "Roderick Bloem"]
+      },
+      {
+        "point": "Memory model does not exploit Rust's ownership guarantees",
+        "detail": "The Array(BV64→BV8) model treats C and Rust memory identically, ignoring that Rust's borrow checker has already verified non-aliasing of &mut references. Axiomatizing these ownership guarantees in the SMT encoding would prune spurious counterexamples and likely improve the 28.6% memory accuracy. The SSA versioning scheme's interaction with pointer aliasing is also underdocumented.",
+        "severity": "medium",
+        "reviewers": ["Vasco Vasconcelos", "Roderick Bloem"]
+      }
     ],
     "divergent_opinions": [
-      "Sanchez emphasizes the need for CompCert/RefinedC-caliber formal foundations and views the custom parsers as a near-disqualifying concern, while Vasconcelos sees the product program approach as fundamentally sound but requiring formalization, and Bloem focuses more on practical adoption barriers.",
-      "Bloem raises unique safety concerns about the CEGAR LLM-in-the-loop interaction with verification incompleteness — the possibility that LLM-refined translations pass verification due to memory model limitations rather than genuine equivalence. Sanchez and Vasconcelos acknowledge the LLM component but view it as secondary to the formal foundations.",
-      "Vasconcelos uniquely frames the problem through the lens of behavioral types and session-typed equivalence, suggesting that SemRec's input-output functional equivalence is too narrow for concurrent or I/O-heavy migration scenarios. Sanchez and Bloem focus on the current functional setting without questioning the equivalence notion itself."
+      {
+        "topic": "Practical viability and recommendation",
+        "positions": {
+          "Roderick Bloem": "Recommends weak reject. The 15.6% accuracy, absence of unsafe Rust handling (the primary output of C2Rust), and unanalyzed CEGAR LLM safety concerns make the tool unsuitable for its stated purpose. The gap between the tool's aspirations and its current capabilities is too large.",
+          "Cesar Sanchez": "Recommends weak accept. While the pipeline coverage is poor, the σ-bridge abstraction and IR-erasure observation are novel contributions to the formal methods literature. The theoretical framework deserves publication with significant revisions to the soundness arguments and evaluation methodology.",
+          "Vasco Vasconcelos": "Recommends weak accept. The product program construction is well-grounded in relational verification theory and the SemanticConfig has independent value as a specification of the C↔Rust semantic gap. Formalization gaps are addressable in revision."
+        }
+      },
+      {
+        "topic": "CEGAR LLM-in-the-loop assessment",
+        "positions": {
+          "Roderick Bloem": "Views the LLM component as potentially dangerous — the interaction between LLM unreliability and verification incompleteness could produce false confidence in buggy translations. Demands explicit failure-mode taxonomy and verification of all converged cases.",
+          "Cesar Sanchez": "Acknowledges the LLM component as a secondary contribution but focuses criticism on the verification core. The 45% convergence rate is an honest baseline for hybrid formal-methods/AI approaches.",
+          "Vasco Vasconcelos": "Notes the LLM component briefly but views it as orthogonal to the product program's theoretical foundations."
+        }
+      },
+      {
+        "topic": "Equivalence notion scope",
+        "positions": {
+          "Vasco Vasconcelos": "Argues that input-output functional equivalence is too narrow. Cross-language equivalence for concurrent or I/O-heavy code requires trace equivalence or behavioral type compatibility. The restriction to pure functions limits applicability to a fraction of real migration scenarios.",
+          "Cesar Sanchez": "Accepts functional equivalence as appropriate for the current scope but notes the need for interprocedural analysis to handle function-level composition.",
+          "Roderick Bloem": "Focuses on the practical scope limitation (50-line functions, no call graphs) rather than the theoretical equivalence notion."
+        }
+      }
     ],
     "critical_questions": [
-      "Can the custom C/Rust parsers be replaced with wrappers around Clang AST and rustc HIR/MIR to eliminate the frontend soundness concern?",
-      "What is the distribution of loop depths in the 212 benchmarks, and does doubling K to 64 change any verification verdicts?",
-      "How does the SSA memory encoding handle pointer aliasing — does it assume non-aliasing (unsound) or universal aliasing (imprecise)?",
-      "Does SemRec handle unsafe Rust, which is the primary output of C2Rust and the most common migration scenario?",
-      "Can the σ-bridge coercion correctness be formalized as a simulation relation with a mechanized proof?"
+      "Can Alive2 detect any of the 13 divergence classes that the IR-erasure thesis claims compile to identical LLVM IR? An empirical comparison would validate or refute the thesis.",
+      "How does SemRec handle Rust unsafe blocks — does parsing fail, does the block get skipped, or is it modeled? This determines applicability to C2Rust output.",
+      "Can the product program construction's soundness be stated and mechanized as a bisimulation between product traces and paired original-program traces?",
+      "What is the sensitivity of verification verdicts to K — does increasing K from 32 to 64 or 128 change any equivalence/inequivalence results on the 212-pair benchmark?",
+      "For the 9 CEGAR-converged cases (45% of 20), have all been independently verified as genuinely equivalent, or could any be false positives due to memory model limitations?",
+      "Can the σ-bridge's four dimensions be proven complete for a formally defined subset of C11×Rust, or can you exhibit a divergence class outside the σ-bridge's scope that produces a false equivalence verdict?"
     ],
     "recommended_revisions": [
-      "Replace custom Python parsers with bindings to Clang (libclang) for C and syn/rust-analyzer for Rust to establish a trustworthy parsing foundation.",
-      "Formalize and prove the product program construction's soundness: state the correctness theorem (simulation, bisimulation, or trace equivalence) and mechanize it in a proof assistant.",
-      "Extend the memory model to handle pointer aliasing via a points-to analysis preprocessing pass, and incorporate Rust ownership constraints as non-aliasing axioms in the SMT encoding.",
-      "Provide empirical justification for K=32: measure required unrolling depths across all benchmarks and report sensitivity analysis for K ∈ {16, 32, 64, 128}.",
-      "Analyze CEGAR LLM-in-the-loop failure modes explicitly: categorize the 55% failures and verify that successful refinements are not false positives due to memory model limitations.",
-      "Add evaluation on C2Rust transpiler output for at least one real-world C library to demonstrate practical applicability beyond synthetic benchmarks."
+      {
+        "priority": "essential",
+        "revision": "Formalize and prove the product program construction's soundness: state the correctness theorem as a simulation or bisimulation relation between the product program and the paired original programs. Mechanize in Coq or Isabelle for at least the core IR fragment."
+      },
+      {
+        "priority": "essential",
+        "revision": "Substantiate the IR-erasure thesis by running Alive2 on the LLVM IR for all 13 claimed IR-identical divergence pairs. Report the optimization level, LLVM version, and target triple used. Reframe the thesis as 'complementary coverage' rather than 'IR is insufficient' if Alive2 detects any of the 13 cases."
+      },
+      {
+        "priority": "essential",
+        "revision": "Document the benchmark selection protocol. Specify whether the 32 core pairs were hand-curated, randomly sampled, or stratified. For the 212 extended pairs, describe the generation methodology and any filtering criteria applied."
+      },
+      {
+        "priority": "important",
+        "revision": "Add unsafe Rust support to the Rust frontend, covering at minimum raw pointer dereference, transmute, and union access. Evaluate on C2Rust output for at least one real-world C library."
+      },
+      {
+        "priority": "important",
+        "revision": "Provide K sensitivity analysis: report verification verdicts for K∈{8,16,32,64,128} across all benchmarks. Discuss loop acceleration or k-induction as paths to unbounded guarantees."
+      },
+      {
+        "priority": "important",
+        "revision": "Enumerate the σ-bridge's divergence class coverage explicitly. List handled and unhandled divergence classes with estimated frequency in real migration scenarios."
+      },
+      {
+        "priority": "suggested",
+        "revision": "Incorporate Rust's ownership and borrowing guarantees as non-aliasing axioms in the SMT encoding to improve memory operation accuracy beyond 28.6%."
+      },
+      {
+        "priority": "suggested",
+        "revision": "Provide a failure-mode taxonomy for the CEGAR LLM-in-the-loop: categorize the 55% non-convergent cases and verify that all convergent cases are genuine equivalences."
+      }
     ]
   }
 }

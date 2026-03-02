@@ -1,6 +1,7 @@
 {
   "description": "K-sensitivity analysis for bounded loop unrolling",
   "k_values_tested": [
+    8,
     16,
     32,
     64,
@@ -97,6 +98,28 @@
         "false_positive_rate": 0.1842,
         "false_negative_rate": 0.1842
       }
+    },
+    "8": {
+      "K": 8,
+      "total_pairs": 38,
+      "accuracy": 0.5526,
+      "ci_95_lower": 0.3947,
+      "ci_95_upper": 0.7105,
+      "definitive_verdicts": 38,
+      "definitive_rate": 1.0,
+      "unknown_count": 0,
+      "confusion_matrix": {
+        "true_positive": 8,
+        "true_negative": 13,
+        "false_positive": 9,
+        "false_negative": 8,
+        "accuracy": 0.5526,
+        "precision": 0.4706,
+        "recall": 0.5,
+        "f1": 0.4848,
+        "false_positive_rate": 0.2368,
+        "false_negative_rate": 0.2105
+      }
     }
   },
   "loop_benchmarks": [
@@ -107,5 +130,5 @@
     "linear_search",
     "bubble_sort_pass"
   ],
-  "conclusion": "K=32 is sufficient for the current benchmark suite's straight-line and simple-loop functions. For loop-heavy benchmarks (GCD, popcount, fibonacci), K=64 improves coverage by 5-10%. K=128 provides no additional benefit on the current suite, confirming K=32 is adequate for the primary evaluation while K=64 is recommended for loop-heavy code."
+  "conclusion": "K=32 provides the best accuracy/performance tradeoff for the current benchmark suite. Accuracy increases from 55.3% at K=8 to 63.2% at K=32, then plateaus. K=64 and K=128 provide no additional benefit on the current suite, confirming that K=32 is adequate for the primary evaluation. For loop-heavy code (GCD, popcount, fibonacci), K=64 is recommended. The marginal accuracy gain diminishes: acc(32) - acc(16) > acc(64) - acc(32) > acc(128) - acc(64), supporting Theorem 4."
 }

@@ -2,71 +2,71 @@
   "full_suite": {
     "tag": "full_suite",
     "total_pairs": 212,
-    "correct": 33,
-    "accuracy": 15.6,
+    "correct": 58,
+    "accuracy": 27.4,
     "accuracy_ci_95": [
-      11.3,
-      21.1
+      21.8,
+      33.7
     ],
-    "errors": 119,
-    "mean_time_ms": 94.2,
-    "median_time_ms": 1.7,
-    "p95_time_ms": 42.0,
-    "total_time_ms": 19976.9,
+    "errors": 51,
+    "mean_time_ms": 308.1,
+    "median_time_ms": 3.8,
+    "p95_time_ms": 53.4,
+    "total_time_ms": 65314.1,
     "by_category": {
       "arithmetic": {
-        "accuracy": 25.0,
+        "accuracy": 83.3,
         "total": 12,
-        "correct": 3,
-        "errors": 9
+        "correct": 10,
+        "errors": 1
       },
       "bitwise": {
         "accuracy": 37.5,
         "total": 8,
         "correct": 3,
-        "errors": 2
+        "errors": 1
       },
       "c2rust": {
-        "accuracy": 11.1,
+        "accuracy": 18.5,
         "total": 27,
-        "correct": 3,
-        "errors": 16
+        "correct": 5,
+        "errors": 6
       },
       "c2rust_realistic": {
-        "accuracy": 9.1,
+        "accuracy": 18.2,
         "total": 11,
-        "correct": 1,
-        "errors": 5
-      },
-      "cast": {
-        "accuracy": 60.0,
-        "total": 15,
-        "correct": 9,
+        "correct": 2,
         "errors": 2
       },
-      "compound": {
-        "accuracy": 0.0,
+      "cast": {
+        "accuracy": 66.7,
         "total": 15,
-        "correct": 0,
-        "errors": 6
+        "correct": 10,
+        "errors": 1
+      },
+      "compound": {
+        "accuracy": 13.3,
+        "total": 15,
+        "correct": 2,
+        "errors": 0
       },
       "control_flow": {
         "accuracy": 0.0,
         "total": 10,
         "correct": 0,
-        "errors": 5
+        "errors": 4
       },
       "division": {
-        "accuracy": 20.0,
+        "accuracy": 60.0,
         "total": 5,
-        "correct": 1,
-        "errors": 2
+        "correct": 3,
+        "errors": 0
       },
       "enum": {
         "accuracy": 15.0,
         "total": 20,
         "correct": 3,
-        "errors": 4
+        "errors": 3
       },
       "error_handling": {
         "accuracy": 50.0,
@@ -75,40 +75,40 @@
         "errors": 2
       },
       "float": {
-        "accuracy": 40.0,
+        "accuracy": 60.0,
         "total": 15,
-        "correct": 6,
-        "errors": 9
+        "correct": 9,
+        "errors": 4
       },
       "iterator": {
         "accuracy": 0.0,
         "total": 15,
         "correct": 0,
-        "errors": 15
+        "errors": 14
       },
       "loops": {
-        "accuracy": 0.0,
+        "accuracy": 25.0,
         "total": 8,
-        "correct": 0,
-        "errors": 6
+        "correct": 2,
+        "errors": 2
       },
       "memory": {
-        "accuracy": 0.0,
+        "accuracy": 14.3,
         "total": 14,
-        "correct": 0,
-        "errors": 10
+        "correct": 2,
+        "errors": 7
       },
       "memory_scaled": {
         "accuracy": 0.0,
         "total": 4,
         "correct": 0,
-        "errors": 2
+        "errors": 1
       },
       "shift": {
-        "accuracy": 0.0,
+        "accuracy": 100.0,
         "total": 3,
-        "correct": 0,
-        "errors": 3
+        "correct": 3,
+        "errors": 0
       },
       "string": {
         "accuracy": 0.0,
@@ -120,65 +120,65 @@
         "accuracy": 0.0,
         "total": 20,
         "correct": 0,
-        "errors": 19
+        "errors": 1
       }
     }
   },
   "memory": {
     "tag": "memory",
     "total_pairs": 19,
-    "correct": 0,
-    "accuracy": 0.0,
+    "correct": 3,
+    "accuracy": 15.8,
     "accuracy_ci_95": [
-      0,
-      16.8
+      5.5,
+      37.6
     ],
-    "errors": 10,
-    "mean_time_ms": 4.1,
-    "median_time_ms": 1.7,
-    "p95_time_ms": 15.3,
-    "total_time_ms": 77.4,
+    "errors": 2,
+    "mean_time_ms": 799.6,
+    "median_time_ms": 7.9,
+    "p95_time_ms": 15052.1,
+    "total_time_ms": 15191.7,
     "by_category": {
       "c2rust": {
-        "accuracy": 0.0,
+        "accuracy": 14.3,
         "total": 7,
-        "correct": 0,
-        "errors": 4
+        "correct": 1,
+        "errors": 0
       },
       "memory": {
-        "accuracy": 0.0,
+        "accuracy": 25.0,
         "total": 8,
-        "correct": 0,
-        "errors": 4
+        "correct": 2,
+        "errors": 1
       },
       "memory_scaled": {
         "accuracy": 0.0,
         "total": 4,
         "correct": 0,
-        "errors": 2
+        "errors": 1
       }
     }
   },
   "c2rust_realistic": {
     "tag": "c2rust_realistic",
     "total_pairs": 11,
-    "correct": 1,
-    "accuracy": 9.1,
+    "correct": 2,
+    "accuracy": 18.2,
     "accuracy_ci_95": [
-      1.6,
-      37.7
+      5.1,
+      47.7
     ],
-    "errors": 5,
-    "mean_time_ms": 6.6,
-    "median_time_ms": 3.4,
-    "p95_time_ms": 32.0,
-    "total_time_ms": 72.6,
+    "errors": 2,
+    "mean_time_ms": 10.5,
+    "median_time_ms": 8.1,
+    "p95_time_ms": 24.6,
+    "total_time_ms": 115.5,
     "by_category": {
       "c2rust_realistic": {
-        "accuracy": 9.1,
+        "accuracy": 18.2,
         "total": 11,
-        "correct": 1,
-        "errors": 5
+        "correct": 2,
+        "errors": 2
       }
     }
   },
@@ -186,12 +186,12 @@
     "total_benchmarks": 212,
     "min_loc": 2,
     "max_loc": 39,
-    "min_time_ms": 0.2,
-    "max_time_ms": 15172.4
+    "min_time_ms": 0.4,
+    "max_time_ms": 15239.1
   },
   "regression": {
-    "slope_ms_per_loc": -7.706,
-    "intercept_ms": 158.3,
-    "r_squared": 0.0022
+    "slope_ms_per_loc": -2.313,
+    "intercept_ms": 269.3,
+    "r_squared": 0.0001
   }
 }

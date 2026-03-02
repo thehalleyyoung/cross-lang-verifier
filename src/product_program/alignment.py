@@ -392,7 +392,13 @@ def _instruction_similarity(left: Instruction, right: Instruction) -> float:
         min_ops = min(operand_count_l, operand_count_r)
         operand_sim = min_ops / max_ops
 
-    return 0.5 * opcode_sim + 0.3 * type_sim + 0.2 * operand_sim
+    base = 0.5 * opcode_sim + 0.3 * type_sim + 0.2 * operand_sim
+
+    # Boost when types are compatible but opcodes differ (common in C↔Rust)
+    if opcode_sim < 0.5 and type_sim > 0.7:
+        base = max(base, 0.15 + 0.3 * type_sim)
+
+    return min(base, 1.0)
 
 
 # ---------------------------------------------------------------------------
@@ -423,6 +429,36 @@ _STRUCTURAL_EQUIVALENCES = {
     # C comparison+branch ↔ Rust match
     ("cmp", "extractvalue"): 0.3,
     ("extractvalue", "cmp"): 0.3,
+    # Cast ↔ cast (C implicit vs Rust explicit `as`)
+    ("cast", "cast"): 0.7,
+    # GEP ↔ GEP (index operations)
+    ("gep", "gep"): 0.8,
+    # GEP ↔ load (index operation mapping to element access)
+    ("gep", "load"): 0.4,
+    ("load", "gep"): 0.4,
+    # ExtractValue/InsertValue ↔ field access patterns
+    ("extractvalue", "extractvalue"): 0.8,
+    ("insertvalue", "insertvalue"): 0.8,
+    ("extractvalue", "insertvalue"): 0.3,
+    ("insertvalue", "extractvalue"): 0.3,
+    # Call ↔ binop (wrapping_add/sub/mul → +/-/*)
+    ("call", "binop"): 0.4,
+    ("binop", "call"): 0.4,
+    # Select ↔ br.cond (conditional patterns)
+    ("select", "br.cond"): 0.35,
+    ("br.cond", "select"): 0.35,
+    # Phi ↔ select (phi node vs select)
+    ("phi", "select"): 0.45,
+    ("select", "phi"): 0.45,
+}
+
+# Rust wrapping/checked/saturating method names → corresponding BinOpKind names
+_WRAPPING_METHOD_TO_OP = {
+    "wrapping_add": "ADD", "wrapping_sub": "SUB", "wrapping_mul": "MUL",
+    "wrapping_shl": "SHL", "wrapping_shr": "LSHR",
+    "checked_add": "ADD", "checked_sub": "SUB", "checked_mul": "MUL",
+    "saturating_add": "ADD", "saturating_sub": "SUB", "saturating_mul": "MUL",
+    "overflowing_add": "ADD", "overflowing_sub": "SUB", "overflowing_mul": "MUL",
 }
 
 
@@ -434,9 +470,60 @@ def _structural_pattern_similarity(
     base_l = tag_l.split(".")[0]
     base_r = tag_r.split(".")[0]
     key = (base_l, base_r)
+
+    # Direct table lookup
     if key in _STRUCTURAL_EQUIVALENCES:
-        return _STRUCTURAL_EQUIVALENCES[key]
-    return 0.0
+        base_score = _STRUCTURAL_EQUIVALENCES[key]
+    else:
+        base_score = 0.0
+
+    # Cast instructions: C implicit casts vs Rust explicit `as`
+    if isinstance(left, CastInst) and isinstance(right, CastInst):
+        if left.cast_kind == right.cast_kind:
+            base_score = max(base_score, 0.8)
+        else:
+            base_score = max(base_score, 0.5)
+
+    # Method calls mapping to operators (e.g. .wrapping_add() → +)
+    if isinstance(left, CallInst) and isinstance(right, BinaryOp):
+        callee = left.callee_name
+        for method, op_name in _WRAPPING_METHOD_TO_OP.items():
+            if method in callee and right.op.name == op_name:
+                base_score = max(base_score, 0.7)
+                break
+    if isinstance(left, BinaryOp) and isinstance(right, CallInst):
+        callee = right.callee_name
+        for method, op_name in _WRAPPING_METHOD_TO_OP.items():
+            if method in callee and left.op.name == op_name:
+                base_score = max(base_score, 0.7)
+                break
+
+    # GEP ↔ index operations
+    if isinstance(left, GetElementPtrInst) and isinstance(right, GetElementPtrInst):
+        base_score = max(base_score, 0.8)
+    if (isinstance(left, GetElementPtrInst) and isinstance(right, (LoadInst, ExtractValueInst))) or \
+       (isinstance(left, (LoadInst, ExtractValueInst)) and isinstance(right, GetElementPtrInst)):
+        base_score = max(base_score, 0.45)
+
+    # ExtractValue/InsertValue ↔ field access patterns
+    if isinstance(left, ExtractValueInst) and isinstance(right, ExtractValueInst):
+        if left.indices == right.indices:
+            base_score = max(base_score, 0.9)
+        else:
+            base_score = max(base_score, 0.6)
+    if isinstance(left, InsertValueInst) and isinstance(right, InsertValueInst):
+        if left.indices == right.indices:
+            base_score = max(base_score, 0.9)
+        else:
+            base_score = max(base_score, 0.6)
+
+    # Compatible result types boost even for different opcodes
+    if base_score > 0.0:
+        ts = _type_similarity(left.type, right.type)
+        if ts > 0.7:
+            base_score = min(base_score + 0.1, 1.0)
+
+    return base_score
 
 
 def _block_similarity(left: BasicBlock, right: BasicBlock) -> float:
@@ -738,6 +825,67 @@ def _detect_reordered_blocks(
 
 
 # ---------------------------------------------------------------------------
+# Block alignment helpers for structural differences
+# ---------------------------------------------------------------------------
+
+def _is_fallthrough_block(block: BasicBlock) -> bool:
+    """Check if a block is a simple fallthrough (unconditional branch only or single-op + branch)."""
+    insts = list(block.instructions)
+    if not insts:
+        return True
+    if len(insts) == 1 and isinstance(insts[0], BranchInst) and not insts[0].is_conditional:
+        return True
+    if len(insts) == 2 and isinstance(insts[-1], BranchInst) and not insts[-1].is_conditional:
+        return True
+    return False
+
+
+def _is_short_circuit_block(block: BasicBlock) -> bool:
+    """Check if a block is part of a short-circuit evaluation expansion (C && / || patterns)."""
+    insts = list(block.instructions)
+    if not insts:
+        return False
+    last = insts[-1]
+    if isinstance(last, BranchInst) and last.is_conditional:
+        non_branch = [i for i in insts if not isinstance(i, BranchInst)]
+        if len(non_branch) <= 1:
+            return True
+        if all(isinstance(i, (CompareOp, BranchInst, PhiInst)) for i in insts):
+            return True
+    return False
+
+
+def _try_merge_fallthrough(
+    alignment_triples: List[Tuple[Optional[int], Optional[int], float]],
+    left_blocks: List[BasicBlock],
+    right_blocks: List[BasicBlock],
+) -> List[Tuple[Optional[int], Optional[int], float]]:
+    """
+    If one side has exactly one more block and it's a fallthrough, merge it
+    into the adjacent matched block.
+    """
+    left_only = [(i, t) for i, t in enumerate(alignment_triples) if t[0] is not None and t[1] is None]
+    right_only = [(i, t) for i, t in enumerate(alignment_triples) if t[0] is None and t[1] is not None]
+
+    # Heuristic: if exactly one extra block on one side and it's a fallthrough, remove it
+    if len(left_only) == 1 and len(right_only) == 0:
+        idx, (li, _, _) = left_only[0]
+        if _is_fallthrough_block(left_blocks[li]):
+            result = list(alignment_triples)
+            result.pop(idx)
+            return result
+
+    if len(right_only) == 1 and len(left_only) == 0:
+        idx, (_, ri, _) = right_only[0]
+        if _is_fallthrough_block(right_blocks[ri]):
+            result = list(alignment_triples)
+            result.pop(idx)
+            return result
+
+    return alignment_triples
+
+
+# ---------------------------------------------------------------------------
 # Extra temporary detection
 # ---------------------------------------------------------------------------
 
@@ -791,6 +939,9 @@ class FunctionAligner:
         raw_alignment = _greedy_block_alignment(
             left_blocks, right_blocks, self.similarity_threshold
         )
+
+        # Phase 1b: Merge fallthrough blocks when one side has one extra
+        raw_alignment = _try_merge_fallthrough(raw_alignment, left_blocks, right_blocks)
 
         matched_left: set = set()
         matched_right: set = set()

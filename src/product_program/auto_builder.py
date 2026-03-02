@@ -147,18 +147,26 @@ class AutoProductBuilder:
         c_blocks = list(c_func.blocks)
         r_blocks = list(rust_func.blocks)
 
-        # Align blocks by position (simple strategy for straight-line code)
+        # Handle different numbers of basic blocks with partial alignment
         n = max(len(c_blocks), len(r_blocks))
-        for i in range(n):
-            c_block = c_blocks[i] if i < len(c_blocks) else None
-            r_block = r_blocks[i] if i < len(r_blocks) else None
+        min_blocks = min(len(c_blocks), len(r_blocks))
 
-            bp = BlockPair(c_block=c_block, rust_block=r_block)
+        # Phase 1: Align blocks that exist on both sides
+        for i in range(min_blocks):
+            bp = BlockPair(c_block=c_blocks[i], rust_block=r_blocks[i])
+            bp.instruction_pairs = self._align_instructions(c_blocks[i], r_blocks[i])
+            bp.similarity = self._block_similarity(c_blocks[i], r_blocks[i])
+            alignment.block_pairs.append(bp)
 
-            if c_block and r_block:
-                bp.instruction_pairs = self._align_instructions(c_block, r_block)
-                bp.similarity = self._block_similarity(c_block, r_block)
+        # Phase 2: Handle extra blocks (partial alignment)
+        for i in range(min_blocks, len(c_blocks)):
+            bp = BlockPair(c_block=c_blocks[i], rust_block=None)
+            bp.similarity = 0.0
+            alignment.block_pairs.append(bp)
 
+        for i in range(min_blocks, len(r_blocks)):
+            bp = BlockPair(c_block=None, rust_block=r_blocks[i])
+            bp.similarity = 0.0
             alignment.block_pairs.append(bp)
 
         if alignment.block_pairs:
@@ -213,6 +221,19 @@ class AutoProductBuilder:
     def _instruction_similarity(self, a: Instruction, b: Instruction) -> float:
         """Compute similarity between two instructions."""
         if type(a) != type(b):
+            # Cross-type similarities for C↔Rust translation patterns
+            # Call to BinaryOp (wrapping methods → operators)
+            if isinstance(a, CallInst) and isinstance(b, BinaryOp):
+                callee = a.callee_name
+                if any(m in callee for m in ("wrapping_", "checked_", "saturating_", "overflowing_")):
+                    return 0.7
+            if isinstance(a, BinaryOp) and isinstance(b, CallInst):
+                callee = b.callee_name
+                if any(m in callee for m in ("wrapping_", "checked_", "saturating_", "overflowing_")):
+                    return 0.7
+            # Cast ↔ Cast always has some similarity
+            if isinstance(a, CastInst) and isinstance(b, CastInst):
+                return 0.6
             return 0.0
         score = 0.5  # Same type
         if isinstance(a, BinaryOp) and isinstance(b, BinaryOp):
@@ -227,6 +248,11 @@ class AutoProductBuilder:
             score += 0.5
         elif isinstance(a, BranchInst) and isinstance(b, BranchInst):
             score += 0.3
+        elif isinstance(a, CastInst) and isinstance(b, CastInst):
+            if a.cast_kind == b.cast_kind:
+                score += 0.4
+            else:
+                score += 0.2
         else:
             score += 0.2
         return min(score, 1.0)
@@ -240,6 +266,30 @@ class AutoProductBuilder:
 
     def _identify_coercions(self, alignment: StructuralAlignment) -> None:
         """Identify points where semantic coercions are needed."""
+        # Check for parameter count differences (C output params vs Rust return)
+        c_args = list(alignment.c_func.arguments)
+        r_args = list(alignment.rust_func.arguments)
+        if len(c_args) != len(r_args):
+            alignment.coercion_points.append(AutoCoercionPoint(
+                kind=CoercionKind.RETURN_COERCION,
+                c_instruction=None,
+                rust_instruction=None,
+                description=f"Parameter count mismatch: C has {len(c_args)}, Rust has {len(r_args)}",
+                severity="warning",
+            ))
+
+        # Check for return type differences (e.g., C returns int, Rust returns Result<i32, E>)
+        c_ret = alignment.c_func.return_type
+        r_ret = alignment.rust_func.return_type
+        if c_ret is not None and r_ret is not None and type(c_ret) != type(r_ret):
+            alignment.coercion_points.append(AutoCoercionPoint(
+                kind=CoercionKind.RETURN_COERCION,
+                c_instruction=None,
+                rust_instruction=None,
+                description=f"Return type mismatch: C returns {c_ret}, Rust returns {r_ret}",
+                severity="warning",
+            ))
+
         for bp in alignment.block_pairs:
             for ip in bp.instruction_pairs:
                 coercions = []

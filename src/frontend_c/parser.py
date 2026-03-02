@@ -38,7 +38,8 @@ from .c_ast import (
     AlignofExpr, CallExpr, MemberExpr, ArraySubscriptExpr,
     TernaryExpr, CommaExpr, InitListExpr, Designator,
     CompoundLiteralExpr, ParenExpr, StmtExpr, BuiltinCallExpr,
-    GenericExpr, VaArgExpr,
+    GenericExpr, VaArgExpr, OffsetofExpr, TypesCompatibleExpr,
+    DesignatedInitExpr,
     BinaryOp as CASTBinaryOp, UnaryOp as CASTUnaryOp,
     # Top level
     TranslationUnit, NodeLocation,
@@ -65,7 +66,6 @@ class ParseError(Exception):
 
 # Binary operator precedence (higher = tighter binding)
 _BINOP_PRECEDENCE: dict[TokenKind, int] = {
-    TokenKind.COMMA: 1,
     TokenKind.ASSIGN: 2,
     TokenKind.PLUS_ASSIGN: 2,
     TokenKind.MINUS_ASSIGN: 2,
@@ -488,8 +488,17 @@ class CParser:
                 qualifiers.append(TypeQualifier.RESTRICT)
                 self._advance()
             elif tok.kind == TokenKind.KW_ATOMIC:
-                qualifiers.append(TypeQualifier.ATOMIC)
-                self._advance()
+                # _Atomic(type) is a type specifier; bare _Atomic is a qualifier
+                if self._peek(1).kind == TokenKind.LPAREN:
+                    self._advance()  # _Atomic
+                    self._advance()  # (
+                    inner_type = self._parse_type_name()
+                    self._expect(TokenKind.RPAREN)
+                    struct_type = AtomicCType(base=inner_type)
+                    has_any_type = True
+                else:
+                    qualifiers.append(TypeQualifier.ATOMIC)
+                    self._advance()
 
             # Function specifiers
             elif tok.kind == TokenKind.KW_INLINE:
@@ -568,6 +577,22 @@ class CParser:
             elif tok.kind == TokenKind.KW_TYPEOF:
                 struct_type = self._parse_typeof()
                 has_any_type = True
+
+            # _Alignas(type_or_expr) - consume and skip
+            elif tok.kind == TokenKind.KW_ALIGNAS:
+                self._advance()
+                if self._match(TokenKind.LPAREN):
+                    # Skip balanced parens content
+                    depth = 1
+                    while depth > 0 and not self._at(TokenKind.EOF):
+                        if self._at(TokenKind.LPAREN):
+                            depth += 1
+                        elif self._at(TokenKind.RPAREN):
+                            depth -= 1
+                            if depth == 0:
+                                self._advance()
+                                break
+                        self._advance()
 
             # Typedef name
             elif (tok.kind == TokenKind.IDENT and not has_any_type
@@ -725,12 +750,26 @@ class CParser:
         return EnumRefCType(name=name)
 
     def _parse_typeof(self) -> CType:
-        """Parse typeof(expr)."""
-        self._advance()  # typeof
+        """Parse typeof(expr) or typeof(type)."""
+        self._advance()  # typeof / __typeof__ / __typeof
         self._expect(TokenKind.LPAREN)
+        # Check if the content looks like a type
+        if self._looks_like_type_in_parens_content():
+            ty = self._parse_type_name()
+            self._expect(TokenKind.RPAREN)
+            return ty  # typeof(type) resolves to the type itself
         expr = self._parse_expression()
         self._expect(TokenKind.RPAREN)
         return TypeofCType(expr=expr)
+
+    def _looks_like_type_in_parens_content(self) -> bool:
+        """Check if the current position starts with a type name (already inside parens)."""
+        tok = self._cur()
+        if tok.is_type_specifier or tok.is_type_qualifier:
+            return True
+        if tok.kind == TokenKind.IDENT and tok.text in self._typedef_names:
+            return True
+        return False
 
     # -------------------------------------------------------------------
     # Declarators
@@ -1033,6 +1072,9 @@ class CParser:
             return NullStmt(loc=self._loc(tok))
         elif tok.kind == TokenKind.KW_ASM:
             return self._parse_asm_stmt()
+        elif tok.kind == TokenKind.KW_STATIC_ASSERT:
+            sa = self._parse_static_assert()
+            return DeclStmt(decl=sa, loc=sa.loc)
 
         # Check for label: ident ':'
         if tok.kind == TokenKind.IDENT and self._peek(1).kind == TokenKind.COLON:
@@ -1294,8 +1336,14 @@ class CParser:
     # -------------------------------------------------------------------
 
     def _parse_expression(self) -> Expr:
-        """Parse a full expression (comma expression)."""
-        return self._parse_assignment_expr()
+        """Parse a full expression (including comma expressions)."""
+        left = self._parse_assignment_expr()
+        if self._at(TokenKind.COMMA):
+            exprs = [left]
+            while self._match(TokenKind.COMMA):
+                exprs.append(self._parse_assignment_expr())
+            return CommaExpr(exprs=exprs, loc=left.loc)
+        return left
 
     def _parse_assignment_expr(self) -> Expr:
         """Parse an assignment expression (right-associative)."""
@@ -1609,6 +1657,9 @@ class CParser:
             )
 
         if tok.kind == TokenKind.IDENT:
+            # Handle __builtin_ calls before generic identifiers
+            if tok.text.startswith("__builtin_"):
+                return self._parse_builtin_call()
             self._advance()
             return IdentExpr(name=tok.text, loc=self._loc(tok))
 
@@ -1627,9 +1678,10 @@ class CParser:
         if tok.kind == TokenKind.KW_GENERIC:
             return self._parse_generic_expr()
 
-        # Builtin identifiers that start with __builtin_
-        if tok.kind == TokenKind.IDENT and tok.text.startswith("__builtin_"):
-            return self._parse_builtin_call()
+        # __extension__ in expression context: skip and parse sub-expression
+        if tok.kind == TokenKind.KW_EXTENSION:
+            self._advance()
+            return self._parse_unary_expr()
 
         self._error(f"expected expression, got {tok.kind.name} ({tok.text!r})", tok)
         self._advance()
@@ -1656,10 +1708,34 @@ class CParser:
         self._expect(TokenKind.RPAREN)
         return GenericExpr(controlling_expr=ctrl, associations=assocs, loc=self._loc(start))
 
-    def _parse_builtin_call(self) -> BuiltinCallExpr:
-        """Parse __builtin_xxx(args)."""
+    def _parse_builtin_call(self) -> Expr:
+        """Parse __builtin_xxx(args) with special handling for type-argument builtins."""
         start = self._cur()
         name = self._advance().text
+
+        # __builtin_offsetof(type, member)
+        if name == "__builtin_offsetof":
+            self._expect(TokenKind.LPAREN)
+            ty = self._parse_type_name()
+            self._expect(TokenKind.COMMA)
+            member = self._expect(TokenKind.IDENT).text
+            # Handle nested member access like a.b.c
+            while self._match(TokenKind.DOT):
+                member += "." + self._expect(TokenKind.IDENT).text
+            self._expect(TokenKind.RPAREN)
+            return OffsetofExpr(type_name=ty, member_name=member, loc=self._loc(start))
+
+        # __builtin_types_compatible_p(type1, type2)
+        if name == "__builtin_types_compatible_p":
+            self._expect(TokenKind.LPAREN)
+            ty1 = self._parse_type_name()
+            self._expect(TokenKind.COMMA)
+            ty2 = self._parse_type_name()
+            self._expect(TokenKind.RPAREN)
+            return TypesCompatibleExpr(type1=ty1, type2=ty2, loc=self._loc(start))
+
+        # __builtin_va_arg is handled via VaArgExpr
+        # For __builtin_expect and all other builtins, parse as normal call
         args: list[Expr] = []
         if self._match(TokenKind.LPAREN):
             if not self._at(TokenKind.RPAREN):

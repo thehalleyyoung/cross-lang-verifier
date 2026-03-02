@@ -1128,6 +1128,7 @@ class OverflowBehavior(Enum):
     UNDEFINED = auto()      # undefined behavior (C signed default)
     SATURATE = auto()       # clamp to min/max
     TRAP = auto()           # raise a trap / panic (Rust debug mode)
+    CHECKED = auto()        # return (result, overflow_flag) pair
 
     @staticmethod
     def for_language(lang: Language, signed: bool) -> "OverflowBehavior":

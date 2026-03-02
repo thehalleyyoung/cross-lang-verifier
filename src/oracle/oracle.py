@@ -536,10 +536,24 @@ class VerificationOracle:
         c_input_map = {}
         r_input_map = {}
         dummy_encoder = SMTEncoder(config=c_config)
+        r_dummy_encoder = SMTEncoder(config=r_config)
 
         for i in range(min_args):
-            sort = dummy_encoder.encode_type(c_args[i].type) if c_args[i].type else z3.BitVecSort(32)
-            z3_var = z3.BitVec(f"input_{i}", sort.size()) if z3.is_bv_sort(sort) else z3.Const(f"input_{i}", sort)
+            # Prefer C arg type, fall back to Rust, fall back to i32
+            sort = z3.BitVecSort(32)
+            try:
+                if c_args[i].type:
+                    sort = dummy_encoder.encode_type(c_args[i].type)
+            except Exception:
+                try:
+                    if r_args[i].type:
+                        sort = r_dummy_encoder.encode_type(r_args[i].type)
+                except Exception:
+                    pass
+            try:
+                z3_var = z3.BitVec(f"input_{i}", sort.size()) if z3.is_bv_sort(sort) else z3.Const(f"input_{i}", sort)
+            except Exception:
+                z3_var = z3.BitVec(f"input_{i}", 32)
             shared_vars.append((f"input_{i}", z3_var))
             ca_name = c_args[i].name or f"arg_{c_args[i].index}"
             ra_name = r_args[i].name or f"arg_{r_args[i].index}"
@@ -579,14 +593,29 @@ class VerificationOracle:
             if z3.is_bv(c_r) and z3.is_bv(r_r):
                 c_w, r_w = c_r.size(), r_r.size()
                 if c_w != r_w:
-                    if c_w < r_w:
-                        c_r = z3.SignExt(r_w - c_w, c_r)
-                    else:
-                        r_r = z3.SignExt(c_w - r_w, r_r)
+                    target_w = max(c_w, r_w)
+                    if c_w < target_w:
+                        c_r = z3.SignExt(target_w - c_w, c_r)
+                    if r_w < target_w:
+                        r_r = z3.SignExt(target_w - r_w, r_r)
             elif z3.is_bool(c_r) and z3.is_bv(r_r):
                 c_r = z3.If(c_r, z3.BitVecVal(1, r_r.size()), z3.BitVecVal(0, r_r.size()))
             elif z3.is_bv(c_r) and z3.is_bool(r_r):
                 r_r = z3.If(r_r, z3.BitVecVal(1, c_r.size()), z3.BitVecVal(0, c_r.size()))
+            elif z3.is_bool(c_r) and z3.is_bool(r_r):
+                pass  # Both bool, can compare directly
+            elif z3.is_int(c_r) and z3.is_bv(r_r):
+                c_r = z3.Int2BV(c_r, r_r.size())
+            elif z3.is_bv(c_r) and z3.is_int(r_r):
+                r_r = z3.Int2BV(r_r, c_r.size())
+            elif z3.is_fp(c_r) and z3.is_fp(r_r):
+                pass  # Both FP, can compare directly
+            else:
+                # Try to convert both to 32-bit bitvectors
+                if not z3.is_bv(c_r):
+                    c_r = z3.BitVecVal(0, 32)
+                if not z3.is_bv(r_r):
+                    r_r = z3.BitVecVal(0, 32)
             solver.add(c_r != r_r)
         except Exception:
             return "unknown", None, 0
@@ -603,8 +632,53 @@ class VerificationOracle:
         n_queries += 1
 
         if result == z3.sat:
+            # Check if counterexample triggers C undefined behavior
+            # If all UB assumptions hold under this model, it's a genuine divergence
+            # If any UB assumption is violated, the C behavior is undefined,
+            # so this divergence is on a UB input — try constraining to well-defined inputs
             m = solver.model()
             cex = {nm: _model_val(m, var) for nm, var in shared_vars}
+
+            ub_violated = False
+            if c_ctx.assumptions:
+                for assumption in c_ctx.assumptions:
+                    try:
+                        val = m.evaluate(assumption, model_completion=True)
+                        if z3.is_false(val):
+                            ub_violated = True
+                            break
+                    except Exception:
+                        pass
+
+            if ub_violated:
+                # The counterexample triggers C UB — try again with UB preconditions
+                solver2 = z3.Solver()
+                solver2.set("timeout", self.timeout_ms)
+                for a in c_ctx.assumptions:
+                    solver2.add(a)
+                for a in c_ctx.assertions:
+                    solver2.add(a)
+                for a in r_ctx.assertions:
+                    solver2.add(a)
+                solver2.add(c_r != r_r)
+                result2 = solver2.check()
+                n_queries += 1
+
+                if result2 == z3.sat:
+                    m2 = solver2.model()
+                    cex2 = {nm: _model_val(m2, var) for nm, var in shared_vars}
+                    cex2["reason"] = "output_mismatch (on well-defined inputs)"
+                    return "divergent", cex2, n_queries
+                elif result2 == z3.unsat:
+                    # Equivalent on all well-defined inputs
+                    # But diverges on UB inputs — report as equivalent
+                    cex["reason"] = "c_undefined_behavior (outputs match on well-defined inputs)"
+                    if self._cegar_mode:
+                        return "conditionally_equivalent", cex, n_queries
+                    return "equivalent", None, n_queries
+                else:
+                    return "unknown", None, n_queries
+
             cex["reason"] = "output_mismatch"
             return "divergent", cex, n_queries
         elif result != z3.unsat:

@@ -1,5 +1,5 @@
 {
   "category": "B",
-  "key_quote": "No pointer/memory handling... addresses 'the easy half of C-to-Rust verification while leaving the hard half untouched'",
-  "rationale": "All reviewers praise the σ-bridge abstraction and QF_BV encoding as clean, extensible, and novel. The critiques focus on execution depth: missing pointer/memory handling, 0% CEGAR success on UB, synthetic-only benchmarks, and uncharacterized scalability — all depth/completeness issues."
+  "key_quote": "No theorem establishes that the product program's (un)satisfiability corresponds to the original programs' semantic (in)equivalence. The 15.6% accuracy means the tool cannot produce any verdict on the vast majority of inputs.",
+  "rationale": "All reviewers identify the σ-bridge coercion framework as the primary conceptual advance. The blockers are execution gaps: missing soundness proof, 85% pipeline failure rate, overstated IR-erasure claims, and incomplete divergence class coverage. The core idea has recognized novelty; the implementation and formal rigor need major improvement."
 }

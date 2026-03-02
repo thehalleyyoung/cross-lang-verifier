@@ -282,6 +282,53 @@ class BitvectorTheory:
     def one(width: int) -> z3.BitVecVal:
         return z3.BitVecVal(1, width)
 
+    # -- Integer min / max / abs --
+
+    @staticmethod
+    def bv_min_signed(a: z3.BitVecRef, b: z3.BitVecRef) -> z3.BitVecRef:
+        """Signed minimum of two bitvectors."""
+        return z3.If(a < b, a, b)
+
+    @staticmethod
+    def bv_max_signed(a: z3.BitVecRef, b: z3.BitVecRef) -> z3.BitVecRef:
+        """Signed maximum of two bitvectors."""
+        return z3.If(a > b, a, b)
+
+    @staticmethod
+    def bv_min_unsigned(a: z3.BitVecRef, b: z3.BitVecRef) -> z3.BitVecRef:
+        """Unsigned minimum of two bitvectors."""
+        return z3.If(z3.ULT(a, b), a, b)
+
+    @staticmethod
+    def bv_max_unsigned(a: z3.BitVecRef, b: z3.BitVecRef) -> z3.BitVecRef:
+        """Unsigned maximum of two bitvectors."""
+        return z3.If(z3.UGT(a, b), a, b)
+
+    @staticmethod
+    def bv_abs(x: z3.BitVecRef) -> z3.BitVecRef:
+        """Absolute value of a signed bitvector."""
+        w = x.size()
+        zero = z3.BitVecVal(0, w)
+        return z3.If(x < zero, -x, x)
+
+    @staticmethod
+    def bv_min_chain(values: List[z3.BitVecRef], signed: bool = True) -> z3.BitVecRef:
+        """Minimum of a list of bitvectors via If-chain."""
+        result = values[0]
+        cmp = (lambda a, b: a < b) if signed else z3.ULT
+        for v in values[1:]:
+            result = z3.If(cmp(v, result), v, result)
+        return result
+
+    @staticmethod
+    def bv_max_chain(values: List[z3.BitVecRef], signed: bool = True) -> z3.BitVecRef:
+        """Maximum of a list of bitvectors via If-chain."""
+        result = values[0]
+        cmp = (lambda a, b: a > b) if signed else z3.UGT
+        for v in values[1:]:
+            result = z3.If(cmp(v, result), v, result)
+        return result
+
 
 # ---------------------------------------------------------------------------
 # Floating-point theory helpers

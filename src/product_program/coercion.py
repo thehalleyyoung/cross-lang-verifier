@@ -47,6 +47,14 @@ class CoercionKind(Enum):
     RETURN_COERCION = auto()
     CAST_COERCION = auto()
     CALLING_CONVENTION = auto()
+    WRAPPING_ARITHMETIC = auto()
+    CHECKED_ARITHMETIC = auto()
+    SATURATING_ARITHMETIC = auto()
+    UNION_VARIANT = auto()
+    FLEXIBLE_ARRAY = auto()
+    BIT_MANIPULATION = auto()
+    STRING_HANDLING = auto()
+    ARRAY_BOUNDS = auto()
 
 
 class AssertionStrength(Enum):
@@ -460,6 +468,222 @@ def _gen_error_handling_assertions(
     ]
 
 
+def _gen_wrapping_arithmetic_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for wrapping_* method calls matching C UB-on-overflow."""
+    lhs = f"{var_prefix}_lhs"
+    rhs = f"{var_prefix}_rhs"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [lhs, rhs, c_result, rust_result]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description=f"Wrapping arithmetic equivalence (i{width}): both wrap on overflow",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_checked_arithmetic_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for checked_* patterns (returns None/panic on overflow)."""
+    lhs = f"{var_prefix}_lhs"
+    rhs = f"{var_prefix}_rhs"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    rust_overflowed = f"{var_prefix}_rust_overflowed"
+    variables = [lhs, rhs, c_result, rust_result, rust_overflowed]
+
+    no_overflow = _and(
+        _bvsle(_sign_min(width), _bvadd(lhs, rhs)),
+        _bvsle(_bvadd(lhs, rhs), _sign_max(width)),
+    )
+
+    return [
+        CoercionAssertion(
+            smt_expression=no_overflow,
+            description=f"No overflow for checked arithmetic (i{width})",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(no_overflow, _eq(c_result, rust_result)),
+            description=f"Checked arithmetic equivalence when no overflow (i{width})",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_saturating_arithmetic_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for saturating_* patterns."""
+    lhs = f"{var_prefix}_lhs"
+    rhs = f"{var_prefix}_rhs"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [lhs, rhs, c_result, rust_result]
+
+    no_overflow = _and(
+        _bvsle(_sign_min(width), _bvadd(lhs, rhs)),
+        _bvsle(_bvadd(lhs, rhs), _sign_max(width)),
+    )
+
+    return [
+        CoercionAssertion(
+            smt_expression=_implies(no_overflow, _eq(c_result, rust_result)),
+            description=f"Saturating arithmetic equivalence when no overflow (i{width})",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(
+                _not(no_overflow),
+                _or(
+                    _eq(rust_result, _sign_max(width)),
+                    _eq(rust_result, _sign_min(width)),
+                ),
+            ),
+            description=f"Saturating clamp on overflow (i{width})",
+            strength=AssertionStrength.SOFT,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_union_variant_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for C union access vs Rust enum variants."""
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    tag = f"{var_prefix}_tag"
+    variables = [c_result, rust_result, tag]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_implies(
+                _bvsge(tag, _bvconst(0, width)),
+                _eq(c_result, rust_result),
+            ),
+            description="Union/enum variant access equivalence for valid tag",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_flexible_array_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for C flexible array members."""
+    idx = f"{var_prefix}_idx"
+    length = f"{var_prefix}_len"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [idx, length, c_result, rust_result]
+
+    in_bounds = _and(
+        _bvsge(idx, _bvconst(0, width)),
+        _bvslt(idx, length),
+    )
+
+    return [
+        CoercionAssertion(
+            smt_expression=in_bounds,
+            description="Flexible array index within allocated length",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(in_bounds, _eq(c_result, rust_result)),
+            description="Flexible array access equivalence when in bounds",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_bit_manipulation_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for C bitwise operations vs Rust equivalents."""
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [c_result, rust_result]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description=f"Bitwise operation equivalence (i{width})",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_string_handling_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for C char*/strlen vs Rust &str/.len()."""
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    c_ptr = f"{var_prefix}_c_ptr"
+    variables = [c_result, rust_result, c_ptr]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_ptr, _bvconst(0, 64))),
+            description="C string pointer is non-null",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description="String operation equivalence (length/content)",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_array_bounds_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for C unchecked array access vs Rust bounds-checked."""
+    idx = f"{var_prefix}_idx"
+    length = f"{var_prefix}_len"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [idx, length, c_result, rust_result]
+
+    in_bounds = _and(
+        _bvsge(idx, _bvconst(0, width)),
+        _bvslt(idx, length),
+    )
+
+    return [
+        CoercionAssertion(
+            smt_expression=in_bounds,
+            description="Array index within bounds (Rust-checked)",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(in_bounds, _eq(c_result, rust_result)),
+            description="Array access equivalence when index is in bounds",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Generator dispatch table
 # ---------------------------------------------------------------------------
@@ -474,6 +698,9 @@ _COERCION_GENERATORS: Dict[DivergenceClass, Callable] = {
     DivergenceClass.NullDeref: _gen_null_deref_assertions,
     DivergenceClass.ArrayOOB: _gen_bounds_check_assertions,
     DivergenceClass.ErrorHandling: _gen_error_handling_assertions,
+    DivergenceClass.EnumRepr: _gen_union_variant_assertions,
+    DivergenceClass.BitfieldLayout: _gen_bit_manipulation_assertions,
+    DivergenceClass.AlignmentReqs: _gen_flexible_array_assertions,
 }
 
 
@@ -779,6 +1006,9 @@ class CoercionGenerator:
             DivergenceClass.ErrorHandling: CoercionKind.ERROR_HANDLING,
             DivergenceClass.IntPromotion: CoercionKind.TYPE_WIDTH,
             DivergenceClass.PointerArith: CoercionKind.POINTER_PROVENANCE,
+            DivergenceClass.EnumRepr: CoercionKind.UNION_VARIANT,
+            DivergenceClass.BitfieldLayout: CoercionKind.BIT_MANIPULATION,
+            DivergenceClass.AlignmentReqs: CoercionKind.FLEXIBLE_ARRAY,
         }
         return mapping.get(cls, CoercionKind.OVERFLOW_CHECK)
 

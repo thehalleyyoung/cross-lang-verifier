@@ -878,6 +878,51 @@ class TryExpr(Expr):
     operand: Optional[Expr] = None
 
 
+@dataclass
+class AsyncBlock(Expr):
+    """Async block expression: async { ... } or async move { ... }."""
+    body: Optional[BlockExpr] = None
+    is_move: bool = False
+
+
+@dataclass
+class RawPointerDeref(Expr):
+    """Dereference of a raw pointer (*const T / *mut T) inside unsafe."""
+    operand: Optional[Expr] = None
+
+
+@dataclass
+class TransmuteCall(Expr):
+    """std::mem::transmute call."""
+    operand: Optional[Expr] = None
+    target_type: Optional[RustType] = None
+
+
+@dataclass
+class InlineAsm(Expr):
+    """asm! macro invocation."""
+    template: str = ""
+    operands: str = ""
+
+
+@dataclass
+class IfLetExpr(Expr):
+    """if let pattern = expr { ... } else { ... }."""
+    pattern: Optional[Pattern] = None
+    scrutinee: Optional[Expr] = None
+    then_body: Optional[BlockExpr] = None
+    else_body: Optional[Expr] = None
+
+
+@dataclass
+class WhileLetExpr(Expr):
+    """while let pattern = expr { ... }."""
+    pattern: Optional[Pattern] = None
+    scrutinee: Optional[Expr] = None
+    body: Optional[BlockExpr] = None
+    label: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Statements
 # ---------------------------------------------------------------------------
@@ -920,6 +965,37 @@ class EmptyStmt(Stmt):
 class MacroStmt(Stmt):
     """Macro invocation as statement: name!(args);"""
     invocation: Optional[MacroInvocation] = None
+
+
+@dataclass
+class LetElseStmt(Stmt):
+    """Let-else binding: let pat = expr else { diverging_block };"""
+    pattern: Optional[Pattern] = None
+    type_ann: Optional[RustType] = None
+    initializer: Optional[Expr] = None
+    else_block: Optional["BlockExpr"] = None
+    is_mutable: bool = False
+
+
+# ---------------------------------------------------------------------------
+# Additional item types
+# ---------------------------------------------------------------------------
+
+@dataclass
+class UnionItem(Item):
+    """Union definition (Rust union)."""
+    name: str = ""
+    fields: list[StructField] = field(default_factory=list)
+    generics: Generics = field(default_factory=Generics)
+
+
+@dataclass
+class ExternFnItem(Item):
+    """Extern function declaration (without body)."""
+    name: str = ""
+    params: list[FnParam] = field(default_factory=list)
+    return_type: Optional[RustType] = None
+    abi: str = "C"
 
 
 # ---------------------------------------------------------------------------
@@ -1107,3 +1183,16 @@ class RustASTVisitor:
             for e in node.elements: self.visit_expr(e)
         elif isinstance(node, ArrayExpr):
             for e in node.elements: self.visit_expr(e)
+        elif isinstance(node, TryExpr):
+            if node.operand: self.visit_expr(node.operand)
+        elif isinstance(node, AwaitExpr):
+            if node.operand: self.visit_expr(node.operand)
+        elif isinstance(node, IfLetExpr):
+            if node.scrutinee: self.visit_expr(node.scrutinee)
+            if node.then_body: self.visit_expr(node.then_body)
+            if node.else_body: self.visit_expr(node.else_body)
+        elif isinstance(node, WhileLetExpr):
+            if node.scrutinee: self.visit_expr(node.scrutinee)
+            if node.body: self.visit_expr(node.body)
+        elif isinstance(node, AsyncBlock):
+            if node.body: self.visit_expr(node.body)

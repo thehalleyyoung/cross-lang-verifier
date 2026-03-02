@@ -303,6 +303,20 @@ class SMTEncoder:
                             z3.If(lhs > z3.BitVecVal(0, width), max_val, min_val),
                             result,
                         )
+        elif overflow_behavior == OverflowBehavior.CHECKED:
+            # Checked operations: encode (result, overflow_flag) as a
+            # wider bitvector where the top bit is the overflow flag.
+            if op in ("ADD", "SUB", "MUL") and z3.is_bv(lhs):
+                width = lhs.size()
+                overflow_cond = self._signed_overflow_check(op, lhs, rhs)
+                if overflow_cond is not None:
+                    flag_bv = z3.If(overflow_cond,
+                                    z3.BitVecVal(1, width),
+                                    z3.BitVecVal(0, width))
+                    # Store the overflow flag so callers can extract it
+                    if inst.name:
+                        ctx.declarations[f"{inst.name}_overflow"] = overflow_cond
+                        ctx.declarations[f"{inst.name}_flag"] = flag_bv
 
         # Store result
         if inst.name:

@@ -246,6 +246,8 @@ KEYWORDS: dict[str, TokenKind] = {
     "__int128": TokenKind.KW_INT128,
     "__restrict": TokenKind.KW_RESTRICT_GNU,
     "__restrict__": TokenKind.KW_RESTRICT_GNU,
+    "__asm": TokenKind.KW_ASM,
+    "__typeof": TokenKind.KW_TYPEOF,
 }
 
 # Set of keyword token kinds for quick checking
@@ -316,6 +318,7 @@ _TYPE_SPECIFIER_KINDS = frozenset({
     TokenKind.KW_DOUBLE, TokenKind.KW_SIGNED, TokenKind.KW_UNSIGNED,
     TokenKind.KW_BOOL, TokenKind.KW_COMPLEX, TokenKind.KW_STRUCT,
     TokenKind.KW_UNION, TokenKind.KW_ENUM, TokenKind.KW_INT128,
+    TokenKind.KW_TYPEOF, TokenKind.KW_ATOMIC,
 })
 
 _TYPE_QUALIFIER_KINDS = frozenset({
@@ -1053,6 +1056,8 @@ def can_start_declaration(token: Token, typedef_names: set[str] | None = None) -
     if token.kind == TokenKind.KW_ATTRIBUTE:
         return True
     if token.kind == TokenKind.KW_EXTENSION:
+        return True
+    if token.kind == TokenKind.KW_ALIGNAS:
         return True
     if token.kind == TokenKind.IDENT and typedef_names and token.text in typedef_names:
         return True

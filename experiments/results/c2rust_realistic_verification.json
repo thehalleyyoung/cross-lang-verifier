@@ -2,23 +2,23 @@
   "summary": {
     "tag": "c2rust_realistic",
     "total_pairs": 11,
-    "correct": 1,
-    "accuracy": 9.1,
+    "correct": 2,
+    "accuracy": 18.2,
     "accuracy_ci_95": [
-      1.6,
-      37.7
+      5.1,
+      47.7
     ],
-    "errors": 5,
-    "mean_time_ms": 6.6,
-    "median_time_ms": 3.4,
-    "p95_time_ms": 32.0,
-    "total_time_ms": 72.6,
+    "errors": 2,
+    "mean_time_ms": 10.5,
+    "median_time_ms": 8.1,
+    "p95_time_ms": 24.6,
+    "total_time_ms": 115.5,
     "by_category": {
       "c2rust_realistic": {
-        "accuracy": 9.1,
+        "accuracy": 18.2,
         "total": 11,
-        "correct": 1,
-        "errors": 5
+        "correct": 2,
+        "errors": 2
       }
     }
   },
@@ -27,10 +27,10 @@
       "name": "c2rust_error_cleanup",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.66,
-      "smt_queries": 0
+      "time_ms": 18.69,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_state_machine",
@@ -38,17 +38,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 10.67,
+      "time_ms": 9.35,
       "smt_queries": 0
     },
     {
       "name": "c2rust_gcd",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.9,
-      "smt_queries": 0
+      "time_ms": 18.22,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_isqrt",
@@ -56,7 +56,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 6.64,
+      "time_ms": 5.4,
       "smt_queries": 1
     },
     {
@@ -65,7 +65,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.43,
+      "time_ms": 2.66,
       "smt_queries": 0
     },
     {
@@ -74,17 +74,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 4.07,
+      "time_ms": 3.19,
       "smt_queries": 0
     },
     {
       "name": "c2rust_next_power_of_two",
       "category": "c2rust_realistic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 1.49,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 22.9,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_atoi_simple",
@@ -92,7 +92,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.13,
+      "time_ms": 8.11,
       "smt_queries": 1
     },
     {
@@ -101,7 +101,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.99,
+      "time_ms": 0.65,
       "smt_queries": 0
     },
     {
@@ -110,7 +110,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 31.97,
+      "time_ms": 24.59,
       "smt_queries": 1
     },
     {
@@ -119,7 +119,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.63,
+      "time_ms": 1.78,
       "smt_queries": 0
     }
   ]

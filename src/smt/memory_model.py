@@ -442,6 +442,32 @@ class SeparationLogicEncoder:
         null = z3.BitVecVal(_NULL_ADDR, self.ptr_width)
         return addr == null
 
+    def encode_memcpy(
+        self,
+        dst: z3.BitVecRef,
+        src: z3.BitVecRef,
+        length: int,
+    ) -> None:
+        """Encode ``memcpy(dst, src, length)`` as byte-by-byte array copy."""
+        for i in range(min(length, 256)):
+            off = z3.BitVecVal(i, self.ptr_width)
+            byte_val = self.heap.read_bytes(src + off, 1)
+            self.heap.write_bytes(dst + off, byte_val, 1)
+
+    def encode_memset(
+        self,
+        dst: z3.BitVecRef,
+        value: z3.BitVecRef,
+        length: int,
+    ) -> None:
+        """Encode ``memset(dst, value, length)`` as byte-by-byte fill."""
+        byte_val = z3.Extract(7, 0, value) if value.size() > 8 else value
+        if byte_val.size() < 8:
+            byte_val = z3.ZeroExt(8 - byte_val.size(), byte_val)
+        for i in range(min(length, 256)):
+            off = z3.BitVecVal(i, self.ptr_width)
+            self.heap.write_bytes(dst + off, byte_val, 1)
+
     def encode_points_to(
         self,
         addr: z3.BitVecRef,
@@ -1285,3 +1311,128 @@ def _align_up_int(value: int, alignment: int) -> int:
     if alignment <= 1:
         return value
     return (value + alignment - 1) & ~(alignment - 1)
+
+
+# ---------------------------------------------------------------------------
+# Pointer pair encoding (base_id, offset)
+# ---------------------------------------------------------------------------
+
+class PointerPairEncoding:
+    """Encodes pointers as (base_id, offset) pairs for provenance-aware
+    pointer reasoning.
+
+    Each pointer is represented as two bitvectors:
+    - ``base_id``: identifies the allocation (0 = null)
+    - ``offset``: byte offset within that allocation
+
+    This separates provenance from address arithmetic, allowing
+    the solver to reason about pointer identity and arithmetic
+    independently.
+
+    Parameters
+    ----------
+    ctx : EncodingContext
+        Shared encoding context.
+    ptr_width : int
+        Pointer width in bits.
+    id_width : int
+        Width of the base_id field in bits (default 32).
+    """
+
+    def __init__(
+        self,
+        ctx: EncodingContext,
+        ptr_width: int = 64,
+        id_width: int = 32,
+    ) -> None:
+        self.ctx = ctx
+        self.ptr_width = ptr_width
+        self.id_width = id_width
+        self._alloc_counter = 0
+
+    def null_pointer(self) -> Tuple[z3.BitVecRef, z3.BitVecRef]:
+        """Return the null pointer as ``(0, 0)``."""
+        return (
+            z3.BitVecVal(0, self.id_width),
+            z3.BitVecVal(0, self.ptr_width),
+        )
+
+    def fresh_pointer(self, name: str) -> Tuple[z3.BitVecRef, z3.BitVecRef]:
+        """Create a fresh symbolic pointer ``(base_id, offset)``."""
+        base_id = self.ctx.declare_bv(f"{name}_base_id", self.id_width)
+        offset = self.ctx.declare_bv(f"{name}_offset", self.ptr_width)
+        return base_id, offset
+
+    def allocate(self, name: str) -> Tuple[z3.BitVecRef, z3.BitVecRef]:
+        """Allocate a new pointer with a unique non-zero base_id and zero
+        offset.  The base_id is constrained to be distinct from all
+        prior allocations.
+        """
+        self._alloc_counter += 1
+        base_id = self.ctx.declare_bv(f"{name}_base_id", self.id_width)
+        # Non-null
+        self.ctx.assert_hard(base_id != z3.BitVecVal(0, self.id_width))
+        offset = z3.BitVecVal(0, self.ptr_width)
+        return base_id, offset
+
+    def pointer_add(
+        self,
+        ptr: Tuple[z3.BitVecRef, z3.BitVecRef],
+        n: z3.BitVecRef,
+        elem_size: int,
+    ) -> Tuple[z3.BitVecRef, z3.BitVecRef]:
+        """Pointer arithmetic: ``p + n`` → ``(base_id, offset + n * sizeof(T))``."""
+        base_id, offset = ptr
+        stride = z3.BitVecVal(elem_size, self.ptr_width)
+        if n.size() != self.ptr_width:
+            if n.size() < self.ptr_width:
+                n = z3.SignExt(self.ptr_width - n.size(), n)
+            else:
+                n = z3.Extract(self.ptr_width - 1, 0, n)
+        new_offset = offset + n * stride
+        return base_id, new_offset
+
+    def pointer_eq(
+        self,
+        a: Tuple[z3.BitVecRef, z3.BitVecRef],
+        b: Tuple[z3.BitVecRef, z3.BitVecRef],
+    ) -> z3.BoolRef:
+        """Pointer equality: same base_id and same offset."""
+        return z3.And(a[0] == b[0], a[1] == b[1])
+
+    def pointer_ne(
+        self,
+        a: Tuple[z3.BitVecRef, z3.BitVecRef],
+        b: Tuple[z3.BitVecRef, z3.BitVecRef],
+    ) -> z3.BoolRef:
+        """Pointer inequality."""
+        return z3.Or(a[0] != b[0], a[1] != b[1])
+
+    def pointer_lt(
+        self,
+        a: Tuple[z3.BitVecRef, z3.BitVecRef],
+        b: Tuple[z3.BitVecRef, z3.BitVecRef],
+    ) -> z3.BoolRef:
+        """Pointer less-than (only meaningful within same allocation)."""
+        same_base = a[0] == b[0]
+        return z3.And(same_base, z3.ULT(a[1], b[1]))
+
+    def is_null(
+        self,
+        ptr: Tuple[z3.BitVecRef, z3.BitVecRef],
+    ) -> z3.BoolRef:
+        """Check if pointer is null ``(0, 0)``."""
+        return z3.And(
+            ptr[0] == z3.BitVecVal(0, self.id_width),
+            ptr[1] == z3.BitVecVal(0, self.ptr_width),
+        )
+
+    def to_flat(
+        self,
+        ptr: Tuple[z3.BitVecRef, z3.BitVecRef],
+    ) -> z3.BitVecRef:
+        """Convert a pointer pair to a flat address (for interop)."""
+        # Widen base_id to ptr_width and combine
+        base = z3.ZeroExt(self.ptr_width - self.id_width, ptr[0]) \
+            if self.id_width < self.ptr_width else ptr[0]
+        return base + ptr[1]

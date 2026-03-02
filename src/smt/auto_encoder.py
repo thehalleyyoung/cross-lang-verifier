@@ -226,6 +226,8 @@ class AutoSMTEncoder:
         self.c_config = c_config or SemanticConfig.c11()
         self.rust_config = rust_config or SemanticConfig.rust_release()
         self.pointer_width = pointer_width
+        # Function summary cache: callee_name -> (input_sorts, output_sort, z3.Function)
+        self._function_summaries: Dict[str, z3.FuncDeclRef] = {}
 
     def check_equivalence(
         self,
@@ -351,6 +353,7 @@ class AutoSMTEncoder:
         Handles control flow by building conditional return expressions
         when branches lead to different return values.
         Handles memory operations via QF_ABV array theory.
+        Detects simple loop patterns and unrolls them up to a bound.
         """
         # Initialize memory model for this side
         ctx._init_memory(prefix)
@@ -362,7 +365,40 @@ class AutoSMTEncoder:
         last_branch_cond = None
         in_then_branch = False
 
-        for block_idx, block in enumerate(func.blocks):
+        # Detect loop headers (blocks with back-edges)
+        block_list = list(func.blocks)
+        block_indices = {id(b): i for i, b in enumerate(block_list)}
+        loop_headers: Set[int] = set()
+        for idx, block in enumerate(block_list):
+            for succ in block.successors:
+                succ_idx = block_indices.get(id(succ))
+                if succ_idx is not None and succ_idx <= idx:
+                    loop_headers.add(succ_idx)
+
+        _UNROLL_LIMIT = 16
+        unrolled: Set[int] = set()
+
+        for block_idx, block in enumerate(block_list):
+            # Unroll loop headers
+            if block_idx in loop_headers and block_idx not in unrolled:
+                unrolled.add(block_idx)
+                for k in range(_UNROLL_LIMIT):
+                    iter_tag = f"{prefix}L{block_idx}K{k}_"
+                    for inst in block.instructions:
+                        orig_name = inst.name
+                        if inst.name:
+                            inst.name = f"{iter_tag}{inst.name}"
+                        result = self._encode_instruction(inst, ctx, prefix, config)
+                        if result is not None:
+                            inst_results[id(inst)] = result
+                            if inst.name:
+                                ctx.set(f"{prefix}{inst.name}", result)
+                            if isinstance(inst, ReturnInst):
+                                return_pairs.append((None, result))
+                        if orig_name is not None:
+                            inst.name = orig_name
+                continue
+
             for inst in block.instructions:
                 result = self._encode_instruction(inst, ctx, prefix, config)
                 if result is not None:
@@ -803,6 +839,12 @@ class AutoSMTEncoder:
                     result = operand
             else:
                 result = z3.BitVecVal(0, w)
+        elif kind == "FPEXT":
+            sort = z3.FPSort(11, 53)
+            result = z3.fpFPToFP(z3.RNE(), operand, sort) if z3.is_fp(operand) else z3.FPVal(0.0, sort)
+        elif kind == "FPTRUNC":
+            sort = z3.FPSort(8, 24)
+            result = z3.fpFPToFP(z3.RNE(), operand, sort) if z3.is_fp(operand) else z3.FPVal(0.0, sort)
         else:
             result = operand
 
@@ -1067,6 +1109,27 @@ class AutoSMTEncoder:
             sort = self._type_to_sort(inst.type)
             name = f"{prefix}{inst.name or ctx.fresh('call')}"
             if z3.is_bv_sort(sort):
+                # Use uninterpreted function summary for recursive/unknown calls
+                if isinstance(callee, str) and callee and inst.operands:
+                    summary_key = f"{prefix}{callee}"
+                    arg_sorts = []
+                    arg_exprs = []
+                    for op in inst.operands:
+                        arg_val = self._resolve_value(op, ctx, prefix)
+                        arg_sorts.append(arg_val.sort())
+                        arg_exprs.append(arg_val)
+                    if arg_sorts:
+                        if summary_key not in self._function_summaries:
+                            self._function_summaries[summary_key] = z3.Function(
+                                summary_key, *arg_sorts, sort
+                            )
+                        fn = self._function_summaries[summary_key]
+                        try:
+                            result = fn(*arg_exprs)
+                            ctx.set(name, result)
+                            return result
+                        except z3.Z3Exception:
+                            pass
                 return ctx.declare_bv(name, sort.size())
         return z3.BoolVal(True)
 

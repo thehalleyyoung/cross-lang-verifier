@@ -2,71 +2,71 @@
   "summary": {
     "tag": "full_suite",
     "total_pairs": 212,
-    "correct": 33,
-    "accuracy": 15.6,
+    "correct": 58,
+    "accuracy": 27.4,
     "accuracy_ci_95": [
-      11.3,
-      21.1
+      21.8,
+      33.7
     ],
-    "errors": 119,
-    "mean_time_ms": 94.2,
-    "median_time_ms": 1.7,
-    "p95_time_ms": 42.0,
-    "total_time_ms": 19976.9,
+    "errors": 51,
+    "mean_time_ms": 308.1,
+    "median_time_ms": 3.8,
+    "p95_time_ms": 53.4,
+    "total_time_ms": 65314.1,
     "by_category": {
       "arithmetic": {
-        "accuracy": 25.0,
+        "accuracy": 83.3,
         "total": 12,
-        "correct": 3,
-        "errors": 9
+        "correct": 10,
+        "errors": 1
       },
       "bitwise": {
         "accuracy": 37.5,
         "total": 8,
         "correct": 3,
-        "errors": 2
+        "errors": 1
       },
       "c2rust": {
-        "accuracy": 11.1,
+        "accuracy": 18.5,
         "total": 27,
-        "correct": 3,
-        "errors": 16
+        "correct": 5,
+        "errors": 6
       },
       "c2rust_realistic": {
-        "accuracy": 9.1,
+        "accuracy": 18.2,
         "total": 11,
-        "correct": 1,
-        "errors": 5
-      },
-      "cast": {
-        "accuracy": 60.0,
-        "total": 15,
-        "correct": 9,
+        "correct": 2,
         "errors": 2
       },
-      "compound": {
-        "accuracy": 0.0,
+      "cast": {
+        "accuracy": 66.7,
         "total": 15,
-        "correct": 0,
-        "errors": 6
+        "correct": 10,
+        "errors": 1
+      },
+      "compound": {
+        "accuracy": 13.3,
+        "total": 15,
+        "correct": 2,
+        "errors": 0
       },
       "control_flow": {
         "accuracy": 0.0,
         "total": 10,
         "correct": 0,
-        "errors": 5
+        "errors": 4
       },
       "division": {
-        "accuracy": 20.0,
+        "accuracy": 60.0,
         "total": 5,
-        "correct": 1,
-        "errors": 2
+        "correct": 3,
+        "errors": 0
       },
       "enum": {
         "accuracy": 15.0,
         "total": 20,
         "correct": 3,
-        "errors": 4
+        "errors": 3
       },
       "error_handling": {
         "accuracy": 50.0,
@@ -75,40 +75,40 @@
         "errors": 2
       },
       "float": {
-        "accuracy": 40.0,
+        "accuracy": 60.0,
         "total": 15,
-        "correct": 6,
-        "errors": 9
+        "correct": 9,
+        "errors": 4
       },
       "iterator": {
         "accuracy": 0.0,
         "total": 15,
         "correct": 0,
-        "errors": 15
+        "errors": 14
       },
       "loops": {
-        "accuracy": 0.0,
+        "accuracy": 25.0,
         "total": 8,
-        "correct": 0,
-        "errors": 6
+        "correct": 2,
+        "errors": 2
       },
       "memory": {
-        "accuracy": 0.0,
+        "accuracy": 14.3,
         "total": 14,
-        "correct": 0,
-        "errors": 10
+        "correct": 2,
+        "errors": 7
       },
       "memory_scaled": {
         "accuracy": 0.0,
         "total": 4,
         "correct": 0,
-        "errors": 2
+        "errors": 1
       },
       "shift": {
-        "accuracy": 0.0,
+        "accuracy": 100.0,
         "total": 3,
-        "correct": 0,
-        "errors": 3
+        "correct": 3,
+        "errors": 0
       },
       "string": {
         "accuracy": 0.0,
@@ -120,7 +120,7 @@
         "accuracy": 0.0,
         "total": 20,
         "correct": 0,
-        "errors": 19
+        "errors": 1
       }
     }
   },
@@ -129,10 +129,10 @@
       "name": "add_wrapping",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 1141.31,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 2042.04,
+      "smt_queries": 2
     },
     {
       "name": "add_checked_divergent",
@@ -140,62 +140,62 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 58.2,
+      "time_ms": 25.4,
       "smt_queries": 2
     },
     {
       "name": "mul_overflow",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.52,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5792.49,
+      "smt_queries": 2
     },
     {
       "name": "sub_overflow",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.3,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 6.48,
+      "smt_queries": 2
     },
     {
       "name": "saturating_add",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.37,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.58,
+      "smt_queries": 2
     },
     {
       "name": "negate_min",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.5,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 2.4,
+      "smt_queries": 2
     },
     {
       "name": "abs_function",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 1.34,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 13.74,
+      "smt_queries": 2
     },
     {
       "name": "unsigned_add",
       "category": "arithmetic",
       "expected": "equivalent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.32,
-      "smt_queries": 0
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 2.1,
+      "smt_queries": 1
     },
     {
       "name": "mixed_sign_compare",
@@ -203,7 +203,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 5.24,
+      "time_ms": 4.38,
       "smt_queries": 1
     },
     {
@@ -212,16 +212,16 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.21,
+      "time_ms": 0.72,
       "smt_queries": 0
     },
     {
       "name": "checked_add_result",
       "category": "arithmetic",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.58,
+      "time_ms": 6.14,
       "smt_queries": 0
     },
     {
@@ -230,7 +230,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 15186.88,
+      "time_ms": 15024.31,
       "smt_queries": 2
     },
     {
@@ -239,53 +239,53 @@
       "expected": "divergent",
       "verdict": "equivalent",
       "correct": false,
-      "time_ms": 4.75,
+      "time_ms": 6.73,
       "smt_queries": 1
     },
     {
       "name": "div_int_min",
       "category": "division",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.53,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 14.93,
+      "smt_queries": 1
     },
     {
       "name": "modulo_negative",
       "category": "division",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.82,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 23.85,
+      "smt_queries": 1
     },
     {
       "name": "shift_left_overflow",
       "category": "shift",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.47,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.11,
+      "smt_queries": 2
     },
     {
       "name": "shift_right_arithmetic",
       "category": "shift",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.45,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 6.61,
+      "smt_queries": 1
     },
     {
       "name": "shift_negative_amount",
       "category": "shift",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.75,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 4.5,
+      "smt_queries": 2
     },
     {
       "name": "unsigned_div",
@@ -293,7 +293,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 317.66,
+      "time_ms": 6782.07,
       "smt_queries": 1
     },
     {
@@ -302,7 +302,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 5.0,
+      "time_ms": 11.82,
       "smt_queries": 1
     },
     {
@@ -311,17 +311,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 5.23,
+      "time_ms": 3.64,
       "smt_queries": 0
     },
     {
       "name": "gcd_loop",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 1.81,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 9.02,
+      "smt_queries": 1
     },
     {
       "name": "fibonacci",
@@ -336,10 +336,10 @@
       "name": "binary_search",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.47,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 9.22,
+      "smt_queries": 1
     },
     {
       "name": "reverse_bits_loop",
@@ -347,25 +347,25 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.8,
+      "time_ms": 0.83,
       "smt_queries": 0
     },
     {
       "name": "collatz_steps",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.27,
+      "time_ms": 5.7,
       "smt_queries": 0
     },
     {
       "name": "digit_sum",
       "category": "loops",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.4,
+      "time_ms": 4.38,
       "smt_queries": 0
     },
     {
@@ -374,7 +374,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 20.22,
+      "time_ms": 4.54,
       "smt_queries": 1
     },
     {
@@ -383,7 +383,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 51.27,
+      "time_ms": 27.27,
       "smt_queries": 1
     },
     {
@@ -392,7 +392,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 17.03,
+      "time_ms": 7.69,
       "smt_queries": 1
     },
     {
@@ -401,7 +401,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.81,
+      "time_ms": 5.04,
       "smt_queries": 0
     },
     {
@@ -410,7 +410,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 11.9,
+      "time_ms": 9.49,
       "smt_queries": 1
     },
     {
@@ -419,7 +419,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.03,
+      "time_ms": 2.31,
       "smt_queries": 0
     },
     {
@@ -428,7 +428,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.18,
+      "time_ms": 1.04,
       "smt_queries": 0
     },
     {
@@ -437,7 +437,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 9.18,
+      "time_ms": 8.07,
       "smt_queries": 1
     },
     {
@@ -446,17 +446,17 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 4.5,
+      "time_ms": 9.64,
       "smt_queries": 1
     },
     {
       "name": "is_power_of_two",
       "category": "bitwise",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.01,
-      "smt_queries": 0
+      "time_ms": 6.09,
+      "smt_queries": 1
     },
     {
       "name": "rotate_right",
@@ -464,7 +464,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 12.42,
+      "time_ms": 10.11,
       "smt_queries": 1
     },
     {
@@ -473,7 +473,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 12.36,
+      "time_ms": 10.77,
       "smt_queries": 1
     },
     {
@@ -482,7 +482,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 15.13,
+      "time_ms": 13.54,
       "smt_queries": 2
     },
     {
@@ -491,7 +491,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.63,
+      "time_ms": 6.89,
       "smt_queries": 1
     },
     {
@@ -500,7 +500,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 20.07,
+      "time_ms": 20.79,
       "smt_queries": 1
     },
     {
@@ -509,7 +509,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.64,
+      "time_ms": 1.38,
       "smt_queries": 0
     },
     {
@@ -518,7 +518,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 68.97,
+      "time_ms": 20.6,
       "smt_queries": 4
     },
     {
@@ -527,7 +527,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.17,
+      "time_ms": 0.92,
       "smt_queries": 0
     },
     {
@@ -536,7 +536,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 3.06,
+      "time_ms": 0.6,
       "smt_queries": 0
     },
     {
@@ -545,7 +545,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.67,
+      "time_ms": 0.49,
       "smt_queries": 0
     },
     {
@@ -554,7 +554,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.3,
+      "time_ms": 1.02,
       "smt_queries": 0
     },
     {
@@ -563,7 +563,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.88,
+      "time_ms": 1.16,
       "smt_queries": 0
     },
     {
@@ -572,7 +572,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.38,
+      "time_ms": 1.01,
       "smt_queries": 0
     },
     {
@@ -581,7 +581,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.58,
+      "time_ms": 1.26,
       "smt_queries": 0
     },
     {
@@ -590,44 +590,44 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.99,
+      "time_ms": 0.82,
       "smt_queries": 0
     },
     {
       "name": "struct_field_access",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.05,
-      "smt_queries": 0
+      "time_ms": 2.31,
+      "smt_queries": 1
     },
     {
       "name": "struct_sum_fields",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.42,
+      "time_ms": 0.9,
       "smt_queries": 0
     },
     {
       "name": "struct_field_overflow",
       "category": "struct",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.39,
+      "time_ms": 0.81,
       "smt_queries": 0
     },
     {
       "name": "struct_nested_access",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.36,
-      "smt_queries": 0
+      "time_ms": 1.67,
+      "smt_queries": 1
     },
     {
       "name": "struct_construction_equiv",
@@ -635,61 +635,61 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.47,
+      "time_ms": 2.1,
       "smt_queries": 0
     },
     {
       "name": "struct_mul_overflow",
       "category": "struct",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.58,
+      "time_ms": 0.81,
       "smt_queries": 0
     },
     {
       "name": "struct_conditional_field",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.56,
-      "smt_queries": 0
+      "time_ms": 1.71,
+      "smt_queries": 1
     },
     {
       "name": "struct_swap_fields",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.68,
+      "time_ms": 1.93,
       "smt_queries": 0
     },
     {
       "name": "struct_packed_vs_aligned",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.39,
-      "smt_queries": 0
+      "time_ms": 1.78,
+      "smt_queries": 1
     },
     {
       "name": "struct_max_field",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.82,
-      "smt_queries": 0
+      "time_ms": 3.0,
+      "smt_queries": 1
     },
     {
       "name": "struct_dot_product",
       "category": "struct",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.56,
+      "time_ms": 1.53,
       "smt_queries": 0
     },
     {
@@ -698,80 +698,80 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.59,
+      "time_ms": 0.48,
       "smt_queries": 0
     },
     {
       "name": "struct_distance_sq",
       "category": "struct",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.18,
-      "smt_queries": 0
+      "time_ms": 15405.69,
+      "smt_queries": 1
     },
     {
       "name": "struct_midpoint",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.76,
+      "time_ms": 2.05,
       "smt_queries": 0
     },
     {
       "name": "struct_scale",
       "category": "struct",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.51,
+      "time_ms": 1.63,
       "smt_queries": 0
     },
     {
       "name": "struct_manhattan_dist",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.29,
-      "smt_queries": 0
+      "time_ms": 53.42,
+      "smt_queries": 1
     },
     {
       "name": "struct_clamp_fields",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.79,
-      "smt_queries": 0
+      "time_ms": 6.18,
+      "smt_queries": 1
     },
     {
       "name": "struct_bit_field_emulation",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.54,
+      "time_ms": 1.69,
       "smt_queries": 0
     },
     {
       "name": "struct_weighted_avg",
       "category": "struct",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.79,
+      "time_ms": 2.01,
       "smt_queries": 0
     },
     {
       "name": "struct_color_blend",
       "category": "struct",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 3.9,
-      "smt_queries": 0
+      "time_ms": 4.59,
+      "smt_queries": 1
     },
     {
       "name": "enum_c_like_equiv",
@@ -779,7 +779,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.09,
+      "time_ms": 1.35,
       "smt_queries": 1
     },
     {
@@ -788,7 +788,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.56,
+      "time_ms": 1.99,
       "smt_queries": 0
     },
     {
@@ -797,7 +797,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.08,
+      "time_ms": 1.53,
       "smt_queries": 0
     },
     {
@@ -806,17 +806,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.95,
+      "time_ms": 1.78,
       "smt_queries": 0
     },
     {
       "name": "enum_result_ok_path",
       "category": "enum",
       "expected": "equivalent",
-      "verdict": "unknown",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 3.59,
-      "smt_queries": 0
+      "time_ms": 3.79,
+      "smt_queries": 1
     },
     {
       "name": "enum_exhaustiveness",
@@ -824,7 +824,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.39,
+      "time_ms": 1.46,
       "smt_queries": 0
     },
     {
@@ -833,7 +833,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 5.71,
+      "time_ms": 4.39,
       "smt_queries": 2
     },
     {
@@ -842,7 +842,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 5.19,
+      "time_ms": 4.32,
       "smt_queries": 1
     },
     {
@@ -851,7 +851,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.34,
+      "time_ms": 1.1,
       "smt_queries": 0
     },
     {
@@ -860,17 +860,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 7.29,
+      "time_ms": 3.36,
       "smt_queries": 2
     },
     {
       "name": "enum_option_map",
       "category": "enum",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.3,
-      "smt_queries": 0
+      "time_ms": 2.58,
+      "smt_queries": 1
     },
     {
       "name": "enum_result_chain",
@@ -878,7 +878,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.22,
+      "time_ms": 1.25,
       "smt_queries": 0
     },
     {
@@ -887,7 +887,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 6.0,
+      "time_ms": 5.33,
       "smt_queries": 0
     },
     {
@@ -896,7 +896,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.6,
+      "time_ms": 1.86,
       "smt_queries": 0
     },
     {
@@ -905,7 +905,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 5.65,
+      "time_ms": 4.26,
       "smt_queries": 1
     },
     {
@@ -914,7 +914,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.27,
+      "time_ms": 2.15,
       "smt_queries": 0
     },
     {
@@ -923,7 +923,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 20.3,
+      "time_ms": 19.3,
       "smt_queries": 0
     },
     {
@@ -932,7 +932,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.45,
+      "time_ms": 1.98,
       "smt_queries": 0
     },
     {
@@ -941,7 +941,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.27,
+      "time_ms": 2.34,
       "smt_queries": 1
     },
     {
@@ -950,7 +950,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.55,
+      "time_ms": 1.14,
       "smt_queries": 0
     },
     {
@@ -959,7 +959,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.39,
+      "time_ms": 8.96,
       "smt_queries": 1
     },
     {
@@ -968,17 +968,17 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.57,
+      "time_ms": 0.55,
       "smt_queries": 0
     },
     {
       "name": "float_inf_arithmetic",
       "category": "float",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.63,
-      "smt_queries": 0
+      "time_ms": 4.47,
+      "smt_queries": 1
     },
     {
       "name": "float_to_int_truncation",
@@ -986,7 +986,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.36,
+      "time_ms": 0.39,
       "smt_queries": 0
     },
     {
@@ -995,26 +995,26 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 3.09,
+      "time_ms": 2.35,
       "smt_queries": 1
     },
     {
       "name": "float_fma_precision",
       "category": "float",
       "expected": "conditional",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.55,
-      "smt_queries": 0
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 5.34,
+      "smt_queries": 1
     },
     {
       "name": "float_abs_equiv",
       "category": "float",
       "expected": "equivalent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.7,
-      "smt_queries": 0
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 2.78,
+      "smt_queries": 1
     },
     {
       "name": "float_rounding_mode",
@@ -1022,17 +1022,17 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.03,
+      "time_ms": 1.99,
       "smt_queries": 1
     },
     {
       "name": "float_neg_zero",
       "category": "float",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.68,
-      "smt_queries": 0
+      "time_ms": 2618.47,
+      "smt_queries": 1
     },
     {
       "name": "float_lerp",
@@ -1040,7 +1040,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 5.29,
+      "time_ms": 4.81,
       "smt_queries": 1
     },
     {
@@ -1049,7 +1049,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.24,
+      "time_ms": 4.17,
       "smt_queries": 0
     },
     {
@@ -1058,17 +1058,17 @@
       "expected": "conditional",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 1641.19,
+      "time_ms": 327.83,
       "smt_queries": 1
     },
     {
       "name": "float_clamp",
       "category": "float",
       "expected": "equivalent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.77,
-      "smt_queries": 0
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 3.64,
+      "smt_queries": 1
     },
     {
       "name": "float_int_conv_roundtrip",
@@ -1076,7 +1076,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.37,
+      "time_ms": 0.25,
       "smt_queries": 0
     },
     {
@@ -1085,7 +1085,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 13.05,
+      "time_ms": 1.91,
       "smt_queries": 1
     },
     {
@@ -1094,7 +1094,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.18,
+      "time_ms": 0.77,
       "smt_queries": 0
     },
     {
@@ -1103,17 +1103,17 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.26,
+      "time_ms": 0.56,
       "smt_queries": 0
     },
     {
       "name": "c2rust_abs_val",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.63,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 7.56,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_min_max",
@@ -1121,7 +1121,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 13.73,
+      "time_ms": 2.86,
       "smt_queries": 1
     },
     {
@@ -1130,7 +1130,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 41.99,
+      "time_ms": 10.29,
       "smt_queries": 2
     },
     {
@@ -1139,7 +1139,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.29,
+      "time_ms": 1.23,
       "smt_queries": 0
     },
     {
@@ -1148,7 +1148,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.85,
+      "time_ms": 0.71,
       "smt_queries": 0
     },
     {
@@ -1157,7 +1157,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 13.01,
+      "time_ms": 4.2,
       "smt_queries": 1
     },
     {
@@ -1166,7 +1166,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.89,
+      "time_ms": 3.19,
       "smt_queries": 0
     },
     {
@@ -1175,7 +1175,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.26,
+      "time_ms": 0.57,
       "smt_queries": 0
     },
     {
@@ -1184,7 +1184,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 18.71,
+      "time_ms": 5.85,
       "smt_queries": 2
     },
     {
@@ -1193,7 +1193,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.92,
+      "time_ms": 0.45,
       "smt_queries": 0
     },
     {
@@ -1202,7 +1202,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 5.19,
+      "time_ms": 3.78,
       "smt_queries": 1
     },
     {
@@ -1211,53 +1211,53 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 9.18,
+      "time_ms": 7.99,
       "smt_queries": 1
     },
     {
       "name": "c2rust_clz",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.31,
-      "smt_queries": 0
+      "time_ms": 7.91,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_byte_swap",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.51,
-      "smt_queries": 0
+      "time_ms": 5.82,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_saturating_add",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.31,
-      "smt_queries": 0
+      "time_ms": 12.09,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_checked_mul",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.96,
+      "time_ms": 4.43,
       "smt_queries": 0
     },
     {
       "name": "c2rust_rotate_left",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.62,
-      "smt_queries": 0
+      "time_ms": 8.34,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_safe_array_access",
@@ -1265,7 +1265,7 @@
       "expected": "divergent",
       "verdict": "divergent",
       "correct": true,
-      "time_ms": 6.47,
+      "time_ms": 7.5,
       "smt_queries": 1
     },
     {
@@ -1274,7 +1274,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.56,
+      "time_ms": 0.49,
       "smt_queries": 0
     },
     {
@@ -1283,7 +1283,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.5,
+      "time_ms": 0.47,
       "smt_queries": 0
     },
     {
@@ -1292,7 +1292,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.54,
+      "time_ms": 0.58,
       "smt_queries": 0
     },
     {
@@ -1301,7 +1301,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.52,
+      "time_ms": 0.88,
       "smt_queries": 0
     },
     {
@@ -1310,7 +1310,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.47,
+      "time_ms": 0.45,
       "smt_queries": 0
     },
     {
@@ -1319,17 +1319,17 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.43,
+      "time_ms": 0.5,
       "smt_queries": 0
     },
     {
       "name": "iter_min_value",
       "category": "iterator",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.48,
-      "smt_queries": 0
+      "time_ms": 6.25,
+      "smt_queries": 1
     },
     {
       "name": "iter_sum_of_squares",
@@ -1337,7 +1337,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.51,
+      "time_ms": 0.61,
       "smt_queries": 0
     },
     {
@@ -1355,7 +1355,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.99,
+      "time_ms": 0.75,
       "smt_queries": 0
     },
     {
@@ -1364,7 +1364,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.72,
+      "time_ms": 0.85,
       "smt_queries": 0
     },
     {
@@ -1373,7 +1373,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.45,
+      "time_ms": 0.51,
       "smt_queries": 0
     },
     {
@@ -1382,7 +1382,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.55,
+      "time_ms": 0.49,
       "smt_queries": 0
     },
     {
@@ -1391,7 +1391,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.45,
+      "time_ms": 0.41,
       "smt_queries": 0
     },
     {
@@ -1400,7 +1400,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.99,
+      "time_ms": 0.57,
       "smt_queries": 0
     },
     {
@@ -1409,7 +1409,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.06,
+      "time_ms": 1.59,
       "smt_queries": 1
     },
     {
@@ -1418,7 +1418,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 1.99,
+      "time_ms": 1.63,
       "smt_queries": 1
     },
     {
@@ -1427,7 +1427,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.69,
+      "time_ms": 1.92,
       "smt_queries": 1
     },
     {
@@ -1436,7 +1436,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 1.8,
+      "time_ms": 2.19,
       "smt_queries": 1
     },
     {
@@ -1445,7 +1445,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 506.79,
+      "time_ms": 174.92,
       "smt_queries": 1
     },
     {
@@ -1454,7 +1454,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.78,
+      "time_ms": 1.95,
       "smt_queries": 1
     },
     {
@@ -1463,7 +1463,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 2.89,
+      "time_ms": 1.46,
       "smt_queries": 0
     },
     {
@@ -1472,7 +1472,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 3.87,
+      "time_ms": 2.66,
       "smt_queries": 1
     },
     {
@@ -1481,17 +1481,17 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.1,
+      "time_ms": 1.28,
       "smt_queries": 1
     },
     {
       "name": "cast_double_to_float",
       "category": "cast",
       "expected": "equivalent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.55,
-      "smt_queries": 0
+      "verdict": "equivalent",
+      "correct": true,
+      "time_ms": 1.49,
+      "smt_queries": 1
     },
     {
       "name": "cast_size_t_to_int",
@@ -1499,7 +1499,7 @@
       "expected": "conditional",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 1.61,
+      "time_ms": 1.27,
       "smt_queries": 1
     },
     {
@@ -1508,7 +1508,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 2.0,
+      "time_ms": 1.04,
       "smt_queries": 1
     },
     {
@@ -1517,7 +1517,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 10.77,
+      "time_ms": 9.37,
       "smt_queries": 2
     },
     {
@@ -1526,7 +1526,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 3.61,
+      "time_ms": 2.48,
       "smt_queries": 1
     },
     {
@@ -1535,17 +1535,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 9.79,
+      "time_ms": 10.62,
       "smt_queries": 1
     },
     {
       "name": "compound_ternary_chain",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.72,
-      "smt_queries": 0
+      "time_ms": 8.67,
+      "smt_queries": 1
     },
     {
       "name": "compound_short_circuit_and",
@@ -1553,7 +1553,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 6.23,
+      "time_ms": 7.8,
       "smt_queries": 1
     },
     {
@@ -1562,7 +1562,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 6.66,
+      "time_ms": 7.95,
       "smt_queries": 1
     },
     {
@@ -1571,7 +1571,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 17.78,
+      "time_ms": 17.16,
       "smt_queries": 1
     },
     {
@@ -1580,7 +1580,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 7.53,
+      "time_ms": 8.24,
       "smt_queries": 1
     },
     {
@@ -1589,7 +1589,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 134.98,
+      "time_ms": 952.11,
       "smt_queries": 2
     },
     {
@@ -1598,44 +1598,44 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 6.77,
+      "time_ms": 7.34,
       "smt_queries": 1
     },
     {
       "name": "compound_mixed_ops",
       "category": "compound",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.75,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 10.77,
+      "smt_queries": 2
     },
     {
       "name": "compound_predicate_combine",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.78,
-      "smt_queries": 0
+      "time_ms": 7.41,
+      "smt_queries": 1
     },
     {
       "name": "compound_abs_diff",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.41,
-      "smt_queries": 0
+      "time_ms": 9.53,
+      "smt_queries": 1
     },
     {
       "name": "compound_min3",
       "category": "compound",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 0.59,
-      "smt_queries": 0
+      "time_ms": 5.84,
+      "smt_queries": 1
     },
     {
       "name": "compound_median3",
@@ -1643,17 +1643,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 47.53,
+      "time_ms": 44.35,
       "smt_queries": 1
     },
     {
       "name": "compound_polynomial_eval",
       "category": "compound",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.86,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 12.66,
+      "smt_queries": 2
     },
     {
       "name": "compound_collatz_step",
@@ -1661,7 +1661,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.58,
+      "time_ms": 9.19,
       "smt_queries": 2
     },
     {
@@ -1670,16 +1670,16 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 5.57,
+      "time_ms": 4.76,
       "smt_queries": 0
     },
     {
       "name": "cf_early_return",
       "category": "control_flow",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.85,
+      "time_ms": 2.09,
       "smt_queries": 0
     },
     {
@@ -1688,7 +1688,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.72,
+      "time_ms": 0.47,
       "smt_queries": 0
     },
     {
@@ -1697,7 +1697,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 8.46,
+      "time_ms": 9.05,
       "smt_queries": 1
     },
     {
@@ -1706,7 +1706,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 6.43,
+      "time_ms": 5.97,
       "smt_queries": 0
     },
     {
@@ -1715,7 +1715,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.88,
+      "time_ms": 0.75,
       "smt_queries": 0
     },
     {
@@ -1724,7 +1724,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.27,
+      "time_ms": 2.18,
       "smt_queries": 0
     },
     {
@@ -1733,7 +1733,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.56,
+      "time_ms": 0.48,
       "smt_queries": 0
     },
     {
@@ -1742,7 +1742,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 0.54,
+      "time_ms": 0.71,
       "smt_queries": 0
     },
     {
@@ -1751,7 +1751,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 4.22,
+      "time_ms": 3.77,
       "smt_queries": 2
     },
     {
@@ -1760,7 +1760,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.56,
+      "time_ms": 2.97,
       "smt_queries": 0
     },
     {
@@ -1769,7 +1769,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.24,
+      "time_ms": 0.86,
       "smt_queries": 0
     },
     {
@@ -1778,7 +1778,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 4.31,
+      "time_ms": 4.07,
       "smt_queries": 0
     },
     {
@@ -1787,7 +1787,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 8.21,
+      "time_ms": 8.6,
       "smt_queries": 0
     },
     {
@@ -1796,7 +1796,7 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 2.27,
+      "time_ms": 2.68,
       "smt_queries": 0
     },
     {
@@ -1805,43 +1805,43 @@
       "expected": "divergent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.77,
+      "time_ms": 1.67,
       "smt_queries": 0
     },
     {
       "name": "struct_field_access",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.5,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 5.71,
+      "smt_queries": 1
     },
     {
       "name": "struct_modify",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.68,
+      "time_ms": 4.59,
       "smt_queries": 0
     },
     {
       "name": "heap_alloc_use",
       "category": "memory",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 0.46,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 8.35,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_array_init",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 0.64,
+      "time_ms": 6.54,
       "smt_queries": 0
     },
     {
@@ -1850,16 +1850,16 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 18.19,
+      "time_ms": 8.25,
       "smt_queries": 1
     },
     {
       "name": "c2rust_buffer_fill",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.54,
+      "time_ms": 3.42,
       "smt_queries": 0
     },
     {
@@ -1868,17 +1868,17 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 15.52,
+      "time_ms": 4.06,
       "smt_queries": 1
     },
     {
       "name": "c2rust_macro_expand",
       "category": "c2rust",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 3.32,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 8.8,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_strlen_simple",
@@ -1886,26 +1886,26 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 8.13,
+      "time_ms": 8.53,
       "smt_queries": 0
     },
     {
       "name": "c2rust_bitfield_extract",
       "category": "c2rust",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.8,
-      "smt_queries": 0
+      "time_ms": 18.53,
+      "smt_queries": 2
     },
     {
       "name": "matrix_multiply_2x2",
       "category": "memory_scaled",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "unknown",
       "correct": false,
-      "time_ms": 1.01,
-      "smt_queries": 0
+      "time_ms": 15054.69,
+      "smt_queries": 1
     },
     {
       "name": "ring_buffer_insert",
@@ -1913,7 +1913,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 9.0,
+      "time_ms": 9.44,
       "smt_queries": 0
     },
     {
@@ -1922,7 +1922,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 27.68,
+      "time_ms": 16.53,
       "smt_queries": 1
     },
     {
@@ -1931,17 +1931,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 27.11,
+      "time_ms": 6.85,
       "smt_queries": 0
     },
     {
       "name": "c2rust_error_cleanup",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 1.53,
-      "smt_queries": 0
+      "time_ms": 17.0,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_state_machine",
@@ -1949,17 +1949,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 9.73,
+      "time_ms": 9.06,
       "smt_queries": 0
     },
     {
       "name": "c2rust_gcd",
       "category": "c2rust_realistic",
       "expected": "equivalent",
-      "verdict": "error",
+      "verdict": "divergent",
       "correct": false,
-      "time_ms": 2.29,
-      "smt_queries": 0
+      "time_ms": 17.54,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_isqrt",
@@ -1967,7 +1967,7 @@
       "expected": "equivalent",
       "verdict": "equivalent",
       "correct": true,
-      "time_ms": 17.88,
+      "time_ms": 6.36,
       "smt_queries": 1
     },
     {
@@ -1976,7 +1976,7 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 4.06,
+      "time_ms": 3.08,
       "smt_queries": 0
     },
     {
@@ -1985,17 +1985,17 @@
       "expected": "equivalent",
       "verdict": "unknown",
       "correct": false,
-      "time_ms": 3.94,
+      "time_ms": 3.53,
       "smt_queries": 0
     },
     {
       "name": "c2rust_next_power_of_two",
       "category": "c2rust_realistic",
       "expected": "divergent",
-      "verdict": "error",
-      "correct": false,
-      "time_ms": 1.39,
-      "smt_queries": 0
+      "verdict": "divergent",
+      "correct": true,
+      "time_ms": 25.48,
+      "smt_queries": 1
     },
     {
       "name": "c2rust_atoi_simple",
@@ -2003,7 +2003,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 18.93,
+      "time_ms": 10.38,
       "smt_queries": 1
     },
     {
@@ -2012,7 +2012,7 @@
       "expected": "divergent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.47,
+      "time_ms": 0.8,
       "smt_queries": 0
     },
     {
@@ -2021,7 +2021,7 @@
       "expected": "equivalent",
       "verdict": "divergent",
       "correct": false,
-      "time_ms": 33.19,
+      "time_ms": 29.26,
       "smt_queries": 1
     },
     {
@@ -2030,7 +2030,7 @@
       "expected": "equivalent",
       "verdict": "error",
       "correct": false,
-      "time_ms": 1.81,
+      "time_ms": 1.9,
       "smt_queries": 0
     }
   ]

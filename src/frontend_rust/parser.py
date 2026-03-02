@@ -30,6 +30,7 @@ from .rust_ast import (
     Item, FnItem, FnParam, StructItem, StructField as RustStructField,
     EnumItem, EnumVariant, ImplItem, UseItem, ConstItem, StaticItem,
     TypeAliasItem, TraitItem, ExternBlock, ModItem, MacroDefItem,
+    UnionItem, ExternFnItem,
     Attribute, Visibility, Mutability,
     # Expressions
     Expr, LitExpr, PathExpr, BinaryExpr, UnaryExpr, CastExpr,
@@ -38,9 +39,11 @@ from .rust_ast import (
     LoopExpr, WhileExpr, ForExpr, ReturnExpr, BreakExpr, ContinueExpr,
     ClosureExpr, TupleExpr, ArrayExpr, StructExpr, RefExpr, DerefExpr,
     UnsafeBlock, MacroInvocation, ParenExpr, TryExpr, AwaitExpr,
+    AsyncBlock, IfLetExpr, WhileLetExpr, TransmuteCall, InlineAsm,
     BinaryOp as RustBinaryOp, UnaryOp as RustUnaryOp,
     # Statements
     Stmt, LetStmt, ExprStmt, ItemStmt, EmptyStmt, MacroStmt,
+    LetElseStmt,
     # Top level
     Crate, NodeLocation,
 )
@@ -261,6 +264,8 @@ class RustParser:
             return self._parse_extern_block(attrs, vis, start)
         if tok.kind == TokenKind.KW_STRUCT:
             return self._parse_struct_item(attrs, vis, start)
+        if tok.kind == TokenKind.IDENT and tok.text == "union":
+            return self._parse_union_item(attrs, vis, start)
         if tok.kind == TokenKind.KW_ENUM:
             return self._parse_enum_item(attrs, vis, start)
         if tok.kind == TokenKind.KW_IMPL:
@@ -446,6 +451,37 @@ class RustParser:
 
         return StructItem(
             name=name, fields=fields, generics=generics, is_tuple_struct=is_tuple,
+            loc=self._loc(start), attributes=attrs, visibility=vis,
+        )
+
+    def _parse_union_item(
+        self, attrs: list[Attribute], vis: Visibility, start: Token,
+    ) -> UnionItem:
+        """Parse a union definition."""
+        self._advance()  # union (contextual keyword)
+        name = self._expect(TokenKind.IDENT).text
+        generics = self._parse_generics()
+
+        if self._at(TokenKind.KW_WHERE):
+            self._parse_where_clause(generics)
+
+        fields: list[RustStructField] = []
+        self._expect(TokenKind.LBRACE)
+        while not self._at(TokenKind.RBRACE) and not self._at(TokenKind.EOF):
+            f_attrs = self._parse_outer_attributes()
+            f_vis = self._parse_visibility()
+            f_name = self._expect(TokenKind.IDENT).text
+            self._expect(TokenKind.COLON)
+            f_type = self._parse_type()
+            fields.append(RustStructField(
+                name=f_name, type_ann=f_type,
+                attributes=f_attrs, visibility=f_vis,
+            ))
+            if not self._match(TokenKind.COMMA):
+                break
+        self._expect(TokenKind.RBRACE)
+        return UnionItem(
+            name=name, fields=fields, generics=generics,
             loc=self._loc(start), attributes=attrs, visibility=vis,
         )
 
@@ -1218,12 +1254,18 @@ class RustParser:
             item = self._parse_item()
             return ItemStmt(item=item, loc=self._loc(start))
 
-        # Expression statement
-        expr = self._parse_expression()
+        # Expression statement (with error recovery)
+        try:
+            expr = self._parse_expression()
+        except ParseError as e:
+            self._errors.append(e)
+            self._skip_to(TokenKind.SEMICOLON, TokenKind.RBRACE)
+            self._match(TokenKind.SEMICOLON)
+            return EmptyStmt(loc=self._loc(start))
         has_semi = bool(self._match(TokenKind.SEMICOLON))
         return ExprStmt(expr=expr, has_semicolon=has_semi, loc=self._loc(start))
 
-    def _parse_let_stmt(self) -> LetStmt:
+    def _parse_let_stmt(self) -> Stmt:
         start = self._cur()
         self._advance()  # let
         is_mut = bool(self._match(TokenKind.KW_MUT))
@@ -1234,6 +1276,14 @@ class RustParser:
         init = None
         if self._match(TokenKind.ASSIGN):
             init = self._parse_expression()
+        # let-else: let pat = expr else { diverging_block }
+        if self._at(TokenKind.KW_ELSE):
+            self._advance()
+            else_block = self._parse_block_expr()
+            self._match(TokenKind.SEMICOLON)
+            return LetElseStmt(pattern=pat, type_ann=ty, initializer=init,
+                               else_block=else_block, is_mutable=is_mut,
+                               loc=self._loc(start))
         self._expect(TokenKind.SEMICOLON)
         return LetStmt(pattern=pat, type_ann=ty, initializer=init,
                        is_mutable=is_mut, loc=self._loc(start))
@@ -1498,6 +1548,12 @@ class RustParser:
             body.is_unsafe = True
             return UnsafeBlock(body=body, loc=self._loc(tok))
 
+        if tok.kind == TokenKind.KW_ASYNC:
+            self._advance()
+            is_move = bool(self._match(TokenKind.KW_MOVE))
+            body = self._parse_block_expr()
+            return AsyncBlock(body=body, is_move=is_move, loc=self._loc(tok))
+
         if tok.kind == TokenKind.PIPE:
             return self._parse_closure_expr()
 
@@ -1532,11 +1588,30 @@ class RustParser:
         # Check for macro invocation: name!()
         if self._at(TokenKind.BANG):
             self._advance()
+            macro_name = "::".join(segments)
+            # Handle asm! as InlineAsm
+            if macro_name == "asm" or macro_name == "core::arch::asm":
+                body, _ = self._parse_macro_body()
+                return InlineAsm(template=body, loc=self._loc(start))
             body, _ = self._parse_macro_body()
-            return MacroInvocation(name="::".join(segments), args=body,
+            return MacroInvocation(name=macro_name, args=body,
                                   loc=self._loc(start))
 
         path_expr = PathExpr(segments=segments, loc=self._loc(start))
+
+        # Handle transmute calls: std::mem::transmute(expr) or transmute(expr)
+        full_path = "::".join(segments)
+        if full_path in ("std::mem::transmute", "core::mem::transmute", "transmute"):
+            if self._at(TokenKind.LPAREN):
+                self._advance()
+                args: list[Expr] = []
+                while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
+                    args.append(self._parse_expression())
+                    if not self._match(TokenKind.COMMA):
+                        break
+                self._expect(TokenKind.RPAREN)
+                operand = args[0] if args else None
+                return TransmuteCall(operand=operand, loc=self._loc(start))
 
         # Check for struct literal: Name { field: value }
         # Disabled inside if/while/match conditions to avoid ambiguity
@@ -1647,16 +1722,35 @@ class RustParser:
         self._expect(TokenKind.RBRACE)
         return BlockExpr(stmts=stmts, tail_expr=tail_expr, loc=self._loc(start))
 
-    def _parse_if_expr(self) -> IfExpr:
+    def _parse_if_expr(self) -> Expr:
         start = self._cur()
         self._advance()  # if
-        # Disable struct literals in condition to avoid { being parsed as struct
+        # if let pattern = expr { ... }
+        if self._at(TokenKind.KW_LET):
+            self._advance()  # let
+            pat = self._parse_pattern()
+            self._expect(TokenKind.ASSIGN)
+            old_no_struct = self._no_struct_literal
+            self._no_struct_literal = True
+            scrutinee = self._parse_expression()
+            self._no_struct_literal = old_no_struct
+            then_body = self._parse_block_expr()
+            else_body: Optional[Expr] = None
+            if self._match(TokenKind.KW_ELSE):
+                if self._at(TokenKind.KW_IF):
+                    else_body = self._parse_if_expr()
+                else:
+                    else_body = self._parse_block_expr()
+            return IfLetExpr(pattern=pat, scrutinee=scrutinee,
+                             then_body=then_body, else_body=else_body,
+                             loc=self._loc(start))
+        # Regular if
         old_no_struct = self._no_struct_literal
         self._no_struct_literal = True
         cond = self._parse_expression()
         self._no_struct_literal = old_no_struct
         then_body = self._parse_block_expr()
-        else_body: Optional[Expr] = None
+        else_body = None
         if self._match(TokenKind.KW_ELSE):
             if self._at(TokenKind.KW_IF):
                 else_body = self._parse_if_expr()
@@ -1695,9 +1789,21 @@ class RustParser:
         body = self._parse_block_expr()
         return LoopExpr(body=body, loc=self._loc(start))
 
-    def _parse_while_expr(self) -> WhileExpr:
+    def _parse_while_expr(self) -> Expr:
         start = self._cur()
         self._advance()  # while
+        # while let pattern = expr { ... }
+        if self._at(TokenKind.KW_LET):
+            self._advance()  # let
+            pat = self._parse_pattern()
+            self._expect(TokenKind.ASSIGN)
+            old_no_struct = self._no_struct_literal
+            self._no_struct_literal = True
+            scrutinee = self._parse_expression()
+            self._no_struct_literal = old_no_struct
+            body = self._parse_block_expr()
+            return WhileLetExpr(pattern=pat, scrutinee=scrutinee,
+                                body=body, loc=self._loc(start))
         old_no_struct = self._no_struct_literal
         self._no_struct_literal = True
         cond = self._parse_expression()

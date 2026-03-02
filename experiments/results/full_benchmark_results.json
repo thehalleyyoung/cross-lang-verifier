@@ -1,27 +1,31 @@
 {
   "summary": {
-    "total": 351,
-    "correct": 238,
-    "accuracy_pct": 67.8,
+    "total": 511,
+    "correct": 181,
+    "accuracy_pct": 35.4,
     "verdicts": {
-      "equivalent": 80,
-      "divergent": 170,
-      "unknown": 78,
-      "error": 23
+      "equivalent": 76,
+      "divergent": 171,
+      "unknown": 57,
+      "error": 207
     },
-    "avg_time_ms": 138.4,
+    "avg_time_ms": 172.1,
     "by_source": {
       "core": {
         "total": 52,
         "correct": 25
       },
+      "combined": {
+        "total": 212,
+        "correct": 58
+      },
       "scaled": {
         "total": 150,
-        "correct": 150
+        "correct": 123
       },
       "real_world": {
         "total": 149,
-        "correct": 63
+        "correct": 0
       }
     }
   },
@@ -32,7 +36,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 190.01
+      "time_ms": 606.3
     },
     {
       "name": "add_checked_divergent",
@@ -40,15 +44,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.46
+      "time_ms": 18.87
     },
     {
       "name": "mul_overflow",
       "category": "arithmetic",
       "expected": "divergent",
-      "actual": "equivalent",
-      "correct": false,
-      "time_ms": 5055.34
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 6657.41
     },
     {
       "name": "sub_overflow",
@@ -56,7 +60,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 22.97
+      "time_ms": 6.35
     },
     {
       "name": "saturating_add",
@@ -64,7 +68,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.01
+      "time_ms": 6.0
     },
     {
       "name": "negate_min",
@@ -72,7 +76,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 22.5
+      "time_ms": 2.75
     },
     {
       "name": "abs_function",
@@ -80,7 +84,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 21.21
+      "time_ms": 4.52
     },
     {
       "name": "unsigned_add",
@@ -88,7 +92,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 3.91
+      "time_ms": 2.25
     },
     {
       "name": "mixed_sign_compare",
@@ -96,15 +100,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.79
+      "time_ms": 5.11
     },
     {
       "name": "increment_loop",
       "category": "arithmetic",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.5
+      "time_ms": 2.11
     },
     {
       "name": "checked_add_result",
@@ -112,7 +116,7 @@
       "expected": "divergent",
       "actual": "unknown",
       "correct": false,
-      "time_ms": 9.24
+      "time_ms": 6.58
     },
     {
       "name": "widening_mul",
@@ -120,7 +124,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 5019.78
+      "time_ms": 15019.95
     },
     {
       "name": "div_by_zero",
@@ -128,7 +132,7 @@
       "expected": "divergent",
       "actual": "equivalent",
       "correct": false,
-      "time_ms": 2.95
+      "time_ms": 6.47
     },
     {
       "name": "div_int_min",
@@ -136,7 +140,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 2.5
+      "time_ms": 7.69
     },
     {
       "name": "modulo_negative",
@@ -144,7 +148,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 27.27
+      "time_ms": 30.65
     },
     {
       "name": "shift_left_overflow",
@@ -152,7 +156,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.4
+      "time_ms": 6.58
     },
     {
       "name": "shift_right_arithmetic",
@@ -160,7 +164,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.88
+      "time_ms": 7.56
     },
     {
       "name": "shift_negative_amount",
@@ -168,7 +172,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.32
+      "time_ms": 6.89
     },
     {
       "name": "unsigned_div",
@@ -176,7 +180,7 @@
       "expected": "equivalent",
       "actual": "divergent",
       "correct": false,
-      "time_ms": 135.31
+      "time_ms": 7397.23
     },
     {
       "name": "power_of_two_div",
@@ -184,7 +188,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.6
+      "time_ms": 1.56
     },
     {
       "name": "count_bits",
@@ -192,7 +196,7 @@
       "expected": "equivalent",
       "actual": "unknown",
       "correct": false,
-      "time_ms": 3.33
+      "time_ms": 3.21
     },
     {
       "name": "gcd_loop",
@@ -200,15 +204,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 7.81
+      "time_ms": 9.42
     },
     {
       "name": "fibonacci",
       "category": "loops",
       "expected": "divergent",
-      "actual": "equivalent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 6.48
+      "time_ms": 0.83
     },
     {
       "name": "binary_search",
@@ -216,15 +220,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 25.18
+      "time_ms": 8.34
     },
     {
       "name": "reverse_bits_loop",
       "category": "loops",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.65
+      "time_ms": 0.72
     },
     {
       "name": "collatz_steps",
@@ -232,7 +236,7 @@
       "expected": "divergent",
       "actual": "unknown",
       "correct": false,
-      "time_ms": 5.34
+      "time_ms": 5.57
     },
     {
       "name": "digit_sum",
@@ -240,7 +244,7 @@
       "expected": "divergent",
       "actual": "unknown",
       "correct": false,
-      "time_ms": 3.71
+      "time_ms": 4.22
     },
     {
       "name": "count_trailing_zeros",
@@ -248,7 +252,7 @@
       "expected": "equivalent",
       "actual": "divergent",
       "correct": false,
-      "time_ms": 4.16
+      "time_ms": 4.4
     },
     {
       "name": "safe_divide_errno",
@@ -256,7 +260,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.74
+      "time_ms": 23.76
     },
     {
       "name": "sqrt_int",
@@ -264,7 +268,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 40.23
+      "time_ms": 6.85
     },
     {
       "name": "array_index_safe",
@@ -272,7 +276,7 @@
       "expected": "divergent",
       "actual": "error",
       "correct": false,
-      "time_ms": 0.99
+      "time_ms": 4.87
     },
     {
       "name": "clamp_value",
@@ -280,7 +284,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 8.1
+      "time_ms": 8.02
     },
     {
       "name": "null_vs_option",
@@ -288,15 +292,15 @@
       "expected": "divergent",
       "actual": "unknown",
       "correct": false,
-      "time_ms": 1.71
+      "time_ms": 1.82
     },
     {
       "name": "find_char",
       "category": "error_handling",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.83
+      "time_ms": 0.88
     },
     {
       "name": "max_of_three",
@@ -304,7 +308,7 @@
       "expected": "equivalent",
       "actual": "divergent",
       "correct": false,
-      "time_ms": 4.42
+      "time_ms": 4.71
     },
     {
       "name": "sign_function",
@@ -312,7 +316,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 3.8
+      "time_ms": 3.43
     },
     {
       "name": "is_power_of_two",
@@ -320,7 +324,7 @@
       "expected": "equivalent",
       "actual": "divergent",
       "correct": false,
-      "time_ms": 5.14
+      "time_ms": 5.39
     },
     {
       "name": "rotate_right",
@@ -328,7 +332,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 9.0
+      "time_ms": 10.54
     },
     {
       "name": "swap_bytes",
@@ -336,7 +340,7 @@
       "expected": "equivalent",
       "actual": "divergent",
       "correct": false,
-      "time_ms": 9.49
+      "time_ms": 10.74
     },
     {
       "name": "bit_extract",
@@ -344,7 +348,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 11.56
+      "time_ms": 34.06
     },
     {
       "name": "leading_zeros",
@@ -352,23 +356,23 @@
       "expected": "equivalent",
       "actual": "divergent",
       "correct": false,
-      "time_ms": 6.76
+      "time_ms": 18.59
     },
     {
       "name": "parity",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 16.27
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 19.29
     },
     {
       "name": "interleave_bits",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 7.26
+      "time_ms": 1.4
     },
     {
       "name": "bit_reverse_byte",
@@ -376,55 +380,55 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 14.99
+      "time_ms": 20.02
     },
     {
       "name": "hash_djb2",
       "category": "string",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 2.66
+      "time_ms": 0.94
     },
     {
       "name": "array_sum",
       "category": "string",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 2.21
+      "time_ms": 0.62
     },
     {
       "name": "memset_pattern",
       "category": "memory",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 2.18
+      "time_ms": 0.81
     },
     {
       "name": "array_max",
       "category": "memory",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.62
+      "time_ms": 1.04
     },
     {
       "name": "copy_array",
       "category": "memory",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.31
+      "time_ms": 1.34
     },
     {
       "name": "dot_product",
       "category": "memory",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.04
+      "time_ms": 1.14
     },
     {
       "name": "insertion_sort",
@@ -432,15 +436,1295 @@
       "expected": "equivalent",
       "actual": "error",
       "correct": false,
-      "time_ms": 1.71
+      "time_ms": 1.36
     },
     {
       "name": "linear_search",
       "category": "memory",
       "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.75
+    },
+    {
+      "name": "struct_field_access",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 2.9
+    },
+    {
+      "name": "struct_sum_fields",
+      "category": "struct",
+      "expected": "equivalent",
       "actual": "unknown",
       "correct": false,
-      "time_ms": 3.77
+      "time_ms": 0.97
+    },
+    {
+      "name": "struct_field_overflow",
+      "category": "struct",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 0.92
+    },
+    {
+      "name": "struct_nested_access",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 12.76
+    },
+    {
+      "name": "struct_construction_equiv",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.86
+    },
+    {
+      "name": "struct_mul_overflow",
+      "category": "struct",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 1.03
+    },
+    {
+      "name": "struct_conditional_field",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 13.47
+    },
+    {
+      "name": "struct_swap_fields",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 3.29
+    },
+    {
+      "name": "struct_packed_vs_aligned",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 12.51
+    },
+    {
+      "name": "struct_max_field",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 3.65
+    },
+    {
+      "name": "struct_dot_product",
+      "category": "struct",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 1.66
+    },
+    {
+      "name": "struct_equality_check",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.54
+    },
+    {
+      "name": "struct_distance_sq",
+      "category": "struct",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 15485.42
+    },
+    {
+      "name": "struct_midpoint",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.0
+    },
+    {
+      "name": "struct_scale",
+      "category": "struct",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 1.62
+    },
+    {
+      "name": "struct_manhattan_dist",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 82.89
+    },
+    {
+      "name": "struct_clamp_fields",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 7.88
+    },
+    {
+      "name": "struct_bit_field_emulation",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 1.92
+    },
+    {
+      "name": "struct_weighted_avg",
+      "category": "struct",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 4.72
+    },
+    {
+      "name": "struct_color_blend",
+      "category": "struct",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 7.71
+    },
+    {
+      "name": "enum_c_like_equiv",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 12.37
+    },
+    {
+      "name": "enum_switch_vs_match",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.7
+    },
+    {
+      "name": "enum_fallthrough_divergence",
+      "category": "enum",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 1.73
+    },
+    {
+      "name": "enum_tagged_union_option",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.01
+    },
+    {
+      "name": "enum_result_ok_path",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 17.09
+    },
+    {
+      "name": "enum_exhaustiveness",
+      "category": "enum",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.14
+    },
+    {
+      "name": "enum_arithmetic_on_discriminant",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 8.71
+    },
+    {
+      "name": "enum_comparison",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 20.51
+    },
+    {
+      "name": "enum_bitflags",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 1.41
+    },
+    {
+      "name": "enum_next_variant",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 18.29
+    },
+    {
+      "name": "enum_option_map",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 5.12
+    },
+    {
+      "name": "enum_result_chain",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 1.54
+    },
+    {
+      "name": "enum_nested_match",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 7.58
+    },
+    {
+      "name": "enum_state_machine",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.15
+    },
+    {
+      "name": "enum_discriminant_bounds",
+      "category": "enum",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 18.76
+    },
+    {
+      "name": "enum_option_filter",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 2.53
+    },
+    {
+      "name": "enum_ternary_vs_match",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 21.4
+    },
+    {
+      "name": "enum_error_code_mapping",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.2
+    },
+    {
+      "name": "enum_bool_result",
+      "category": "enum",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.29
+    },
+    {
+      "name": "enum_option_unwrap_panic",
+      "category": "enum",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 1.28
+    },
+    {
+      "name": "float_add_equiv",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 4.78
+    },
+    {
+      "name": "float_nan_comparison",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.51
+    },
+    {
+      "name": "float_inf_arithmetic",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 5.18
+    },
+    {
+      "name": "float_to_int_truncation",
+      "category": "float",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.32
+    },
+    {
+      "name": "float_division_by_zero",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 2.22
+    },
+    {
+      "name": "float_fma_precision",
+      "category": "float",
+      "expected": "conditional",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.97
+    },
+    {
+      "name": "float_abs_equiv",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.45
+    },
+    {
+      "name": "float_rounding_mode",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.71
+    },
+    {
+      "name": "float_neg_zero",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 671.94
+    },
+    {
+      "name": "float_lerp",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 5.45
+    },
+    {
+      "name": "float_compare_epsilon",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 24.08
+    },
+    {
+      "name": "float_sum_associativity",
+      "category": "float",
+      "expected": "conditional",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 597.87
+    },
+    {
+      "name": "float_clamp",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 4.12
+    },
+    {
+      "name": "float_int_conv_roundtrip",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.34
+    },
+    {
+      "name": "float_sign_bit",
+      "category": "float",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 2.61
+    },
+    {
+      "name": "c2rust_strlen_loop",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 1.6
+    },
+    {
+      "name": "c2rust_array_sum",
+      "category": "c2rust",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 1.01
+    },
+    {
+      "name": "c2rust_abs_val",
+      "category": "c2rust",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 10.28
+    },
+    {
+      "name": "c2rust_min_max",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.36
+    },
+    {
+      "name": "c2rust_swap_xor",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 13.79
+    },
+    {
+      "name": "c2rust_binary_search",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 1.58
+    },
+    {
+      "name": "c2rust_fibonacci",
+      "category": "c2rust",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.87
+    },
+    {
+      "name": "c2rust_gcd",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 6.77
+    },
+    {
+      "name": "c2rust_popcount",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 5.6
+    },
+    {
+      "name": "c2rust_reverse_bits",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 1.17
+    },
+    {
+      "name": "c2rust_count_digits",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 8.31
+    },
+    {
+      "name": "c2rust_power_iterative",
+      "category": "c2rust",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.65
+    },
+    {
+      "name": "c2rust_is_palindrome_num",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 4.89
+    },
+    {
+      "name": "c2rust_array_reverse",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 10.81
+    },
+    {
+      "name": "c2rust_clz",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 12.22
+    },
+    {
+      "name": "c2rust_byte_swap",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 8.97
+    },
+    {
+      "name": "c2rust_saturating_add",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 15.5
+    },
+    {
+      "name": "c2rust_checked_mul",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 4.57
+    },
+    {
+      "name": "c2rust_rotate_left",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 8.76
+    },
+    {
+      "name": "c2rust_safe_array_access",
+      "category": "c2rust",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 8.41
+    },
+    {
+      "name": "iter_sum",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.51
+    },
+    {
+      "name": "iter_count_positive",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.47
+    },
+    {
+      "name": "iter_find_first",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.45
+    },
+    {
+      "name": "iter_any_negative",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.82
+    },
+    {
+      "name": "iter_all_positive",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.45
+    },
+    {
+      "name": "iter_product",
+      "category": "iterator",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.39
+    },
+    {
+      "name": "iter_min_value",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 11.27
+    },
+    {
+      "name": "iter_sum_of_squares",
+      "category": "iterator",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.67
+    },
+    {
+      "name": "iter_fold_xor",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.39
+    },
+    {
+      "name": "iter_count_divisible",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.9
+    },
+    {
+      "name": "iter_max_consecutive",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.65
+    },
+    {
+      "name": "iter_enumerate_sum",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.44
+    },
+    {
+      "name": "iter_zip_sum",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.47
+    },
+    {
+      "name": "iter_take_while_sum",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.4
+    },
+    {
+      "name": "iter_skip_take",
+      "category": "iterator",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.97
+    },
+    {
+      "name": "cast_signed_to_unsigned",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 2.18
+    },
+    {
+      "name": "cast_truncation",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 2.08
+    },
+    {
+      "name": "cast_zero_extend",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.74
+    },
+    {
+      "name": "cast_sign_extend",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 10.29
+    },
+    {
+      "name": "cast_widening_mul",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 226.54
+    },
+    {
+      "name": "cast_bool_to_int",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.26
+    },
+    {
+      "name": "cast_int_to_bool_to_int",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 3.02
+    },
+    {
+      "name": "cast_narrowing_unsigned",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 8.14
+    },
+    {
+      "name": "cast_char_to_int_signed",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 2.7
+    },
+    {
+      "name": "cast_double_to_float",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 3.7
+    },
+    {
+      "name": "cast_size_t_to_int",
+      "category": "cast",
+      "expected": "conditional",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 1.94
+    },
+    {
+      "name": "cast_enum_to_int",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 1.71
+    },
+    {
+      "name": "cast_pointer_to_int_size",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 14.95
+    },
+    {
+      "name": "cast_chain",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 5.67
+    },
+    {
+      "name": "cast_conditional_widen",
+      "category": "cast",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 17.39
+    },
+    {
+      "name": "compound_ternary_chain",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 10.23
+    },
+    {
+      "name": "compound_short_circuit_and",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 11.55
+    },
+    {
+      "name": "compound_comma_operator",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 9.58
+    },
+    {
+      "name": "compound_nested_conditional",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 31.8
+    },
+    {
+      "name": "compound_bitwise_extract",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 13.72
+    },
+    {
+      "name": "compound_arithmetic_identity",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 94.6
+    },
+    {
+      "name": "compound_demorgan",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 8.31
+    },
+    {
+      "name": "compound_mixed_ops",
+      "category": "compound",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 15.38
+    },
+    {
+      "name": "compound_predicate_combine",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 11.58
+    },
+    {
+      "name": "compound_abs_diff",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 14.31
+    },
+    {
+      "name": "compound_min3",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 6.44
+    },
+    {
+      "name": "compound_median3",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 49.52
+    },
+    {
+      "name": "compound_polynomial_eval",
+      "category": "compound",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 24.15
+    },
+    {
+      "name": "compound_collatz_step",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 12.63
+    },
+    {
+      "name": "compound_digit_sum",
+      "category": "compound",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 5.42
+    },
+    {
+      "name": "cf_early_return",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.32
+    },
+    {
+      "name": "cf_loop_vs_recursion",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.55
+    },
+    {
+      "name": "cf_goto_vs_loop",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 10.23
+    },
+    {
+      "name": "cf_do_while_vs_loop",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 6.19
+    },
+    {
+      "name": "cf_nested_break",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.85
+    },
+    {
+      "name": "cf_switch_fallthrough_sum",
+      "category": "control_flow",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.39
+    },
+    {
+      "name": "cf_for_vs_while",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.56
+    },
+    {
+      "name": "cf_continue_vs_if",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.55
+    },
+    {
+      "name": "cf_ternary_vs_if",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 11.08
+    },
+    {
+      "name": "cf_multiple_returns",
+      "category": "control_flow",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 3.26
+    },
+    {
+      "name": "array_sum",
+      "category": "memory",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 1.04
+    },
+    {
+      "name": "array_write_read",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 4.04
+    },
+    {
+      "name": "array_swap",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 8.68
+    },
+    {
+      "name": "ptr_offset_ub",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 2.66
+    },
+    {
+      "name": "null_deref_guard",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 1.51
+    },
+    {
+      "name": "struct_field_access",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 8.89
+    },
+    {
+      "name": "struct_modify",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 4.97
+    },
+    {
+      "name": "heap_alloc_use",
+      "category": "memory",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 7.61
+    },
+    {
+      "name": "c2rust_array_init",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 7.66
+    },
+    {
+      "name": "c2rust_conditional_ptr",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 7.12
+    },
+    {
+      "name": "c2rust_buffer_fill",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 5.04
+    },
+    {
+      "name": "c2rust_goto_elimination",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 5.34
+    },
+    {
+      "name": "c2rust_macro_expand",
+      "category": "c2rust",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 9.92
+    },
+    {
+      "name": "c2rust_strlen_simple",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 8.71
+    },
+    {
+      "name": "c2rust_bitfield_extract",
+      "category": "c2rust",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 19.33
+    },
+    {
+      "name": "matrix_multiply_2x2",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 15051.92
+    },
+    {
+      "name": "ring_buffer_insert",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 10.57
+    },
+    {
+      "name": "bubble_sort_3",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 27.34
+    },
+    {
+      "name": "linked_list_sum_unrolled",
+      "category": "memory_scaled",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 6.59
+    },
+    {
+      "name": "c2rust_error_cleanup",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 20.62
+    },
+    {
+      "name": "c2rust_state_machine",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 15.12
+    },
+    {
+      "name": "c2rust_gcd",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 18.34
+    },
+    {
+      "name": "c2rust_isqrt",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "equivalent",
+      "correct": true,
+      "time_ms": 11.36
+    },
+    {
+      "name": "c2rust_popcount",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 6.5
+    },
+    {
+      "name": "c2rust_reverse_bits",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 4.38
+    },
+    {
+      "name": "c2rust_next_power_of_two",
+      "category": "c2rust_realistic",
+      "expected": "divergent",
+      "actual": "divergent",
+      "correct": true,
+      "time_ms": 28.95
+    },
+    {
+      "name": "c2rust_atoi_simple",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 10.05
+    },
+    {
+      "name": "c2rust_hash_combine",
+      "category": "c2rust_realistic",
+      "expected": "divergent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.76
+    },
+    {
+      "name": "c2rust_errno_to_result",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 36.6
+    },
+    {
+      "name": "c2rust_crc8",
+      "category": "c2rust_realistic",
+      "expected": "equivalent",
+      "actual": "error",
+      "correct": false,
+      "time_ms": 2.3
     },
     {
       "name": "add_i8_overflow",
@@ -448,7 +1732,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.31
+      "time_ms": 10.49
     },
     {
       "name": "add_i16_overflow",
@@ -456,7 +1740,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.55
+      "time_ms": 10.2
     },
     {
       "name": "add_i64_overflow",
@@ -464,7 +1748,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.32
+      "time_ms": 9.81
     },
     {
       "name": "sub_i8_overflow",
@@ -472,7 +1756,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.16
+      "time_ms": 11.38
     },
     {
       "name": "mul_i16_overflow",
@@ -480,7 +1764,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 69.86
+      "time_ms": 30.86
     },
     {
       "name": "add_u32_wrap",
@@ -488,7 +1772,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.31
+      "time_ms": 2.6
     },
     {
       "name": "sub_u32_wrap",
@@ -496,7 +1780,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.89
+      "time_ms": 2.38
     },
     {
       "name": "mul_u32_wrap",
@@ -504,7 +1788,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.95
+      "time_ms": 2.71
     },
     {
       "name": "negate_i32",
@@ -512,7 +1796,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 1.88
+      "time_ms": 4.11
     },
     {
       "name": "negate_i8",
@@ -520,7 +1804,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 1.8
+      "time_ms": 4.23
     },
     {
       "name": "increment_i32",
@@ -528,7 +1812,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.1
+      "time_ms": 7.23
     },
     {
       "name": "decrement_i32",
@@ -536,7 +1820,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.0
+      "time_ms": 7.24
     },
     {
       "name": "abs_divergent",
@@ -544,7 +1828,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.34
+      "time_ms": 5.23
     },
     {
       "name": "abs_equivalent",
@@ -552,7 +1836,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.04
+      "time_ms": 5.52
     },
     {
       "name": "saturating_add",
@@ -560,7 +1844,7 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 7.34
+      "time_ms": 13.65
     },
     {
       "name": "double_add",
@@ -568,7 +1852,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.76
+      "time_ms": 8.25
     },
     {
       "name": "triple_add",
@@ -576,7 +1860,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.37
+      "time_ms": 11.17
     },
     {
       "name": "square_i32",
@@ -584,7 +1868,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 100.13
+      "time_ms": 93.41
     },
     {
       "name": "factorial_5",
@@ -592,7 +1876,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.4
+      "time_ms": 14.75
     },
     {
       "name": "signed_unsigned_add",
@@ -600,7 +1884,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.34
+      "time_ms": 6.12
     },
     {
       "name": "mul_pow2",
@@ -608,7 +1892,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.44
+      "time_ms": 23.13
     },
     {
       "name": "sum_squares",
@@ -616,7 +1900,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 118.09
+      "time_ms": 88.33
     },
     {
       "name": "midpoint_naive",
@@ -624,7 +1908,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.82
+      "time_ms": 17.29
     },
     {
       "name": "midpoint_safe",
@@ -632,7 +1916,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.37
+      "time_ms": 12.2
     },
     {
       "name": "poly_eval",
@@ -640,7 +1924,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.68
+      "time_ms": 19.15
     },
     {
       "name": "cond_add_equiv",
@@ -648,7 +1932,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.57
+      "time_ms": 7.6
     },
     {
       "name": "clamp_i32",
@@ -656,7 +1940,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 7.59
+      "time_ms": 14.73
     },
     {
       "name": "min_i32",
@@ -664,7 +1948,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.76
+      "time_ms": 3.79
     },
     {
       "name": "max_i32",
@@ -672,15 +1956,15 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.86
+      "time_ms": 3.87
     },
     {
       "name": "sign_func",
       "category": "arithmetic",
       "expected": "conditional",
       "actual": "error",
-      "correct": true,
-      "time_ms": 1.79
+      "correct": false,
+      "time_ms": 2.98
     },
     {
       "name": "div_by_zero_i32",
@@ -688,7 +1972,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 2.61
+      "time_ms": 4.03
     },
     {
       "name": "div_by_zero_i8",
@@ -696,7 +1980,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 2.15
+      "time_ms": 7.05
     },
     {
       "name": "mod_by_zero",
@@ -704,7 +1988,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 23.81
+      "time_ms": 31.08
     },
     {
       "name": "intmin_div_neg1",
@@ -712,7 +1996,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 2.67
+      "time_ms": 3.72
     },
     {
       "name": "intmin_mod_neg1",
@@ -720,23 +2004,23 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 23.25
+      "time_ms": 27.63
     },
     {
       "name": "safe_div",
       "category": "division",
       "expected": "conditional",
-      "actual": "unknown",
+      "actual": "divergent",
       "correct": true,
-      "time_ms": 2.27
+      "time_ms": 41.65
     },
     {
       "name": "safe_mod",
       "category": "division",
       "expected": "conditional",
-      "actual": "unknown",
+      "actual": "divergent",
       "correct": true,
-      "time_ms": 2.05
+      "time_ms": 31.48
     },
     {
       "name": "div_round_down",
@@ -744,7 +2028,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 2.48
+      "time_ms": 6.23
     },
     {
       "name": "div_positive",
@@ -752,7 +2036,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 46.29
+      "time_ms": 85.89
     },
     {
       "name": "neg_mod",
@@ -760,7 +2044,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 131.99
+      "time_ms": 190.6
     },
     {
       "name": "pow2_div",
@@ -768,7 +2052,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.03
+      "time_ms": 8.44
     },
     {
       "name": "mod_pow2",
@@ -776,7 +2060,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.0
+      "time_ms": 7.78
     },
     {
       "name": "gcd_iter",
@@ -784,7 +2068,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.37
+      "time_ms": 14.2
     },
     {
       "name": "div_ceil",
@@ -792,15 +2076,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 989.39
+      "time_ms": 5917.21
     },
     {
       "name": "is_divisible",
       "category": "division",
       "expected": "conditional",
-      "actual": "error",
+      "actual": "divergent",
       "correct": true,
-      "time_ms": 0.76
+      "time_ms": 34.22
     },
     {
       "name": "shl_overwidth_i32",
@@ -808,7 +2092,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.8
+      "time_ms": 10.2
     },
     {
       "name": "shr_overwidth_i32",
@@ -816,7 +2100,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.26
+      "time_ms": 14.66
     },
     {
       "name": "shl_negative",
@@ -824,7 +2108,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.11
+      "time_ms": 14.69
     },
     {
       "name": "shr_negative_value",
@@ -832,7 +2116,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.48
+      "time_ms": 23.14
     },
     {
       "name": "shl_i8",
@@ -840,7 +2124,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.97
+      "time_ms": 22.75
     },
     {
       "name": "shl_safe",
@@ -848,7 +2132,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.96
+      "time_ms": 18.78
     },
     {
       "name": "shr_safe",
@@ -856,7 +2140,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.68
+      "time_ms": 6.53
     },
     {
       "name": "shl_1",
@@ -864,7 +2148,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.22
+      "time_ms": 12.5
     },
     {
       "name": "bit_extract",
@@ -872,7 +2156,7 @@
       "expected": "conditional",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 4.13
+      "time_ms": 7.12
     },
     {
       "name": "rotate_left",
@@ -880,7 +2164,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.27
+      "time_ms": 16.45
     },
     {
       "name": "rotate_right",
@@ -888,7 +2172,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.38
+      "time_ms": 17.43
     },
     {
       "name": "arith_shr",
@@ -896,7 +2180,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 7.38
+      "time_ms": 9.8
     },
     {
       "name": "logical_shr",
@@ -904,7 +2188,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.15
+      "time_ms": 21.36
     },
     {
       "name": "shift_add_mul",
@@ -912,7 +2196,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 16.07
+      "time_ms": 34.42
     },
     {
       "name": "i64_to_i32_trunc",
@@ -920,7 +2204,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.41
+      "time_ms": 1.93
     },
     {
       "name": "i32_to_i8_trunc",
@@ -928,7 +2212,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.54
+      "time_ms": 2.8
     },
     {
       "name": "i32_to_i16_trunc",
@@ -936,7 +2220,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.52
+      "time_ms": 2.65
     },
     {
       "name": "u32_to_i32_reinterpret",
@@ -944,7 +2228,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.39
+      "time_ms": 1.57
     },
     {
       "name": "i32_to_u32_reinterpret",
@@ -952,7 +2236,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.12
+      "time_ms": 2.24
     },
     {
       "name": "char_to_int_sign",
@@ -960,7 +2244,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.17
+      "time_ms": 1.94
     },
     {
       "name": "int_to_bool",
@@ -968,15 +2252,15 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.73
+      "time_ms": 3.83
     },
     {
       "name": "bool_to_int",
       "category": "cast",
       "expected": "conditional",
       "actual": "error",
-      "correct": true,
-      "time_ms": 1.79
+      "correct": false,
+      "time_ms": 2.9
     },
     {
       "name": "i8_to_i32_widen",
@@ -984,7 +2268,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.36
+      "time_ms": 4.38
     },
     {
       "name": "i16_to_i32_widen",
@@ -992,7 +2276,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.21
+      "time_ms": 2.19
     },
     {
       "name": "u8_to_u32_widen",
@@ -1000,7 +2284,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.21
+      "time_ms": 2.07
     },
     {
       "name": "mask_to_byte",
@@ -1008,7 +2292,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.98
+      "time_ms": 1.99
     },
     {
       "name": "sign_extend_manual",
@@ -1016,7 +2300,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.05
+      "time_ms": 3.03
     },
     {
       "name": "bit_and",
@@ -1024,7 +2308,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.83
+      "time_ms": 3.05
     },
     {
       "name": "bit_or",
@@ -1032,7 +2316,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.68
+      "time_ms": 3.17
     },
     {
       "name": "bit_xor",
@@ -1040,23 +2324,23 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.65
+      "time_ms": 2.59
     },
     {
       "name": "bit_not",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 1.17
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 4.5
     },
     {
       "name": "popcount",
       "category": "bitwise",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 2.74
+      "correct": false,
+      "time_ms": 4.77
     },
     {
       "name": "count_leading_zeros",
@@ -1064,7 +2348,7 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.62
+      "time_ms": 8.94
     },
     {
       "name": "is_power_of_2",
@@ -1072,15 +2356,15 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.31
+      "time_ms": 9.72
     },
     {
       "name": "next_power_of_2",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 19.03
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 30.7
     },
     {
       "name": "swap_bytes",
@@ -1088,7 +2372,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.41
+      "time_ms": 8.5
     },
     {
       "name": "bit_reverse",
@@ -1096,7 +2380,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 15.36
+      "time_ms": 20.69
     },
     {
       "name": "bit_set",
@@ -1104,15 +2388,15 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 3.15
+      "time_ms": 4.32
     },
     {
       "name": "bit_clear",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 3.27
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 9.77
     },
     {
       "name": "bit_toggle",
@@ -1120,15 +2404,15 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.95
+      "time_ms": 4.09
     },
     {
       "name": "parity",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 16.24
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 23.58
     },
     {
       "name": "extract_bits",
@@ -1136,39 +2420,39 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 8.88
+      "time_ms": 14.0
     },
     {
       "name": "countdown",
       "category": "control_flow",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 2.99
+      "correct": false,
+      "time_ms": 2.88
     },
     {
       "name": "sum_to_n",
       "category": "control_flow",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 2.23
+      "correct": false,
+      "time_ms": 2.73
     },
     {
       "name": "fibonacci",
       "category": "control_flow",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 2.85
+      "correct": false,
+      "time_ms": 2.68
     },
     {
       "name": "collatz_steps",
       "category": "control_flow",
       "expected": "conditional",
       "actual": "error",
-      "correct": true,
-      "time_ms": 1.04
+      "correct": false,
+      "time_ms": 1.1
     },
     {
       "name": "linear_search",
@@ -1176,7 +2460,7 @@
       "expected": "conditional",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 9.55
+      "time_ms": 12.83
     },
     {
       "name": "nested_ternary",
@@ -1184,7 +2468,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 11.39
+      "time_ms": 14.24
     },
     {
       "name": "switch_like",
@@ -1192,7 +2476,7 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.94
+      "time_ms": 10.77
     },
     {
       "name": "early_return",
@@ -1200,23 +2484,23 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 5.42
+      "time_ms": 9.82
     },
     {
       "name": "loop_with_break",
       "category": "control_flow",
       "expected": "conditional",
       "actual": "error",
-      "correct": true,
-      "time_ms": 0.98
+      "correct": false,
+      "time_ms": 1.01
     },
     {
       "name": "nested_loops",
       "category": "control_flow",
       "expected": "conditional",
       "actual": "error",
-      "correct": true,
-      "time_ms": 1.22
+      "correct": false,
+      "time_ms": 1.61
     },
     {
       "name": "djb2_hash_step",
@@ -1224,7 +2508,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.2
+      "time_ms": 5.5
     },
     {
       "name": "fnv1a_step",
@@ -1232,39 +2516,39 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.58
+      "time_ms": 3.96
     },
     {
       "name": "murmur_fmix",
       "category": "real_patterns",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 81.47
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.79
     },
     {
       "name": "crc_step",
       "category": "real_patterns",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 6.85
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 12.62
     },
     {
       "name": "align_up",
       "category": "real_patterns",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 3.45
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 19.35
     },
     {
       "name": "align_down",
       "category": "real_patterns",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 2.31
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 20.3
     },
     {
       "name": "clamp_u8",
@@ -1272,7 +2556,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 5.25
+      "time_ms": 10.0
     },
     {
       "name": "sat_sub_u32",
@@ -1280,7 +2564,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 12.34
+      "time_ms": 17.39
     },
     {
       "name": "read_be16",
@@ -1288,7 +2572,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 3.45
+      "time_ms": 5.38
     },
     {
       "name": "read_be32",
@@ -1296,7 +2580,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 10.02
+      "time_ms": 18.19
     },
     {
       "name": "base64_char",
@@ -1304,7 +2588,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 18.87
+      "time_ms": 35.95
     },
     {
       "name": "fixed_mul_q15",
@@ -1312,7 +2596,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 175.18
+      "time_ms": 96.57
     },
     {
       "name": "fixed_lerp",
@@ -1320,15 +2604,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 8.27
+      "time_ms": 64.1
     },
     {
       "name": "inet_checksum_step",
       "category": "real_patterns",
       "expected": "conditional",
       "actual": "error",
-      "correct": true,
-      "time_ms": 2.73
+      "correct": false,
+      "time_ms": 7.33
     },
     {
       "name": "min3",
@@ -1336,7 +2620,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.37
+      "time_ms": 11.98
     },
     {
       "name": "max3",
@@ -1344,7 +2628,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.6
+      "time_ms": 8.24
     },
     {
       "name": "median3",
@@ -1352,15 +2636,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 12.18
+      "time_ms": 30.77
     },
     {
       "name": "hamming_dist",
       "category": "real_patterns",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 3.84
+      "correct": false,
+      "time_ms": 5.49
     },
     {
       "name": "isqrt",
@@ -1368,7 +2652,7 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.93
+      "time_ms": 10.31
     },
     {
       "name": "pack_rgb",
@@ -1376,7 +2660,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 7.28
+      "time_ms": 15.28
     },
     {
       "name": "unpack_r",
@@ -1384,15 +2668,15 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.8
+      "time_ms": 3.47
     },
     {
       "name": "errno_to_result",
       "category": "real_patterns",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 2.68
+      "correct": false,
+      "time_ms": 2.62
     },
     {
       "name": "avg_no_overflow",
@@ -1400,31 +2684,31 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 7.76
+      "time_ms": 12.24
     },
     {
       "name": "fls",
       "category": "real_patterns",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 10.26
+      "correct": false,
+      "time_ms": 12.87
     },
     {
       "name": "pow_mod",
       "category": "real_patterns",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 7.74
+      "correct": false,
+      "time_ms": 9.03
     },
     {
       "name": "state_machine",
       "category": "real_patterns",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 5.66
+      "correct": false,
+      "time_ms": 6.25
     },
     {
       "name": "add_then_shift",
@@ -1432,7 +2716,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.57
+      "time_ms": 11.54
     },
     {
       "name": "mul_then_div",
@@ -1440,7 +2724,7 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 1324.93
+      "time_ms": 160.21
     },
     {
       "name": "shift_then_cast",
@@ -1448,7 +2732,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.73
+      "time_ms": 11.97
     },
     {
       "name": "abs_then_div",
@@ -1456,15 +2740,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 82.0
+      "time_ms": 33.35
     },
     {
       "name": "square_then_mod",
       "category": "compound",
       "expected": "conditional",
-      "actual": "unknown",
+      "actual": "divergent",
       "correct": true,
-      "time_ms": 5076.27
+      "time_ms": 183.51
     },
     {
       "name": "weighted_avg",
@@ -1472,23 +2756,23 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 100.24
+      "time_ms": 121.09
     },
     {
       "name": "range_check_add",
       "category": "compound",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 5.3
+      "correct": false,
+      "time_ms": 15.13
     },
     {
       "name": "distance_2d",
       "category": "compound",
       "expected": "conditional",
       "actual": "unknown",
-      "correct": true,
-      "time_ms": 5034.7
+      "correct": false,
+      "time_ms": 15195.2
     },
     {
       "name": "dot_product_2d",
@@ -1496,7 +2780,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 95.62
+      "time_ms": 640.1
     },
     {
       "name": "cross_product_2d",
@@ -1504,15 +2788,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 88.74
+      "time_ms": 117.01
     },
     {
       "name": "hash_combine",
       "category": "compound",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 10.07
+      "actual": "unknown",
+      "correct": false,
+      "time_ms": 6.24
     },
     {
       "name": "safe_mul_check",
@@ -1520,7 +2804,7 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 146.51
+      "time_ms": 152.56
     },
     {
       "name": "identity_add_0",
@@ -1528,7 +2812,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.93
+      "time_ms": 5.79
     },
     {
       "name": "identity_mul_1",
@@ -1536,7 +2820,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.91
+      "time_ms": 4.7
     },
     {
       "name": "negate_twice",
@@ -1544,7 +2828,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.08
+      "time_ms": 5.18
     },
     {
       "name": "sub_self",
@@ -1552,7 +2836,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 6.38
+      "time_ms": 3.64
     },
     {
       "name": "xor_self",
@@ -1560,7 +2844,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.66
+      "time_ms": 2.5
     },
     {
       "name": "and_self",
@@ -1568,7 +2852,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 2.1
+      "time_ms": 1.93
     },
     {
       "name": "or_self",
@@ -1576,7 +2860,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.52
+      "time_ms": 2.27
     },
     {
       "name": "add_sub_cancel",
@@ -1584,7 +2868,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 7.25
+      "time_ms": 13.77
     },
     {
       "name": "mul_neg1",
@@ -1592,7 +2876,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 8.83
+      "time_ms": 8.12
     },
     {
       "name": "complement_add_1",
@@ -1600,7 +2884,7 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 4.41
+      "time_ms": 11.32
     },
     {
       "name": "max_val_add_1",
@@ -1608,15 +2892,15 @@
       "expected": "divergent",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 3.71
+      "time_ms": 6.48
     },
     {
       "name": "zero_div_anything",
       "category": "division",
       "expected": "conditional",
-      "actual": "unknown",
+      "actual": "equivalent",
       "correct": true,
-      "time_ms": 1.77
+      "time_ms": 67.6
     },
     {
       "name": "power_of_2_test",
@@ -1624,15 +2908,15 @@
       "expected": "conditional",
       "actual": "divergent",
       "correct": true,
-      "time_ms": 6.39
+      "time_ms": 10.41
     },
     {
       "name": "demorgan_and",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 7.05
+      "actual": "divergent",
+      "correct": false,
+      "time_ms": 11.54
     },
     {
       "name": "ternary_assign",
@@ -1640,7 +2924,7 @@
       "expected": "equivalent",
       "actual": "equivalent",
       "correct": true,
-      "time_ms": 5.37
+      "time_ms": 3.54
     },
     {
       "name": "my_strlen",
@@ -1648,7 +2932,7 @@
       "expected": "equivalent",
       "actual": "error",
       "correct": false,
-      "time_ms": 0.92
+      "time_ms": 0.09
     },
     {
       "name": "my_strcmp",
@@ -1656,7 +2940,7 @@
       "expected": "divergent",
       "actual": "error",
       "correct": false,
-      "time_ms": 1.99
+      "time_ms": 0.05
     },
     {
       "name": "my_strncpy",
@@ -1664,39 +2948,39 @@
       "expected": "equivalent",
       "actual": "error",
       "correct": false,
-      "time_ms": 1.79
+      "time_ms": 0.04
     },
     {
       "name": "my_memcmp",
       "category": "string",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.59
+      "time_ms": 0.04
     },
     {
       "name": "my_memset",
       "category": "string",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.86
+      "time_ms": 0.04
     },
     {
       "name": "my_strchr",
       "category": "string",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.37
+      "time_ms": 0.04
     },
     {
       "name": "my_strrchr",
       "category": "string",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.89
+      "time_ms": 0.04
     },
     {
       "name": "my_strncat",
@@ -1704,7 +2988,7 @@
       "expected": "equivalent",
       "actual": "error",
       "correct": false,
-      "time_ms": 2.71
+      "time_ms": 0.04
     },
     {
       "name": "str_to_upper",
@@ -1712,391 +2996,391 @@
       "expected": "divergent",
       "actual": "error",
       "correct": false,
-      "time_ms": 1.57
+      "time_ms": 0.04
     },
     {
       "name": "count_char",
       "category": "string",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.93
+      "time_ms": 0.04
     },
     {
       "name": "my_abs",
       "category": "math",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.66
+      "time_ms": 0.04
     },
     {
       "name": "clamp",
       "category": "math",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 9.13
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "int_min",
       "category": "math",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 3.45
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "int_max",
       "category": "math",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 5.8
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "gcd",
       "category": "math",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 8.57
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "lcm",
       "category": "math",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 69.03
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "isqrt",
       "category": "math",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 41.86
+      "time_ms": 0.04
     },
     {
       "name": "ipow",
       "category": "math",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.87
+      "time_ms": 0.04
     },
     {
       "name": "modpow",
       "category": "math",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 181.61
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "factorial",
       "category": "math",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.04
+      "time_ms": 0.04
     },
     {
       "name": "fibonacci",
       "category": "math",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 11.84
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "div_ceil",
       "category": "math",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 21.58
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "popcount",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.05
+      "time_ms": 0.04
     },
     {
       "name": "clz",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 16.51
+      "time_ms": 0.04
     },
     {
       "name": "ctz",
       "category": "bitwise",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 14.69
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "is_power_of_2",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 6.91
+      "time_ms": 0.04
     },
     {
       "name": "next_power_of_2",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 26.46
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "reverse_bits",
       "category": "bitwise",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.23
+      "time_ms": 0.04
     },
     {
       "name": "rotate_left",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 9.95
+      "time_ms": 0.04
     },
     {
       "name": "rotate_right",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 10.7
+      "time_ms": 0.04
     },
     {
       "name": "parity",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 20.44
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "highest_bit",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.24
+      "time_ms": 0.04
     },
     {
       "name": "linear_search",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.63
+      "time_ms": 0.04
     },
     {
       "name": "binary_search",
       "category": "array",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.77
+      "time_ms": 0.04
     },
     {
       "name": "sum_array",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.56
+      "time_ms": 0.04
     },
     {
       "name": "max_element",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.93
+      "time_ms": 0.04
     },
     {
       "name": "reverse_array",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 7.1
+      "time_ms": 0.04
     },
     {
       "name": "rotate_array",
       "category": "array",
       "expected": "unknown",
-      "actual": "unknown",
-      "correct": true,
-      "time_ms": 17.02
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.05
     },
     {
       "name": "partition",
       "category": "array",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 13.81
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "count_if",
       "category": "array",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.98
+      "time_ms": 0.04
     },
     {
       "name": "any_match",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.12
+      "time_ms": 0.04
     },
     {
       "name": "find_first",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 2.65
+      "time_ms": 0.04
     },
     {
       "name": "djb2_hash",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.54
+      "time_ms": 0.04
     },
     {
       "name": "fnv1a_hash",
       "category": "crypto",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.25
+      "time_ms": 0.04
     },
     {
       "name": "crc32_step",
       "category": "crypto",
       "expected": "divergent",
-      "actual": "equivalent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 6.61
+      "time_ms": 0.04
     },
     {
       "name": "xor_cipher",
       "category": "crypto",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.06
+      "time_ms": 0.04
     },
     {
       "name": "byte_swap_32",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 9.28
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "endian_swap_16",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 8.13
+      "time_ms": 0.04
     },
     {
       "name": "lcg_next",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 4.36
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "simple_checksum",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.83
+      "time_ms": 0.04
     },
     {
       "name": "stack_push",
       "category": "data-structure",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 9.31
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "stack_pop",
       "category": "data-structure",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 7.04
+      "time_ms": 0.04
     },
     {
       "name": "circular_buffer_write",
       "category": "data-structure",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 17.87
+      "time_ms": 0.04
     },
     {
       "name": "circular_buffer_read",
       "category": "data-structure",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 11.79
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "node_insert_after",
       "category": "data-structure",
       "expected": "unknown",
-      "actual": "unknown",
-      "correct": true,
-      "time_ms": 9.19
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "node_remove_after",
       "category": "data-structure",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 8.34
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "priority_compare",
       "category": "data-structure",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 12.74
+      "time_ms": 0.04
     },
     {
       "name": "heap_parent_child",
@@ -2104,55 +3388,55 @@
       "expected": "equivalent",
       "actual": "error",
       "correct": false,
-      "time_ms": 4.01
+      "time_ms": 0.04
     },
     {
       "name": "checked_add",
       "category": "error-handling",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 37.85
+      "time_ms": 0.04
     },
     {
       "name": "checked_mul",
       "category": "error-handling",
       "expected": "unknown",
-      "actual": "unknown",
-      "correct": true,
-      "time_ms": 4.27
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "safe_div",
       "category": "error-handling",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 5.85
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "saturating_add",
       "category": "error-handling",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 8.25
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "saturating_sub",
       "category": "error-handling",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 8.79
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "clamped_div",
       "category": "error-handling",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 30.03
+      "time_ms": 0.04
     },
     {
       "name": "try_parse_digit",
@@ -2160,175 +3444,175 @@
       "expected": "divergent",
       "actual": "error",
       "correct": false,
-      "time_ms": 1.15
+      "time_ms": 0.04
     },
     {
       "name": "safe_array_access",
       "category": "error-handling",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 7.58
+      "time_ms": 0.04
     },
     {
       "name": "fixed_point_mul",
       "category": "dsp",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 639.31
+      "time_ms": 0.04
     },
     {
       "name": "saturating_add_16",
       "category": "dsp",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 14.51
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "moving_average_step",
       "category": "dsp",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5045.28
+      "time_ms": 0.04
     },
     {
       "name": "fir_tap",
       "category": "dsp",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.65
+      "time_ms": 0.04
     },
     {
       "name": "clip_to_range",
       "category": "dsp",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 11.23
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "scale_value",
       "category": "dsp",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 183.2
+      "time_ms": 0.04
     },
     {
       "name": "pack_bytes_u32",
       "category": "network",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 9.45
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "ntohs",
       "category": "network",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 5.04
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "ntohl",
       "category": "network",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 7.87
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "ip_to_int",
       "category": "network",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 11.98
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "inet_checksum_step",
       "category": "network",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 5.85
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "extract_header_field",
       "category": "network",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 8.01
+      "time_ms": 0.04
     },
     {
       "name": "date_to_days",
       "category": "mixed",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 85.24
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "is_leap_year",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 11.37
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "temp_f_to_c_fixed",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 16.16
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "rgb_pack",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 7.69
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "rgb_unpack_r",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 1.86
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "rgb_unpack_g",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 3.67
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "manhattan_distance",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 15.77
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "days_in_month",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.23
+      "time_ms": 0.04
     },
     {
       "name": "safe_strlen",
@@ -2336,231 +3620,231 @@
       "expected": "divergent",
       "actual": "error",
       "correct": false,
-      "time_ms": 0.91
+      "time_ms": 0.04
     },
     {
       "name": "sign",
       "category": "math",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 3.58
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "bit_extract",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 8.08
+      "time_ms": 0.04
     },
     {
       "name": "bit_set",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.57
+      "time_ms": 0.04
     },
     {
       "name": "bit_clear",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.27
+      "time_ms": 0.04
     },
     {
       "name": "insertion_sort_step",
       "category": "array",
       "expected": "unknown",
       "actual": "error",
-      "correct": true,
-      "time_ms": 1.41
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "merge_step",
       "category": "array",
       "expected": "unknown",
       "actual": "error",
-      "correct": true,
-      "time_ms": 2.12
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "adler32_step",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 6.94
+      "time_ms": 0.04
     },
     {
       "name": "sdbm_hash",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.47
+      "time_ms": 0.04
     },
     {
       "name": "mix_hash",
       "category": "crypto",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 29.03
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "ring_buffer_full",
       "category": "data-structure",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.31
+      "time_ms": 0.04
     },
     {
       "name": "ring_buffer_empty",
       "category": "data-structure",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 2.11
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "ring_buffer_count",
       "category": "data-structure",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 70.87
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "min3",
       "category": "math",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.45
+      "time_ms": 0.04
     },
     {
       "name": "max3",
       "category": "math",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.34
+      "time_ms": 0.04
     },
     {
       "name": "midpoint",
       "category": "math",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 14.69
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "encode_zigzag",
       "category": "network",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 4.21
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "decode_zigzag",
       "category": "network",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.64
+      "time_ms": 0.04
     },
     {
       "name": "varint_size",
       "category": "network",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 2.36
+      "time_ms": 0.04
     },
     {
       "name": "alpha_blend",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 233.94
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "lerp_fixed",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 11.07
+      "time_ms": 0.04
     },
     {
       "name": "gray_from_rgb",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 37.81
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "map_range",
       "category": "dsp",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 11.89
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "quantize",
       "category": "dsp",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 359.54
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "weighted_sum_2",
       "category": "dsp",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5030.26
+      "time_ms": 0.04
     },
     {
       "name": "array_dot_product",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.04
+      "time_ms": 0.04
     },
     {
       "name": "prefix_sum",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.49
+      "time_ms": 0.04
     },
     {
       "name": "array_shift_left",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 6.17
+      "time_ms": 0.04
     },
     {
       "name": "count_zeros",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 2.98
+      "time_ms": 0.04
     },
     {
       "name": "atoi_simple",
@@ -2568,95 +3852,95 @@
       "expected": "divergent",
       "actual": "error",
       "correct": false,
-      "time_ms": 2.24
+      "time_ms": 0.04
     },
     {
       "name": "itoa_simple",
       "category": "string",
       "expected": "unknown",
       "actual": "error",
-      "correct": true,
-      "time_ms": 3.31
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "hamming_distance",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.58
+      "time_ms": 0.04
     },
     {
       "name": "swap_nibbles",
       "category": "bitwise",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 7.82
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "interleave_bits",
       "category": "bitwise",
       "expected": "divergent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.43
+      "time_ms": 0.04
     },
     {
       "name": "safe_mod",
       "category": "error-handling",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 2.44
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "errno_style_open",
       "category": "error-handling",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 8.45
+      "time_ms": 0.04
     },
     {
       "name": "checked_shift_left",
       "category": "error-handling",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 10.61
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "downsample_2x",
       "category": "dsp",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.06
+      "time_ms": 0.04
     },
     {
       "name": "upsample_zoh",
       "category": "dsp",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.59
+      "time_ms": 0.04
     },
     {
       "name": "apply_gain",
       "category": "dsp",
       "expected": "unknown",
-      "actual": "unknown",
-      "correct": true,
-      "time_ms": 5.17
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "subnet_match",
       "category": "network",
       "expected": "unknown",
       "actual": "error",
-      "correct": true,
-      "time_ms": 6.41
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "unpack_port",
@@ -2664,175 +3948,175 @@
       "expected": "equivalent",
       "actual": "error",
       "correct": false,
-      "time_ms": 3.2
+      "time_ms": 0.04
     },
     {
       "name": "pack_port",
       "category": "network",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.09
+      "time_ms": 0.04
     },
     {
       "name": "rgb_to_hsv_hue",
       "category": "mixed",
       "expected": "unknown",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 348.06
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "bcd_to_int",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 4.9
+      "time_ms": 0.04
     },
     {
       "name": "int_to_bcd",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.5
+      "time_ms": 0.04
     },
     {
       "name": "distance_squared",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5031.11
+      "time_ms": 0.04
     },
     {
       "name": "clamp_to_u8",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "equivalent",
-      "correct": true,
-      "time_ms": 11.0
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "bilinear_weight",
       "category": "mixed",
       "expected": "unknown",
-      "actual": "unknown",
-      "correct": true,
-      "time_ms": 5092.92
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "find_majority",
       "category": "array",
       "expected": "unknown",
-      "actual": "unknown",
-      "correct": true,
-      "time_ms": 4.78
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "kadane_max_subarray",
       "category": "array",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 23.54
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "two_complement_negate",
       "category": "bitwise",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.49
+      "time_ms": 0.05
     },
     {
       "name": "abs_diff",
       "category": "math",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 8.27
+      "time_ms": 0.05
     },
     {
       "name": "average_3",
       "category": "math",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 7.93
+      "time_ms": 0.04
     },
     {
       "name": "is_sorted",
       "category": "array",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 3.17
+      "time_ms": 0.04
     },
     {
       "name": "xor_reduce",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "unknown",
+      "actual": "error",
       "correct": false,
-      "time_ms": 2.83
+      "time_ms": 0.04
     },
     {
       "name": "pearson_hash_step",
       "category": "crypto",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.3
+      "time_ms": 0.04
     },
     {
       "name": "bounded_increment",
       "category": "error-handling",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 7.59
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "bounded_decrement",
       "category": "error-handling",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.09
+      "time_ms": 0.04
     },
     {
       "name": "celsius_to_kelvin_fixed",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 5.44
+      "time_ms": 0.04
     },
     {
       "name": "wrap_angle",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 2.13
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     },
     {
       "name": "point_in_rect",
       "category": "mixed",
       "expected": "equivalent",
-      "actual": "divergent",
+      "actual": "error",
       "correct": false,
-      "time_ms": 14.64
+      "time_ms": 0.04
     },
     {
       "name": "rects_overlap",
       "category": "mixed",
       "expected": "divergent",
-      "actual": "divergent",
-      "correct": true,
-      "time_ms": 18.99
+      "actual": "error",
+      "correct": false,
+      "time_ms": 0.04
     }
   ]
 }

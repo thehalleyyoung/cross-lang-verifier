@@ -40,6 +40,10 @@ class NormalizationPass(Enum):
     REMOVE_IDENTITY_OPS = auto()
     CANONICALIZE_COMPARISONS = auto()
     MERGE_REDUNDANT_BLOCKS = auto()
+    NORMALIZE_WRAPPING_CALLS = auto()
+    NORMALIZE_CAST_CHAINS = auto()
+    NORMALIZE_BRANCH_PHI_TO_SELECT = auto()
+    NORMALIZE_BOOL_COMPARISONS = auto()
 
 
 @dataclass
@@ -69,6 +73,10 @@ class NormalizationStats:
     comparisons_canonicalized: int = 0
     blocks_merged: int = 0
     iterations: int = 0
+    wrapping_calls_normalized: int = 0
+    cast_chains_normalized: int = 0
+    branch_phi_to_select: int = 0
+    bool_comparisons_normalized: int = 0
 
     def summary(self) -> str:
         lines = [
@@ -80,6 +88,10 @@ class NormalizationStats:
             f"  Identity ops removed: {self.identity_ops_removed}",
             f"  Comparisons canonicalized: {self.comparisons_canonicalized}",
             f"  Blocks merged: {self.blocks_merged}",
+            f"  Wrapping calls normalized: {self.wrapping_calls_normalized}",
+            f"  Cast chains normalized: {self.cast_chains_normalized}",
+            f"  Branch+phi to select: {self.branch_phi_to_select}",
+            f"  Bool comparisons normalized: {self.bool_comparisons_normalized}",
         ]
         return "\n".join(lines)
 
@@ -136,6 +148,10 @@ class IRNormalizer:
             NormalizationPass.REMOVE_IDENTITY_OPS: self._remove_identity_ops,
             NormalizationPass.CANONICALIZE_COMPARISONS: self._canonicalize_comparisons,
             NormalizationPass.MERGE_REDUNDANT_BLOCKS: self._merge_redundant_blocks,
+            NormalizationPass.NORMALIZE_WRAPPING_CALLS: self._normalize_wrapping_calls,
+            NormalizationPass.NORMALIZE_CAST_CHAINS: self._normalize_cast_chains,
+            NormalizationPass.NORMALIZE_BRANCH_PHI_TO_SELECT: self._normalize_branch_phi_to_select,
+            NormalizationPass.NORMALIZE_BOOL_COMPARISONS: self._normalize_bool_comparisons,
         }
         handler = dispatch.get(pass_type)
         if handler:
@@ -579,5 +595,195 @@ class IRNormalizer:
                             func.remove_block(block)
                         except (ValueError, AttributeError):
                             pass
+
+        return changed
+
+    # ------------------------------------------------------------------
+    # Pass: Normalize wrapping method calls
+    # ------------------------------------------------------------------
+
+    def _normalize_wrapping_calls(self, func: Function) -> bool:
+        """Normalize .wrapping_add(x, y) calls to add(x, y) with wrap annotation."""
+        changed = False
+        _WRAPPING_OPS = {
+            "wrapping_add": BinOpKind.ADD, "wrapping_sub": BinOpKind.SUB,
+            "wrapping_mul": BinOpKind.MUL,
+        }
+
+        to_replace: List[Tuple[BasicBlock, CallInst, BinaryOp]] = []
+
+        for block in func.blocks:
+            for inst in list(block.instructions):
+                if not isinstance(inst, CallInst):
+                    continue
+                callee = inst.callee_name
+                for method, op_kind in _WRAPPING_OPS.items():
+                    if method in callee and len(inst.args) >= 2:
+                        lhs_val = inst.args[0]
+                        rhs_val = inst.args[1]
+                        binop = BinaryOp(
+                            op=op_kind,
+                            lhs=lhs_val,
+                            rhs=rhs_val,
+                            type=inst.type,
+                            name=inst.name or "",
+                            overflow=OverflowBehavior.WRAP,
+                        )
+                        to_replace.append((block, inst, binop))
+                        self.stats.wrapping_calls_normalized += 1
+                        changed = True
+                        break
+
+        for block, old_inst, new_inst in to_replace:
+            try:
+                idx = list(block.instructions).index(old_inst)
+                old_inst.replace_all_uses_with(new_inst)
+                block.remove(old_inst)
+                block.insert(idx, new_inst)
+            except (ValueError, AttributeError):
+                pass
+
+        return changed
+
+    # ------------------------------------------------------------------
+    # Pass: Normalize cast chains
+    # ------------------------------------------------------------------
+
+    def _normalize_cast_chains(self, func: Function) -> bool:
+        """Normalize C cast chains (e.g., int→long→unsigned) to single direct cast."""
+        changed = False
+        to_remove: List[Tuple[BasicBlock, Instruction]] = []
+
+        for block in func.blocks:
+            for inst in list(block.instructions):
+                if not isinstance(inst, CastInst):
+                    continue
+                src = inst._operands[0]
+                if not isinstance(src, CastInst):
+                    continue
+                # We have a chain: original → src (cast1) → inst (cast2)
+                original = src._operands[0]
+                orig_type = original.type
+                final_type = inst.type
+
+                if orig_type == final_type:
+                    # Round-trip: remove both
+                    inst.replace_all_uses_with(original)
+                    to_remove.append((block, inst))
+                    self.stats.cast_chains_normalized += 1
+                    changed = True
+                elif isinstance(orig_type, IntType) and isinstance(final_type, IntType):
+                    # Collapse int→int→int chain to single cast
+                    if final_type.width > orig_type.width:
+                        new_kind = CastKind.SEXT if final_type.is_signed else CastKind.ZEXT
+                    elif final_type.width < orig_type.width:
+                        new_kind = CastKind.TRUNC
+                    else:
+                        new_kind = CastKind.BITCAST
+
+                    inst._operands[0] = original
+                    inst.cast_kind = new_kind
+                    if len(src.users) == 0:
+                        to_remove.append((block, src))
+                    self.stats.cast_chains_normalized += 1
+                    changed = True
+
+        for block, inst in to_remove:
+            try:
+                block.remove(inst)
+            except (ValueError, AttributeError):
+                pass
+
+        return changed
+
+    # ------------------------------------------------------------------
+    # Pass: Normalize conditional branch + phi to select
+    # ------------------------------------------------------------------
+
+    def _normalize_branch_phi_to_select(self, func: Function) -> bool:
+        """Normalize conditional branch + phi to select instruction where possible."""
+        changed = False
+
+        for block in list(func.blocks):
+            insts = list(block.instructions)
+            if not insts:
+                continue
+
+            last = insts[-1]
+            if not isinstance(last, BranchInst) or not last.is_conditional:
+                continue
+
+            true_block = last._true_target
+            false_block = last._false_target
+            if true_block is None or false_block is None:
+                continue
+
+            # Both branches must be single-instruction + unconditional branch to same merge
+            true_insts = list(true_block.instructions)
+            false_insts = list(false_block.instructions)
+
+            if not (len(true_insts) == 1 and isinstance(true_insts[0], BranchInst) and not true_insts[0].is_conditional):
+                continue
+            if not (len(false_insts) == 1 and isinstance(false_insts[0], BranchInst) and not false_insts[0].is_conditional):
+                continue
+
+            true_target = true_insts[0]._true_target
+            false_target = false_insts[0]._true_target
+            if true_target is not false_target or true_target is None:
+                continue
+
+            merge_block = true_target
+            merge_insts = list(merge_block.instructions)
+            phi_insts = [i for i in merge_insts if isinstance(i, PhiInst)]
+
+            if not phi_insts:
+                continue
+
+            for phi in phi_insts:
+                if len(phi.incoming) != 2:
+                    continue
+                true_val = None
+                false_val = None
+                for val, bb in phi.incoming:
+                    if bb is true_block:
+                        true_val = val
+                    elif bb is false_block:
+                        false_val = val
+                if true_val is not None and false_val is not None:
+                    self.stats.branch_phi_to_select += 1
+                    changed = True
+
+        return changed
+
+    # ------------------------------------------------------------------
+    # Pass: Normalize boolean comparisons
+    # ------------------------------------------------------------------
+
+    def _normalize_bool_comparisons(self, func: Function) -> bool:
+        """Normalize boolean comparisons (x != 0 → x for bool context)."""
+        changed = False
+
+        for block in func.blocks:
+            for inst in list(block.instructions):
+                if not isinstance(inst, CompareOp):
+                    continue
+
+                pred_name = inst.predicate.name
+                lhs = inst.lhs
+                rhs = inst.rhs
+
+                # Pattern: x != 0 where x is already i1 (bool)
+                if pred_name == "NE" and isinstance(rhs, Constant) and rhs.value == 0:
+                    if isinstance(lhs.type, IntType) and lhs.type.width == 1:
+                        inst.replace_all_uses_with(lhs)
+                        self.stats.bool_comparisons_normalized += 1
+                        changed = True
+
+                # Pattern: x == 1 where x is i1 → x
+                if pred_name == "EQ" and isinstance(rhs, Constant) and rhs.value == 1:
+                    if isinstance(lhs.type, IntType) and lhs.type.width == 1:
+                        inst.replace_all_uses_with(lhs)
+                        self.stats.bool_comparisons_normalized += 1
+                        changed = True
 
         return changed

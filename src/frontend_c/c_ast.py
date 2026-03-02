@@ -841,6 +841,26 @@ class OffsetofExpr(Expr):
 
 
 @dataclass
+class TypesCompatibleExpr(Expr):
+    """__builtin_types_compatible_p(type1, type2)."""
+    type1: Optional[CType] = None
+    type2: Optional[CType] = None
+
+    def __str__(self) -> str:
+        return f"__builtin_types_compatible_p({self.type1}, {self.type2})"
+
+
+@dataclass
+class DesignatedInitExpr(Expr):
+    """Designated initializer: .field = val or [idx] = val."""
+    designators: list[Designator] = field(default_factory=list)
+    init_expr: Optional[Expr] = None
+
+    def __str__(self) -> str:
+        return f"<designated_init> = {self.init_expr}"
+
+
+@dataclass
 class VaArgExpr(Expr):
     """va_arg(ap, type)."""
     ap_expr: Optional[Expr] = None

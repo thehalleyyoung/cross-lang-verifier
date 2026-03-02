@@ -109,6 +109,16 @@ class DivisionModel(Enum):
         return self.name
 
 
+class LayoutModel(Enum):
+    """Struct/union layout model."""
+    CCompat = auto()    # C-compatible layout (repr(C))
+    RustDefault = auto() # Rust default (may reorder fields)
+    Packed = auto()     # Packed layout (no padding)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class FloatToIntModel(Enum):
     """Float-to-integer cast behaviour for out-of-range values."""
     UB = auto()         # C: undefined behavior
@@ -170,6 +180,9 @@ class SemanticConfig:
 
     # Unwinding
     unwind_model: UnwindModel = UnwindModel.NoUnwind
+
+    # Struct layout
+    layout_model: LayoutModel = LayoutModel.CCompat
 
     # Platform / ABI
     pointer_size: int = 64       # bits
