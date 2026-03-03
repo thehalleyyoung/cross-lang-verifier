@@ -1,5 +1,0 @@
-{
-  "category": "A",
-  "key_quote": "The tool does not introduce any new verification algorithm, theory, or abstraction beyond applying standard BV SMT solving to a custom IR.",
-  "rationale": "Even if all pipeline bugs were fixed and experiments expanded, reviewers would still say 'not novel' because the core approach — BV SMT solving on a product program with semantic configs — composes known techniques without a new algorithm or theory. The 'not novel' critique is the primary blocker, not the implementation quality."
-}
