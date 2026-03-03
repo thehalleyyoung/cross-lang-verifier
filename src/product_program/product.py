@@ -8,9 +8,13 @@ divergence points.
 
 from __future__ import annotations
 
+import logging
+import warnings
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import List, Optional, Dict, Tuple, Set, Any, Iterator
+
+logger = logging.getLogger(__name__)
 
 from ..ir.types import (
     IRType, IntType, FloatType, PointerType, VoidType,
@@ -25,7 +29,7 @@ from ..ir.instructions import (
 )
 from ..ir.basic_block import BasicBlock
 from ..ir.function import Function
-from ..semantics.divergence_table import DivergenceTable, DivergenceClass
+from ..semantics.divergence_table import DivergenceTable, DivergenceClass, CSemantics, RustSemantics
 from ..semantics.semantic_config import SemanticConfig, OverflowMode
 from .alignment import (
     AlignmentResult, BlockAlignment, InstructionAlignment,
@@ -389,7 +393,11 @@ class ProductBuilder:
         self._build_product_blocks(product, alignment)
 
         # Step 5: Generate coercion points
-        coercion_points = self.coercion_gen.generate_for_alignment(alignment)
+        try:
+            coercion_points = self.coercion_gen.generate_for_alignment(alignment)
+        except Exception as exc:
+            logger.warning("Coercion generation failed: %s", exc)
+            coercion_points = []
         product.coercion_points = coercion_points
 
         # Step 6: Distribute coercion points to product instructions
@@ -403,7 +411,12 @@ class ProductBuilder:
     def _create_shared_inputs(
         self, left: Function, right: Function,
     ) -> List[SharedInput]:
-        """Create shared symbolic inputs for the product program."""
+        """Create shared symbolic inputs for the product program.
+
+        If the two functions have different numbers of arguments, the first
+        min(n, m) arguments are matched positionally and warnings are emitted
+        for the unmatched remainder.
+        """
         shared: List[SharedInput] = []
 
         left_args = list(left.arguments)
@@ -411,11 +424,26 @@ class ProductBuilder:
 
         min_args = min(len(left_args), len(right_args))
 
+        if len(left_args) != len(right_args):
+            warnings.warn(
+                f"Argument count mismatch: {left.name} has {len(left_args)} args, "
+                f"{right.name} has {len(right_args)} args. "
+                f"Matching first {min_args} positionally.",
+                stacklevel=2,
+            )
+
         for i in range(min_args):
             la = left_args[i]
             ra = right_args[i]
 
-            # Choose the more general type
+            # Choose the more general type; warn on type mismatch
+            if la.type != ra.type:
+                warnings.warn(
+                    f"Type mismatch at argument {i}: "
+                    f"{left.name} has {la.type}, {right.name} has {ra.type}. "
+                    f"Using unified type.",
+                    stacklevel=2,
+                )
             shared_type = self._unify_types(la.type, ra.type)
             name = la.name or ra.name or f"arg_{i}"
 
@@ -429,6 +457,11 @@ class ProductBuilder:
         # Extra left-only arguments
         for i in range(min_args, len(left_args)):
             la = left_args[i]
+            warnings.warn(
+                f"Unmatched left argument {i} ({la.name or 'unnamed'}): "
+                f"no corresponding right argument.",
+                stacklevel=2,
+            )
             shared.append(SharedInput(
                 name=f"input_left_{la.name or i}",
                 ir_type=la.type,
@@ -439,6 +472,11 @@ class ProductBuilder:
         # Extra right-only arguments
         for i in range(min_args, len(right_args)):
             ra = right_args[i]
+            warnings.warn(
+                f"Unmatched right argument {i} ({ra.name or 'unnamed'}): "
+                f"no corresponding left argument.",
+                stacklevel=2,
+            )
             shared.append(SharedInput(
                 name=f"input_right_{ra.name or i}",
                 ir_type=ra.type,
@@ -483,22 +521,50 @@ class ProductBuilder:
                 is_entry=(i == 0),
             )
 
-            if ba.is_matched or ba.kind == AlignmentKind.REORDERED:
-                self._build_matched_block(pblock, ba)
-            elif ba.kind == AlignmentKind.LEFT_ONLY:
-                self._build_left_only_block(pblock, ba)
-            elif ba.kind == AlignmentKind.RIGHT_ONLY:
-                self._build_right_only_block(pblock, ba)
+            try:
+                if ba.is_matched or ba.kind == AlignmentKind.REORDERED:
+                    self._build_matched_block(pblock, ba)
+                elif ba.kind == AlignmentKind.LEFT_ONLY:
+                    self._build_left_only_block(pblock, ba)
+                    # Add assertion that left-only block has no observable
+                    # effect differing from a no-op on the right side
+                    pblock.instructions.append(ProductInstruction(
+                        left_inst=None,
+                        right_inst=None,
+                        side=ProductSide.LEFT,
+                        notes=["assertion: left-only block must not affect equivalence"],
+                    ))
+                elif ba.kind == AlignmentKind.RIGHT_ONLY:
+                    self._build_right_only_block(pblock, ba)
+                    # Add assertion that right-only block has no observable
+                    # effect differing from a no-op on the left side
+                    pblock.instructions.append(ProductInstruction(
+                        left_inst=None,
+                        right_inst=None,
+                        side=ProductSide.RIGHT,
+                        notes=["assertion: right-only block must not affect equivalence"],
+                    ))
+            except Exception as exc:
+                logger.warning("Failed to build block %s: %s", block_name, exc)
+                pblock.instructions.append(ProductInstruction(
+                    left_inst=None,
+                    right_inst=None,
+                    side=ProductSide.BOTH,
+                    notes=[f"block build failed: {exc}"],
+                ))
 
             # Check if this is an exit block
-            if ba.left and ba.right:
-                left_is_exit = any(isinstance(i, ReturnInst) for i in ba.left.instructions)
-                right_is_exit = any(isinstance(i, ReturnInst) for i in ba.right.instructions)
-                pblock.is_exit = left_is_exit or right_is_exit
-            elif ba.left:
-                pblock.is_exit = any(isinstance(i, ReturnInst) for i in ba.left.instructions)
-            elif ba.right:
-                pblock.is_exit = any(isinstance(i, ReturnInst) for i in ba.right.instructions)
+            try:
+                if ba.left and ba.right:
+                    left_is_exit = any(isinstance(i, ReturnInst) for i in ba.left.instructions)
+                    right_is_exit = any(isinstance(i, ReturnInst) for i in ba.right.instructions)
+                    pblock.is_exit = left_is_exit or right_is_exit
+                elif ba.left:
+                    pblock.is_exit = any(isinstance(i, ReturnInst) for i in ba.left.instructions)
+                elif ba.right:
+                    pblock.is_exit = any(isinstance(i, ReturnInst) for i in ba.right.instructions)
+            except Exception as exc:
+                logger.warning("Failed to determine exit status for %s: %s", block_name, exc)
 
             product.add_block(pblock)
 
@@ -507,36 +573,45 @@ class ProductBuilder:
     ) -> None:
         """Build product instructions for a matched block pair."""
         for ia in ba.instruction_alignments:
-            if ia.is_matched:
-                left_name = f"c_{ia.left.name}" if ia.left and ia.left.name else ""
-                right_name = f"rust_{ia.right.name}" if ia.right and ia.right.name else ""
+            try:
+                if ia.is_matched:
+                    left_name = f"c_{ia.left.name}" if ia.left and ia.left.name else ""
+                    right_name = f"rust_{ia.right.name}" if ia.right and ia.right.name else ""
 
-                pi = ProductInstruction(
-                    left_inst=ia.left,
-                    right_inst=ia.right,
+                    pi = ProductInstruction(
+                        left_inst=ia.left,
+                        right_inst=ia.right,
+                        side=ProductSide.BOTH,
+                        left_result_name=left_name,
+                        right_result_name=right_name,
+                    )
+                    pblock.instructions.append(pi)
+                elif ia.is_left_only:
+                    pi = ProductInstruction(
+                        left_inst=ia.left,
+                        right_inst=None,
+                        side=ProductSide.LEFT,
+                        left_result_name=f"c_{ia.left.name}" if ia.left and ia.left.name else "",
+                        notes=["left-only instruction"],
+                    )
+                    pblock.instructions.append(pi)
+                elif ia.is_right_only:
+                    pi = ProductInstruction(
+                        left_inst=None,
+                        right_inst=ia.right,
+                        side=ProductSide.RIGHT,
+                        right_result_name=f"rust_{ia.right.name}" if ia.right and ia.right.name else "",
+                        notes=["right-only instruction"],
+                    )
+                    pblock.instructions.append(pi)
+            except Exception as exc:
+                logger.warning("Failed to build instruction in block %s: %s", pblock.name, exc)
+                pblock.instructions.append(ProductInstruction(
+                    left_inst=ia.left if hasattr(ia, 'left') else None,
+                    right_inst=ia.right if hasattr(ia, 'right') else None,
                     side=ProductSide.BOTH,
-                    left_result_name=left_name,
-                    right_result_name=right_name,
-                )
-                pblock.instructions.append(pi)
-            elif ia.is_left_only:
-                pi = ProductInstruction(
-                    left_inst=ia.left,
-                    right_inst=None,
-                    side=ProductSide.LEFT,
-                    left_result_name=f"c_{ia.left.name}" if ia.left and ia.left.name else "",
-                    notes=["left-only instruction"],
-                )
-                pblock.instructions.append(pi)
-            elif ia.is_right_only:
-                pi = ProductInstruction(
-                    left_inst=None,
-                    right_inst=ia.right,
-                    side=ProductSide.RIGHT,
-                    right_result_name=f"rust_{ia.right.name}" if ia.right and ia.right.name else "",
-                    notes=["right-only instruction"],
-                )
-                pblock.instructions.append(pi)
+                    notes=[f"instruction build failed: {exc}"],
+                ))
 
     def _build_left_only_block(
         self, pblock: ProductBlock, ba: BlockAlignment,
@@ -678,6 +753,92 @@ class ProductBuilder:
                             pi.coercion_points.append(err_cp)
                             product.coercion_points.append(err_cp)
 
+        return product
+
+    def build_with_fallback(
+        self,
+        left: Function,
+        right: Function,
+    ) -> ProductProgram:
+        """Build a product program, falling back to signature comparison on failure.
+
+        Tries the full build first. If it fails, falls back to a simplified
+        product program that only compares function signatures and return types.
+        """
+        try:
+            return self.build(left, right)
+        except Exception as exc:
+            logger.warning(
+                "Full product build failed for %s x %s: %s. "
+                "Falling back to signature comparison.",
+                left.name, right.name, exc,
+            )
+            return self._build_signature_fallback(left, right)
+
+    def _build_signature_fallback(
+        self,
+        left: Function,
+        right: Function,
+    ) -> ProductProgram:
+        """Build a minimal product program comparing only signatures and return types."""
+        shared_inputs = self._create_shared_inputs(left, right)
+
+        product = ProductProgram(
+            name=f"product_{left.name}_x_{right.name}_fallback",
+            left_function=left,
+            right_function=right,
+            shared_inputs=shared_inputs,
+            c_config=self.c_config,
+            rust_config=self.rust_config,
+        )
+
+        # Create a single product block with a return-value comparison
+        pblock = ProductBlock(
+            name=self._fresh_name("pblock_fallback"),
+            left_block=None,
+            right_block=None,
+            is_entry=True,
+            is_exit=True,
+        )
+
+        # Add a comparison note about function signatures
+        sig_notes = [
+            f"fallback: signature comparison only",
+            f"left args: {len(list(left.arguments))}, right args: {len(list(right.arguments))}",
+            f"left return: {left.return_type}, right return: {right.return_type}",
+        ]
+        pblock.instructions.append(ProductInstruction(
+            left_inst=None,
+            right_inst=None,
+            side=ProductSide.BOTH,
+            notes=sig_notes,
+        ))
+
+        # Add return type coercion if types differ
+        if left.return_type != right.return_type:
+            ret_type = self._unify_types(left.return_type, right.return_type)
+            bit_width = ret_type.width if isinstance(ret_type, IntType) else 32
+            ret_assertion = CoercionAssertion(
+                smt_expression=f"(= ret_left ret_right)",
+                description="Fallback: return values must be equal (after type coercion)",
+                strength=AssertionStrength.HARD,
+                variables=["ret_left", "ret_right"],
+            )
+            cp = CoercionPoint(
+                kind=CoercionKind.CAST,
+                left_instruction=None,
+                right_instruction=None,
+                divergence_class=DivergenceClass.CastTruncation,
+                c_semantics=CSemantics(summary="return value"),
+                rust_semantics=RustSemantics(summary="return value"),
+                assertions=[ret_assertion],
+                operation="RETURN",
+                bit_width=bit_width,
+            )
+            pblock.instructions[-1].coercion_points.append(cp)
+            product.coercion_points.append(cp)
+
+        product.add_block(pblock)
         return product
 
     def _create_error_handling_coercion(

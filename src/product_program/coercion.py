@@ -15,11 +15,13 @@ from typing import List, Optional, Dict, Tuple, Any, Callable
 from ..ir.types import (
     IRType, IntType, FloatType, PointerType, VoidType,
     Signedness, FloatKind, OverflowBehavior, Language,
+    StructType, EnumType,
 )
 from ..ir.instructions import (
     Instruction, BinaryOp, UnaryOp, CompareOp, CastInst,
     LoadInst, StoreInst, CallInst, ReturnInst, BranchInst,
     PhiInst, SelectInst, Value, Constant, BinOpKind, CmpPredicate, CastKind,
+    GetElementPtrInst, AllocaInst, ExtractValueInst, InsertValueInst,
 )
 from ..ir.basic_block import BasicBlock
 from ..ir.function import Function
@@ -684,6 +686,481 @@ def _gen_array_bounds_assertions(
     ]
 
 
+def _gen_pointer_provenance_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for pointer provenance checks."""
+    c_ptr = f"{var_prefix}_c_ptr"
+    rust_ptr = f"{var_prefix}_rust_ptr"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    base = f"{var_prefix}_base"
+    size = f"{var_prefix}_alloc_size"
+    variables = [c_ptr, rust_ptr, c_result, rust_result, base, size]
+    ptr_width = 64
+
+    # Provenance: pointer derived from valid allocation
+    in_bounds = _and(
+        _bvsge(c_ptr, base),
+        _bvslt(c_ptr, _bvadd(base, size)),
+    )
+
+    # Alignment check: pointer must be aligned to element size
+    align_mask = _bvconst(max(width // 8 - 1, 0), ptr_width)
+    aligned = _eq(
+        f"(bvand {c_ptr} {align_mask})",
+        _bvconst(0, ptr_width),
+    )
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_ptr, _bvconst(0, ptr_width))),
+            description="Pointer is non-null (provenance check)",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=in_bounds,
+            description="Pointer within allocation bounds (provenance check)",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=aligned,
+            description=f"Pointer aligned to {max(width // 8, 1)}-byte boundary",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(
+                _and(in_bounds, _not(_eq(c_ptr, _bvconst(0, ptr_width)))),
+                _eq(c_result, rust_result),
+            ),
+            description="Memory access equivalence with valid provenance",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_pointer_cast_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for pointer cast operations."""
+    c_ptr = f"{var_prefix}_c_ptr"
+    rust_ptr = f"{var_prefix}_rust_ptr"
+    variables = [c_ptr, rust_ptr]
+    ptr_width = 64
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_ptr, _bvconst(0, ptr_width))),
+            description="Pointer non-null before cast",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_ptr, rust_ptr),
+            description="Pointer cast preserves address value",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_struct_layout_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for struct field access compatibility."""
+    c_offset = f"{var_prefix}_c_offset"
+    rust_offset = f"{var_prefix}_rust_offset"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    c_field_type = f"{var_prefix}_c_field_type"
+    rust_field_type = f"{var_prefix}_rust_field_type"
+    variables = [c_offset, rust_offset, c_result, rust_result, c_field_type, rust_field_type]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_eq(c_offset, rust_offset),
+            description="Struct field offset matches (#[repr(C)] layout)",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_field_type, rust_field_type),
+            description="Struct field type compatible",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(
+                _and(_eq(c_offset, rust_offset), _eq(c_field_type, rust_field_type)),
+                _eq(c_result, rust_result),
+            ),
+            description="Struct field access equivalence with matching layout",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_enum_discriminant_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for enum discriminant compatibility."""
+    c_disc = f"{var_prefix}_c_discriminant"
+    rust_disc = f"{var_prefix}_rust_discriminant"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    max_disc = f"{var_prefix}_max_discriminant"
+    variables = [c_disc, rust_disc, c_result, rust_result, max_disc]
+
+    valid_disc = _and(
+        _bvsge(c_disc, _bvconst(0, width)),
+        _bvslt(c_disc, max_disc),
+    )
+
+    return [
+        CoercionAssertion(
+            smt_expression=valid_disc,
+            description="Discriminant within valid range for enum",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(valid_disc, _eq(c_disc, rust_disc)),
+            description="Enum discriminant values match",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(
+                _and(valid_disc, _eq(c_disc, rust_disc)),
+                _eq(c_result, rust_result),
+            ),
+            description="Enum variant access equivalence with matching discriminant",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_memory_model_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for Load/Store pair memory model compatibility."""
+    c_addr = f"{var_prefix}_c_addr"
+    rust_addr = f"{var_prefix}_rust_addr"
+    c_val = f"{var_prefix}_c_val"
+    rust_val = f"{var_prefix}_rust_val"
+    variables = [c_addr, rust_addr, c_val, rust_val]
+    ptr_width = 64
+
+    return [
+        CoercionAssertion(
+            smt_expression=_eq(c_addr, rust_addr),
+            description="Memory address equivalence",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_addr, _bvconst(0, ptr_width))),
+            description="Memory address non-null",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(
+                _eq(c_addr, rust_addr),
+                _eq(c_val, rust_val),
+            ),
+            description=f"Memory value equivalence at same address (i{width})",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_calling_convention_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for Call/Call pair calling convention checks."""
+    c_result = f"{var_prefix}_c_call_result"
+    rust_result = f"{var_prefix}_rust_call_result"
+    variables = [c_result, rust_result]
+
+    assertions = [
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description="Call return value equivalence",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+    # Check argument count compatibility
+    if isinstance(left, CallInst) and isinstance(right, CallInst):
+        for i in range(min(len(left.args), len(right.args))):
+            c_arg = f"{var_prefix}_c_arg{i}"
+            rust_arg = f"{var_prefix}_rust_arg{i}"
+            variables.extend([c_arg, rust_arg])
+            assertions.append(CoercionAssertion(
+                smt_expression=_eq(c_arg, rust_arg),
+                description=f"Call argument {i} equivalence",
+                strength=AssertionStrength.HARD,
+                variables=[c_arg, rust_arg],
+            ))
+
+    return assertions
+
+
+def _gen_gep_layout_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for GEP/GEP struct layout compatibility."""
+    c_base = f"{var_prefix}_c_base"
+    rust_base = f"{var_prefix}_rust_base"
+    c_result = f"{var_prefix}_c_gep_result"
+    rust_result = f"{var_prefix}_rust_gep_result"
+    variables = [c_base, rust_base, c_result, rust_result]
+    ptr_width = 64
+
+    return [
+        CoercionAssertion(
+            smt_expression=_eq(c_base, rust_base),
+            description="GEP base pointer equivalence",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_base, _bvconst(0, ptr_width))),
+            description="GEP base pointer non-null",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description="GEP result pointer equivalence (struct layout compatible)",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_malloc_free_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for heap allocation/deallocation equivalence."""
+    c_ptr = f"{var_prefix}_c_heap_ptr"
+    rust_ptr = f"{var_prefix}_rust_heap_ptr"
+    c_size = f"{var_prefix}_c_alloc_size"
+    rust_size = f"{var_prefix}_rust_alloc_size"
+    variables = [c_ptr, rust_ptr, c_size, rust_size]
+    ptr_width = 64
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_ptr, _bvconst(0, ptr_width))),
+            description="C allocation succeeded (non-null)",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_size, rust_size),
+            description="Allocation size equivalence",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_function_pointer_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for function pointer call equivalence."""
+    c_fn_ptr = f"{var_prefix}_c_fn_ptr"
+    rust_fn_ptr = f"{var_prefix}_rust_fn_ptr"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [c_fn_ptr, rust_fn_ptr, c_result, rust_result]
+    ptr_width = 64
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_fn_ptr, _bvconst(0, ptr_width))),
+            description="Function pointer non-null",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_fn_ptr, rust_fn_ptr),
+            description="Function pointer address equivalence",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(
+                _eq(c_fn_ptr, rust_fn_ptr),
+                _eq(c_result, rust_result),
+            ),
+            description="Indirect call result equivalence (same callee)",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_lifetime_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for lifetime/dangling pointer checks."""
+    ptr = f"{var_prefix}_ptr"
+    is_live = f"{var_prefix}_is_live"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [ptr, is_live, c_result, rust_result]
+
+    return [
+        CoercionAssertion(
+            smt_expression=is_live,
+            description="Referenced allocation is still live (not freed)",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(is_live, _eq(c_result, rust_result)),
+            description="Memory access equivalence for live allocations",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_slice_bounds_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for Rust slice vs C raw pointer+length."""
+    idx = f"{var_prefix}_idx"
+    c_ptr = f"{var_prefix}_c_ptr"
+    rust_len = f"{var_prefix}_rust_slice_len"
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [idx, c_ptr, rust_len, c_result, rust_result]
+
+    in_bounds = _and(
+        _bvsge(idx, _bvconst(0, width)),
+        _bvslt(idx, rust_len),
+    )
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_ptr, _bvconst(0, 64))),
+            description="C pointer valid for slice access",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=in_bounds,
+            description="Index within slice bounds",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_implies(in_bounds, _eq(c_result, rust_result)),
+            description="Slice element access equivalence when in bounds",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_string_encoding_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for C char*/strlen vs Rust &str/.len() encoding."""
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    c_ptr = f"{var_prefix}_c_str_ptr"
+    variables = [c_result, rust_result, c_ptr]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(_eq(c_ptr, _bvconst(0, 64))),
+            description="C string pointer non-null",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description="String operation equivalence (encoding compatible)",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_stack_alloc_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for stack allocation lifetime safety."""
+    c_ptr = f"{var_prefix}_c_stack_ptr"
+    rust_ptr = f"{var_prefix}_rust_stack_ptr"
+    escaped = f"{var_prefix}_escaped"
+    variables = [c_ptr, rust_ptr, escaped]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_not(escaped),
+            description="Stack pointer does not escape function scope",
+            strength=AssertionStrength.ASSUME,
+            variables=variables,
+        ),
+        CoercionAssertion(
+            smt_expression=_eq(c_ptr, rust_ptr),
+            description="Stack allocation address equivalence",
+            strength=AssertionStrength.SOFT,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_volatile_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for volatile memory access semantics."""
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [c_result, rust_result]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description="Volatile access equivalence (advisory)",
+            strength=AssertionStrength.SOFT,
+            variables=variables,
+        ),
+    ]
+
+
+def _gen_int_promotion_assertions(
+    left: Instruction, right: Instruction, width: int, var_prefix: str,
+) -> List[CoercionAssertion]:
+    """Generate assertions for C implicit integer promotion vs Rust explicit casts."""
+    c_result = f"{var_prefix}_c_result"
+    rust_result = f"{var_prefix}_rust_result"
+    variables = [c_result, rust_result]
+
+    return [
+        CoercionAssertion(
+            smt_expression=_eq(c_result, rust_result),
+            description=f"Integer promotion equivalence (i{width})",
+            strength=AssertionStrength.HARD,
+            variables=variables,
+        ),
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Generator dispatch table
 # ---------------------------------------------------------------------------
@@ -701,6 +1178,21 @@ _COERCION_GENERATORS: Dict[DivergenceClass, Callable] = {
     DivergenceClass.EnumRepr: _gen_union_variant_assertions,
     DivergenceClass.BitfieldLayout: _gen_bit_manipulation_assertions,
     DivergenceClass.AlignmentReqs: _gen_flexible_array_assertions,
+    # New handlers for pointer semantics, struct layout, etc.
+    DivergenceClass.PointerArith: _gen_pointer_provenance_assertions,
+    DivergenceClass.PointerCast: _gen_pointer_cast_assertions,
+    DivergenceClass.PointerProvenance: _gen_pointer_provenance_assertions,
+    DivergenceClass.StructLayout: _gen_struct_layout_assertions,
+    DivergenceClass.UnionReinterpret: _gen_union_variant_assertions,
+    DivergenceClass.EnumDiscriminant: _gen_enum_discriminant_assertions,
+    DivergenceClass.StringEncoding: _gen_string_encoding_assertions,
+    DivergenceClass.MallocFree: _gen_malloc_free_assertions,
+    DivergenceClass.FunctionPointer: _gen_function_pointer_assertions,
+    DivergenceClass.StackAlloc: _gen_stack_alloc_assertions,
+    DivergenceClass.LifetimeDangle: _gen_lifetime_assertions,
+    DivergenceClass.SliceVsRawPtr: _gen_slice_bounds_assertions,
+    DivergenceClass.IntPromotion: _gen_int_promotion_assertions,
+    DivergenceClass.VolatileSemantics: _gen_volatile_assertions,
 }
 
 
@@ -769,6 +1261,67 @@ def _is_divergence_relevant(
     elif cls == DivergenceClass.ErrorHandling:
         if isinstance(left, CallInst):
             return True
+    elif cls == DivergenceClass.PointerArith:
+        if isinstance(left, GetElementPtrInst) or isinstance(right, GetElementPtrInst):
+            return True
+        if isinstance(left, (LoadInst, StoreInst)) and isinstance(left.type, PointerType):
+            return True
+    elif cls == DivergenceClass.PointerCast:
+        if isinstance(left, CastInst) and isinstance(left.type, PointerType):
+            return True
+        if isinstance(right, CastInst) and isinstance(right.type, PointerType):
+            return True
+    elif cls == DivergenceClass.PointerProvenance:
+        if isinstance(left, (LoadInst, StoreInst)) and isinstance(right, (LoadInst, StoreInst)):
+            return True
+    elif cls == DivergenceClass.StructLayout:
+        if isinstance(left, GetElementPtrInst) and isinstance(right, GetElementPtrInst):
+            if (hasattr(left, 'base_type') and isinstance(left.base_type, StructType)) or \
+               (hasattr(right, 'base_type') and isinstance(right.base_type, StructType)):
+                return True
+        if isinstance(left, ExtractValueInst) or isinstance(right, ExtractValueInst):
+            return True
+    elif cls == DivergenceClass.UnionReinterpret:
+        if isinstance(left, (LoadInst, StoreInst, CastInst)) and \
+           isinstance(right, (LoadInst, StoreInst, CastInst)):
+            return False  # Requires explicit union type annotation
+    elif cls == DivergenceClass.EnumDiscriminant:
+        if isinstance(left, ExtractValueInst) and isinstance(right, ExtractValueInst):
+            return True
+        if isinstance(left, (LoadInst, CompareOp)) and isinstance(right, ExtractValueInst):
+            return True
+        if isinstance(left, ExtractValueInst) and isinstance(right, (LoadInst, CompareOp)):
+            return True
+    elif cls == DivergenceClass.StringEncoding:
+        if isinstance(left, CallInst) and isinstance(right, CallInst):
+            callee_l = left.callee_name.lower()
+            callee_r = right.callee_name.lower()
+            str_fns = ("strlen", "strcpy", "strcat", "strcmp", "str_len", "as_bytes")
+            if any(fn in callee_l or fn in callee_r for fn in str_fns):
+                return True
+    elif cls == DivergenceClass.MallocFree:
+        if isinstance(left, CallInst):
+            callee = left.callee_name.lower()
+            if any(fn in callee for fn in ("malloc", "calloc", "realloc", "free", "alloc", "dealloc")):
+                return True
+    elif cls == DivergenceClass.FunctionPointer:
+        if isinstance(left, CallInst) and isinstance(right, CallInst):
+            return True
+    elif cls == DivergenceClass.StackAlloc:
+        if isinstance(left, AllocaInst) or isinstance(right, AllocaInst):
+            return True
+    elif cls == DivergenceClass.LifetimeDangle:
+        if isinstance(left, (LoadInst, StoreInst)) and isinstance(right, (LoadInst, StoreInst)):
+            return True
+    elif cls == DivergenceClass.SliceVsRawPtr:
+        if isinstance(left, GetElementPtrInst) and isinstance(right, (GetElementPtrInst, ExtractValueInst)):
+            return True
+    elif cls == DivergenceClass.IntPromotion:
+        if isinstance(left, CastInst) and isinstance(left.type, IntType):
+            return True
+    elif cls == DivergenceClass.VolatileSemantics:
+        if isinstance(left, (LoadInst, StoreInst)) and isinstance(right, (LoadInst, StoreInst)):
+            return False  # Only applicable for volatile-annotated accesses
     return False
 
 
@@ -857,6 +1410,71 @@ class CoercionGenerator:
                     source_location=self._get_source_location(left),
                 )
                 points.append(point)
+
+        # Instruction-pair pattern coercions (independent of divergence table)
+        points.extend(self._generate_instruction_pattern_coercions(left, right))
+
+        return points
+
+    def _generate_instruction_pattern_coercions(
+        self,
+        left: Instruction,
+        right: Instruction,
+    ) -> List[CoercionPoint]:
+        """Generate coercions based on instruction pair patterns."""
+        points: List[CoercionPoint] = []
+        prefix = self._fresh_prefix()
+        width = _get_instruction_width(left)
+
+        # Load/Store pairs → memory model assertions
+        if isinstance(left, (LoadInst, StoreInst)) and isinstance(right, (LoadInst, StoreInst)):
+            if type(left) is type(right):
+                assertions = _gen_memory_model_assertions(left, right, width, prefix)
+                if assertions:
+                    points.append(CoercionPoint(
+                        kind=CoercionKind.POINTER_PROVENANCE,
+                        left_instruction=left,
+                        right_instruction=right,
+                        divergence_class=DivergenceClass.NullDeref,
+                        c_semantics=CSemantics(summary="C memory access"),
+                        rust_semantics=RustSemantics(summary="Rust memory access"),
+                        assertions=assertions,
+                        operation=self._describe_operation(left),
+                        bit_width=width,
+                    ))
+
+        # Call/Call pairs → calling convention checks
+        if isinstance(left, CallInst) and isinstance(right, CallInst):
+            if left.callee_name != right.callee_name:
+                assertions = _gen_calling_convention_assertions(left, right, width, prefix)
+                if assertions:
+                    points.append(CoercionPoint(
+                        kind=CoercionKind.CALLING_CONVENTION,
+                        left_instruction=left,
+                        right_instruction=right,
+                        divergence_class=DivergenceClass.ErrorHandling,
+                        c_semantics=CSemantics(summary="C calling convention"),
+                        rust_semantics=RustSemantics(summary="Rust calling convention"),
+                        assertions=assertions,
+                        operation=f"call({left.callee_name} vs {right.callee_name})",
+                        bit_width=width,
+                    ))
+
+        # GEP/GEP pairs → struct layout compatibility
+        if isinstance(left, GetElementPtrInst) and isinstance(right, GetElementPtrInst):
+            assertions = _gen_gep_layout_assertions(left, right, width, prefix)
+            if assertions:
+                points.append(CoercionPoint(
+                    kind=CoercionKind.BOUNDS_CHECK,
+                    left_instruction=left,
+                    right_instruction=right,
+                    divergence_class=DivergenceClass.StructLayout,
+                    c_semantics=CSemantics(summary="C struct field access"),
+                    rust_semantics=RustSemantics(summary="Rust struct field access"),
+                    assertions=assertions,
+                    operation="gep",
+                    bit_width=width,
+                ))
 
         return points
 
@@ -1006,9 +1624,21 @@ class CoercionGenerator:
             DivergenceClass.ErrorHandling: CoercionKind.ERROR_HANDLING,
             DivergenceClass.IntPromotion: CoercionKind.TYPE_WIDTH,
             DivergenceClass.PointerArith: CoercionKind.POINTER_PROVENANCE,
+            DivergenceClass.PointerCast: CoercionKind.POINTER_PROVENANCE,
+            DivergenceClass.PointerProvenance: CoercionKind.POINTER_PROVENANCE,
             DivergenceClass.EnumRepr: CoercionKind.UNION_VARIANT,
+            DivergenceClass.EnumDiscriminant: CoercionKind.UNION_VARIANT,
             DivergenceClass.BitfieldLayout: CoercionKind.BIT_MANIPULATION,
             DivergenceClass.AlignmentReqs: CoercionKind.FLEXIBLE_ARRAY,
+            DivergenceClass.StructLayout: CoercionKind.BOUNDS_CHECK,
+            DivergenceClass.UnionReinterpret: CoercionKind.UNION_VARIANT,
+            DivergenceClass.StringEncoding: CoercionKind.STRING_HANDLING,
+            DivergenceClass.MallocFree: CoercionKind.POINTER_PROVENANCE,
+            DivergenceClass.FunctionPointer: CoercionKind.CALLING_CONVENTION,
+            DivergenceClass.StackAlloc: CoercionKind.POINTER_PROVENANCE,
+            DivergenceClass.LifetimeDangle: CoercionKind.POINTER_PROVENANCE,
+            DivergenceClass.SliceVsRawPtr: CoercionKind.ARRAY_BOUNDS,
+            DivergenceClass.VolatileSemantics: CoercionKind.BOUNDS_CHECK,
         }
         return mapping.get(cls, CoercionKind.OVERFLOW_CHECK)
 

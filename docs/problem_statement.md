@@ -76,4 +76,4 @@ The implementation is ~49K lines of Python across 135 source files. The core pip
 
 ## Slug
 
-`cross-language-equivalence-verifier`
+`cross-lang-verifier`

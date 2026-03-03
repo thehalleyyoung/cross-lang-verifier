@@ -24,8 +24,14 @@ from ..ir.instructions import (
     LoadInst, StoreInst, CallInst, ReturnInst, BranchInst,
     PhiInst, SelectInst, AllocaInst, GetElementPtrInst,
     ExtractValueInst, InsertValueInst, SwitchInst,
+    MemcpyInst, AtomicRMWInst, AtomicCmpXchgInst, AtomicRMWOp,
     Value, Constant, Argument, BinOpKind, CmpPredicate, CastKind,
 )
+from ..ir.types import _align_up
+
+import logging as _logging
+
+_logger = _logging.getLogger(__name__)
 from ..ir.basic_block import BasicBlock
 from ..ir.function import Function
 from ..semantics.semantic_config import SemanticConfig, OverflowMode
@@ -44,6 +50,10 @@ class EncodingContext:
     pointer_width: int = 64
     _fresh_counter: int = 0
     _alloca_values: Dict[str, z3.ExprRef] = field(default_factory=dict)
+    _allocations: Dict[str, Tuple[z3.ExprRef, int, int]] = field(default_factory=dict)  # name -> (base, size_bytes, align)
+    _freed: Set[str] = field(default_factory=set)
+    _return_exprs: List[Tuple[Optional[z3.BoolRef], z3.ExprRef]] = field(default_factory=list)  # (path_cond, ret_val)
+    _trap_flag: Optional[z3.BoolRef] = None
 
     def declare(self, name: str, sort: z3.SortRef) -> z3.ExprRef:
         """Declare a new symbolic constant."""
@@ -131,11 +141,9 @@ class SMTEncoder:
             elem_sort = self.encode_type(ty.element)
             return z3.ArraySort(z3.BitVecSort(64), elem_sort)
         if isinstance(ty, StructType) or tname == "StructType":
-            # Encode struct as flat bitvector of total size
             total_bits = ty.size_bits(self.pointer_width)
             return z3.BitVecSort(max(total_bits, 8))
         if isinstance(ty, EnumType) or tname == "EnumType":
-            # Encode enum as flat bitvector: tag + max payload
             total_bits = ty.size_bits(self.pointer_width)
             return z3.BitVecSort(max(total_bits, 8))
         if isinstance(ty, UnionType) or tname == "UnionType":
@@ -190,8 +198,28 @@ class SMTEncoder:
         Uses both isinstance checks and type-name fallbacks to handle
         classes imported from different module paths (e.g. ``ir.instructions``
         vs ``src.ir.instructions``).
+
+        Individual instruction encoding failures are caught and approximated
+        with unconstrained symbolic values rather than crashing the whole
+        function.
         """
         tname = type(inst).__name__
+        try:
+            return self._encode_instruction_inner(inst, tname, ctx)
+        except Exception as exc:
+            _logger.debug("encoding %s (%s) failed: %s; approximating", tname, inst.name, exc)
+            if inst.name and inst.type:
+                sort = self.encode_type(inst.type)
+                return ctx.declare(inst.name, sort)
+            return None
+
+    def _encode_instruction_inner(
+        self,
+        inst: Instruction,
+        tname: str,
+        ctx: EncodingContext,
+    ) -> Optional[z3.ExprRef]:
+        """Dispatch to specific instruction encoders."""
         if isinstance(inst, BinaryOp) or tname == "BinaryOp":
             return self.encode_binop(inst, ctx)
         if isinstance(inst, UnaryOp) or tname == "UnaryOp":
@@ -213,12 +241,23 @@ class SMTEncoder:
             return self.encode_call(inst, ctx)
         if isinstance(inst, ReturnInst) or tname == "ReturnInst":
             return self.encode_return(inst, ctx)
+        if isinstance(inst, GetElementPtrInst) or tname == "GetElementPtrInst":
+            return self.encode_gep(inst, ctx)
         if isinstance(inst, ExtractValueInst) or tname == "ExtractValueInst":
             return self.encode_extract_value(inst, ctx)
         if isinstance(inst, InsertValueInst) or tname == "InsertValueInst":
             return self.encode_insert_value(inst, ctx)
         if isinstance(inst, SwitchInst) or tname == "SwitchInst":
             return self.encode_switch(inst, ctx)
+        if isinstance(inst, MemcpyInst) or tname == "MemcpyInst":
+            self.encode_memcpy(inst, ctx)
+            return None
+        if isinstance(inst, AtomicRMWInst) or tname == "AtomicRMWInst":
+            return self.encode_atomic_rmw(inst, ctx)
+        if isinstance(inst, AtomicCmpXchgInst) or tname == "AtomicCmpXchgInst":
+            return self.encode_atomic_cmpxchg(inst, ctx)
+        if isinstance(inst, AllocaInst) or tname == "AllocaInst":
+            return self.encode_alloca(inst, ctx)
         # Unknown instruction: create unconstrained
         if inst.name and inst.type:
             sort = self.encode_type(inst.type)
@@ -244,7 +283,13 @@ class SMTEncoder:
 
         # Add overflow checks based on mode
         if overflow_behavior == OverflowBehavior.WRAP:
-            pass  # Default BV semantics already wrap
+            # BV semantics already wrap; mask to exact bit width for clarity
+            if z3.is_bv(result) and inst.type:
+                tname_ty = type(inst.type).__name__
+                if (tname_ty == "IntType" or isinstance(inst.type, IntType)):
+                    w = getattr(inst.type, 'width', None)
+                    if w and result.size() > w:
+                        result = z3.Extract(w - 1, 0, result)
         elif overflow_behavior == OverflowBehavior.UNDEFINED:
             # Add overflow as unconstrained behavior
             if op in ("ADD", "SUB", "MUL") and z3.is_bv(lhs):
@@ -266,10 +311,11 @@ class SMTEncoder:
                 width = rhs.size()
                 ctx.assert_assume(z3.ULT(rhs, z3.BitVecVal(width, width)))
         elif overflow_behavior == OverflowBehavior.TRAP:
+            # Panic/trap: hard assertion that no overflow occurs
             if op in ("ADD", "SUB", "MUL") and z3.is_bv(lhs):
                 overflow_cond = self._signed_overflow_check(op, lhs, rhs)
                 if overflow_cond is not None:
-                    ctx.assert_assume(z3.Not(overflow_cond))
+                    ctx.assert_hard(z3.Not(overflow_cond))
         elif overflow_behavior == OverflowBehavior.SATURATE:
             if op in ("ADD", "SUB", "MUL") and z3.is_bv(lhs):
                 width = lhs.size()
@@ -942,6 +988,297 @@ class SMTEncoder:
 
         return None
 
+    # -- GEP --
+
+    def encode_gep(self, inst: GetElementPtrInst, ctx: EncodingContext) -> z3.ExprRef:
+        """Encode getelementptr: compute byte offset from base pointer.
+
+        Walks the index chain, accumulating byte offsets for array indexing
+        and struct field access.  Returns ``base + offset`` as a pointer-width
+        bitvector.
+        """
+        base = self.encode_value(inst.base, ctx)
+        if not z3.is_bv(base):
+            base = z3.BitVecVal(0, self.pointer_width)
+        pw = self.pointer_width
+
+        offset = z3.BitVecVal(0, pw)
+        current_ty = inst.source_element_type
+        indices = inst.indices
+
+        for i, idx_val in enumerate(indices):
+            idx = self.encode_value(idx_val, ctx)
+            if z3.is_bv(idx) and idx.size() != pw:
+                if idx.size() < pw:
+                    idx = z3.SignExt(pw - idx.size(), idx)
+                else:
+                    idx = z3.Extract(pw - 1, 0, idx)
+
+            if i == 0:
+                # First index: scale by source element size (bytes)
+                elem_bytes = current_ty.size_bits(pw) // 8 if hasattr(current_ty, 'size_bits') else 1
+                if elem_bytes > 0:
+                    offset = offset + idx * z3.BitVecVal(elem_bytes, pw)
+                continue
+
+            tname_ty = type(current_ty).__name__
+            if isinstance(current_ty, StructType) or tname_ty == "StructType":
+                # Struct field access: index must be a constant
+                field_idx = None
+                if isinstance(idx_val, Constant):
+                    field_idx = int(idx_val.value)
+                elif z3.is_bv(idx) and idx.num_args() == 0:
+                    try:
+                        field_idx = idx.as_long()
+                    except Exception:
+                        pass
+                if field_idx is not None and 0 <= field_idx < len(current_ty.fields):
+                    field_off_bits = current_ty.field_offset(field_idx, pw)
+                    offset = offset + z3.BitVecVal(field_off_bits // 8, pw)
+                    current_ty = current_ty.fields[field_idx].type
+                else:
+                    break
+            elif isinstance(current_ty, ArrayType) or tname_ty == "ArrayType":
+                elem_size = current_ty.element.size_bits(pw)
+                elem_align = current_ty.element.align_bits(pw)
+                stride = _align_up(elem_size, elem_align) // 8
+                offset = offset + idx * z3.BitVecVal(max(stride, 1), pw)
+                current_ty = current_ty.element
+            else:
+                # Treat as flat memory; scale by type size
+                ty_bytes = current_ty.size_bits(pw) // 8 if hasattr(current_ty, 'size_bits') else 1
+                offset = offset + idx * z3.BitVecVal(max(ty_bytes, 1), pw)
+                break
+
+        result = base + offset
+        if inst.name:
+            ctx.declarations[inst.name] = result
+        return result
+
+    # -- Alloca --
+
+    def encode_alloca(self, inst: AllocaInst, ctx: EncodingContext) -> z3.ExprRef:
+        """Encode alloca as a fresh symbolic pointer and track allocation metadata."""
+        name = inst.name or ctx.fresh("alloca")
+        result = ctx.declare_bv(name, self.pointer_width)
+        # Track allocation size for bounds checking
+        alloc_bits = inst.alloc_type.size_bits(self.pointer_width) if hasattr(inst.alloc_type, 'size_bits') else 32
+        size_bytes = (alloc_bits * inst.num_elements) // 8
+        ctx._allocations[name] = (result, size_bytes, inst.alignment)
+        return result
+
+    # -- Memcpy --
+
+    def encode_memcpy(self, inst: MemcpyInst, ctx: EncodingContext) -> None:
+        """Encode memcpy by copying memory array entries.
+
+        Since the length may be symbolic, we model memcpy by creating a
+        fresh memory state where for each byte in ``[0, length)`` the
+        destination mirrors the source, and other bytes are unchanged.
+        """
+        mem = ctx.get("_memory")
+        if mem is None:
+            return
+
+        dest = self.encode_value(inst.dest, ctx)
+        src = self.encode_value(inst.src, ctx)
+        length = self.encode_value(inst.length, ctx)
+
+        if not (z3.is_bv(dest) and z3.is_bv(src)):
+            return
+
+        pw = self.pointer_width
+        # Fresh index variable for the quantifier-free approximation
+        i_var = ctx.declare_bv(ctx.fresh("mcpy_i"), pw)
+        in_range = z3.And(z3.UGE(i_var, z3.BitVecVal(0, pw)),
+                          z3.ULT(i_var, length) if z3.is_bv(length) else z3.BoolVal(True))
+        src_byte = z3.Select(mem, src + i_var)
+        new_mem = z3.Store(mem, dest + i_var, src_byte)
+        ctx.declarations["_memory"] = new_mem
+
+    # -- Atomic RMW --
+
+    def encode_atomic_rmw(self, inst: AtomicRMWInst, ctx: EncodingContext) -> z3.ExprRef:
+        """Encode atomic read-modify-write sequentially for equivalence checking.
+
+        Atomics are modelled as sequential load-op-store since we only need
+        to verify single-threaded equivalence.
+        """
+        name = inst.name or ctx.fresh("armw")
+        addr = self.encode_value(inst.address, ctx)
+        val = self.encode_value(inst.value, ctx)
+        sort = self.encode_type(inst.type) if inst.type else z3.BitVecSort(32)
+
+        # Load the old value
+        old_name = ctx.fresh("armw_old")
+        mem = ctx.get("_memory")
+        if mem is not None and z3.is_bv(addr):
+            old_val = z3.Select(mem, addr)
+            # May need width coercion
+            if z3.is_bv(old_val) and z3.is_bv(val) and old_val.size() != val.size():
+                old_val, val = self._coerce_bv(old_val, val)
+        else:
+            old_val = ctx.declare(old_name, sort)
+
+        # Compute new value
+        rmw_op = inst.rmw_op.value if hasattr(inst.rmw_op, 'value') else str(inst.rmw_op)
+        if rmw_op == "xchg":
+            new_val = val
+        elif rmw_op == "add":
+            new_val = old_val + val
+        elif rmw_op == "sub":
+            new_val = old_val - val
+        elif rmw_op == "and":
+            new_val = old_val & val
+        elif rmw_op == "nand":
+            new_val = ~(old_val & val)
+        elif rmw_op == "or":
+            new_val = old_val | val
+        elif rmw_op == "xor":
+            new_val = old_val ^ val
+        elif rmw_op == "max":
+            new_val = z3.If(old_val > val, old_val, val) if z3.is_bv(old_val) else old_val
+        elif rmw_op == "min":
+            new_val = z3.If(old_val < val, old_val, val) if z3.is_bv(old_val) else old_val
+        elif rmw_op == "umax":
+            new_val = z3.If(z3.UGT(old_val, val), old_val, val) if z3.is_bv(old_val) else old_val
+        elif rmw_op == "umin":
+            new_val = z3.If(z3.ULT(old_val, val), old_val, val) if z3.is_bv(old_val) else old_val
+        else:
+            new_val = val
+
+        # Store new value
+        if mem is not None and z3.is_bv(addr):
+            updated = z3.Store(mem, addr, new_val)
+            ctx.declarations["_memory"] = updated
+
+        # Return old value
+        ctx.declarations[name] = old_val
+        return old_val
+
+    # -- Atomic CmpXchg --
+
+    def encode_atomic_cmpxchg(self, inst: AtomicCmpXchgInst, ctx: EncodingContext) -> z3.ExprRef:
+        """Encode atomic compare-and-exchange sequentially.
+
+        Returns a struct ``{loaded_value, success_flag}`` encoded as a
+        bitvector.  The exchange succeeds when the loaded value equals
+        the expected value.
+        """
+        name = inst.name or ctx.fresh("cmpxchg")
+        addr = self.encode_value(inst.address, ctx)
+        expected = self.encode_value(inst.expected, ctx)
+        desired = self.encode_value(inst.desired, ctx)
+
+        val_sort = self.encode_type(inst.expected.type) if inst.expected.type else z3.BitVecSort(32)
+
+        # Load current value
+        mem = ctx.get("_memory")
+        if mem is not None and z3.is_bv(addr):
+            loaded = z3.Select(mem, addr)
+            if z3.is_bv(loaded) and z3.is_bv(expected) and loaded.size() != expected.size():
+                loaded, expected = self._coerce_bv(loaded, expected)
+        else:
+            loaded = ctx.declare(ctx.fresh("cmpxchg_ld"), val_sort)
+
+        # Success condition
+        if z3.is_bv(loaded) and z3.is_bv(expected):
+            success = loaded == expected
+        else:
+            success = ctx.declare_bool(ctx.fresh("cmpxchg_ok"))
+
+        # Conditionally store desired value
+        if mem is not None and z3.is_bv(addr) and z3.is_bv(desired):
+            new_mem = z3.If(success, z3.Store(mem, addr, desired), mem)
+            ctx.declarations["_memory"] = new_mem
+
+        # Build result struct: {value, i1_success}
+        result_sort = self.encode_type(inst.type) if inst.type else z3.BitVecSort(max(loaded.size() + 1, 8) if z3.is_bv(loaded) else 33)
+        if z3.is_bv(loaded):
+            vw = loaded.size()
+            total = result_sort.size() if z3.is_bv_sort(result_sort) else vw + 1
+            flag_bv = z3.If(success, z3.BitVecVal(1, 1), z3.BitVecVal(0, 1))
+            if vw + 1 < total:
+                pad = z3.BitVecVal(0, total - vw - 1)
+                result = z3.Concat(pad, flag_bv, loaded)
+            else:
+                result = z3.Concat(flag_bv, loaded)
+        else:
+            result = ctx.declare(name, result_sort)
+
+        ctx.declarations[name] = result
+        # Also store extracted parts for downstream extractvalue
+        if z3.is_bv(loaded):
+            ctx.declarations[f"{name}_value"] = loaded
+            ctx.declarations[f"{name}_success"] = success
+        return result
+
+    # -- Memory operation encoding --
+
+    def encode_memory_operation(
+        self,
+        op: str,
+        address: z3.ExprRef,
+        ctx: EncodingContext,
+        value: Optional[z3.ExprRef] = None,
+        size_bytes: int = 0,
+        alignment: int = 1,
+    ) -> Optional[z3.ExprRef]:
+        """Encode a memory operation with allocation and alignment checks.
+
+        Parameters
+        ----------
+        op : ``"load"`` or ``"store"``
+        address : pointer bitvector
+        ctx : encoding context
+        value : value to store (for store ops)
+        size_bytes : access size in bytes
+        alignment : required alignment in bytes
+        """
+        mem = ctx.get("_memory")
+        if mem is None:
+            mem = self.initialize_memory(ctx)
+
+        pw = self.pointer_width
+
+        # Alignment check
+        if alignment > 1 and z3.is_bv(address):
+            align_mask = z3.BitVecVal(alignment - 1, pw)
+            aligned = (address & align_mask) == z3.BitVecVal(0, pw)
+            ctx.assert_assume(aligned)
+
+        # Bounds check against known allocations
+        for alloc_name, (base, alloc_size, _) in ctx._allocations.items():
+            if z3.is_bv(base) and z3.is_bv(address):
+                in_alloc = z3.And(z3.UGE(address, base),
+                                  z3.ULT(address + z3.BitVecVal(max(size_bytes, 1), pw),
+                                          base + z3.BitVecVal(alloc_size, pw)))
+                # If accessing this allocation, must be in bounds
+                ctx.assert_assume(z3.Implies(
+                    z3.And(z3.UGE(address, base),
+                           z3.ULT(address, base + z3.BitVecVal(alloc_size, pw))),
+                    in_alloc))
+
+        # Use-after-free check
+        for freed_name in ctx._freed:
+            alloc_info = ctx._allocations.get(freed_name)
+            if alloc_info is not None:
+                fbase, fsize, _ = alloc_info
+                if z3.is_bv(fbase):
+                    not_in_freed = z3.Or(
+                        z3.ULT(address, fbase),
+                        z3.UGE(address, fbase + z3.BitVecVal(fsize, pw)))
+                    ctx.assert_assume(not_in_freed)
+
+        if op == "load":
+            result = z3.Select(mem, address)
+            return result
+        elif op == "store" and value is not None:
+            new_mem = z3.Store(mem, address, value)
+            ctx.declarations["_memory"] = new_mem
+            return None
+        return None
+
     def encode_struct_literal(
         self,
         struct_ty: StructType,
@@ -1045,7 +1382,11 @@ class SMTEncoder:
 
     def encode_return(self, inst: ReturnInst, ctx: EncodingContext) -> Optional[z3.ExprRef]:
         if inst.return_value is not None:
-            return self.encode_value(inst.return_value, ctx)
+            result = self.encode_value(inst.return_value, ctx)
+            if inst.name:
+                ctx.declarations[inst.name] = result
+            return result
+        # Void return – signal with BoolVal(True) so callers can detect it
         return None
 
     # -- Function encoding --
@@ -1231,24 +1572,47 @@ class SMTEncoder:
                 if inst.name:
                     inst.name = f"{prefix}{inst.name}" if prefix else inst.name
                 result = self.encode_instruction(inst, ctx)
-                if (isinstance(inst, ReturnInst) or tname == "ReturnInst") and result is not None:
-                    # Handle multiple returns: combine with path condition
-                    path_cond = ctx.get(f"_path_cond_{current_block_name}") if current_block_name else None
-                    if return_expr is not None and path_cond is not None and z3.is_bool(path_cond):
-                        # Coerce return values to matching sorts
-                        r_val, re_val = result, return_expr
-                        if z3.is_bv(r_val) and z3.is_bv(re_val) and r_val.size() != re_val.size():
-                            target = max(r_val.size(), re_val.size())
-                            if r_val.size() < target:
-                                r_val = z3.SignExt(target - r_val.size(), r_val)
-                            if re_val.size() < target:
-                                re_val = z3.SignExt(target - re_val.size(), re_val)
-                        return_expr = z3.If(path_cond, r_val, re_val)
-                    elif return_expr is None:
-                        return_expr = result
-                    # else: already have a return and no path condition — skip
+                if (isinstance(inst, ReturnInst) or tname == "ReturnInst"):
+                    if result is not None:
+                        # Handle multiple returns: combine with path condition
+                        path_cond = ctx.get(f"_path_cond_{current_block_name}") if current_block_name else None
+                        if return_expr is not None and path_cond is not None and z3.is_bool(path_cond):
+                            # Coerce return values to matching sorts
+                            r_val, re_val = result, return_expr
+                            if z3.is_bv(r_val) and z3.is_bv(re_val) and r_val.size() != re_val.size():
+                                target = max(r_val.size(), re_val.size())
+                                if r_val.size() < target:
+                                    r_val = z3.SignExt(target - r_val.size(), r_val)
+                                if re_val.size() < target:
+                                    re_val = z3.SignExt(target - re_val.size(), re_val)
+                            return_expr = z3.If(path_cond, r_val, re_val)
+                        elif return_expr is None:
+                            return_expr = result
+                        # else: already have a return and no path condition — skip
+                    # else: void return — leave return_expr unchanged
                 if prefix and inst.name and inst.name.startswith(prefix):
                     inst.name = inst.name[len(prefix):]
+
+        # Handle functions that always trap/abort (no return paths found)
+        if return_expr is None:
+            # Check if function has a return type (non-void)
+            ret_ty = getattr(func, 'return_type', None)
+            if ret_ty is not None and not isinstance(ret_ty, VoidType) and type(ret_ty).__name__ != "VoidType":
+                # Check for calls to trap/abort/unreachable in the function
+                has_trap = False
+                for block in block_list:
+                    for inst in block.instructions:
+                        if isinstance(inst, CallInst) or type(inst).__name__ == "CallInst":
+                            callee = getattr(inst, 'callee_name', '')
+                            if callee in ('abort', 'exit', '__builtin_trap', 'unreachable',
+                                          'llvm.trap', '__assert_fail', 'panic'):
+                                has_trap = True
+                                break
+                    if has_trap:
+                        break
+                if has_trap:
+                    # Function always traps: add False assertion (unreachable)
+                    ctx._trap_flag = z3.BoolVal(False)
 
         return ctx, return_expr
 

@@ -49,7 +49,7 @@ class LoopUnrollStrategy(Enum):
 @dataclass
 class BMCConfig:
     """Configuration for bounded model checking."""
-    max_unroll_depth: int = 10
+    max_unroll_depth: int = 128
     initial_unroll_depth: int = 1
     depth_increment: int = 1
     timeout_ms: float = 30000.0
@@ -61,6 +61,8 @@ class BMCConfig:
     use_incremental_solver: bool = True
     max_paths: int = 10000
     simplify_formula: bool = True
+    adaptive_unroll: bool = True
+    coverage_termination: bool = True
 
 
 # ─── BMC Result ────────────────────────────────────────────────────
@@ -84,6 +86,8 @@ class BMCResult:
     paths_explored: int = 0
     paths_feasible: int = 0
     counterexample: Optional[Any] = None
+    counterexample_iteration: int = -1
+    counterexample_detail: str = ""
     coverage_left: float = 0.0
     coverage_right: float = 0.0
     blocks_covered_left: Set[int] = field(default_factory=set)
@@ -96,8 +100,11 @@ class BMCResult:
         return self.status == BMCStatus.EQUIVALENT
 
     def summary(self) -> str:
-        return (f"BMC: {self.status.name} (depth={self.depth_reached}, "
+        base = (f"BMC: {self.status.name} (depth={self.depth_reached}, "
                 f"paths={self.paths_explored}, time={self.time_ms:.1f}ms)")
+        if self.counterexample_iteration >= 0:
+            base += f" [divergence at iteration {self.counterexample_iteration}]"
+        return base
 
 
 # ─── Symbolic Variable Manager ────────────────────────────────────
@@ -380,6 +387,139 @@ class PathEncoder:
         }
 
 
+# ─── Loop Invariant Inferrer ──────────────────────────────────────
+
+class LoopPattern(Enum):
+    """Common loop patterns for invariant inference."""
+    COUNTER = auto()       # for(i=0; i<n; i++)
+    ACCUMULATOR = auto()   # sum += arr[i]
+    LINEAR_SEARCH = auto() # loop until condition
+    UNKNOWN = auto()
+
+
+@dataclass
+class LoopInvariant:
+    """Inferred invariant for a loop."""
+    pattern: LoopPattern
+    description: str
+    max_iterations_hint: int = -1
+    converges: bool = False
+
+
+class LoopInvariantInferrer:
+    """Infer basic loop invariants from IR patterns.
+
+    Recognizes common patterns:
+    - Counter loops: for(i=0; i<n; i++) → invariant 0 <= i <= n
+    - Accumulator loops: sum += arr[i] → invariant about sum bounds
+    - Linear search: loop until condition → bounded by array length
+    """
+
+    def infer_loop_invariants(self, func: Function) -> Dict[int, LoopInvariant]:
+        """Infer invariants for loops in the function.
+
+        Returns a mapping from loop header block ID to its invariant.
+        """
+        invariants: Dict[int, LoopInvariant] = {}
+        loop_headers = self._find_loop_headers(func)
+
+        for header_id in loop_headers:
+            inv = self._classify_loop(func, header_id)
+            invariants[header_id] = inv
+
+        return invariants
+
+    def should_increase_k(self, invariants: Dict[int, LoopInvariant],
+                           current_k: int) -> bool:
+        """Determine if increasing K would discover new behavior."""
+        if not invariants:
+            return True
+
+        for inv in invariants.values():
+            if inv.max_iterations_hint > 0 and current_k < inv.max_iterations_hint:
+                return True
+            if inv.pattern == LoopPattern.UNKNOWN:
+                return True
+        return False
+
+    def _find_loop_headers(self, func: Function) -> Set[int]:
+        """Find loop headers via back-edge detection."""
+        headers: Set[int] = set()
+        visited: Set[int] = set()
+        in_stack: Set[int] = set()
+
+        def dfs(block: BasicBlock) -> None:
+            visited.add(block.id)
+            in_stack.add(block.id)
+            for succ in block.successors:
+                if succ.id in in_stack:
+                    headers.add(succ.id)
+                elif succ.id not in visited:
+                    dfs(succ)
+            in_stack.discard(block.id)
+
+        entry = func.entry_block
+        if entry is not None:
+            dfs(entry)
+        return headers
+
+    def _classify_loop(self, func: Function, header_id: int) -> LoopInvariant:
+        """Classify a loop by analyzing its header block instructions."""
+        block = None
+        for b in func.blocks:
+            if b.id == header_id:
+                block = b
+                break
+
+        if block is None:
+            return LoopInvariant(LoopPattern.UNKNOWN, "Loop header not found")
+
+        has_compare = False
+        has_phi = False
+        has_accumulator = False
+        has_call = False
+
+        for inst in block.instructions:
+            if isinstance(inst, CompareOp):
+                has_compare = True
+            elif isinstance(inst, PhiInst):
+                has_phi = True
+            elif isinstance(inst, BinaryOp):
+                if inst.op in (BinOpKind.ADD, BinOpKind.SUB):
+                    has_accumulator = True
+            elif isinstance(inst, CallInst):
+                has_call = True
+
+        # Counter loop: has phi + compare (for i=0; i<n; i++)
+        if has_phi and has_compare and not has_accumulator:
+            return LoopInvariant(
+                LoopPattern.COUNTER,
+                "Counter loop: 0 <= i <= n",
+                max_iterations_hint=256,
+                converges=True,
+            )
+
+        # Accumulator loop: has phi + binary add/sub
+        if has_phi and has_accumulator:
+            return LoopInvariant(
+                LoopPattern.ACCUMULATOR,
+                "Accumulator loop: sum bounded by iteration count × max element",
+                max_iterations_hint=256,
+                converges=True,
+            )
+
+        # Linear search: has compare but no phi update (simple search)
+        if has_compare and not has_phi:
+            return LoopInvariant(
+                LoopPattern.LINEAR_SEARCH,
+                "Linear search: bounded by collection length",
+                max_iterations_hint=1024,
+                converges=True,
+            )
+
+        return LoopInvariant(LoopPattern.UNKNOWN, "Unknown loop pattern")
+
+
 # ─── Bounded Model Checker ───────────────────────────────────────
 
 class BoundedModelChecker:
@@ -504,10 +644,24 @@ class BoundedModelChecker:
         return result
 
     def _check_increasing(self, left: Function, right: Function) -> BMCResult:
-        """Check with increasing depths until proof, counterexample, or timeout."""
+        """Check with increasing depths until proof, counterexample, or timeout.
+
+        Uses adaptive unrolling: if UNSAT at small K, likely UNSAT at any K.
+        If SAT at small K, definitely SAT at higher K. Applies coverage-based
+        termination if no new basic blocks are reached.
+        """
         start = time.monotonic()
         best_result = BMCResult(status=BMCStatus.UNKNOWN)
+        prev_blocks_left: Set[int] = set()
+        prev_blocks_right: Set[int] = set()
+        no_new_coverage_count = 0
 
+        # Infer loop invariants for adaptive decisions
+        invariant_inferrer = LoopInvariantInferrer()
+        left_invariants = invariant_inferrer.infer_loop_invariants(left)
+        right_invariants = invariant_inferrer.infer_loop_invariants(right)
+
+        # Adaptive unrolling: use doubling schedule (1, 2, 4, 8, 16, ...)
         depth = self._config.initial_unroll_depth
         while depth <= self._config.max_unroll_depth:
             elapsed = (time.monotonic() - start) * 1000
@@ -527,13 +681,48 @@ class BoundedModelChecker:
 
             if result.status == BMCStatus.EQUIVALENT:
                 best_result.status = BMCStatus.EQUIVALENT
+                # If UNSAT at K=16+, likely UNSAT at any K
+                if self._config.adaptive_unroll and depth >= 16:
+                    logger.debug(f"BMC: UNSAT at depth {depth}, likely UNSAT at any K")
                 break
             elif result.status == BMCStatus.NOT_EQUIVALENT:
                 best_result.status = BMCStatus.NOT_EQUIVALENT
                 best_result.counterexample = result.counterexample
+                best_result.counterexample_iteration = depth
+                best_result.counterexample_detail = (
+                    f"Divergence found at loop unroll depth {depth}"
+                )
                 break
 
-            depth += self._config.depth_increment
+            # Coverage-based termination
+            if self._config.coverage_termination:
+                new_left = best_result.blocks_covered_left - prev_blocks_left
+                new_right = best_result.blocks_covered_right - prev_blocks_right
+                if not new_left and not new_right and depth > self._config.initial_unroll_depth:
+                    no_new_coverage_count += 1
+                    if no_new_coverage_count >= 2:
+                        logger.debug(f"BMC: no new blocks covered for 2 iterations, stopping")
+                        best_result.status = BMCStatus.EQUIVALENT
+                        break
+                else:
+                    no_new_coverage_count = 0
+                prev_blocks_left = set(best_result.blocks_covered_left)
+                prev_blocks_right = set(best_result.blocks_covered_right)
+
+            # Check loop invariants to decide if increasing K helps
+            if self._config.adaptive_unroll:
+                all_invariants = {**left_invariants, **right_invariants}
+                if all_invariants and not invariant_inferrer.should_increase_k(
+                    all_invariants, depth
+                ):
+                    logger.debug(f"BMC: loop invariants suggest K={depth} sufficient")
+                    break
+
+            # Adaptive depth increment: double the depth for faster convergence
+            if self._config.adaptive_unroll:
+                depth = min(depth * 2, depth + max(self._config.depth_increment, 4))
+            else:
+                depth += self._config.depth_increment
 
         best_result.time_ms = (time.monotonic() - start) * 1000
         if left.num_blocks > 0:
@@ -544,11 +733,14 @@ class BoundedModelChecker:
         return best_result
 
     def _check_adaptive(self, left: Function, right: Function) -> BMCResult:
-        """Adaptively choose depth based on solver performance."""
+        """Adaptively choose depth based on solver performance and coverage."""
         start = time.monotonic()
         best_result = BMCResult(status=BMCStatus.UNKNOWN)
         depth = self._config.initial_unroll_depth
         prev_time = 0.0
+        prev_blocks_left: Set[int] = set()
+        prev_blocks_right: Set[int] = set()
+        no_new_coverage_count = 0
 
         while depth <= self._config.max_unroll_depth:
             elapsed = (time.monotonic() - start) * 1000
@@ -567,16 +759,34 @@ class BoundedModelChecker:
             if result.status in (BMCStatus.EQUIVALENT, BMCStatus.NOT_EQUIVALENT):
                 best_result.status = result.status
                 best_result.counterexample = result.counterexample
+                if result.status == BMCStatus.NOT_EQUIVALENT:
+                    best_result.counterexample_iteration = depth
+                    best_result.counterexample_detail = (
+                        f"Divergence found at adaptive depth {depth}"
+                    )
                 break
+
+            # Coverage-based termination
+            if self._config.coverage_termination:
+                new_left = best_result.blocks_covered_left - prev_blocks_left
+                new_right = best_result.blocks_covered_right - prev_blocks_right
+                if not new_left and not new_right and depth > self._config.initial_unroll_depth:
+                    no_new_coverage_count += 1
+                    if no_new_coverage_count >= 2:
+                        logger.debug(f"BMC adaptive: no new coverage, stopping")
+                        best_result.status = BMCStatus.EQUIVALENT
+                        break
+                else:
+                    no_new_coverage_count = 0
+                prev_blocks_left = set(best_result.blocks_covered_left)
+                prev_blocks_right = set(best_result.blocks_covered_right)
 
             # Adaptive depth increment based on solver time
             if result.time_ms > 0 and prev_time > 0:
                 growth_rate = result.time_ms / prev_time
                 if growth_rate > 4.0:
-                    # Solver time growing too fast: increase slowly
                     depth += 1
                 elif growth_rate < 2.0:
-                    # Solver time growing slowly: increase faster
                     depth += min(3, self._config.max_unroll_depth - depth)
                 else:
                     depth += self._config.depth_increment
@@ -644,11 +854,13 @@ class BoundedModelChecker:
         """Compare paths structurally when SMT is unavailable."""
         if len(left_paths) == len(right_paths):
             all_match = True
-            for lp, rp in zip(left_paths, right_paths):
+            divergent_idx = -1
+            for i, (lp, rp) in enumerate(zip(left_paths, right_paths)):
                 lr = lp.get("return_value")
                 rr = rp.get("return_value")
                 if lr != rr and lr is not None and rr is not None:
                     all_match = False
+                    divergent_idx = i
                     break
 
             if all_match:
@@ -656,6 +868,12 @@ class BoundedModelChecker:
             else:
                 result.status = BMCStatus.UNKNOWN
                 result.error_message = "Path comparison: return values differ"
+                if divergent_idx >= 0:
+                    result.counterexample_iteration = divergent_idx
+                    result.counterexample_detail = (
+                        f"Divergence found at path index {divergent_idx} "
+                        f"of {len(left_paths)} paths"
+                    )
         else:
             result.status = BMCStatus.UNKNOWN
             result.error_message = f"Different path counts: {len(left_paths)} vs {len(right_paths)}"

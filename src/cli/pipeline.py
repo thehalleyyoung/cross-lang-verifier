@@ -139,6 +139,10 @@ class VerificationPipeline:
     def _check_timeout(self) -> bool:
         return self._elapsed() > self.config.timeouts.total_timeout
 
+    def _remaining_budget(self) -> float:
+        """Return remaining time budget in seconds."""
+        return max(0.0, self.config.timeouts.total_timeout - self._elapsed())
+
     def _run_phase(self, phase: PipelinePhase) -> PhaseResult:
         handler = self._phase_handlers.get(phase)
         if handler is None:
@@ -211,13 +215,29 @@ class VerificationPipeline:
             PipelinePhase.REPORT,
         ]
 
+        skip_product_chain = False
         for phase in phases:
+            # Skip product-dependent phases if we fell back to structural
+            if skip_product_chain and phase in (
+                PipelinePhase.SYMBOLIC, PipelinePhase.SMT,
+            ):
+                self._state.warnings.append(
+                    f"Phase {phase.value} skipped: using structural fallback")
+                continue
+
             result = self._run_phase(phase)
             if result.status == PipelineStatus.FAILED:
                 if phase in (PipelinePhase.PARSE_C, PipelinePhase.PARSE_RUST,
                              PipelinePhase.LOWER_C, PipelinePhase.LOWER_RUST):
                     return self._build_error_report(result)
+                # Non-critical phases: log warning and continue
                 self._state.warnings.append(f"Phase {phase.value} failed: {result.error}")
+                # Alignment/product failures: try structural comparison fallback
+                if phase in (PipelinePhase.ALIGN, PipelinePhase.PRODUCT):
+                    self._state.warnings.append(
+                        "Falling back to structural comparison")
+                    self._try_structural_comparison()
+                    skip_product_chain = True
 
         return self._build_report()
 
@@ -285,32 +305,49 @@ class VerificationPipeline:
     # -----------------------------------------------------------------------
 
     def _phase_parse_c(self) -> Dict[str, Any]:
-        """Parse C source into AST."""
-        try:
-            from ..frontend_c import CLexer, CParser
-            source = self._state.c_source
-            parser = CParser(source, filename="<c_source>")
-            self._state.c_ast = parser.parse()
-            return {}
-        except ImportError:
-            self._state.warnings.append("C frontend not fully available")
-            return {}
-        except Exception as e:
-            raise RuntimeError(f"C parsing failed: {e}") from e
+        """Parse C source into AST with fallback to lenient mode."""
+        source = self._state.c_source
+        # Try strict parsing first, fall back to lenient
+        for attempt, strict in enumerate([True, False]):
+            try:
+                from ..frontend_c import CLexer, CParser
+                parser = CParser(source, filename="<c_source>")
+                if not strict:
+                    parser.lenient = True
+                self._state.c_ast = parser.parse()
+                if not strict:
+                    self._state.warnings.append("C parsing used lenient mode")
+                return {}
+            except ImportError:
+                self._state.warnings.append("C frontend not fully available")
+                return {}
+            except Exception as e:
+                if strict:
+                    continue
+                raise RuntimeError(f"C parsing failed: {e}") from e
+        return {}
 
     def _phase_parse_rust(self) -> Dict[str, Any]:
-        """Parse Rust source into AST."""
-        try:
-            from ..frontend_rust import RustLexer, RustParser
-            source = self._state.rust_source
-            parser = RustParser(source, filename="<rust_source>")
-            self._state.rust_ast = parser.parse()
-            return {}
-        except ImportError:
-            self._state.warnings.append("Rust frontend not fully available")
-            return {}
-        except Exception as e:
-            raise RuntimeError(f"Rust parsing failed: {e}") from e
+        """Parse Rust source into AST with fallback to lenient mode."""
+        source = self._state.rust_source
+        for attempt, strict in enumerate([True, False]):
+            try:
+                from ..frontend_rust import RustLexer, RustParser
+                parser = RustParser(source, filename="<rust_source>")
+                if not strict:
+                    parser.lenient = True
+                self._state.rust_ast = parser.parse()
+                if not strict:
+                    self._state.warnings.append("Rust parsing used lenient mode")
+                return {}
+            except ImportError:
+                self._state.warnings.append("Rust frontend not fully available")
+                return {}
+            except Exception as e:
+                if strict:
+                    continue
+                raise RuntimeError(f"Rust parsing failed: {e}") from e
+        return {}
 
     def _phase_lower_c(self) -> Dict[str, Any]:
         """Lower C AST to shared IR."""
@@ -369,7 +406,7 @@ class VerificationPipeline:
         return {"validation_errors": len(errors)}
 
     def _phase_analysis(self) -> Dict[str, Any]:
-        """Run analysis passes: CFG, dominators, loops, alias analysis."""
+        """Run analysis passes: CFG, dominators, loops, alias analysis, callgraph."""
         stats: Dict[str, Any] = {}
         try:
             from ..analysis import CFG, DominatorTree, LoopInfo, AliasQuery
@@ -397,6 +434,19 @@ class VerificationPipeline:
                             func, field_sensitive=self.config.analysis.field_sensitive_alias
                         )
                     break
+
+            # Interprocedural analysis: build callgraphs for multi-function modules
+            if self.config.analysis.interprocedural:
+                try:
+                    from ..analysis.callgraph import CallGraph
+                    if self._state.c_ir is not None:
+                        c_cg = CallGraph.build(self._state.c_ir)
+                        stats["c_callgraph_nodes"] = len(c_cg)
+                    if self._state.rust_ir is not None:
+                        r_cg = CallGraph.build(self._state.rust_ir)
+                        stats["rust_callgraph_nodes"] = len(r_cg)
+                except Exception as e:
+                    self._state.warnings.append(f"Interprocedural analysis skipped: {e}")
         except ImportError:
             self._state.warnings.append("Analysis module not fully available")
 
@@ -431,6 +481,9 @@ class VerificationPipeline:
                         if hasattr(self._state.alignment, 'block_alignments') else 0}
         except (ImportError, Exception) as e:
             self._state.warnings.append(f"Alignment failed: {e}")
+            # Fall back to structural comparison
+            self._state.warnings.append("Falling back to structural comparison")
+            self._try_structural_comparison()
         return {}
 
     def _phase_product(self) -> Dict[str, Any]:
@@ -447,7 +500,107 @@ class VerificationPipeline:
                 self._state.product_program = builder.build()
         except (ImportError, Exception) as e:
             self._state.warnings.append(f"Product construction failed: {e}")
+            # Try direct SMT comparison as fallback
+            self._try_direct_smt_comparison()
         return {}
+
+    def _try_direct_smt_comparison(self) -> None:
+        """Fall back to direct SMT comparison when product construction fails."""
+        if self._state.c_ir is None or self._state.rust_ir is None:
+            return
+        try:
+            from ..smt.encoder import SMTEncoder, EncodingContext
+            from ..semantics.semantic_config import SemanticConfig
+            import z3
+
+            c_func = next(self._state.c_ir.iter_functions(), None)
+            r_func = next(self._state.rust_ir.iter_functions(), None)
+            if c_func is None or r_func is None:
+                return
+
+            c_config = SemanticConfig.c11()
+            r_config = SemanticConfig.rust_release()
+            c_args = list(c_func.arguments)
+            r_args = list(r_func.arguments)
+            min_args = min(len(c_args), len(r_args))
+
+            shared_vars = []
+            c_input_map: Dict[str, Any] = {}
+            r_input_map: Dict[str, Any] = {}
+            dummy = SMTEncoder(config=c_config)
+
+            for i in range(min_args):
+                sort = z3.BitVecSort(32)
+                try:
+                    if c_args[i].type:
+                        sort = dummy.encode_type(c_args[i].type)
+                except Exception:
+                    pass
+                try:
+                    v = z3.BitVec(f"input_{i}", sort.size()) if z3.is_bv_sort(sort) \
+                        else z3.Const(f"input_{i}", sort)
+                except Exception:
+                    v = z3.BitVec(f"input_{i}", 32)
+                shared_vars.append((f"input_{i}", v))
+                ca = c_args[i].name or f"arg_{c_args[i].index}"
+                ra = r_args[i].name or f"arg_{r_args[i].index}"
+                c_input_map[ca] = v
+                r_input_map[ra] = v
+
+            c_ctx = EncodingContext()
+            for nm, var in c_input_map.items():
+                c_ctx.declarations[nm] = var
+                c_ctx._alloca_values[nm] = var
+            _, c_ret = SMTEncoder(config=c_config).encode_function(c_func, c_ctx)
+
+            r_ctx = EncodingContext()
+            for nm, var in r_input_map.items():
+                r_ctx.declarations[nm] = var
+                r_ctx._alloca_values[nm] = var
+            _, r_ret = SMTEncoder(config=r_config).encode_function(r_func, r_ctx)
+
+            if c_ret is None or r_ret is None:
+                return
+
+            solver = z3.Solver()
+            budget_ms = int(self._remaining_budget() * 1000)
+            solver.set("timeout", min(budget_ms, 5000) if budget_ms > 0 else 5000)
+            for a in c_ctx.assertions:
+                solver.add(a)
+            for a in r_ctx.assertions:
+                solver.add(a)
+
+            c_r, r_r = c_ret, r_ret
+            if z3.is_bv(c_r) and z3.is_bv(r_r):
+                c_w, r_w = c_r.size(), r_r.size()
+                if c_w != r_w:
+                    tw = max(c_w, r_w)
+                    if c_w < tw:
+                        c_r = z3.SignExt(tw - c_w, c_r)
+                    if r_w < tw:
+                        r_r = z3.SignExt(tw - r_w, r_r)
+            solver.add(c_r != r_r)
+
+            result = solver.check()
+            if result == z3.unsat:
+                self._state.coverage.verified_paths = 1
+                self._state.coverage.total_paths = 1
+            elif result == z3.sat:
+                m = solver.model()
+                from ..cli.reporter import Counterexample as RCex, ConcreteValue, DivergenceCategory
+                inputs = []
+                for nm, var in shared_vars:
+                    val = m.evaluate(var, model_completion=True)
+                    inputs.append(ConcreteValue(name=nm, c_value=str(val), rust_value=str(val)))
+                self._state.counterexamples.append(RCex(
+                    inputs=inputs,
+                    category=DivergenceCategory.OTHER,
+                    description="Found by direct SMT comparison (product fallback)",
+                ))
+                self._state.divergence_summary.add(DivergenceCategory.OTHER)
+            self._state.warnings.append("Used direct SMT comparison fallback")
+        except Exception as e:
+            self._state.warnings.append(f"Direct SMT fallback failed: {e}")
 
     def _phase_symbolic(self) -> Dict[str, Any]:
         """Run symbolic execution on the product program."""
@@ -545,6 +698,90 @@ class VerificationPipeline:
         return {}
 
     # -----------------------------------------------------------------------
+    # Structural comparison fallback
+    # -----------------------------------------------------------------------
+
+    def _try_structural_comparison(self) -> None:
+        """Structural comparison fallback when product construction fails.
+
+        Compares C and Rust IR functions by instruction counts, opcode
+        histograms, and return type compatibility to produce a partial verdict.
+        Results are stored in ``self._state`` for ``_determine_verdict()``.
+        """
+        if self._state.c_ir is None or self._state.rust_ir is None:
+            return
+        try:
+            c_func = next(self._state.c_ir.iter_functions(), None)
+            r_func = next(self._state.rust_ir.iter_functions(), None)
+            if c_func is None or r_func is None:
+                return
+
+            c_instr_count = c_func.instruction_count
+            r_instr_count = r_func.instruction_count
+            c_block_count = c_func.num_blocks
+            r_block_count = r_func.num_blocks
+
+            # Build opcode histograms
+            c_opcodes: Dict[str, int] = {}
+            for inst in c_func.iter_instructions():
+                op = inst.opcode_name()
+                c_opcodes[op] = c_opcodes.get(op, 0) + 1
+
+            r_opcodes: Dict[str, int] = {}
+            for inst in r_func.iter_instructions():
+                op = inst.opcode_name()
+                r_opcodes[op] = r_opcodes.get(op, 0) + 1
+
+            # Jaccard similarity on opcode sets
+            all_ops = set(c_opcodes) | set(r_opcodes)
+            if all_ops:
+                matching = sum(
+                    min(c_opcodes.get(op, 0), r_opcodes.get(op, 0))
+                    for op in all_ops
+                )
+                total = sum(
+                    max(c_opcodes.get(op, 0), r_opcodes.get(op, 0))
+                    for op in all_ops
+                )
+                opcode_sim = matching / total if total else 0.0
+            else:
+                opcode_sim = 1.0
+
+            # Instruction count similarity
+            max_instr = max(c_instr_count, r_instr_count, 1)
+            instr_sim = 1.0 - abs(c_instr_count - r_instr_count) / max_instr
+
+            # Return type compatibility
+            ret_compat = 1.0
+            try:
+                c_ret = c_func.return_type
+                r_ret = r_func.return_type
+                if c_ret != r_ret:
+                    ret_compat = 0.5
+                if (hasattr(c_ret, 'is_void') and c_ret.is_void) != \
+                   (hasattr(r_ret, 'is_void') and r_ret.is_void):
+                    ret_compat = 0.0
+            except Exception:
+                ret_compat = 0.5
+
+            similarity = 0.4 * opcode_sim + 0.4 * instr_sim + 0.2 * ret_compat
+
+            self._state.phase_results.append(PhaseResult(
+                PipelinePhase.PRODUCT, PipelineStatus.COMPLETED,
+                data={
+                    "structural_similarity": similarity,
+                    "c_instr_count": c_instr_count,
+                    "r_instr_count": r_instr_count,
+                    "c_block_count": c_block_count,
+                    "r_block_count": r_block_count,
+                    "opcode_similarity": opcode_sim,
+                    "fallback": "structural",
+                },
+            ))
+        except Exception as e:
+            self._state.warnings.append(f"Structural comparison failed: {e}")
+
+    # -----------------------------------------------------------------------
     # Report builders
     # -----------------------------------------------------------------------
 
@@ -614,10 +851,17 @@ class VerificationPipeline:
         verified = self._state.coverage.verified_paths
         total = self._state.coverage.total_paths
 
+        # Check for structural similarity info from fallback
+        structural_sim = None
+        for pr in self._state.phase_results:
+            if pr.data.get("fallback") == "structural":
+                structural_sim = pr.data.get("structural_similarity", 0.0)
+
         if verified > 0 and verified == total:
+            confidence = 0.95 if total <= 1 else 1.0
             return EquivalenceVerdict(
                 kind=VerdictKind.EQUIVALENT,
-                confidence=1.0,
+                confidence=confidence,
                 reason=f"All {verified} paths verified equivalent by SMT solver",
             )
 
@@ -631,11 +875,44 @@ class VerificationPipeline:
             )
 
         # No symbolic results — check fuzz results
-        if self._state.fuzz_results and not self._state.counterexamples:
+        fuzz_iters = 0
+        if self._state.fuzz_results:
+            fuzz_iters = getattr(self._state.fuzz_results, 'iterations', 0)
+
+        if fuzz_iters > 0 and not self._state.counterexamples:
+            fuzz_conf = min(0.7, 0.3 + fuzz_iters / 10000)
+            if structural_sim is not None and structural_sim >= 0.8:
+                fuzz_conf = min(0.8, fuzz_conf + 0.15)
             return EquivalenceVerdict(
                 kind=VerdictKind.UNKNOWN,
-                confidence=0.5,
-                reason="Fuzzing found no divergences, but symbolic verification incomplete",
+                confidence=fuzz_conf,
+                reason=f"Fuzzing ({fuzz_iters} iterations) found no divergences"
+                       + (f", structural similarity {structural_sim:.0%}"
+                          if structural_sim is not None else "")
+                       + "; symbolic verification incomplete",
+            )
+
+        # Structural similarity only
+        if structural_sim is not None:
+            if structural_sim >= 0.95:
+                return EquivalenceVerdict(
+                    kind=VerdictKind.UNKNOWN,
+                    confidence=0.6,
+                    reason=f"High structural similarity ({structural_sim:.0%}), "
+                           f"but formal verification incomplete",
+                )
+            if structural_sim >= 0.5:
+                return EquivalenceVerdict(
+                    kind=VerdictKind.UNKNOWN,
+                    confidence=structural_sim * 0.5,
+                    reason=f"Moderate structural similarity ({structural_sim:.0%}), "
+                           f"formal verification incomplete",
+                )
+            return EquivalenceVerdict(
+                kind=VerdictKind.UNKNOWN,
+                confidence=0.1,
+                reason=f"Low structural similarity ({structural_sim:.0%}), "
+                       f"likely divergent but not confirmed",
             )
 
         return EquivalenceVerdict(

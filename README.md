@@ -69,7 +69,7 @@ The project ships two CLIs:
 
 ```bash
 git clone <repo-url>
-cd cross-language-equivalence-verifier
+cd cross-lang-verifier
 pip install -e .
 ```
 

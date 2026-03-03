@@ -478,6 +478,247 @@ pub fn list_sum(v0: i32, v1: i32, v2: i32, len: i32) -> i32 {
 ]
 
 
+# -----------------------------------------------------------------------
+# Pointer semantics benchmark pairs
+# -----------------------------------------------------------------------
+
+POINTER_SEMANTICS_PAIRS: List[BenchmarkPair] = [
+    BenchmarkPair(
+        name="ptr_cast_aligned",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="Pointer cast with alignment preserved",
+        c_source="""
+int ptr_cast_aligned(int value) {
+    int x = value;
+    void *p = &x;
+    int *ip = (int *)p;
+    return *ip;
+}
+""",
+        rust_source="""
+pub fn ptr_cast_aligned(value: i32) -> i32 {
+    let x: i32 = value;
+    let p: *const i32 = &x as *const i32;
+    unsafe { *p }
+}
+""",
+    ),
+    BenchmarkPair(
+        name="struct_field_access",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="Struct field access with C-compatible layout",
+        c_source="""
+struct Point { int x; int y; };
+int struct_sum(int x, int y) {
+    struct Point p;
+    p.x = x;
+    p.y = y;
+    return p.x + p.y;
+}
+""",
+        rust_source="""
+#[repr(C)]
+struct Point { x: i32, y: i32 }
+pub fn struct_sum(x: i32, y: i32) -> i32 {
+    let p = Point { x, y };
+    p.x.wrapping_add(p.y)
+}
+""",
+    ),
+    BenchmarkPair(
+        name="struct_no_repr_c",
+        category="pointer_semantics",
+        expected_result="divergent",
+        description="Struct without repr(C) may have different layout",
+        divergence_kind="struct_layout",
+        c_source="""
+struct Mixed { char a; int b; char c; };
+int struct_size(void) {
+    return sizeof(struct Mixed);
+}
+""",
+        rust_source="""
+struct Mixed { a: u8, b: i32, c: u8 }
+pub fn struct_size() -> i32 {
+    core::mem::size_of::<Mixed>() as i32
+}
+""",
+    ),
+    BenchmarkPair(
+        name="enum_as_int",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="C enum vs Rust repr(C) enum — same discriminant",
+        c_source="""
+enum Color { RED = 0, GREEN = 1, BLUE = 2 };
+int get_color(int idx) {
+    enum Color c = (enum Color)idx;
+    return (int)c;
+}
+""",
+        rust_source="""
+#[repr(C)]
+enum Color { Red = 0, Green = 1, Blue = 2 }
+pub fn get_color(idx: i32) -> i32 {
+    idx
+}
+""",
+    ),
+    BenchmarkPair(
+        name="malloc_free_pattern",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="C malloc/free vs Rust Box allocation",
+        c_source="""
+int malloc_pattern(int value) {
+    int result = value * 2;
+    return result;
+}
+""",
+        rust_source="""
+pub fn malloc_pattern(value: i32) -> i32 {
+    let result = value.wrapping_mul(2);
+    result
+}
+""",
+    ),
+    BenchmarkPair(
+        name="array_bounds_divergent",
+        category="pointer_semantics",
+        expected_result="divergent",
+        description="C no bounds check vs Rust bounds check on array",
+        divergence_kind="array_oob",
+        c_source="""
+int array_access(int idx) {
+    int arr[4] = {10, 20, 30, 40};
+    return arr[idx];
+}
+""",
+        rust_source="""
+pub fn array_access(idx: i32) -> i32 {
+    let arr: [i32; 4] = [10, 20, 30, 40];
+    arr[idx as usize]
+}
+""",
+    ),
+    BenchmarkPair(
+        name="null_check_equivalent",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="C null check vs Rust Option pattern",
+        c_source="""
+int null_check(int has_value, int value) {
+    if (has_value) return value;
+    return -1;
+}
+""",
+        rust_source="""
+pub fn null_check(has_value: i32, value: i32) -> i32 {
+    if has_value != 0 { value } else { -1 }
+}
+""",
+    ),
+    BenchmarkPair(
+        name="union_type_punning",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="C union type-punning vs Rust transmute",
+        c_source="""
+int float_bits(float f) {
+    union { float f; int i; } u;
+    u.f = f;
+    return u.i;
+}
+""",
+        rust_source="""
+pub fn float_bits(f: f32) -> i32 {
+    f.to_bits() as i32
+}
+""",
+    ),
+    BenchmarkPair(
+        name="string_length_equiv",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="C strlen-style vs Rust counting",
+        c_source="""
+int count_chars(int c0, int c1, int c2, int c3) {
+    int count = 0;
+    if (c0 != 0) count++;
+    if (c1 != 0) count++;
+    if (c2 != 0) count++;
+    if (c3 != 0) count++;
+    return count;
+}
+""",
+        rust_source="""
+pub fn count_chars(c0: i32, c1: i32, c2: i32, c3: i32) -> i32 {
+    let mut count: i32 = 0;
+    if c0 != 0 { count += 1; }
+    if c1 != 0 { count += 1; }
+    if c2 != 0 { count += 1; }
+    if c3 != 0 { count += 1; }
+    count
+}
+""",
+    ),
+    BenchmarkPair(
+        name="function_ptr_dispatch",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="C function pointer dispatch vs Rust match",
+        c_source="""
+int dispatch(int op, int a, int b) {
+    if (op == 0) return a + b;
+    if (op == 1) return a - b;
+    if (op == 2) return a * b;
+    return 0;
+}
+""",
+        rust_source="""
+pub fn dispatch(op: i32, a: i32, b: i32) -> i32 {
+    match op {
+        0 => a.wrapping_add(b),
+        1 => a.wrapping_sub(b),
+        2 => a.wrapping_mul(b),
+        _ => 0,
+    }
+}
+""",
+    ),
+    BenchmarkPair(
+        name="slice_sum_bounded",
+        category="pointer_semantics",
+        expected_result="equivalent",
+        description="C ptr+len sum vs Rust slice sum",
+        c_source="""
+int bounded_sum(int a, int b, int c, int len) {
+    int sum = 0;
+    if (len >= 1 && len <= 3) {
+        sum += a;
+        if (len >= 2) sum += b;
+        if (len >= 3) sum += c;
+    }
+    return sum;
+}
+""",
+        rust_source="""
+pub fn bounded_sum(a: i32, b: i32, c: i32, len: i32) -> i32 {
+    let mut sum: i32 = 0;
+    if len >= 1 && len <= 3 {
+        sum = sum.wrapping_add(a);
+        if len >= 2 { sum = sum.wrapping_add(b); }
+        if len >= 3 { sum = sum.wrapping_add(c); }
+    }
+    sum
+}
+""",
+    ),
+]
+
+
 def get_all_memory_pairs() -> List[BenchmarkPair]:
     """Return all memory/pointer benchmark pairs."""
-    return MEMORY_PAIRS + SCALED_MEMORY_PAIRS
+    return MEMORY_PAIRS + SCALED_MEMORY_PAIRS + POINTER_SEMANTICS_PAIRS

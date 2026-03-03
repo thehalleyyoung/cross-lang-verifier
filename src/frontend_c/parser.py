@@ -154,7 +154,8 @@ class CParser:
             print(func.name)
     """
 
-    def __init__(self, source: str, filename: str = "<input>") -> None:
+    def __init__(self, source: str, filename: str = "<input>",
+                 lenient: bool = False) -> None:
         self._lexer = CLexer(source, filename)
         self._filename = filename
         self._tokens: list[Token] = []
@@ -162,6 +163,7 @@ class CParser:
         self._errors: list[ParseError] = []
         self._typedef_names: set[str] = set()
         self._in_typedef = False
+        self.lenient = lenient
         # Pre-register common C2Rust typedefs
         for name in ("size_t", "ssize_t", "ptrdiff_t", "intptr_t", "uintptr_t",
                       "int8_t", "int16_t", "int32_t", "int64_t",
@@ -247,6 +249,13 @@ class CParser:
         while not self._at(TokenKind.EOF) and not self._at_any(*kinds):
             self._advance()
 
+    def _skip_to_recovery(self) -> None:
+        """Skip tokens until a likely recovery point (semicolon, brace, or EOF)."""
+        while not self._at(TokenKind.EOF):
+            if self._at_any(TokenKind.SEMICOLON, TokenKind.RBRACE, TokenKind.LBRACE):
+                return
+            self._advance()
+
     def _skip_balanced_parens(self) -> None:
         """Skip balanced parentheses."""
         depth = 0
@@ -310,6 +319,21 @@ class CParser:
                 self._advance()
                 return None
 
+        # _Alignas at top level — skip the specifier
+        if self._at(TokenKind.KW_ALIGNAS):
+            self._advance()
+            if self._match(TokenKind.LPAREN):
+                depth = 1
+                while depth > 0 and not self._at(TokenKind.EOF):
+                    if self._at(TokenKind.LPAREN):
+                        depth += 1
+                    elif self._at(TokenKind.RPAREN):
+                        depth -= 1
+                        if depth == 0:
+                            self._advance()
+                            break
+                    self._advance()
+
         # Parse declaration specifiers
         specs = self._parse_declaration_specifiers()
         if specs is None:
@@ -352,7 +376,17 @@ class CParser:
                     break
             first = False
 
-            name, decl_type = self._parse_declarator(base_type)
+            if self.lenient:
+                try:
+                    name, decl_type = self._parse_declarator(base_type)
+                except ParseError as e:
+                    self._errors.append(e)
+                    self._skip_to(TokenKind.SEMICOLON, TokenKind.LBRACE)
+                    if self._at(TokenKind.SEMICOLON):
+                        self._advance()
+                    return None
+            else:
+                name, decl_type = self._parse_declarator(base_type)
 
             if is_typedef:
                 td = TypedefDecl(
@@ -684,49 +718,68 @@ class CParser:
                 self._parse_static_assert()
                 continue
 
-            specs = self._parse_declaration_specifiers()
-            if specs is None:
+            # __extension__ in struct fields
+            if self._at(TokenKind.KW_EXTENSION):
                 self._advance()
                 continue
 
-            _, _, type_spec, _, _, _ = specs
+            if self.lenient:
+                try:
+                    self._parse_struct_field_into(fields, start)
+                except ParseError as e:
+                    self._errors.append(e)
+                    self._skip_to(TokenKind.SEMICOLON, TokenKind.RBRACE)
+                    self._match(TokenKind.SEMICOLON)
+            else:
+                self._parse_struct_field_into(fields, start)
 
-            # Parse field declarators
-            if self._at(TokenKind.SEMICOLON):
-                # Anonymous field (e.g., anonymous struct/union)
-                fields.append(FieldDecl(name="", type_name=type_spec, loc=self._loc(start)))
-                self._advance()
-                continue
+        return fields
 
-            first = True
-            while True:
-                if not first:
-                    if not self._match(TokenKind.COMMA):
-                        break
-                first = False
+    def _parse_struct_field_into(self, fields: list[FieldDecl], start: Token) -> None:
+        """Parse a single struct field declaration into the fields list."""
+        specs = self._parse_declaration_specifiers()
+        if specs is None:
+            self._advance()
+            return
 
-                # Optional declarator (for bitfields without name)
-                name = ""
-                field_type = type_spec
-                bitfield_width = None
+        _, _, type_spec, _, _, _ = specs
 
-                if self._at(TokenKind.COLON):
-                    # Unnamed bitfield
-                    pass
-                elif not self._at(TokenKind.SEMICOLON):
-                    name, field_type = self._parse_declarator(type_spec)
+        # Parse field declarators
+        if self._at(TokenKind.SEMICOLON):
+            # Anonymous field (e.g., anonymous struct/union)
+            fields.append(FieldDecl(name="", type_name=type_spec, loc=self._loc(start)))
+            self._advance()
+            return
 
-                if self._match(TokenKind.COLON):
-                    bitfield_width = self._parse_assignment_expr()
+        first = True
+        while True:
+            if not first:
+                if not self._match(TokenKind.COMMA):
+                    break
+            first = False
 
-                fields.append(FieldDecl(
-                    name=name,
-                    type_name=field_type,
-                    bitfield_width=bitfield_width,
-                    loc=self._loc(start),
-                ))
+            # Optional declarator (for bitfields without name)
+            name = ""
+            field_type = type_spec
+            bitfield_width = None
 
-            self._expect(TokenKind.SEMICOLON)
+            if self._at(TokenKind.COLON):
+                # Unnamed bitfield
+                pass
+            elif not self._at(TokenKind.SEMICOLON):
+                name, field_type = self._parse_declarator(type_spec)
+
+            if self._match(TokenKind.COLON):
+                bitfield_width = self._parse_assignment_expr()
+
+            fields.append(FieldDecl(
+                name=name,
+                type_name=field_type,
+                bitfield_width=bitfield_width,
+                loc=self._loc(start),
+            ))
+
+        self._expect(TokenKind.SEMICOLON)
 
         return fields
 
@@ -1075,6 +1128,9 @@ class CParser:
         elif tok.kind == TokenKind.KW_STATIC_ASSERT:
             sa = self._parse_static_assert()
             return DeclStmt(decl=sa, loc=sa.loc)
+        elif tok.kind == TokenKind.KW_EXTENSION:
+            self._advance()
+            return self._parse_statement()
 
         # Check for label: ident ':'
         if tok.kind == TokenKind.IDENT and self._peek(1).kind == TokenKind.COLON:
@@ -1084,9 +1140,25 @@ class CParser:
         if can_start_declaration(tok, self._typedef_names):
             # Could be a declaration or expression statement
             if self._is_declaration():
+                if self.lenient:
+                    try:
+                        return self._parse_declaration_stmt()
+                    except ParseError as e:
+                        self._errors.append(e)
+                        self._skip_to_recovery()
+                        self._match(TokenKind.SEMICOLON)
+                        return NullStmt(loc=self._loc(tok))
                 return self._parse_declaration_stmt()
 
         # Expression statement
+        if self.lenient:
+            try:
+                return self._parse_expr_stmt()
+            except ParseError as e:
+                self._errors.append(e)
+                self._skip_to_recovery()
+                self._match(TokenKind.SEMICOLON)
+                return NullStmt(loc=self._loc(tok))
         return self._parse_expr_stmt()
 
     def _is_declaration(self) -> bool:
@@ -1246,7 +1318,19 @@ class CParser:
 
     def _parse_expr_stmt(self) -> ExprStmt:
         start = self._cur()
-        expr = self._parse_expression()
+        if self.lenient:
+            try:
+                expr = self._parse_expression()
+            except ParseError as e:
+                self._errors.append(e)
+                self._skip_to_recovery()
+                self._match(TokenKind.SEMICOLON)
+                return ExprStmt(
+                    expr=IdentExpr(name="<error>", loc=self._loc(start)),
+                    loc=self._loc(start),
+                )
+        else:
+            expr = self._parse_expression()
         self._expect(TokenKind.SEMICOLON)
         return ExprStmt(expr=expr, loc=self._loc(start))
 
@@ -1272,10 +1356,27 @@ class CParser:
             self._advance()
             return DeclStmt(loc=self._loc(start))
 
-        name, decl_type = self._parse_declarator(type_spec)
+        if self.lenient:
+            try:
+                name, decl_type = self._parse_declarator(type_spec)
+            except ParseError as e:
+                self._errors.append(e)
+                self._skip_to(TokenKind.SEMICOLON)
+                self._match(TokenKind.SEMICOLON)
+                return DeclStmt(loc=self._loc(start))
+        else:
+            name, decl_type = self._parse_declarator(type_spec)
+
         init = None
         if self._match(TokenKind.ASSIGN):
-            init = self._parse_initializer()
+            if self.lenient:
+                try:
+                    init = self._parse_initializer()
+                except ParseError as e:
+                    self._errors.append(e)
+                    self._skip_to(TokenKind.SEMICOLON)
+            else:
+                init = self._parse_initializer()
 
         vd = VarDecl(
             name=name,
@@ -1351,7 +1452,14 @@ class CParser:
 
     def _parse_prec_expr(self, min_prec: int) -> Expr:
         """Precedence climbing expression parser."""
-        left = self._parse_unary_expr()
+        if self.lenient:
+            try:
+                left = self._parse_unary_expr()
+            except ParseError as e:
+                self._errors.append(e)
+                return IdentExpr(name="<error>", loc=self._loc(self._cur()))
+        else:
+            left = self._parse_unary_expr()
 
         while True:
             tok = self._cur()
@@ -1359,9 +1467,18 @@ class CParser:
             # Handle ternary
             if tok.kind == TokenKind.QUESTION and min_prec <= 3:
                 self._advance()
-                then_expr = self._parse_expression()
-                self._expect(TokenKind.COLON)
-                else_expr = self._parse_prec_expr(3)
+                if self.lenient:
+                    try:
+                        then_expr = self._parse_expression()
+                        self._expect(TokenKind.COLON)
+                        else_expr = self._parse_prec_expr(3)
+                    except ParseError as e:
+                        self._errors.append(e)
+                        break
+                else:
+                    then_expr = self._parse_expression()
+                    self._expect(TokenKind.COLON)
+                    else_expr = self._parse_prec_expr(3)
                 left = TernaryExpr(
                     condition=left,
                     then_expr=then_expr,
@@ -1383,7 +1500,14 @@ class CParser:
 
             # Right-associative: use same prec; left-associative: use prec+1
             next_prec = prec if op_kind in _RIGHT_ASSOC else prec + 1
-            right = self._parse_prec_expr(next_prec)
+            if self.lenient:
+                try:
+                    right = self._parse_prec_expr(next_prec)
+                except ParseError as e:
+                    self._errors.append(e)
+                    right = IdentExpr(name="<error>", loc=self._loc(self._cur()))
+            else:
+                right = self._parse_prec_expr(next_prec)
 
             left = BinaryExpr(op=binop, lhs=left, rhs=right, loc=left.loc)
 
@@ -1683,7 +1807,29 @@ class CParser:
             self._advance()
             return self._parse_unary_expr()
 
+        # __builtin_va_list as identifier in expression context
+        if tok.kind == TokenKind.KW_BUILTIN_VA_LIST:
+            self._advance()
+            return IdentExpr(name="__builtin_va_list", loc=self._loc(tok))
+
+        # _Alignof in expression context
+        if tok.kind == TokenKind.KW_ALIGNOF:
+            return self._parse_alignof_expr()
+
+        # __attribute__ in expression context — skip and parse next expression
+        if tok.kind == TokenKind.KW_ATTRIBUTE:
+            self._parse_attributes()
+            return self._parse_unary_expr()
+
+        # typeof in expression context — treat as a type reference  
+        if tok.kind == TokenKind.KW_TYPEOF:
+            ty = self._parse_typeof()
+            return IdentExpr(name="typeof", loc=self._loc(tok))
+
         self._error(f"expected expression, got {tok.kind.name} ({tok.text!r})", tok)
+        if self.lenient:
+            self._advance()
+            return IdentExpr(name="<error>", loc=self._loc(tok))
         self._advance()
         return IdentExpr(name="<error>", loc=self._loc(tok))
 

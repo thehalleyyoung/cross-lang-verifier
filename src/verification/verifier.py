@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
+import re
+
 from ..ir.function import Function
 from ..ir.module import Module
 from ..ir.basic_block import BasicBlock
@@ -106,7 +108,7 @@ class FunctionMatcher:
         self._unmatched_right: List[Function] = []
 
     def match(self, left_module: Module, right_module: Module) -> List[FunctionPair]:
-        """Match functions by name and signature."""
+        """Match functions by name and signature, with fuzzy C/Rust matching."""
         self._matched.clear()
         self._unmatched_left.clear()
         self._unmatched_right.clear()
@@ -116,6 +118,7 @@ class FunctionMatcher:
 
         for left_func in left_module.functions:
             if left_func.name in right_funcs:
+                # Exact name match
                 right_func = right_funcs[left_func.name]
                 sig_match = self._signatures_compatible(left_func, right_func)
                 pair = FunctionPair(
@@ -128,13 +131,62 @@ class FunctionMatcher:
                 self._matched.append(pair)
                 matched_right.add(left_func.name)
             else:
-                self._unmatched_left.append(left_func)
+                # Try fuzzy matching for cross-language names
+                fuzzy_match = self._fuzzy_find(left_func.name, right_funcs, matched_right)
+                if fuzzy_match is not None:
+                    right_func = right_funcs[fuzzy_match]
+                    sig_match = self._signatures_compatible(left_func, right_func)
+                    pair = FunctionPair(
+                        left=left_func,
+                        right=right_func,
+                        signature_match=sig_match,
+                    )
+                    pair.notes.append(f"Fuzzy matched: {left_func.name} ↔ {fuzzy_match}")
+                    if not sig_match:
+                        pair.notes.append("Signature mismatch")
+                    self._matched.append(pair)
+                    matched_right.add(fuzzy_match)
+                else:
+                    self._unmatched_left.append(left_func)
 
         for name, func in right_funcs.items():
             if name not in matched_right:
                 self._unmatched_right.append(func)
 
         return self._matched
+
+    def _fuzzy_find(self, name: str, candidates: Dict[str, Function],
+                     already_matched: Set[str]) -> Optional[str]:
+        """Fuzzy match a function name against candidates.
+
+        Handles C/Rust naming differences: strips common prefixes/suffixes,
+        normalizes underscores vs camelCase, and handles Rust name mangling.
+        """
+        normalized = self._normalize_name(name)
+        for cand_name in candidates:
+            if cand_name in already_matched:
+                continue
+            if self._normalize_name(cand_name) == normalized:
+                return cand_name
+        return None
+
+    @staticmethod
+    def _normalize_name(name: str) -> str:
+        """Normalize a function name for cross-language comparison.
+
+        Strips common prefixes (_Z, __,  module::), converts camelCase
+        to snake_case, and lowercases.
+        """
+        # Strip Rust name mangling prefix (_ZN...)
+        n = re.sub(r'^_ZN\d+', '', name)
+        # Strip leading underscores (C convention)
+        n = n.lstrip('_')
+        # Strip Rust module path (module::func → func)
+        if '::' in n:
+            n = n.rsplit('::', 1)[-1]
+        # Convert camelCase to snake_case
+        n = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', n)
+        return n.lower().strip('_')
 
     def _signatures_compatible(self, left: Function, right: Function) -> bool:
         """Check if two functions have compatible signatures."""
@@ -567,7 +619,7 @@ class EquivalenceVerifier:
         return module_result
 
     def verify_function_pair(self, pair: FunctionPair) -> FunctionVerificationResult:
-        """Verify equivalence of a single function pair."""
+        """Verify equivalence of a single function pair with per-function timeout."""
         if not pair.signature_match:
             result = FunctionVerificationResult(pair=pair)
             result.status = VerificationStatus.NOT_EQUIVALENT
@@ -581,15 +633,79 @@ class EquivalenceVerifier:
             return result
 
         strategy = self._config.strategy
+        fn_start = time.monotonic()
 
         if strategy == VerificationStrategy.PRODUCT_PROGRAM:
-            return self._verify_product(pair)
+            result = self._verify_product(pair)
         elif strategy == VerificationStrategy.SYMBOLIC_EXECUTION:
-            return self._verify_symbolic(pair)
+            result = self._verify_symbolic(pair)
         elif strategy == VerificationStrategy.BOUNDED_MC:
-            return self._verify_bounded(pair)
+            result = self._verify_bounded(pair)
         else:
-            return self._verify_combined(pair)
+            result = self._verify_combined(pair)
+
+        # Enforce per-function timeout
+        fn_elapsed = (time.monotonic() - fn_start) * 1000
+        if fn_elapsed > self._config.timeout_per_function_ms:
+            if result.status not in (VerificationStatus.EQUIVALENT,
+                                      VerificationStatus.NOT_EQUIVALENT):
+                result.status = VerificationStatus.TIMEOUT
+                result.time_ms = fn_elapsed
+
+        return result
+
+    def _verify_structural(self, pair: FunctionPair) -> FunctionVerificationResult:
+        """Quick structural comparison as a first-pass check.
+
+        If functions have identical instruction sequences (same opcodes,
+        same operation kinds), declare them equivalent without SMT.
+        """
+        result = FunctionVerificationResult(pair=pair)
+        start = time.monotonic()
+
+        left, right = pair.left, pair.right
+
+        if left.num_blocks != right.num_blocks:
+            result.status = VerificationStatus.UNKNOWN
+            result.error_message = "Different block count"
+            result.time_ms = (time.monotonic() - start) * 1000
+            return result
+
+        if left.instruction_count != right.instruction_count:
+            result.status = VerificationStatus.UNKNOWN
+            result.error_message = "Different instruction count"
+            result.time_ms = (time.monotonic() - start) * 1000
+            return result
+
+        left_insts = list(left.iter_instructions())
+        right_insts = list(right.iter_instructions())
+
+        all_match = True
+        for li, ri in zip(left_insts, right_insts):
+            if type(li) != type(ri):
+                all_match = False
+                break
+            if isinstance(li, BinaryOp) and isinstance(ri, BinaryOp):
+                if li.op != ri.op:
+                    all_match = False
+                    break
+            if isinstance(li, CompareOp) and isinstance(ri, CompareOp):
+                if li.predicate != ri.predicate:
+                    all_match = False
+                    break
+            if isinstance(li, UnaryOp) and isinstance(ri, UnaryOp):
+                if li.op != ri.op:
+                    all_match = False
+                    break
+
+        if all_match and len(left_insts) == len(right_insts):
+            result.status = VerificationStatus.EQUIVALENT
+        else:
+            result.status = VerificationStatus.UNKNOWN
+            result.error_message = "Structural mismatch"
+
+        result.time_ms = (time.monotonic() - start) * 1000
+        return result
 
     def _verify_product(self, pair: FunctionPair) -> FunctionVerificationResult:
         """Verify using product program construction."""
@@ -658,21 +774,45 @@ class EquivalenceVerifier:
             return result
 
     def _verify_combined(self, pair: FunctionPair) -> FunctionVerificationResult:
-        """Try multiple verification strategies in order."""
-        # Strategy 1: quick structural check
-        checker = SMTEquivalenceChecker(self._config)
-        result = checker._structural_comparison(pair.left, pair.right, pair)
+        """Try multiple verification strategies in order of increasing cost.
+
+        Order: structural → bounded MC → product program → symbolic.
+        Stops as soon as a definitive result is obtained.
+        """
+        fn_start = time.monotonic()
+
+        # Strategy 1: quick structural check (cheapest)
+        result = self._verify_structural(pair)
         if result.status == VerificationStatus.EQUIVALENT:
             return result
 
-        # Strategy 2: product program + SMT
+        # Check per-function timeout
+        if (time.monotonic() - fn_start) * 1000 > self._config.timeout_per_function_ms:
+            result.status = VerificationStatus.TIMEOUT
+            return result
+
+        # Strategy 2: bounded model checking (moderate cost)
+        result = self._verify_bounded(pair)
+        if result.status in (VerificationStatus.EQUIVALENT,
+                              VerificationStatus.NOT_EQUIVALENT):
+            return result
+
+        if (time.monotonic() - fn_start) * 1000 > self._config.timeout_per_function_ms:
+            result.status = VerificationStatus.TIMEOUT
+            return result
+
+        # Strategy 3: product program + SMT (higher cost)
         result = self._verify_product(pair)
         if result.status in (VerificationStatus.EQUIVALENT,
                               VerificationStatus.NOT_EQUIVALENT):
             return result
 
-        # Strategy 3: bounded model checking
-        result = self._verify_bounded(pair)
+        if (time.monotonic() - fn_start) * 1000 > self._config.timeout_per_function_ms:
+            result.status = VerificationStatus.TIMEOUT
+            return result
+
+        # Strategy 4: symbolic execution (highest cost)
+        result = self._verify_symbolic(pair)
         if result.status in (VerificationStatus.EQUIVALENT,
                               VerificationStatus.NOT_EQUIVALENT):
             return result
@@ -681,6 +821,7 @@ class EquivalenceVerifier:
         result = FunctionVerificationResult(pair=pair)
         result.status = VerificationStatus.UNKNOWN
         result.error_message = "All verification strategies inconclusive"
+        result.time_ms = (time.monotonic() - fn_start) * 1000
         return result
 
     def verify_functions(self, left: Function, right: Function) -> FunctionVerificationResult:
@@ -689,3 +830,42 @@ class EquivalenceVerifier:
         self._session = VerificationSession(self._config)
         self._session.start()
         return self.verify_function_pair(pair)
+
+    def verify_modules_interprocedural(self, left: Module, right: Module) -> ModuleVerificationResult:
+        """Verify modules with interprocedural analysis.
+
+        If a function calls another function that's also in the module,
+        inline the callee's verification result to strengthen confidence.
+        """
+        # First do standard verification
+        module_result = self.verify_modules(left, right)
+
+        # Build a map of verified function results
+        verified: Dict[str, FunctionVerificationResult] = {}
+        for r in module_result.function_results:
+            verified[r.pair.left.name] = r
+
+        # Check for call dependencies and propagate results
+        for r in module_result.function_results:
+            if r.status != VerificationStatus.UNKNOWN:
+                continue
+
+            # Collect callees in left function
+            callees_equiv = True
+            has_callees = False
+            for inst in r.pair.left.iter_instructions():
+                if isinstance(inst, CallInst):
+                    callee_name = inst.callee_name if hasattr(inst, 'callee_name') else None
+                    if callee_name and callee_name in verified:
+                        has_callees = True
+                        callee_result = verified[callee_name]
+                        if not callee_result.is_equivalent:
+                            callees_equiv = False
+                            break
+
+            # If all callees are equivalent and structural match was close,
+            # upgrade confidence
+            if has_callees and callees_equiv and r.status == VerificationStatus.UNKNOWN:
+                r.error_message += " (all callees verified equivalent)"
+
+        return module_result

@@ -248,6 +248,18 @@ KEYWORDS: dict[str, TokenKind] = {
     "__restrict__": TokenKind.KW_RESTRICT_GNU,
     "__asm": TokenKind.KW_ASM,
     "__typeof": TokenKind.KW_TYPEOF,
+    # GNU double-underscore synonyms
+    "__inline": TokenKind.KW_INLINE,
+    "__inline__": TokenKind.KW_INLINE,
+    "__volatile__": TokenKind.KW_VOLATILE,
+    "__volatile": TokenKind.KW_VOLATILE,
+    "__const": TokenKind.KW_CONST,
+    "__const__": TokenKind.KW_CONST,
+    "__signed__": TokenKind.KW_SIGNED,
+    "__signed": TokenKind.KW_SIGNED,
+    "__unsigned__": TokenKind.KW_UNSIGNED,
+    "__unsigned": TokenKind.KW_UNSIGNED,
+    "__attribute": TokenKind.KW_ATTRIBUTE,
 }
 
 # Set of keyword token kinds for quick checking

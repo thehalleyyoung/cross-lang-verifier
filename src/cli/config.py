@@ -59,10 +59,11 @@ class PathStrategy(Enum):
 @dataclass
 class LoopConfig:
     """Loop handling configuration."""
-    max_unroll: int = 10
-    default_bound: int = 100
+    max_unroll: int = 32
+    default_bound: int = 256
     allow_unbounded: bool = False
     widening_delay: int = 3
+    infer_invariants: bool = True
 
     def to_dict(self) -> dict:
         return asdict(self)

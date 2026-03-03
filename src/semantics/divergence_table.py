@@ -54,6 +54,8 @@ from ..ir.instructions import (
     BranchInst,
     SelectInst,
     PhiInst,
+    ExtractValueInst,
+    InsertValueInst,
     BinOpKind,
     UnaryOpKind,
     CastKind,
@@ -67,6 +69,7 @@ from ..ir.instructions import (
 
 class DivergenceClass(Enum):
     """Each category of semantic divergence between C and Rust."""
+    # Original 15 classes
     SignedOverflow = auto()
     UnsignedWrap = auto()
     IntPromotion = auto()
@@ -82,6 +85,18 @@ class DivergenceClass(Enum):
     BitfieldLayout = auto()
     AlignmentReqs = auto()
     VolatileSemantics = auto()
+    # New classes: pointer semantics and memory model
+    PointerCast = auto()
+    PointerProvenance = auto()
+    StructLayout = auto()
+    UnionReinterpret = auto()
+    EnumDiscriminant = auto()
+    StringEncoding = auto()
+    MallocFree = auto()
+    FunctionPointer = auto()
+    StackAlloc = auto()
+    LifetimeDangle = auto()
+    SliceVsRawPtr = auto()
 
 
 class DivergenceType(Enum):
@@ -254,6 +269,97 @@ class SMTEncoding:
     def alignment_check(addr: str, alignment: int) -> str:
         return f"(not (= (mod {addr} {alignment}) 0))"
 
+    @staticmethod
+    def pointer_cast_invalid(ptr: str, src_size: int, dst_size: int) -> str:
+        return (
+            f"(and (not (= {ptr} 0)) "
+            f"(not (= (mod {ptr} {dst_size}) 0)))"
+        )
+
+    @staticmethod
+    def provenance_violation(ptr: str, alloc_base: str, alloc_size: str) -> str:
+        return (
+            f"(or (< {ptr} {alloc_base}) "
+            f"(>= {ptr} (+ {alloc_base} {alloc_size})))"
+        )
+
+    @staticmethod
+    def struct_padding_mismatch(c_size: str, rust_size: str) -> str:
+        return f"(not (= {c_size} {rust_size}))"
+
+    @staticmethod
+    def union_reinterpret(val: str, src_width: int, dst_width: int) -> str:
+        if dst_width > src_width:
+            return f"(> (bv2nat {val}) {(1 << src_width) - 1})"
+        return f"(not (= ((_ extract {dst_width-1} 0) {val}) {val}))"
+
+    @staticmethod
+    def enum_discriminant_mismatch(c_disc: str, rust_disc: str) -> str:
+        return f"(not (= {c_disc} {rust_disc}))"
+
+    @staticmethod
+    def string_encoding_mismatch(c_len: str, rust_len: str) -> str:
+        return f"(not (= {c_len} {rust_len}))"
+
+    @staticmethod
+    def double_free(ptr: str, freed_set: str) -> str:
+        return f"(select {freed_set} {ptr})"
+
+    @staticmethod
+    def dangling_pointer(ptr: str, live_set: str) -> str:
+        return f"(not (select {live_set} {ptr}))"
+
+    @staticmethod
+    def function_pointer_null(fptr: str) -> str:
+        return f"(= {fptr} 0)"
+
+    @staticmethod
+    def stack_lifetime_escape(ptr: str, frame_base: str, frame_size: str) -> str:
+        return (
+            f"(and (>= {ptr} {frame_base}) "
+            f"(< {ptr} (+ {frame_base} {frame_size})))"
+        )
+
+    @staticmethod
+    def slice_bounds_check(ptr: str, len_var: str, idx: str) -> str:
+        return f"(or (< {idx} 0) (>= {idx} {len_var}))"
+
+    @staticmethod
+    def lifetime_violation(ptr: str, scope_start: str, scope_end: str) -> str:
+        """Detect use-after-free: pointer used outside its valid scope."""
+        return (
+            f"(or (< {ptr} {scope_start}) (>= {ptr} {scope_end}))"
+        )
+
+    @staticmethod
+    def borrow_aliasing(ptr1: str, ptr2: str) -> str:
+        """Detect aliasing rule violations: two mutable borrows overlap."""
+        return f"(= {ptr1} {ptr2})"
+
+    @staticmethod
+    def repr_c_layout(fields: str, alignments: str) -> str:
+        """Check struct layout consistency under #[repr(C)]."""
+        return (
+            f"(not (= (c_layout {fields} {alignments}) "
+            f"(rust_layout {fields} {alignments})))"
+        )
+
+    @staticmethod
+    def transmute_safety(src_size: str, dst_size: str) -> str:
+        """Check that transmute source and destination have equal sizes."""
+        return f"(not (= {src_size} {dst_size}))"
+
+    @staticmethod
+    def integer_promotion_c(val: str, from_width: int, to_width: int) -> str:
+        """Model C integer promotion from narrow to wider type."""
+        max_from = (1 << (from_width - 1)) - 1
+        min_from = -(1 << (from_width - 1))
+        return (
+            f"(and (>= {val} {min_from}) (<= {val} {max_from}) "
+            f"(not (= (sext {val} {from_width} {to_width}) "
+            f"(zext {val} {from_width} {to_width}))))"
+        )
+
 
 # ── Divergence entry (one per DivergenceClass) ───────────────────────────
 
@@ -330,6 +436,28 @@ class DivergenceTable:
             )
         return "\n".join(lines)
 
+    def get_divergences_for_pair(
+        self,
+        c_inst: Instruction,
+        rust_inst: Instruction,
+    ) -> list[DivergenceEntry]:
+        """Return all applicable divergences considering both instructions' types.
+
+        Unions the divergence entries matched by either instruction, so that
+        cross-language patterns (e.g. C cast paired with Rust bounds check)
+        are captured.
+        """
+        seen: Set[DivergenceClass] = set()
+        result: list[DivergenceEntry] = []
+        for inst in (c_inst, rust_inst):
+            for entry in self._entries.values():
+                if entry.cls in seen:
+                    continue
+                if entry.matches_instruction(inst):
+                    seen.add(entry.cls)
+                    result.append(entry)
+        return result
+
     # ── table construction ───────────────────────────────────────────────
 
     def _build_table(self) -> None:
@@ -348,6 +476,18 @@ class DivergenceTable:
         self._add_bitfield_layout()
         self._add_alignment_reqs()
         self._add_volatile_semantics()
+        # New pointer semantics and memory model classes
+        self._add_pointer_cast()
+        self._add_pointer_provenance()
+        self._add_struct_layout()
+        self._add_union_reinterpret()
+        self._add_enum_discriminant()
+        self._add_string_encoding()
+        self._add_malloc_free()
+        self._add_function_pointer()
+        self._add_stack_alloc()
+        self._add_lifetime_dangle()
+        self._add_slice_vs_raw_ptr()
 
     def _reg(self, entry: DivergenceEntry) -> None:
         self._entries[entry.cls] = entry
@@ -670,9 +810,15 @@ class DivergenceTable:
                 generator_hint="array_boundary",
                 priority=9,
             ),
-            applicable_opcodes=frozenset({"gep", "load", "store"}),
+            applicable_opcodes=frozenset({
+                "gep", "getelementptr", "getelementptr.inbounds",
+                "load", "store", "extractvalue",
+            }),
             description="C UB vs Rust panic on array out-of-bounds.",
-            mitigation="Use get() or get_unchecked() with manual bounds check.",
+            mitigation=(
+                "Use get() or get_unchecked() with manual bounds check. "
+                "For slices, prefer iterators over raw indexing."
+            ),
             test_priority=9,
         ))
 
@@ -705,9 +851,14 @@ class DivergenceTable:
                 generator_hint="pointer_offset",
                 priority=6,
             ),
-            applicable_opcodes=frozenset({"gep"}),
+            applicable_opcodes=frozenset({
+                "gep", "getelementptr", "getelementptr.inbounds",
+            }),
             description="Pointer arithmetic UB in both languages for unsafe code.",
-            mitigation="Use slice indexing instead of pointer arithmetic.",
+            mitigation=(
+                "Use slice indexing instead of pointer arithmetic. "
+                "For unsafe code, use wrapping_offset or pointer::add with bounds checks."
+            ),
             test_priority=6,
         ))
 
@@ -927,6 +1078,473 @@ class DivergenceTable:
             test_priority=3,
         ))
 
+    # ── 16. PointerCast ──────────────────────────────────────────────────
+
+    def _add_pointer_cast(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.PointerCast,
+            c_semantics=CSemantics(
+                summary="Pointer casts are implicit and unchecked",
+                is_ub=False,
+                is_impl_defined=True,
+                standard_ref="C11 §6.3.2.3",
+                detail=(
+                    "C permits casting between pointer types freely. "
+                    "Casts between incompatible types that are then "
+                    "dereferenced violate strict aliasing (UB)."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Pointer casts require explicit 'as' or transmute in unsafe",
+                guaranteed=True,
+                detail=(
+                    "Rust requires explicit casts between raw pointer types "
+                    "and forbids safe reference-to-different-type casts. "
+                    "Transmute is available but unsafe."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda ptr, _b="", width=64: (
+                SMTEncoding.pointer_cast_invalid(ptr, 8, 4)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Pointers at alignment boundaries",
+                boundary_values=(0, 1, 2, 3, 4, 7, 8, 15, 16),
+                generator_hint="pointer_cast",
+                priority=8,
+            ),
+            applicable_opcodes=frozenset({"bitcast", "inttoptr", "ptrtoint"}),
+            description=(
+                "C allows implicit pointer casts; Rust requires explicit "
+                "unsafe casts between pointer types."
+            ),
+            mitigation="Use safe Rust references or explicit as casts with safety comments.",
+            test_priority=8,
+        ))
+
+    # ── 17. PointerProvenance ────────────────────────────────────────────
+
+    def _add_pointer_provenance(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.PointerProvenance,
+            c_semantics=CSemantics(
+                summary="C pointer provenance is weakly specified (PNVI-ae-udi model)",
+                is_ub=False,
+                is_impl_defined=True,
+                standard_ref="C11 §6.5.6 + defect reports",
+                detail=(
+                    "C has no formal provenance model in the standard. "
+                    "Compilers apply provenance-based alias analysis, "
+                    "making integer-to-pointer roundtrips unreliable."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Rust strictly tracks pointer provenance via Stacked Borrows",
+                guaranteed=True,
+                detail=(
+                    "Rust's Stacked Borrows / Tree Borrows model strictly "
+                    "tracks pointer provenance. Integer-to-pointer casts "
+                    "via strict_provenance API (ptr::with_addr)."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda ptr, alloc_base, width=64: (
+                SMTEncoding.provenance_violation(ptr, alloc_base, str(width))
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Pointer roundtrip through integer and back",
+                boundary_values=(0, 1),
+                generator_hint="provenance_roundtrip",
+                priority=7,
+            ),
+            applicable_opcodes=frozenset({
+                "inttoptr", "ptrtoint",
+                "gep", "getelementptr", "getelementptr.inbounds",
+            }),
+            description=(
+                "C pointer provenance is undefined; Rust uses strict "
+                "Stacked/Tree Borrows provenance model."
+            ),
+            mitigation="Use ptr::with_addr for integer-to-pointer roundtrips.",
+            test_priority=7,
+        ))
+
+    # ── 18. StructLayout ─────────────────────────────────────────────────
+
+    def _add_struct_layout(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.StructLayout,
+            c_semantics=CSemantics(
+                summary="Struct layout follows platform ABI with padding",
+                is_impl_defined=True,
+                standard_ref="C11 §6.7.2.1",
+                detail=(
+                    "C struct layout is defined by the platform ABI. "
+                    "Fields are laid out in declaration order with "
+                    "implementation-defined padding for alignment."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Default Rust struct layout is unspecified; #[repr(C)] matches C",
+                guaranteed=False,
+                detail=(
+                    "Without #[repr(C)], Rust may reorder fields and "
+                    "use different padding. #[repr(C)] matches C layout."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda c_size, rust_size, width=32: (
+                SMTEncoding.struct_padding_mismatch(c_size, rust_size)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Structs with varying field sizes to trigger padding",
+                boundary_values=(),
+                generator_hint="struct_padding",
+                priority=8,
+            ),
+            applicable_opcodes=frozenset({
+                "gep", "getelementptr", "getelementptr.inbounds",
+                "extractvalue", "insertvalue",
+            }),
+            description=(
+                "C struct layout is ABI-defined; Rust default layout "
+                "is unspecified and may differ."
+            ),
+            mitigation="Use #[repr(C)] on all FFI-visible structs.",
+            test_priority=8,
+        ))
+
+    # ── 19. UnionReinterpret ─────────────────────────────────────────────
+
+    def _add_union_reinterpret(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.UnionReinterpret,
+            c_semantics=CSemantics(
+                summary="Union type-punning is implementation-defined (GCC: defined)",
+                is_impl_defined=True,
+                standard_ref="C11 §6.5.2.3, Annex J",
+                detail=(
+                    "Reading a union member other than the last one written "
+                    "is implementation-defined in C11. GCC and Clang define "
+                    "it as type-punning (reinterpret bytes)."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Rust unions require unsafe access; reading is always raw bytes",
+                guaranteed=True,
+                detail=(
+                    "Accessing any field of a Rust union is unsafe. "
+                    "The semantics are type-punning of the raw bytes. "
+                    "No implicit conversion occurs."
+                ),
+            ),
+            divergence_type=DivergenceType.Moderate,
+            smt_encoder=lambda val, _b="", width=32: (
+                SMTEncoding.union_reinterpret(val, width, width)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Values that differ under type-punning",
+                boundary_values=(0, 1, -1, 0x7F800000, 0xFF800000),
+                generator_hint="union_pun",
+                priority=6,
+            ),
+            applicable_opcodes=frozenset({"bitcast", "load", "store"}),
+            description="Union type-punning semantics differ subtly.",
+            mitigation="Use transmute or explicit byte-level access.",
+            test_priority=6,
+        ))
+
+    # ── 20. EnumDiscriminant ─────────────────────────────────────────────
+
+    def _add_enum_discriminant(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.EnumDiscriminant,
+            c_semantics=CSemantics(
+                summary="C enum values are plain integers with no variant data",
+                is_impl_defined=True,
+                standard_ref="C11 §6.7.2.2",
+                detail=(
+                    "C enums are integer constants. There is no tagged union "
+                    "concept; values outside declared enumerators are valid."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Rust enums are tagged unions with discriminant + payload",
+                guaranteed=True,
+                detail=(
+                    "Rust enums can carry data per variant. The discriminant "
+                    "layout depends on #[repr]. Creating an enum value with "
+                    "an invalid discriminant is UB."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda c_disc, rust_disc, width=32: (
+                SMTEncoding.enum_discriminant_mismatch(c_disc, rust_disc)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Discriminant values at and beyond valid range",
+                boundary_values=(0, 1, 255, 256, -1, -128),
+                generator_hint="enum_discriminant",
+                priority=7,
+            ),
+            applicable_opcodes=frozenset({"switch", "extractvalue"}),
+            description=(
+                "C enums are plain integers; Rust enums are tagged unions "
+                "where invalid discriminants are UB."
+            ),
+            mitigation="Use #[repr(C)] and validate discriminant values at FFI boundary.",
+            test_priority=7,
+        ))
+
+    # ── 21. StringEncoding ───────────────────────────────────────────────
+
+    def _add_string_encoding(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.StringEncoding,
+            c_semantics=CSemantics(
+                summary="C strings are null-terminated byte arrays (no encoding guarantee)",
+                is_ub=False,
+                standard_ref="C11 §7.1.1",
+                detail=(
+                    "C strings are char arrays terminated by '\\0'. "
+                    "The encoding is locale-dependent and not guaranteed "
+                    "to be UTF-8."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Rust &str is guaranteed UTF-8; CStr for C interop",
+                guaranteed=True,
+                detail=(
+                    "Rust &str and String are always valid UTF-8. "
+                    "For C interop, CStr/CString handle null-terminated "
+                    "byte strings without encoding guarantees."
+                ),
+            ),
+            divergence_type=DivergenceType.Moderate,
+            smt_encoder=lambda c_len, rust_len, width=32: (
+                SMTEncoding.string_encoding_mismatch(c_len, rust_len)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Strings with non-ASCII bytes and embedded nulls",
+                boundary_values=(0, 0x80, 0xFF),
+                generator_hint="string_encoding",
+                priority=5,
+            ),
+            applicable_opcodes=frozenset({
+                "call", "gep", "getelementptr", "getelementptr.inbounds",
+                "load", "store",
+            }),
+            description="C strings have no encoding; Rust strings must be UTF-8.",
+            mitigation="Use CStr/CString for C string interop.",
+            test_priority=5,
+        ))
+
+    # ── 22. MallocFree ───────────────────────────────────────────────────
+
+    def _add_malloc_free(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.MallocFree,
+            c_semantics=CSemantics(
+                summary="Manual malloc/free with no double-free or leak protection",
+                is_ub=True,
+                standard_ref="C11 §7.22.3",
+                detail=(
+                    "C provides malloc/calloc/realloc/free. Double-free "
+                    "and use-after-free are UB. Memory leaks are allowed "
+                    "but undesirable."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Ownership system prevents double-free and use-after-free",
+                guaranteed=True,
+                detail=(
+                    "Rust's ownership and Drop trait ensure single-owner "
+                    "deallocation. Box, Vec, etc. deallocate automatically. "
+                    "Double-free is prevented at compile time."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda ptr, freed_set, width=64: (
+                SMTEncoding.double_free(ptr, freed_set)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Allocation/deallocation sequences",
+                boundary_values=(0,),
+                generator_hint="malloc_free",
+                priority=9,
+            ),
+            applicable_opcodes=frozenset({"call"}),
+            description=(
+                "C manual memory management vs Rust ownership-based "
+                "automatic deallocation."
+            ),
+            mitigation="Map malloc/free to Box::new/drop or Vec allocation.",
+            test_priority=9,
+        ))
+
+    # ── 23. FunctionPointer ──────────────────────────────────────────────
+
+    def _add_function_pointer(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.FunctionPointer,
+            c_semantics=CSemantics(
+                summary="Function pointers are untyped at runtime; wrong type is UB",
+                is_ub=True,
+                standard_ref="C11 §6.5.2.2/6",
+                detail=(
+                    "Calling a function through a pointer of incompatible "
+                    "type is UB. No runtime check is performed."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Fn traits provide type-safe function references; fn ptrs are unsafe",
+                guaranteed=True,
+                detail=(
+                    "Rust closures implement Fn/FnMut/FnOnce traits with "
+                    "compile-time type safety. Raw fn pointers exist but "
+                    "calling them with wrong signature is UB."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda fptr, _b="", width=64: (
+                SMTEncoding.function_pointer_null(fptr)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Null and invalid function pointer values",
+                boundary_values=(0, 1),
+                generator_hint="function_pointer",
+                priority=7,
+            ),
+            applicable_opcodes=frozenset({"call"}),
+            description="C function pointers are untyped; Rust provides type-safe closures.",
+            mitigation="Use extern \"C\" fn types and validate pointers at FFI boundary.",
+            test_priority=7,
+        ))
+
+    # ── 24. StackAlloc ───────────────────────────────────────────────────
+
+    def _add_stack_alloc(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.StackAlloc,
+            c_semantics=CSemantics(
+                summary="Returning pointer to stack-local is UB (dangling pointer)",
+                is_ub=True,
+                standard_ref="C11 §6.2.4/2",
+                detail=(
+                    "The lifetime of automatic storage duration objects "
+                    "ends when the block exits. Returning their address "
+                    "creates a dangling pointer (UB to dereference)."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Borrow checker prevents returning references to locals",
+                guaranteed=True,
+                detail=(
+                    "Rust's lifetime system prevents returning references "
+                    "to stack-local variables at compile time."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda ptr, frame_base, width=64: (
+                SMTEncoding.stack_lifetime_escape(ptr, frame_base, str(width))
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Addresses in stack frame range",
+                boundary_values=(),
+                generator_hint="stack_escape",
+                priority=8,
+            ),
+            applicable_opcodes=frozenset({"alloca", "ret"}),
+            description="C allows dangling stack pointers; Rust prevents at compile time.",
+            mitigation="Allocate on heap (Box) or use output parameters.",
+            test_priority=8,
+        ))
+
+    # ── 25. LifetimeDangle ───────────────────────────────────────────────
+
+    def _add_lifetime_dangle(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.LifetimeDangle,
+            c_semantics=CSemantics(
+                summary="Use-after-free is UB; no compiler enforcement",
+                is_ub=True,
+                standard_ref="C11 §6.2.4",
+                detail=(
+                    "Accessing memory after it has been freed is UB. "
+                    "C compilers do not detect use-after-free statically "
+                    "(requires dynamic tools like ASan)."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Lifetime annotations prevent use-after-free at compile time",
+                guaranteed=True,
+                detail=(
+                    "Rust's borrow checker ensures references cannot outlive "
+                    "their referent. Use-after-free is impossible in safe Rust."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda ptr, live_set, width=64: (
+                SMTEncoding.dangling_pointer(ptr, live_set)
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Access patterns after deallocation",
+                boundary_values=(),
+                generator_hint="use_after_free",
+                priority=9,
+            ),
+            applicable_opcodes=frozenset({"load", "store", "call"}),
+            description="C allows use-after-free (UB); Rust prevents statically.",
+            mitigation="Ensure all pointers are valid before use; use RAII patterns.",
+            test_priority=9,
+        ))
+
+    # ── 26. SliceVsRawPtr ────────────────────────────────────────────────
+
+    def _add_slice_vs_raw_ptr(self) -> None:
+        self._reg(DivergenceEntry(
+            cls=DivergenceClass.SliceVsRawPtr,
+            c_semantics=CSemantics(
+                summary="C uses pointer+length convention (unchecked)",
+                is_ub=True,
+                standard_ref="C11 §6.5.6",
+                detail=(
+                    "C represents arrays as raw pointers with a separate "
+                    "length parameter (or sentinel). No bounds checking "
+                    "is performed."
+                ),
+            ),
+            rust_semantics=RustSemantics(
+                summary="Rust slices carry length and bounds-check on access",
+                guaranteed=True,
+                detail=(
+                    "Rust slices (&[T]) are fat pointers carrying both "
+                    "pointer and length. Indexing performs bounds checks "
+                    "(panics on OOB)."
+                ),
+            ),
+            divergence_type=DivergenceType.Critical,
+            smt_encoder=lambda ptr, len_var, width=64: (
+                SMTEncoding.slice_bounds_check(ptr, len_var, "idx")
+            ),
+            fuzzing_strategy=FuzzingSeedStrategy(
+                description="Buffer lengths at boundaries",
+                boundary_values=(0, 1, -1),
+                generator_hint="slice_bounds",
+                priority=8,
+            ),
+            applicable_opcodes=frozenset({
+                "gep", "getelementptr", "getelementptr.inbounds",
+                "load", "store",
+            }),
+            description=(
+                "C pointer+length is unchecked; Rust slices carry "
+                "length and perform bounds checks."
+            ),
+            mitigation="Convert C pointer+length pairs to Rust slices at FFI boundary.",
+            test_priority=8,
+        ))
+
 
 # ── Divergence Analyzer ──────────────────────────────────────────────────
 
@@ -1138,6 +1756,65 @@ class DivergenceAnalyzer:
                 return inst.is_floating()
             return False
 
+        if cls is DivergenceClass.PointerCast:
+            if isinstance(inst, CastInst):
+                return isinstance(inst.src_type, PointerType) or isinstance(inst.dest_type, PointerType)
+            return False
+
+        if cls is DivergenceClass.PointerProvenance:
+            if isinstance(inst, CastInst):
+                return (isinstance(inst.src_type, PointerType) and isinstance(inst.dest_type, IntType)) or \
+                       (isinstance(inst.src_type, IntType) and isinstance(inst.dest_type, PointerType))
+            if isinstance(inst, GetElementPtrInst):
+                return True
+            return False
+
+        if cls is DivergenceClass.StructLayout:
+            if isinstance(inst, GetElementPtrInst):
+                return isinstance(inst.base_type, StructType)
+            if isinstance(inst, (ExtractValueInst, InsertValueInst)):
+                return True
+            return False
+
+        if cls is DivergenceClass.MallocFree:
+            if isinstance(inst, CallInst):
+                callee = getattr(inst, 'callee_name', '')
+                return callee in ('malloc', 'calloc', 'realloc', 'free',
+                                  'aligned_alloc', 'posix_memalign')
+            return False
+
+        if cls is DivergenceClass.FunctionPointer:
+            if isinstance(inst, CallInst):
+                # Indirect call: callee_name is empty or callee is a pointer
+                callee = getattr(inst, 'callee_name', '')
+                if not callee:
+                    return True
+                callee_val = inst.callee
+                if isinstance(callee_val.type, PointerType):
+                    pointee = getattr(callee_val.type, 'pointee', None)
+                    if isinstance(pointee, FunctionType):
+                        return True
+            return False
+
+        if cls is DivergenceClass.StringEncoding:
+            if isinstance(inst, CallInst):
+                callee = getattr(inst, 'callee_name', '')
+                return callee in (
+                    'strlen', 'strcmp', 'strncmp', 'strcpy', 'strncpy',
+                    'strcat', 'strncat', 'memcpy', 'memmove', 'memset',
+                    'memcmp', 'strdup', 'strndup',
+                )
+            return True  # Allow opcode-only matching for gep/load/store
+
+        if cls is DivergenceClass.EnumDiscriminant:
+            if isinstance(inst, ExtractValueInst):
+                agg_type = inst.aggregate.type
+                if isinstance(agg_type, StructType):
+                    return True
+            if isinstance(inst, (BranchInst, SelectInst)):
+                return True
+            return True  # Allow opcode-only matching for switch
+
         return True
 
     def _add_notes(self, inst: Instruction, report: DivergenceReport) -> None:
@@ -1163,11 +1840,41 @@ class DivergenceAnalyzer:
                         f"Truncation from {inst.src_type.width}-bit to "
                         f"{inst.dest_type.width}-bit may lose information"
                     )
+            if isinstance(inst.src_type, PointerType) or isinstance(inst.dest_type, PointerType):
+                report.notes.append(
+                    "Pointer cast detected; check alignment and aliasing rules"
+                )
 
         if isinstance(inst, (LoadInst, StoreInst)):
             report.notes.append(
                 "Check pointer validity and alignment before memory access"
             )
+
+        if isinstance(inst, GetElementPtrInst):
+            if isinstance(inst.source_element_type, StructType):
+                report.notes.append(
+                    "Struct field access via GEP; verify #[repr(C)] layout compatibility"
+                )
+
+        if isinstance(inst, CallInst):
+            callee = getattr(inst, 'callee_name', '')
+            if callee in ('malloc', 'calloc', 'realloc', 'free',
+                          'aligned_alloc', 'posix_memalign'):
+                report.notes.append(
+                    f"Memory allocation call '{callee}'; "
+                    f"map to Rust ownership patterns (Box, Vec, etc.)"
+                )
+            if callee in ('strlen', 'strcmp', 'strncmp', 'strcpy', 'strncpy',
+                          'strcat', 'strncat', 'memcpy', 'memmove', 'memset',
+                          'memcmp', 'strdup', 'strndup'):
+                report.notes.append(
+                    f"String/memory operation '{callee}'; "
+                    f"Rust &str requires valid UTF-8 unlike C char*"
+                )
+            if not callee:
+                report.notes.append(
+                    "Indirect function call; verify function pointer type safety"
+                )
 
 
 # ── Convenience ──────────────────────────────────────────────────────────

@@ -26,6 +26,8 @@ from enum import Enum, auto
 class Verdict(Enum):
     EQUIVALENT = "equivalent"
     DIVERGENT = "divergent"
+    LIKELY_EQUIVALENT = "likely_equivalent"
+    LIKELY_DIVERGENT = "likely_divergent"
     UNKNOWN = "unknown"
     ERROR = "error"
 
@@ -213,7 +215,27 @@ def classify_divergence(reason: str) -> str:
     if "cast" in r or "truncat" in r or "sign_ext" in r:
         return "cast"
     if "negat" in r or "int_min" in r:
-        return "overflow"  # INT_MIN negation is overflow class
+        return "overflow"
+    if "null" in r or "nullptr" in r:
+        return "null_pointer"
+    if "pointer" in r or "provenance" in r or "dereference" in r:
+        return "pointer"
+    if "struct" in r or "layout" in r or "padding" in r or "alignment" in r:
+        return "struct_layout"
+    if "enum" in r or "discriminant" in r or "variant" in r:
+        return "enum_discriminant"
+    if "malloc" in r or "free" in r or "alloc" in r or "heap" in r:
+        return "memory_management"
+    if "lifetime" in r or "dangling" in r or "use_after_free" in r or "borrow" in r:
+        return "lifetime"
+    if "slice" in r or "bounds" in r or "array" in r or "index" in r:
+        return "bounds_check"
+    if "function_pointer" in r or "indirect_call" in r:
+        return "function_pointer"
+    if "string" in r or "utf" in r or "encoding" in r:
+        return "string_encoding"
+    if "union" in r or "type_pun" in r or "reinterpret" in r:
+        return "union_reinterpret"
     if "undefined" in r or "ub" in r:
         return "undefined_behavior"
     return "other"
@@ -345,6 +367,7 @@ class VerificationOracle:
                       start: float) -> OracleResult:
         """Run the full SemRec pipeline and produce an OracleResult."""
         import z3
+        import re
         from src.frontend_c.parser import CParser
         from src.frontend_c.ir_lowering import CIRLowering
         from src.frontend_rust.parser import RustParser
@@ -357,7 +380,8 @@ class VerificationOracle:
 
         stages = {}
 
-        # Parse C — prefer tree-sitter (verified grammar), fall back to hand-written
+        # Parse C — prefer tree-sitter, fall back to hand-written, then try wrapping
+        c_ast = None
         try:
             try:
                 from src.frontend_c.tree_sitter_parser import TreeSitterCParser
@@ -369,14 +393,28 @@ class VerificationOracle:
                 stages["c_parse"] = True
                 stages["c_parser_backend"] = "hand-written"
         except Exception as e:
-            return OracleResult(
-                verdict=Verdict.ERROR.value,
-                error_msg=f"C parse failed: {e}",
-                time_ms=(time.time() - start) * 1000,
-                pipeline_stages=stages, func_name=name,
-            )
+            # Try wrapping in a function if it looks like statements
+            for wrapper in [
+                f"int {name}(void) {{ {c_code} }}",
+                f"void {name}(void) {{ {c_code} }}",
+            ]:
+                try:
+                    c_ast = CParser(wrapper, f"{name}.c").parse()
+                    stages["c_parse"] = True
+                    stages["c_parser_backend"] = "hand-written+wrapped"
+                    break
+                except Exception:
+                    continue
+            if c_ast is None:
+                return OracleResult(
+                    verdict=Verdict.ERROR.value,
+                    error_msg=f"C parse failed: {e}",
+                    time_ms=(time.time() - start) * 1000,
+                    pipeline_stages=stages, func_name=name,
+                )
 
-        # Parse Rust — prefer tree-sitter, fall back to hand-written
+        # Parse Rust — prefer tree-sitter, fall back with recovery strategies
+        r_ast = None
         try:
             try:
                 from src.frontend_rust.tree_sitter_parser import TreeSitterRustParser
@@ -388,17 +426,22 @@ class VerificationOracle:
                 stages["rust_parse"] = True
                 stages["rust_parser_backend"] = "hand-written"
         except Exception as e:
-            # Retry: add pub keyword if missing
-            import re
-            retried = False
+            # Try recovery strategies
+            variants = []
             if re.match(r'\s*fn\s+', rust_code):
+                variants.append("pub " + rust_code)
+            if not re.search(r'\bfn\s+', rust_code):
+                variants.append(f"pub fn {name}() {{ {rust_code} }}")
+            variants.append(f"pub {rust_code}")
+            for v in variants:
                 try:
-                    r_ast = RustParser("pub " + rust_code, f"{name}.rs").parse()
+                    r_ast = RustParser(v, f"{name}.rs").parse()
                     stages["rust_parse"] = True
-                    retried = True
+                    stages["rust_parser_backend"] = "hand-written+recovery"
+                    break
                 except Exception:
-                    pass
-            if not retried:
+                    continue
+            if r_ast is None:
                 return OracleResult(
                     verdict=Verdict.ERROR.value,
                     error_msg=f"Rust parse failed: {e}",
@@ -406,30 +449,38 @@ class VerificationOracle:
                     pipeline_stages=stages, func_name=name,
                 )
 
-        # Lower to IR
+        # Lower to IR with recovery
+        c_module = None
         try:
             c_module = CIRLowering().lower(c_ast)
             stages["c_ir"] = True
         except Exception as e:
-            return OracleResult(
-                verdict=Verdict.ERROR.value,
-                error_msg=f"C IR lowering failed: {e}",
-                time_ms=(time.time() - start) * 1000,
-                pipeline_stages=stages, func_name=name,
-            )
+            stages["c_ir"] = False
+            stages["c_ir_error"] = str(e)
 
+        r_module = None
         try:
             r_module = RustIRLowering(RustTypeResolver()).lower(r_ast)
             stages["rust_ir"] = True
         except Exception as e:
+            stages["rust_ir"] = False
+            stages["rust_ir_error"] = str(e)
+
+        if c_module is None or r_module is None:
+            # If both fail, return error; if one succeeds, try structural
+            err_parts = []
+            if c_module is None:
+                err_parts.append(f"C IR: {stages.get('c_ir_error', 'unknown')}")
+            if r_module is None:
+                err_parts.append(f"Rust IR: {stages.get('rust_ir_error', 'unknown')}")
             return OracleResult(
                 verdict=Verdict.ERROR.value,
-                error_msg=f"Rust IR lowering failed: {e}",
+                error_msg=f"IR lowering failed: {'; '.join(err_parts)}",
                 time_ms=(time.time() - start) * 1000,
                 pipeline_stages=stages, func_name=name,
             )
 
-        # Align + product
+        # Find matching function pair (try all pairs if first fails)
         c_funcs = list(c_module.functions.values())
         r_funcs = list(r_module.functions.values())
         if not c_funcs or not r_funcs:
@@ -440,60 +491,110 @@ class VerificationOracle:
                 pipeline_stages=stages, func_name=name,
             )
 
+        # Try to find matching pair by name first, then fall back to first pair
         c_func, r_func = c_funcs[0], r_funcs[0]
+        if len(c_funcs) > 1 or len(r_funcs) > 1:
+            for cf in c_funcs:
+                for rf in r_funcs:
+                    if cf.name == rf.name:
+                        c_func, r_func = cf, rf
+                        break
 
+        # Alignment with structural fallback
+        alignment = None
         try:
             alignment = FunctionAligner().align(c_func, r_func)
             stages["alignment"] = True
         except Exception as e:
-            return OracleResult(
-                verdict=Verdict.ERROR.value,
-                error_msg=f"Alignment failed: {e}",
-                time_ms=(time.time() - start) * 1000,
-                pipeline_stages=stages, func_name=name,
-            )
+            stages["alignment"] = False
+            stages["alignment_error"] = str(e)
 
         c_config = SemanticConfig.c11()
         r_config = SemanticConfig.rust_release()
 
-        try:
-            product = ProductBuilder(c_config=c_config, rust_config=r_config).build(c_func, r_func)
-            stages["product"] = True
-        except Exception as e:
-            return OracleResult(
-                verdict=Verdict.ERROR.value,
-                error_msg=f"Product build failed: {e}",
-                time_ms=(time.time() - start) * 1000,
-                pipeline_stages=stages, func_name=name,
-            )
-
-        # SMT verification (with enhanced memory model)
-        try:
-            verdict_str, cex_raw, n_queries = self._smt_verify(
-                c_func, r_func, c_config, r_config, product
-            )
-            stages["smt"] = True
-            # Run enhanced memory model analysis when available
+        # Product construction with direct SMT fallback
+        product = None
+        if alignment is not None:
             try:
-                from src.smt.points_to_analysis import EnhancedMemoryModel
-                from src.smt.encoder import EncodingContext as EMCtx
-                emm = EnhancedMemoryModel(EMCtx(), c_config, r_config)
-                emm.analyze_c_function(c_func)
-                emm.analyze_rust_function(r_func)
-                mem_stats = emm.encode_all_constraints()
-                stages["enhanced_memory"] = True
-                stages["memory_stats"] = mem_stats
-            except Exception:
-                stages["enhanced_memory"] = False
-        except Exception as e:
-            return OracleResult(
-                verdict=Verdict.ERROR.value,
-                error_msg=f"SMT verification failed: {e}",
-                time_ms=(time.time() - start) * 1000,
-                pipeline_stages=stages, func_name=name,
-            )
+                product = ProductBuilder(c_config=c_config, rust_config=r_config).build(c_func, r_func)
+                stages["product"] = True
+            except Exception as e:
+                stages["product"] = False
+                stages["product_error"] = str(e)
+
+        # SMT verification — try via product first, fall back to direct comparison
+        verdict_str = "unknown"
+        cex_raw = None
+        n_queries = 0
+
+        if product is not None:
+            try:
+                verdict_str, cex_raw, n_queries = self._smt_verify(
+                    c_func, r_func, c_config, r_config, product
+                )
+                stages["smt"] = True
+            except Exception as e:
+                stages["smt"] = False
+                stages["smt_error"] = str(e)
+
+        # Direct SMT fallback when product/alignment failed
+        if verdict_str == "unknown" and (product is None or not stages.get("smt")):
+            try:
+                verdict_str, cex_raw, dq = self._direct_smt_verify(
+                    c_func, r_func, c_config, r_config
+                )
+                n_queries += dq
+                stages["direct_smt"] = True
+            except Exception as e:
+                stages["direct_smt"] = False
+                stages["direct_smt_error"] = str(e)
+
+        # Structural verification as additional signal
+        structural_verdict = None
+        try:
+            structural_verdict = self._structural_verify(c_func, r_func)
+            stages["structural"] = True
+            stages["structural_verdict"] = structural_verdict
+        except Exception:
+            stages["structural"] = False
+
+        # Enhanced memory model analysis when available
+        try:
+            from src.smt.points_to_analysis import EnhancedMemoryModel
+            from src.smt.encoder import EncodingContext as EMCtx
+            emm = EnhancedMemoryModel(EMCtx(), c_config, r_config)
+            emm.analyze_c_function(c_func)
+            emm.analyze_rust_function(r_func)
+            mem_stats = emm.encode_all_constraints()
+            stages["enhanced_memory"] = True
+            stages["memory_stats"] = mem_stats
+        except Exception:
+            stages["enhanced_memory"] = False
 
         elapsed = (time.time() - start) * 1000
+
+        # Refine verdict using structural info
+        confidence = 1.0
+        if verdict_str == "equivalent":
+            confidence = 0.95 if n_queries <= 1 else 1.0
+            if structural_verdict and structural_verdict.get("similar") is False:
+                verdict_str = "likely_equivalent"
+                confidence = 0.7
+        elif verdict_str == "divergent":
+            confidence = 1.0
+        elif verdict_str == "unknown":
+            if structural_verdict:
+                sim = structural_verdict.get("similarity", 0)
+                if sim >= 0.95:
+                    verdict_str = "likely_equivalent"
+                    confidence = 0.6
+                elif sim < 0.3:
+                    verdict_str = "likely_divergent"
+                    confidence = 0.4
+                else:
+                    confidence = sim * 0.5
+            else:
+                confidence = 0.0
 
         # Build structured result
         cex_info = None
@@ -519,7 +620,7 @@ class VerificationOracle:
             smt_queries=n_queries,
             pipeline_stages=stages,
             func_name=name,
-            confidence=1.0 if verdict_str in ("equivalent", "divergent") else 0.5,
+            confidence=confidence,
         )
 
     def _smt_verify(self, c_func, r_func, c_config, r_config, product):
@@ -715,3 +816,158 @@ class VerificationOracle:
                     return "divergent", cex, n_queries
 
         return "equivalent", None, n_queries
+
+    def _direct_smt_verify(self, c_func, r_func, c_config, r_config):
+        """Direct SMT comparison without product program."""
+        import z3
+        from src.smt.encoder import SMTEncoder, EncodingContext
+
+        n_queries = 0
+        c_args = list(c_func.arguments)
+        r_args = list(r_func.arguments)
+        min_args = min(len(c_args), len(r_args))
+
+        shared_vars = []
+        c_input_map = {}
+        r_input_map = {}
+        dummy_encoder = SMTEncoder(config=c_config)
+
+        for i in range(min_args):
+            sort = z3.BitVecSort(32)
+            try:
+                if c_args[i].type:
+                    sort = dummy_encoder.encode_type(c_args[i].type)
+            except Exception:
+                pass
+            try:
+                z3_var = z3.BitVec(f"input_{i}", sort.size()) if z3.is_bv_sort(sort) \
+                    else z3.Const(f"input_{i}", sort)
+            except Exception:
+                z3_var = z3.BitVec(f"input_{i}", 32)
+            shared_vars.append((f"input_{i}", z3_var))
+            ca_name = c_args[i].name or f"arg_{c_args[i].index}"
+            ra_name = r_args[i].name or f"arg_{r_args[i].index}"
+            c_input_map[ca_name] = z3_var
+            r_input_map[ra_name] = z3_var
+
+        c_ctx = EncodingContext()
+        for nm, var in c_input_map.items():
+            c_ctx.declarations[nm] = var
+            c_ctx._alloca_values[nm] = var
+        _, c_ret = SMTEncoder(config=c_config).encode_function(c_func, c_ctx)
+
+        r_ctx = EncodingContext()
+        for nm, var in r_input_map.items():
+            r_ctx.declarations[nm] = var
+            r_ctx._alloca_values[nm] = var
+        _, r_ret = SMTEncoder(config=r_config).encode_function(r_func, r_ctx)
+
+        if c_ret is None or r_ret is None:
+            return "unknown", None, 0
+
+        solver = z3.Solver()
+        solver.set("timeout", self.timeout_ms)
+        for a in c_ctx.assertions:
+            solver.add(a)
+        for a in r_ctx.assertions:
+            solver.add(a)
+
+        c_r, r_r = c_ret, r_ret
+        try:
+            if z3.is_bv(c_r) and z3.is_bv(r_r):
+                c_w, r_w = c_r.size(), r_r.size()
+                if c_w != r_w:
+                    tw = max(c_w, r_w)
+                    if c_w < tw:
+                        c_r = z3.SignExt(tw - c_w, c_r)
+                    if r_w < tw:
+                        r_r = z3.SignExt(tw - r_w, r_r)
+            elif z3.is_bool(c_r) and z3.is_bv(r_r):
+                c_r = z3.If(c_r, z3.BitVecVal(1, r_r.size()), z3.BitVecVal(0, r_r.size()))
+            elif z3.is_bv(c_r) and z3.is_bool(r_r):
+                r_r = z3.If(r_r, z3.BitVecVal(1, c_r.size()), z3.BitVecVal(0, c_r.size()))
+            solver.add(c_r != r_r)
+        except Exception:
+            return "unknown", None, 0
+
+        def _model_val(model, var):
+            val = model.evaluate(var, model_completion=True)
+            if hasattr(val, 'as_signed_long'):
+                return str(val.as_signed_long())
+            if hasattr(val, 'as_long'):
+                return str(val.as_long())
+            return str(val)
+
+        result = solver.check()
+        n_queries += 1
+
+        if result == z3.sat:
+            m = solver.model()
+            cex = {nm: _model_val(m, var) for nm, var in shared_vars}
+            cex["reason"] = "output_mismatch"
+            return "divergent", cex, n_queries
+        elif result == z3.unsat:
+            return "equivalent", None, n_queries
+        return "unknown", None, n_queries
+
+    def _structural_verify(self, c_func, r_func) -> dict:
+        """Compare function signatures, instruction counts, and control flow
+        as a fast heuristic. Returns a dict with similarity metrics."""
+        c_instr = c_func.instruction_count
+        r_instr = r_func.instruction_count
+        c_blocks = c_func.num_blocks
+        r_blocks = r_func.num_blocks
+
+        # Opcode histograms
+        c_ops: dict = {}
+        for inst in c_func.iter_instructions():
+            op = inst.opcode_name()
+            c_ops[op] = c_ops.get(op, 0) + 1
+        r_ops: dict = {}
+        for inst in r_func.iter_instructions():
+            op = inst.opcode_name()
+            r_ops[op] = r_ops.get(op, 0) + 1
+
+        all_ops = set(c_ops) | set(r_ops)
+        if all_ops:
+            matching = sum(min(c_ops.get(o, 0), r_ops.get(o, 0)) for o in all_ops)
+            total = sum(max(c_ops.get(o, 0), r_ops.get(o, 0)) for o in all_ops)
+            opcode_sim = matching / total if total else 0.0
+        else:
+            opcode_sim = 1.0
+
+        max_instr = max(c_instr, r_instr, 1)
+        instr_sim = 1.0 - abs(c_instr - r_instr) / max_instr
+
+        # Return type compatibility
+        ret_compat = 1.0
+        try:
+            c_ret = c_func.return_type
+            r_ret = r_func.return_type
+            if c_ret != r_ret:
+                ret_compat = 0.5
+            c_void = getattr(c_ret, 'is_void', False)
+            r_void = getattr(r_ret, 'is_void', False)
+            if c_void != r_void:
+                ret_compat = 0.0
+        except Exception:
+            ret_compat = 0.5
+
+        # Argument count compatibility
+        c_nargs = len(list(c_func.arguments))
+        r_nargs = len(list(r_func.arguments))
+        arg_compat = 1.0 if c_nargs == r_nargs else max(0.0, 1.0 - abs(c_nargs - r_nargs) * 0.25)
+
+        similarity = (0.35 * opcode_sim + 0.3 * instr_sim +
+                      0.15 * ret_compat + 0.2 * arg_compat)
+
+        return {
+            "similarity": similarity,
+            "similar": similarity >= 0.8,
+            "opcode_similarity": opcode_sim,
+            "instruction_similarity": instr_sim,
+            "return_compatible": ret_compat > 0.0,
+            "arg_count_match": c_nargs == r_nargs,
+            "c_blocks": c_blocks,
+            "r_blocks": r_blocks,
+        }

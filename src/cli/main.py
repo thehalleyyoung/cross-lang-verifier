@@ -20,6 +20,10 @@ from .reporter import (
     EquivalenceVerdict, TimingInfo,
 )
 from .pipeline import VerificationPipeline, PipelinePhase, PipelineStatus, PipelineBuilder
+from .project_discovery import (
+    scan_cargo_dir, scan_compile_commands, scan_c_directory,
+    discover_matches, format_discovery_result,
+)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -75,6 +79,25 @@ Examples:
                                help="Disable fuzzing phase")
     verify_parser.add_argument("--report-dir", type=str, default=None,
                                help="Directory for HTML reports")
+    verify_parser.add_argument("--cargo-dir", type=str, default=None,
+                               help="Path to Rust project (with Cargo.toml) to scan for FFI functions")
+    verify_parser.add_argument("--compile-commands", type=str, default=None,
+                               help="Path to compile_commands.json to discover C source files")
+
+    # --- discover ---
+    discover_parser = subparsers.add_parser("discover",
+                                            help="Auto-discover matching C/Rust function pairs from build systems")
+    discover_parser.add_argument("--cargo-dir", type=str, required=True,
+                                 help="Path to Rust project directory containing Cargo.toml")
+    discover_parser.add_argument("--c-dir", type=str, required=True,
+                                 help="Path to C source directory")
+    discover_parser.add_argument("--compile-commands", type=str, default=None,
+                                 help="Path to compile_commands.json (optional, uses --c-dir if omitted)")
+    discover_parser.add_argument("--output", "-o", type=str, default=None,
+                                 help="Output file path")
+    discover_parser.add_argument("--format", type=str, default="text",
+                                 choices=["text", "json"],
+                                 help="Output format (default: text)")
 
     # --- fuzz ---
     fuzz_parser = subparsers.add_parser("fuzz", help="Run differential fuzzing only")
@@ -197,6 +220,26 @@ def _make_progress_callback(quiet: bool):
 
 def cmd_verify(args: argparse.Namespace) -> int:
     """Handle the 'verify' subcommand."""
+    config = _load_config(args)
+
+    # If --cargo-dir or --compile-commands given, list discovered functions
+    if getattr(args, "cargo_dir", None) or getattr(args, "compile_commands", None):
+        if args.cargo_dir:
+            rust_fns = scan_cargo_dir(args.cargo_dir)
+            if not args.quiet:
+                print(f"Discovered {len(rust_fns)} Rust FFI function(s):")
+                for f in rust_fns:
+                    print(f"  {f.name}  ({f.file_path}:{f.line_number})")
+        if args.compile_commands:
+            c_fns = scan_compile_commands(args.compile_commands)
+            if not args.quiet:
+                print(f"Discovered {len(c_fns)} C function(s):")
+                for f in c_fns:
+                    print(f"  {f.name}  ({f.file_path}:{f.line_number})")
+        # Fall through to normal verify if source files also provided
+        if not hasattr(args, "c_source") or not args.c_source:
+            return 0
+
     config = _load_config(args)
 
     # Apply verify-specific CLI overrides
@@ -450,6 +493,48 @@ def _benchmark_summary(results: list) -> dict:
     }
 
 
+def cmd_discover(args: argparse.Namespace) -> int:
+    """Handle the 'discover' subcommand."""
+    rust_fns = scan_cargo_dir(args.cargo_dir)
+
+    if args.compile_commands:
+        c_fns = scan_compile_commands(args.compile_commands)
+    else:
+        c_fns = scan_c_directory(args.c_dir)
+
+    result = discover_matches(rust_fns, c_fns)
+
+    fmt = getattr(args, "format", "text")
+    if fmt == "json":
+        data = {
+            "rust_functions": [
+                {"name": f.name, "file": f.file_path, "line": f.line_number}
+                for f in result.rust_functions
+            ],
+            "c_functions": [
+                {"name": f.name, "file": f.file_path, "line": f.line_number}
+                for f in result.c_functions
+            ],
+            "matched_pairs": [
+                {"name": c.name, "c_file": c.file_path, "rust_file": r.file_path}
+                for c, r in result.matched_pairs
+            ],
+        }
+        output = json.dumps(data, indent=2)
+    else:
+        output = format_discovery_result(result)
+
+    if args.output:
+        with open(args.output, "w") as fh:
+            fh.write(output + "\n")
+        if not args.quiet:
+            print(f"Results written to {args.output}")
+    else:
+        print(output)
+
+    return 0
+
+
 def _output_report(report: VerificationReport, args: argparse.Namespace) -> None:
     """Output the report in the requested format."""
     fmt = getattr(args, "format", "json")
@@ -491,6 +576,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "fuzz": cmd_fuzz,
         "analyze": cmd_analyze,
         "benchmark": cmd_benchmark,
+        "discover": cmd_discover,
     }
 
     handler = commands.get(args.command)

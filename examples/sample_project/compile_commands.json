@@ -1,0 +1,7 @@
+[
+  {
+    "directory": ".",
+    "command": "cc -c -o math_utils.o c_impl/math_utils.c",
+    "file": "c_impl/math_utils.c"
+  }
+]

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  2 MAR 2026 06:05
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  2 MAR 2026 11:53
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -8,8 +8,8 @@ LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2024/06/29 v1.4n Standard LaTeX document class
-(/usr/local/texlive/2025basic/texmf-dist/tex/latex/base/size11.clo
-File: size11.clo 2024/06/29 v1.4n Standard LaTeX file (size option)
+(/usr/local/texlive/2025basic/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2024/06/29 v1.4n Standard LaTeX file (size option)
 )
 \c@part=\count196
 \c@section=\count197
@@ -499,24 +499,24 @@ File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
 ) (./tool_paper.aux)
 \openout1 = `tool_paper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 59.
-LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
 
 (/usr/local/texlive/2025basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -542,7 +542,7 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring OFF on input line 59.
+Package hyperref Info: Link coloring OFF on input line 58.
  (./tool_paper.out) (./tool_paper.out)
 \@outlinefile=\write3
 \openout3 = `tool_paper.out'.
@@ -568,12 +568,12 @@ Package hyperref Info: Link coloring OFF on input line 59.
 * \topmargin=-37.0pt
 * \headheight=12.0pt
 * \headsep=25.0pt
-* \topskip=11.0pt
+* \topskip=10.0pt
 * \footskip=30.0pt
-* \marginparwidth=50.0pt
-* \marginparsep=10.0pt
+* \marginparwidth=57.0pt
+* \marginparsep=11.0pt
 * \columnsep=10.0pt
-* \skip\footins=10.0pt plus 4.0pt minus 2.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
 * \hoffset=0.0pt
 * \voffset=0.0pt
 * \mag=1000
@@ -585,19 +585,19 @@ Package hyperref Info: Link coloring OFF on input line 59.
 
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 61.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 60.
 
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 61.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 60.
 
 
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Trying to load font information for U+stmry on input line 6
-1.
+0.
 
 (/usr/local/texlive/2025basic/texmf-dist/tex/latex/stmaryrd/Ustmry.fd)
 
@@ -608,289 +608,350 @@ LaTeX Warning: No \author given.
 [1
 
 {/usr/local/texlive/2025basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-(/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
-File: lstlang1.sty 2024/09/23 1.10c listings language file
-)
-(/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstmisc.sty
-File: lstmisc.sty 2024/09/23 1.10c (Carsten Heinz)
-)
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 194.
+(hyperref)                removing `math shift' on input line 208.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 194.
+(hyperref)                removing `\sigma' on input line 208.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 194.
+(hyperref)                removing `math shift' on input line 208.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 210.
+(Font)              using `T1/cmr/m/scsl' instead on input line 217.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 210.
+(Font)              using `T1/cmr/m/scsl' instead on input line 217.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 210.
+(Font)              using `T1/cmr/m/scsl' instead on input line 217.
 
 
-Overfull \hbox (1.82071pt too wide) in paragraph at lines 209--215
-[][]\T1/cmr/bx/n/10.95 Definition 1 \T1/cmr/m/n/10.95 (Se-man-tic-Config)\T1/cm
-r/bx/n/10.95 . []\T1/cmr/m/it/10.95 A se-man-tic con-fig-u-ra-tion $\OML/cmm/m/
-it/10.95 ^^[ \OT1/cmr/m/n/10.95 : [] \OMS/cmsy/m/n/10.95 ^^B [] ! f[]\OML/cmm/m
-/it/10.95 ; []; []\OMS/cmsy/m/n/10.95 g$
+LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
+(Font)              using `T1/cmr/m/scsl' instead on input line 217.
+
+
+LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
+(Font)              using `T1/cmr/m/scsl' instead on input line 218.
+
+
+Overfull \hbox (25.21313pt too wide) in paragraph at lines 231--233
+[]\T1/cmr/m/sc/10 UB\T1/cmr/m/n/10 : bitvec-tor op-er-a-tion plus a well-define
+dness guard added to the as-sump-tion set (\T1/cmtt/m/n/10 ctx.assert_assume\T1
+/cmr/m/n/10 ). 
  []
 
 
-Overfull \hbox (17.72122pt too wide) in paragraph at lines 223--225
-[]\T1/cmr/m/sc/10.95 UB\T1/cmr/m/n/10.95 : bitvec-tor op-er-a-tion plus a well-
-definedness guard as-sert-ing the re-sult lies in $\OT1/cmr/m/n/10.95 [\OMS/cms
-y/m/n/10.95 ^^@\OT1/cmr/m/n/10.95 2[]\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 2
-[] \OMS/cmsy/m/n/10.95 ^^@
+Overfull \hbox (10.10947pt too wide) in paragraph at lines 242--249
+[][]\T1/cmr/bx/n/10 Definition 2 \T1/cmr/m/n/10 ($\OML/cmm/m/it/10 ^^[$\T1/cmr/
+m/n/10 -Bridge Co-er-cion)\T1/cmr/bx/n/10 . []\T1/cmr/m/it/10 A $\OML/cmm/m/it/
+10 ^^[$\T1/cmr/m/it/10 -bridge co-er-cion at pro-gram point $\OML/cmm/m/it/10 i
+$ \T1/cmr/m/it/10 is a triple $\OML/cmm/m/it/10 ^^[[] \OT1/cmr/m/n/10 = ([][]\O
+ML/cmm/m/it/10 ; [][]; [][]\OT1/cmr/m/n/10 )$
  []
 
 
 
 [2]
+Overfull \hbox (77.59837pt too wide) in paragraph at lines 261--263
+ []\T1/cmr/bx/n/10 Product pro-gram con-struc-tion.[] \T1/cmr/m/n/10 Al-go-rith
+m []1[] sum-ma-rizes the con-struc-tion, im-ple-mented in \T1/cmtt/m/n/10 Produ
+ctBuilder.build()
+ []
+
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 287.
+put line 265.
 
 
 [3]
-Overfull \hbox (10.55739pt too wide) in paragraph at lines 361--364
-[]\T1/cmr/m/sc/10.95 UB \T1/cmr/m/n/10.95 (C11 signed): Com-pute $\OML/cmm/m/it
-/10.95 r \OT1/cmr/m/n/10.95 = [](\OML/cmm/m/it/10.95 e[]; e[]\OT1/cmr/m/n/10.95
- )$\T1/cmr/m/n/10.95 . Add to $[]$: $[]\OT1/cmr/m/n/10.95 (\OMS/cmsy/m/n/10.95 
-^^@\OT1/cmr/m/n/10.95 2[]\OML/cmm/m/it/10.95 ; r\OT1/cmr/m/n/10.95 ) \OMS/cmsy/
-m/n/10.95 ^ []\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 r; \OT1/cmr/m/n/10.95 2[]
- \OMS/cmsy/m/n/10.95 ^^@
+Overfull \hbox (117.75385pt too wide) in paragraph at lines 386--389
+\T1/cmr/m/n/10 We state the main sound-ness the-o-rem, cor-re-spond-ing to \T1/
+cmtt/m/n/10 verify_soundness_theorem_1() \T1/cmr/m/n/10 in \T1/cmtt/m/n/10 src/
+product_program/soundness.py\T1/cmr/m/n/10 . 
  []
 
 
-Overfull \hbox (21.0375pt too wide) in paragraph at lines 367--371
-[]\T1/cmr/m/sc/10.95 Panic \T1/cmr/m/n/10.95 (Rust de-bug): Com-pute $\OML/cmm/
-m/it/10.95 r \OT1/cmr/m/n/10.95 = [](\OML/cmm/m/it/10.95 e[]; e[]\OT1/cmr/m/n/1
-0.95 )$\T1/cmr/m/n/10.95 . Set panic flag: $[] \OMS/cmsy/m/n/10.95   :\OT1/cmr/
-m/n/10.95 ([](\OMS/cmsy/m/n/10.95 ^^@\OT1/cmr/m/n/10.95 2[]\OML/cmm/m/it/10.95 
-; r\OT1/cmr/m/n/10.95 ) \OMS/cmsy/m/n/10.95 ^
- []
+LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
+(Font)              using `T1/cmr/m/scsl' instead on input line 441.
 
 
-Overfull \hbox (1.56944pt too wide) in paragraph at lines 379--387
-\T1/cmr/m/n/10.95 For pointer-manipulating code, \T1/cmr/m/sc/10.95 Sem-Rec \T1
-/cmr/m/n/10.95 in-cor-po-rates: (1) Andersen-style flow-insensitive points-
+LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
+(Font)              using `T1/cmr/m/scsl' instead on input line 442.
+
+
+Overfull \hbox (13.40016pt too wide) in paragraph at lines 461--467
+ []\T1/cmr/bx/n/10 Parser fron-tends.[] \T1/cmr/m/n/10 Each lan-guage has two p
+ars-ing back-ends: tree-sitter-c 0.24 and tree-sitter-rust 0.24 [[]]
  []
 
 
 
 [4]
-Overfull \hbox (2.66948pt too wide) in paragraph at lines 404--409
-\T1/cmtt/m/n/10.95 BinaryOp \T1/cmr/m/n/10.95 (an-no-tated with \T1/cmtt/m/n/10
-.95 OverflowBehavior\T1/cmr/m/n/10.95 ), \T1/cmtt/m/n/10.95 CompareOp\T1/cmr/m/
-n/10.95 , \T1/cmtt/m/n/10.95 CastInst\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 Ret
-urnInst\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 BranchInst\T1/cmr/m/n/10.95 ,
+Overfull \hbox (1.0379pt too wide) in paragraph at lines 500--510
+ []\T1/cmr/bx/n/10 Memory model.[] \T1/cmr/m/n/10 For pointer-manipulating code
+, \T1/cmr/m/sc/10 Sem-Rec \T1/cmr/m/n/10 in-cor-po-rates Andersen-style flow-in
+sensitive
  []
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 599.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 599.
 
 
 
 [5]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 484.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 484.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 523.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 523.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 523.
+Overfull \hbox (10.51071pt too wide) in paragraph at lines 630--638
+\T1/cmr/m/n/10 rectly pin-point the di-ver-gence class. For ex-am-ple, on an \T
+1/cmtt/m/n/10 add \T1/cmr/m/n/10 pair, the coun-terex-am-ple $\OML/cmm/m/it/10 
+a \OT1/cmr/m/n/10 = 2[]147[]483[]647\OML/cmm/m/it/10 ; b \OT1/cmr/m/n/10 =
+ []
 
 
 
 [6]
-Overfull \hbox (10.58234pt too wide) in paragraph at lines 590--595
-[][]\T1/cmr/bx/n/10.95 Lemma 3 \T1/cmr/m/n/10.95 (Bitvec-tor En-cod-ing Faith-f
-ul-ness)\T1/cmr/bx/n/10.95 . []\T1/cmr/m/it/10.95 For each arith-metic op-er-a-
-tion $\OML/cmm/m/it/10.95 op \OMS/cmsy/m/n/10.95 2 f\OT1/cmr/m/n/10.95 +\OML/cm
-m/m/it/10.95 ; \OMS/cmsy/m/n/10.95 ^^@\OML/cmm/m/it/10.95 ; \OMS/cmsy/m/n/10.95
- ^^B\OML/cmm/m/it/10.95 ; =; \OT1/cmr/m/n/10.95 %\OML/cmm/m/it/10.95 ; \OMS/cms
-y/m/n/10.95 ^^\
- []
-
-
-Overfull \hbox (3.99487pt too wide) in paragraph at lines 606--610
-\T1/cmr/m/it/10.95 in the han-dled set of 17 classes: if $[][]\OT1/cmr/m/n/10.9
-5 ([])$ \T1/cmr/m/it/10.95 holds, then the co-erced en-cod-ings sat-isfy $[][]\
-OT1/cmr/m/n/10.95 ([]\OML/cmm/m/it/10.95 ; y[]; y[]\OT1/cmr/m/n/10.95 )$\T1/cmr
-/m/it/10.95 . 
- []
-
-
 
 [7]
 
-LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 662.
-
-
-LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 663.
-
-
-
 [8]
-Underfull \hbox (badness 10000) in paragraph at lines 748--751
-[]\T1/cmr/m/n/10.95 Chromium Project.  Mem-ory safety.  []$\T1/cmtt/m/n/10.95 h
-ttps : / / www . chromium . org / Home /
+
+[9]
+Overfull \hbox (15.13892pt too wide) in paragraph at lines 1035--1039
+\T1/cmr/m/n/10 en-coder (\T1/cmtt/m/n/10 encode_binop \T1/cmr/m/n/10 with \T1/c
+mtt/m/n/10 OverflowBehavior.UNDEFINED\T1/cmr/m/n/10 ) gen-er-ates these guards 
+as \T1/cmtt/m/n/10 ctx.assert_assume
  []
 
 
 
-[9]
-
-[10]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 954.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 954.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 954.
-
-
-LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 960.
-
-
-LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 968.
-
-
-
-[11
+[10
 
 ]
 
-LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 974.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1084.
 
 
-LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 980.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\sigma' on input line 1084.
 
 
-LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 985.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1084.
 
 
-Overfull \hbox (11.50298pt too wide) in paragraph at lines 1018--1022
-[]\T1/cmr/m/n/10.95 Suppose for con-tra-dic-tion that there ex-ists $[]$ with $
-[]\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 ^^[[]; f[]; []\OT1/cmr/m/n/10.95 )$ \
-T1/cmr/m/n/10.95 true and $\U/stmry/m/n/10.95 J\OML/cmm/m/it/10.95 f[]\U/stmry/
-m/n/10.95 K\OT1/cmr/m/n/10.95 ([]) \OMS/cmsy/m/n/10.95 6\OT1/cmr/m/n/10.95 =
- []
 
-
+[11]
 
 [12]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1115.
+(hyperref)                removing `math shift' on input line 1411.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 1115.
+(hyperref)                removing `\sigma' on input line 1411.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1115.
+(hyperref)                removing `math shift' on input line 1411.
 
 
-LaTeX Warning: `h' float specifier changed to `ht'.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 
 [13]
 
-[14] (./tool_paper.aux)
+[14]
+Underfull \hbox (badness 1308) in paragraph at lines 1625--1626
+[]|\T1/cmr/m/n/9 Integer pro-mo-tion: C im-plic-itly
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1646--1646
+[]|\T1/cmr/m/n/9 Truncation to-ward
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Overfull \hbox (1.83661pt too wide) in paragraph at lines 1656--1666
+\T1/cmr/m/n/10 Integer nar-row-ing (class 13) is implementation-defined in C bu
+t uni-ver-sally trun-cates on two's-complement
+ []
+
+
+
+[15]
+Underfull \hbox (badness 1648) in paragraph at lines 1721--1725
+\T1/cmr/m/n/9 UREM, FADD, FSUB, FMUL, FDIV,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1721--1725
+\T1/cmr/m/n/9 FREM, SHL, LSHR, ASHR, AND,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1721--1725
+\T1/cmr/m/n/9 OR, XOR. Each an-no-tated with
+ []
+
+
+Underfull \hbox (badness 1117) in paragraph at lines 1728--1732
+[]|\T1/cmr/m/n/9 Signed (SLT/S-GT/SLE/SGE), un-signed
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1728--1732
+\T1/cmr/m/n/9 (ULT/UGT/ULE/UGE), or-dered float
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1728--1732
+\T1/cmr/m/n/9 (OE-Q/ONE/OLT/OGT/OLE/OGE),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1733--1736
+[]|\T1/cmr/m/n/9 TRUNC, ZEXT, SEXT, FP-TRUNC,
+ []
+
+
+Underfull \hbox (badness 2717) in paragraph at lines 1733--1736
+\T1/cmr/m/n/9 FPEXT, FP-TOSI, FP-TOUI, SITOFP,
+ []
+
+
+Underfull \hbox (badness 2828) in paragraph at lines 1741--1742
+[]|\T1/cmr/m/n/9 Phi for SSA con-struc-tion; Se-lect for
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+
+[16] (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2024/09/23 1.10c listings language file
+)
+Overfull \hbox (7.85013pt too wide) in paragraph at lines 1778--1781
+ []\T1/cmr/bx/n/10 Memory ar-ray model.[] \T1/cmr/m/n/10 Mem-ory is mod-eled as
+ a Z3 \T1/cmtt/m/n/10 Array(BitVecSort(ptr_width), BitVecSort(8))
+ []
+
+
+
+[17]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Overfull \hbox (8.3457pt too wide) in paragraph at lines 1936--1941
+\T1/cmr/m/n/10 The $\OML/cmm/m/it/10 ^^[$\T1/cmr/m/n/10 -bridge frame-work con-
+tributes a 40pp im-prove-ment over naive bitvec-tor com-par-i-son. Well-defined
+ness
+ []
+
+
+
+[18]
+
+[19]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1997.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1997.
+
+
+
+[20] (./tool_paper.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `tool_paper.out' has not changed.
-(rerunfilecheck)             Checksum: 7965C84FBCE8FE454768A513E4D2D2D9;6626.
+(rerunfilecheck)             Checksum: 263E180065A8F0A9FFBB12D806E6BA30;9007.
  ) 
 Here is how much of TeX's memory you used:
- 16133 strings out of 474662
- 248077 string characters out of 5751110
- 860268 words of memory out of 5000000
- 38797 multiletter control sequences out of 15000+600000
- 598946 words of font info for 140 fonts, out of 8000000 for 9000
+ 16294 strings out of 474662
+ 249898 string characters out of 5751110
+ 934597 words of memory out of 5000000
+ 38886 multiletter control sequences out of 15000+600000
+ 598836 words of font info for 140 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 75i,15n,79p,547b,1331s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,15n,79p,547b,1438s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jkna
-ppen/ec/ecbi1095.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var
-/fonts/pk/ljfour/jknappen/ec/ecrm0900.600pk> </Users/halleyyoung/Library/texliv
-e/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600pk> </Users/halle
-yyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecit1095
+ppen/ec/ectt0800.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var
+/fonts/pk/ljfour/jknappen/ec/ecrm0500.600pk> </Users/halleyyoung/Library/texliv
+e/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbi1000.600pk> </Users/halle
+yyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm0800
 .600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour
-/jknappen/ec/ecsc1095.600pk> </Users/halleyyoung/Library/texlive/2025basic/texm
-f-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk> </Users/halleyyoung/Library/t
-exlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1095.600pk> </Users/
-halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ect
-t0900.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/l
-jfour/jknappen/ec/ecrm0600.600pk> </Users/halleyyoung/Library/texlive/2025basic
-/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1095.600pk> </Users/halleyyoung/Libr
-ary/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/eccc1095.600pk> </U
+/jknappen/ec/tcrm1000.600pk> </Users/halleyyoung/Library/texlive/2025basic/texm
+f-var/fonts/pk/ljfour/jknappen/ec/ecit1000.600pk> </Users/halleyyoung/Library/t
+exlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecsc1000.600pk> </Users/
+halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecb
+x1200.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/l
+jfour/jknappen/ec/eccc1000.600pk> </Users/halleyyoung/Library/texlive/2025basic
+/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600pk> </Users/halleyyoung/Libr
+ary/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk> </U
 sers/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/e
-c/ectt1095.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts
-/pk/ljfour/jknappen/ec/ecti1095.600pk> </Users/halleyyoung/Library/texlive/2025
-basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1095.600pk> </Users/halleyyoung
-/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk
+c/ecti1000.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts
+/pk/ljfour/jknappen/ec/ecrm1000.600pk> </Users/halleyyoung/Library/texlive/2025
+basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </Users/halleyyoung
+/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt0900.600pk
 > </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknap
-pen/ec/eccc1000.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/
-fonts/pk/ljfour/jknappen/ec/ecrm1000.600pk> </Users/halleyyoung/Library/texlive
-/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk> </Users/halley
-young/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1728.
-600pk></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/c
-mbx10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/
-cm/cmex10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmmi10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmmi12.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type
-1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2025basic/texmf-dist/font
-s/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2025basic/texmf-dist/fo
-nts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2025basic/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2025basic/texmf-
-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2025basic/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2025basic
-/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/
-2025basic/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local
-/texlive/2025basic/texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb>
-Output written on tool_paper.pdf (14 pages, 391253 bytes).
+pen/ec/ecti0900.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/
+fonts/pk/ljfour/jknappen/ec/eccc0900.600pk> </Users/halleyyoung/Library/texlive
+/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm0900.600pk> </Users/halley
+young/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx0900.
+600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/
+jknappen/ec/ecbx1728.600pk></usr/local/texlive/2025basic/texmf-dist/fonts/type1
+/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2025basic/texmf-dist/fon
+ts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2025basic/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2025basic/texmf-
+dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2025basic/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2025basic/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2025bas
+ic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texlive/2025
+basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2
+025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive
+/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texli
+ve/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/tex
+live/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local
+/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/lo
+cal/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr
+/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></
+usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pf
+b></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/symbols/
+msam10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts
+/symbols/msbm10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public
+/stmaryrd/stmary10.pfb>
+Output written on tool_paper.pdf (20 pages, 490075 bytes).
 PDF statistics:
- 1185 PDF objects out of 1200 (max. 8388607)
- 487 compressed objects within 5 object streams
- 131 named destinations out of 1000 (max. 500000)
- 273 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1490 PDF objects out of 1728 (max. 8388607)
+ 653 compressed objects within 7 object streams
+ 199 named destinations out of 1000 (max. 500000)
+ 369 words of extra memory for PDF output out of 10000 (max. 10000000)
 

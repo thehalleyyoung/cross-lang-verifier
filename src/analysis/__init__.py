@@ -37,6 +37,13 @@ from .callgraph import (
     CallGraphNode,
     CallGraphSCC,
 )
+from .interprocedural import (
+    InterproceduralVerifier,
+    InterproceduralResult,
+    InterproceduralStatus,
+    FunctionPairResult,
+    InliningTransform,
+)
 
 __all__ = [
     "CFG", "DominatorTree", "LoopInfo", "NaturalLoop", "CFGEdge", "EdgeKind",
@@ -45,4 +52,6 @@ __all__ = [
     "VeryBusyExpressions", "ConstantPropagation", "DefUseChains", "UseDefChains",
     "AliasResult", "PointsToSet", "AndersenAnalysis", "SteensgaardAnalysis", "AliasQuery",
     "CallGraph", "CallSite", "CallGraphNode", "CallGraphSCC",
+    "InterproceduralVerifier", "InterproceduralResult", "InterproceduralStatus",
+    "FunctionPairResult", "InliningTransform",
 ]

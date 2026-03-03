@@ -137,13 +137,15 @@ class RustParser:
         crate = parser.parse()
     """
 
-    def __init__(self, source: str, filename: str = "<input>") -> None:
+    def __init__(self, source: str, filename: str = "<input>",
+                 lenient: bool = False) -> None:
         self._lexer = RustLexer(source, filename)
         self._filename = filename
         self._tokens: list[Token] = []
         self._pos = 0
         self._errors: list[ParseError] = []
         self._no_struct_literal = False  # Disables struct literal parsing in if/while/match conditions
+        self.lenient = lenient
 
     @property
     def errors(self) -> list[ParseError]:
@@ -176,6 +178,10 @@ class RustParser:
         if tok.kind != kind:
             if not msg:
                 msg = f"expected {kind.name}, got {tok.kind.name} ({tok.text!r})"
+            if self.lenient:
+                self._error(msg, tok)
+                # Return a synthetic token so callers don't crash
+                return tok
             self._error(msg, tok)
             return tok
         return self._advance()
@@ -197,6 +203,12 @@ class RustParser:
         self._errors.append(err)
         return err
 
+    def _recover_to_next_boundary(self) -> None:
+        """Skip tokens until we reach a statement/item boundary."""
+        self._skip_to(TokenKind.SEMICOLON, TokenKind.RBRACE, TokenKind.LBRACE)
+        if self._at(TokenKind.SEMICOLON):
+            self._advance()
+
     def _loc(self, start_token: Token) -> NodeLocation:
         end = self._cur()
         span = SourceSpan(start_token.span.start, end.span.start)
@@ -205,6 +217,21 @@ class RustParser:
     def _skip_to(self, *kinds: TokenKind) -> None:
         while not self._at(TokenKind.EOF) and not self._at_any(*kinds):
             self._advance()
+
+    def _split_shr(self) -> None:
+        """Split a >> (SHR) token into two > (GT) tokens.
+
+        Used when parsing nested generics like Option<Box<i32>>.
+        """
+        if not self._at(TokenKind.SHR):
+            return
+        shr_tok = self._tokens[self._pos]
+        # Replace >> with > and insert another > after it
+        gt1 = Token(kind=TokenKind.GT, text=">", span=shr_tok.span)
+        gt2 = Token(kind=TokenKind.GT, text=">", span=shr_tok.span)
+        self._tokens[self._pos] = gt1
+        self._tokens.insert(self._pos + 1, gt2)
+        self._advance()  # consume first >
 
     # -------------------------------------------------------------------
     # Top-level parsing
@@ -222,6 +249,7 @@ class RustParser:
             crate.inner_attributes.append(attr)
 
         while not self._at(TokenKind.EOF):
+            saved_pos = self._pos
             try:
                 item = self._parse_item()
                 if item is not None:
@@ -233,6 +261,9 @@ class RustParser:
                     self._advance()
                 elif self._at(TokenKind.RBRACE):
                     self._advance()
+            # Guard against infinite loops
+            if self._pos == saved_pos:
+                self._advance()
 
         crate.loc = self._loc(start)
         return crate
@@ -258,6 +289,9 @@ class RustParser:
             return self._parse_fn_item(attrs, vis, start, is_const=True)
         if tok.kind == TokenKind.KW_ASYNC and self._peek(1).kind == TokenKind.KW_FN:
             return self._parse_fn_item(attrs, vis, start, is_async=True)
+        if tok.kind == TokenKind.KW_UNSAFE and self._peek(1).kind == TokenKind.KW_EXTERN:
+            self._advance()  # unsafe
+            return self._parse_extern_block(attrs, vis, start)
         if tok.kind == TokenKind.KW_EXTERN:
             if self._peek(1).kind == TokenKind.STRING_LITERAL or self._peek(1).kind == TokenKind.KW_FN:
                 return self._parse_extern_item(attrs, vis, start)
@@ -721,13 +755,36 @@ class RustParser:
 
     def _parse_extern_item(
         self, attrs: list[Attribute], vis: Visibility, start: Token,
-    ) -> FnItem:
-        """Parse extern "C" fn ..."""
+    ) -> Item:
+        """Parse extern "C" fn ... or extern "C" { ... }."""
         self._advance()  # extern
         abi = "C"
         if self._at(TokenKind.STRING_LITERAL):
             abi = self._advance().string_value or "C"
+        # After consuming ABI, check if it's a block or function
+        if self._at(TokenKind.LBRACE):
+            return self._parse_extern_block_body(attrs, vis, start, abi)
         return self._parse_fn_item(attrs, vis, start, abi=abi, is_extern=True)
+
+    def _parse_extern_block_body(
+        self, attrs: list[Attribute], vis: Visibility, start: Token, abi: str,
+    ) -> ExternBlock:
+        """Parse the body of extern "C" { ... } (LBRACE already peeked)."""
+        self._advance()  # {
+        items: list[Item] = []
+        while not self._at(TokenKind.RBRACE) and not self._at(TokenKind.EOF):
+            try:
+                item = self._parse_item()
+                if item:
+                    items.append(item)
+            except ParseError:
+                self._skip_to(TokenKind.SEMICOLON, TokenKind.RBRACE)
+                self._match(TokenKind.SEMICOLON)
+        self._expect(TokenKind.RBRACE)
+        return ExternBlock(
+            abi=abi, items=items,
+            loc=self._loc(start), attributes=attrs, visibility=vis,
+        )
 
     def _parse_extern_block(
         self, attrs: list[Attribute], vis: Visibility, start: Token,
@@ -876,7 +933,7 @@ class RustParser:
             return generics
 
         self._advance()  # <
-        while not self._at(TokenKind.GT) and not self._at(TokenKind.EOF):
+        while not self._at(TokenKind.GT) and not self._at(TokenKind.SHR) and not self._at(TokenKind.EOF):
             if self._at(TokenKind.LIFETIME):
                 name = self._advance().lifetime_name
                 generics.params.append(GenericParam(name=name, is_lifetime=True))
@@ -903,7 +960,10 @@ class RustParser:
             if not self._match(TokenKind.COMMA):
                 break
 
-        self._expect(TokenKind.GT)
+        if self._at(TokenKind.SHR):
+            self._split_shr()
+        else:
+            self._expect(TokenKind.GT)
         return generics
 
     def _parse_where_clause(self, generics: Generics) -> None:
@@ -993,14 +1053,18 @@ class RustParser:
             saved = self._pos
             try:
                 self._advance()  # <
-                while not self._at(TokenKind.GT) and not self._at(TokenKind.EOF):
+                while not self._at(TokenKind.GT) and not self._at(TokenKind.SHR) and not self._at(TokenKind.EOF):
                     if self._at(TokenKind.LIFETIME):
                         self._advance()
                     else:
                         generic_args.append(self._parse_type())
                     if not self._match(TokenKind.COMMA):
                         break
-                self._expect(TokenKind.GT)
+                if self._at(TokenKind.SHR):
+                    # >> in nested generics: consume one > and leave one
+                    self._split_shr()
+                else:
+                    self._expect(TokenKind.GT)
             except ParseError:
                 self._pos = saved
                 generic_args = []
@@ -1233,6 +1297,11 @@ class RustParser:
         """Parse a statement within a block."""
         start = self._cur()
 
+        # Skip outer attributes at statement level
+        if self._at(TokenKind.HASH) and self._peek(1).kind == TokenKind.LBRACKET:
+            self._parse_outer_attributes()
+            # Fall through to parse the attributed item/expr
+
         if self._at(TokenKind.KW_LET):
             return self._parse_let_stmt()
 
@@ -1269,13 +1338,24 @@ class RustParser:
         start = self._cur()
         self._advance()  # let
         is_mut = bool(self._match(TokenKind.KW_MUT))
-        pat = self._parse_pattern()
+        try:
+            pat = self._parse_pattern()
+        except ParseError:
+            self._skip_to(TokenKind.SEMICOLON, TokenKind.RBRACE)
+            self._match(TokenKind.SEMICOLON)
+            return EmptyStmt(loc=self._loc(start))
         ty = None
         if self._match(TokenKind.COLON):
-            ty = self._parse_type()
+            try:
+                ty = self._parse_type()
+            except ParseError:
+                self._skip_to(TokenKind.ASSIGN, TokenKind.SEMICOLON, TokenKind.RBRACE)
         init = None
         if self._match(TokenKind.ASSIGN):
-            init = self._parse_expression()
+            try:
+                init = self._parse_expression()
+            except ParseError:
+                self._skip_to(TokenKind.SEMICOLON, TokenKind.RBRACE)
         # let-else: let pat = expr else { diverging_block }
         if self._at(TokenKind.KW_ELSE):
             self._advance()
@@ -1408,7 +1488,10 @@ class RustParser:
                         self._advance()
                         args: list[Expr] = []
                         while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
-                            args.append(self._parse_expression())
+                            try:
+                                args.append(self._parse_expression())
+                            except ParseError:
+                                self._skip_to(TokenKind.RPAREN, TokenKind.COMMA)
                             if not self._match(TokenKind.COMMA):
                                 break
                         self._expect(TokenKind.RPAREN)
@@ -1416,33 +1499,42 @@ class RustParser:
                                              loc=expr.loc)
                     elif self._at(TokenKind.PATH_SEP) and self._peek(1).kind == TokenKind.LT:
                         # Turbofish: .method::<T>()
-                        self._advance()  # ::
-                        generics = []
-                        self._advance()  # <
-                        while not self._at(TokenKind.GT) and not self._at(TokenKind.EOF):
-                            generics.append(self._parse_type())
-                            if not self._match(TokenKind.COMMA):
-                                break
-                        self._expect(TokenKind.GT)
-                        self._expect(TokenKind.LPAREN)
-                        args = []
-                        while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
-                            args.append(self._parse_expression())
-                            if not self._match(TokenKind.COMMA):
-                                break
-                        self._expect(TokenKind.RPAREN)
-                        expr = MethodCallExpr(receiver=expr, method=name, args=args,
-                                             generic_args=generics, loc=expr.loc)
+                        saved = self._pos
+                        try:
+                            self._advance()  # ::
+                            generics = self._parse_turbofish_args()
+                            if self._at(TokenKind.LPAREN):
+                                self._advance()
+                                args = []
+                                while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
+                                    args.append(self._parse_expression())
+                                    if not self._match(TokenKind.COMMA):
+                                        break
+                                self._expect(TokenKind.RPAREN)
+                                expr = MethodCallExpr(receiver=expr, method=name, args=args,
+                                                     generic_args=generics, loc=expr.loc)
+                            else:
+                                # Turbofish without call — treat as field access
+                                expr = FieldExpr(base=expr, field_name=name, loc=expr.loc)
+                        except ParseError:
+                            self._pos = saved
+                            expr = FieldExpr(base=expr, field_name=name, loc=expr.loc)
                     else:
                         expr = FieldExpr(base=expr, field_name=name, loc=expr.loc)
                 else:
+                    # Dangling dot — recover gracefully
+                    if self.lenient:
+                        break
                     break
 
             elif tok.kind == TokenKind.LPAREN:
                 self._advance()
                 args = []
                 while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
-                    args.append(self._parse_expression())
+                    try:
+                        args.append(self._parse_expression())
+                    except ParseError:
+                        self._skip_to(TokenKind.RPAREN, TokenKind.COMMA)
                     if not self._match(TokenKind.COMMA):
                         break
                 self._expect(TokenKind.RPAREN)
@@ -1456,7 +1548,10 @@ class RustParser:
 
             elif tok.kind == TokenKind.KW_AS:
                 self._advance()
-                target_type = self._parse_type()
+                try:
+                    target_type = self._parse_type()
+                except ParseError:
+                    target_type = PathType(segments=["?"])
                 expr = CastExpr(operand=expr, target_type=target_type, loc=expr.loc)
 
             elif tok.kind == TokenKind.QUESTION:
@@ -1467,6 +1562,20 @@ class RustParser:
                 break
 
         return expr
+
+    def _parse_turbofish_args(self) -> list[RustType]:
+        """Parse turbofish generic arguments: <Type, ...>."""
+        generics: list[RustType] = []
+        self._advance()  # <
+        while not self._at(TokenKind.GT) and not self._at(TokenKind.SHR) and not self._at(TokenKind.EOF):
+            generics.append(self._parse_type())
+            if not self._match(TokenKind.COMMA):
+                break
+        if self._at(TokenKind.SHR):
+            self._split_shr()
+        else:
+            self._expect(TokenKind.GT)
+        return generics
 
     def _parse_primary_expr(self) -> Expr:
         """Parse primary expressions."""
@@ -1504,6 +1613,41 @@ class RustParser:
         if tok.kind == TokenKind.KW_SELF:
             self._advance()
             return PathExpr(segments=["self"], loc=self._loc(tok))
+
+        if tok.kind == TokenKind.KW_SELF_TYPE:
+            self._advance()
+            return PathExpr(segments=["Self"], loc=self._loc(tok))
+
+        # Leading :: for absolute paths: ::std::mem::size_of
+        if tok.kind == TokenKind.PATH_SEP:
+            self._advance()
+            if self._at(TokenKind.IDENT):
+                return self._parse_path_or_struct_expr()
+            self._error("expected identifier after ::")
+            return PathExpr(segments=["<error>"], loc=self._loc(tok))
+
+        # Labeled block: 'label: loop { ... }
+        if tok.kind == TokenKind.LIFETIME:
+            label = self._advance().lifetime_name
+            if self._match(TokenKind.COLON):
+                if self._at(TokenKind.KW_LOOP):
+                    expr = self._parse_loop_expr()
+                    if hasattr(expr, 'label'):
+                        expr.label = label
+                    return expr
+                if self._at(TokenKind.KW_WHILE):
+                    expr = self._parse_while_expr()
+                    if hasattr(expr, 'label'):
+                        expr.label = label
+                    return expr
+                if self._at(TokenKind.KW_FOR):
+                    expr = self._parse_for_expr()
+                    if hasattr(expr, 'label'):
+                        expr.label = label
+                    return expr
+                if self._at(TokenKind.LBRACE):
+                    return self._parse_block_expr()
+            return PathExpr(segments=[f"'{label}"], loc=self._loc(tok))
 
         if tok.kind == TokenKind.LPAREN:
             return self._parse_tuple_or_paren_expr()
@@ -1582,6 +1726,34 @@ class RustParser:
         while self._match(TokenKind.PATH_SEP):
             if self._at(TokenKind.IDENT):
                 segments.append(self._advance().text)
+            elif self._at(TokenKind.LT):
+                # Turbofish on path: Path::<T>(...)
+                saved = self._pos
+                try:
+                    generics = self._parse_turbofish_args()
+                    # After turbofish, continue collecting path segments
+                    while self._match(TokenKind.PATH_SEP):
+                        if self._at(TokenKind.IDENT):
+                            segments.append(self._advance().text)
+                        else:
+                            break
+                    # After turbofish (+ optional path), check for function call
+                    if self._at(TokenKind.LPAREN):
+                        self._advance()
+                        args: list[Expr] = []
+                        while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
+                            args.append(self._parse_expression())
+                            if not self._match(TokenKind.COMMA):
+                                break
+                        self._expect(TokenKind.RPAREN)
+                        path_expr = PathExpr(segments=segments, loc=self._loc(start))
+                        return CallExpr(callee=path_expr, args=args,
+                                       loc=self._loc(start))
+                    # No call after turbofish — just a path
+                    break
+                except ParseError:
+                    self._pos = saved
+                    break
             else:
                 break
 
@@ -1604,7 +1776,7 @@ class RustParser:
         if full_path in ("std::mem::transmute", "core::mem::transmute", "transmute"):
             if self._at(TokenKind.LPAREN):
                 self._advance()
-                args: list[Expr] = []
+                args = []
                 while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
                     args.append(self._parse_expression())
                     if not self._match(TokenKind.COMMA):
@@ -1612,6 +1784,26 @@ class RustParser:
                 self._expect(TokenKind.RPAREN)
                 operand = args[0] if args else None
                 return TransmuteCall(operand=operand, loc=self._loc(start))
+
+        # Handle transmute with turbofish: transmute::<T>(expr)
+        if full_path in ("std::mem::transmute", "core::mem::transmute", "transmute"):
+            if self._at(TokenKind.PATH_SEP) and self._peek(1).kind == TokenKind.LT:
+                saved = self._pos
+                try:
+                    self._advance()  # ::
+                    self._parse_turbofish_args()
+                    if self._at(TokenKind.LPAREN):
+                        self._advance()
+                        args = []
+                        while not self._at(TokenKind.RPAREN) and not self._at(TokenKind.EOF):
+                            args.append(self._parse_expression())
+                            if not self._match(TokenKind.COMMA):
+                                break
+                        self._expect(TokenKind.RPAREN)
+                        operand = args[0] if args else None
+                        return TransmuteCall(operand=operand, loc=self._loc(start))
+                except ParseError:
+                    self._pos = saved
 
         # Check for struct literal: Name { field: value }
         # Disabled inside if/while/match conditions to avoid ambiguity
@@ -1706,6 +1898,7 @@ class RustParser:
         tail_expr: Optional[Expr] = None
 
         while not self._at(TokenKind.RBRACE) and not self._at(TokenKind.EOF):
+            saved_pos = self._pos
             try:
                 stmt = self._parse_statement()
                 if isinstance(stmt, ExprStmt) and not stmt.has_semicolon:
@@ -1718,6 +1911,9 @@ class RustParser:
                 self._errors.append(e)
                 self._skip_to(TokenKind.SEMICOLON, TokenKind.RBRACE)
                 self._match(TokenKind.SEMICOLON)
+            # Guard against infinite loops — must make progress
+            if self._pos == saved_pos:
+                self._advance()
 
         self._expect(TokenKind.RBRACE)
         return BlockExpr(stmts=stmts, tail_expr=tail_expr, loc=self._loc(start))

@@ -1,13 +1,13 @@
 {
   "version": 4,
   "phase": "implementation",
-  "problem_slug": "cross-language-equivalence-verifier",
-  "problem_dir": "pipeline_output/cross-language-equivalence-verifier",
+  "problem_slug": "cross-lang-verifier",
+  "problem_dir": "pipeline_output/cross-lang-verifier",
   "proposals": {
     "proposal_00": {
       "id": "proposal_00",
       "status": "theory_approved",
-      "source_file": "pipeline_output/cross-language-equivalence-verifier/ideation/final_approach.md",
+      "source_file": "pipeline_output/cross-lang-verifier/ideation/final_approach.md",
       "theory_score": 5,
       "impl_loc": 0,
       "impl_timeout": false,
@@ -27,8 +27,8 @@
     {
       "at": "2026-02-22T18:08:07Z",
       "event": "problem_crystallized",
-      "slug": "cross-language-equivalence-verifier",
-      "dir": "pipeline_output/cross-language-equivalence-verifier"
+      "slug": "cross-lang-verifier",
+      "dir": "pipeline_output/cross-lang-verifier"
     },
     {
       "at": "2026-02-22T18:56:40Z",

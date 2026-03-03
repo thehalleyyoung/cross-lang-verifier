@@ -1,0 +1,98 @@
+{
+  "total": 212,
+  "correct": 43,
+  "accuracy": 0.2028301886792453,
+  "errors": 0,
+  "by_category": {
+    "arithmetic": {
+      "total": 12,
+      "correct": 10,
+      "errors": 0
+    },
+    "division": {
+      "total": 5,
+      "correct": 1,
+      "errors": 0
+    },
+    "shift": {
+      "total": 3,
+      "correct": 3,
+      "errors": 0
+    },
+    "loops": {
+      "total": 8,
+      "correct": 3,
+      "errors": 0
+    },
+    "error_handling": {
+      "total": 8,
+      "correct": 2,
+      "errors": 0
+    },
+    "bitwise": {
+      "total": 8,
+      "correct": 2,
+      "errors": 0
+    },
+    "string": {
+      "total": 2,
+      "correct": 0,
+      "errors": 0
+    },
+    "memory": {
+      "total": 14,
+      "correct": 2,
+      "errors": 0
+    },
+    "struct": {
+      "total": 20,
+      "correct": 0,
+      "errors": 0
+    },
+    "enum": {
+      "total": 20,
+      "correct": 2,
+      "errors": 0
+    },
+    "float": {
+      "total": 15,
+      "correct": 3,
+      "errors": 0
+    },
+    "c2rust": {
+      "total": 27,
+      "correct": 5,
+      "errors": 0
+    },
+    "iterator": {
+      "total": 15,
+      "correct": 1,
+      "errors": 0
+    },
+    "cast": {
+      "total": 15,
+      "correct": 5,
+      "errors": 0
+    },
+    "compound": {
+      "total": 15,
+      "correct": 2,
+      "errors": 0
+    },
+    "control_flow": {
+      "total": 10,
+      "correct": 0,
+      "errors": 0
+    },
+    "memory_scaled": {
+      "total": 4,
+      "correct": 0,
+      "errors": 0
+    },
+    "c2rust_realistic": {
+      "total": 11,
+      "correct": 2,
+      "errors": 0
+    }
+  }
+}

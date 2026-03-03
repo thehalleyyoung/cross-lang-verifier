@@ -856,7 +856,7 @@ class CIAnnotationGenerator:
                 {
                     "tool": {
                         "driver": {
-                            "name": "cross-language-equivalence-verifier",
+                            "name": "cross-lang-verifier",
                             "version": TOOL_VERSION,
                             "rules": list(rules.values()),
                         }

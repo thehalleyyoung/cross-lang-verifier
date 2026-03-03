@@ -47,6 +47,7 @@ Examples:
 
     # --- verify ---
     vp = sub.add_parser("verify", help="Verify equivalence of C and Rust functions")
+    vp.add_argument("positional", nargs="*", help="C and Rust source files (positional)")
     vp.add_argument("--source", default="C", help="Source language (default: C)")
     vp.add_argument("--target", default="Rust", help="Target language (default: Rust)")
     vp.add_argument("--c-file", type=str, help="Path to C source file")
@@ -100,13 +101,29 @@ def cmd_verify(args) -> int:
     _ensure_path()
     from src.oracle.oracle import VerificationOracle
 
+    # Support positional args: semrec verify file.c file.rs
+    if hasattr(args, 'positional') and args.positional:
+        for p in args.positional:
+            if p.endswith('.c') or p.endswith('.h'):
+                if not args.c_file:
+                    args.c_file = p
+            elif p.endswith('.rs'):
+                if not args.rs_file:
+                    args.rs_file = p
+
     # Get source code
     c_code = args.c_code
     rs_code = args.rs_code
     if args.c_file:
+        if not os.path.isfile(args.c_file):
+            print(f"Error: C source file not found: {args.c_file}", file=sys.stderr)
+            return 1
         with open(args.c_file) as f:
             c_code = f.read()
     if args.rs_file:
+        if not os.path.isfile(args.rs_file):
+            print(f"Error: Rust source file not found: {args.rs_file}", file=sys.stderr)
+            return 1
         with open(args.rs_file) as f:
             rs_code = f.read()
 

@@ -366,6 +366,47 @@ def _type_similarity(t1: Optional[IRType], t2: Optional[IRType]) -> float:
     return 0.0
 
 
+def _operand_similarity(left: Instruction, right: Instruction) -> float:
+    """Compute similarity between operands of two instructions using type matching."""
+    left_ops = left._operands
+    right_ops = right._operands
+    if not left_ops and not right_ops:
+        return 1.0
+    if not left_ops or not right_ops:
+        return 0.0
+
+    # Count ratio for basic similarity
+    max_ops = max(len(left_ops), len(right_ops))
+    min_ops = min(len(left_ops), len(right_ops))
+    count_sim = min_ops / max_ops
+
+    # Pairwise type similarity for matched operands
+    type_sims = []
+    for i in range(min_ops):
+        lo = left_ops[i]
+        ro = right_ops[i]
+        lo_type = lo.type if hasattr(lo, 'type') else None
+        ro_type = ro.type if hasattr(ro, 'type') else None
+        type_sims.append(_type_similarity(lo_type, ro_type))
+
+    avg_type_sim = sum(type_sims) / len(type_sims) if type_sims else 0.0
+
+    # Bonus: check if both operands are constants with same value
+    const_bonus = 0.0
+    for i in range(min_ops):
+        lo = left_ops[i]
+        ro = right_ops[i]
+        if (hasattr(lo, 'value') and hasattr(ro, 'value') and
+                isinstance(lo, Value) and isinstance(ro, Value)):
+            try:
+                if lo.value == ro.value:
+                    const_bonus += 0.1
+            except (TypeError, AttributeError):
+                pass
+
+    return min(0.4 * count_sim + 0.4 * avg_type_sim + 0.2 * min(const_bonus, 1.0), 1.0)
+
+
 def _instruction_similarity(left: Instruction, right: Instruction) -> float:
     """Compute similarity between two instructions, 0.0-1.0."""
     tag_l = _instruction_opcode_tag(left)
@@ -381,16 +422,7 @@ def _instruction_similarity(left: Instruction, right: Instruction) -> float:
 
     type_sim = _type_similarity(left.type, right.type)
 
-    operand_count_l = len(left._operands)
-    operand_count_r = len(right._operands)
-    if operand_count_l == 0 and operand_count_r == 0:
-        operand_sim = 1.0
-    elif operand_count_l == 0 or operand_count_r == 0:
-        operand_sim = 0.0
-    else:
-        max_ops = max(operand_count_l, operand_count_r)
-        min_ops = min(operand_count_l, operand_count_r)
-        operand_sim = min_ops / max_ops
+    operand_sim = _operand_similarity(left, right)
 
     base = 0.5 * opcode_sim + 0.3 * type_sim + 0.2 * operand_sim
 
@@ -551,7 +583,19 @@ def _block_similarity(left: BasicBlock, right: BasicBlock) -> float:
     succ_diff = abs(sig_l[3] - sig_r[3])
     conn_sim = 1.0 / (1.0 + pred_diff + succ_diff)
 
-    return 0.4 * inst_sim + 0.35 * branch_sim + 0.25 * conn_sim
+    # Pairwise instruction similarity (graph-aware, not just sequential)
+    left_insts = list(left.instructions)
+    right_insts = list(right.instructions)
+    pairwise_sim = 0.0
+    if left_insts and right_insts:
+        min_len = min(len(left_insts), len(right_insts))
+        max_len = max(len(left_insts), len(right_insts))
+        sim_sum = 0.0
+        for i in range(min_len):
+            sim_sum += _instruction_similarity(left_insts[i], right_insts[i])
+        pairwise_sim = sim_sum / max_len if max_len > 0 else 0.0
+
+    return 0.3 * inst_sim + 0.25 * branch_sim + 0.2 * conn_sim + 0.25 * pairwise_sim
 
 
 def _lcs_length(a: Sequence, b: Sequence) -> int:
@@ -728,9 +772,11 @@ def _greedy_block_alignment(
     similarity_threshold: float = 0.25,
 ) -> List[Tuple[Optional[int], Optional[int], float]]:
     """
-    Greedy LCS-based block alignment.
+    Block alignment using graph similarity for better matching.
 
-    Returns list of (left_idx | None, right_idx | None, similarity).
+    When blocks differ in count, uses bipartite best-match approach
+    instead of purely sequential alignment. Returns list of
+    (left_idx | None, right_idx | None, similarity).
     """
     m = len(left_blocks)
     n = len(right_blocks)
@@ -747,6 +793,11 @@ def _greedy_block_alignment(
     for i in range(m):
         for j in range(n):
             sim[i][j] = _block_similarity(left_blocks[i], right_blocks[j])
+
+    # When block counts differ significantly, use bipartite greedy matching
+    # to find best matches rather than forcing sequential alignment
+    if abs(m - n) > max(m, n) * 0.5 and min(m, n) >= 1:
+        return _bipartite_block_alignment(sim, m, n, similarity_threshold)
 
     # DP to find best-score alignment (like global sequence alignment)
     GAP = -0.2
@@ -784,6 +835,56 @@ def _greedy_block_alignment(
             break
 
     result.reverse()
+    return result
+
+
+def _bipartite_block_alignment(
+    sim: List[List[float]],
+    m: int,
+    n: int,
+    threshold: float,
+) -> List[Tuple[Optional[int], Optional[int], float]]:
+    """
+    Greedy bipartite matching for blocks with significantly different counts.
+
+    Greedily matches highest-similarity pairs first, then emits unmatched
+    blocks as single-sided entries.
+    """
+    # Build candidate list sorted by similarity (descending)
+    candidates: List[Tuple[float, int, int]] = []
+    for i in range(m):
+        for j in range(n):
+            if sim[i][j] >= threshold:
+                candidates.append((sim[i][j], i, j))
+    candidates.sort(reverse=True)
+
+    used_left: set = set()
+    used_right: set = set()
+    matched: List[Tuple[int, int, float]] = []
+
+    for s, i, j in candidates:
+        if i not in used_left and j not in used_right:
+            matched.append((i, j, s))
+            used_left.add(i)
+            used_right.add(j)
+
+    # Build result in block order (by min of left/right index)
+    result: List[Tuple[Optional[int], Optional[int], float]] = []
+    # Interleave matched and unmatched in order
+    all_events: List[Tuple[float, Optional[int], Optional[int], float]] = []
+    for li, ri, s in matched:
+        all_events.append((li + ri * 0.001, li, ri, s))
+    for i in range(m):
+        if i not in used_left:
+            all_events.append((i, i, None, 0.0))
+    for j in range(n):
+        if j not in used_right:
+            all_events.append((j + 0.5, None, j, 0.0))
+    all_events.sort()
+
+    for _, li, ri, s in all_events:
+        result.append((li, ri, s))
+
     return result
 
 
@@ -920,10 +1021,12 @@ class FunctionAligner:
         similarity_threshold: float = 0.25,
         reorder_threshold: float = 0.5,
         instruction_match_threshold: float = 0.3,
+        block_similarity_threshold: float = 0.2,
     ):
         self.similarity_threshold = similarity_threshold
         self.reorder_threshold = reorder_threshold
         self.instruction_match_threshold = instruction_match_threshold
+        self.block_similarity_threshold = block_similarity_threshold
 
     def align(self, left: Function, right: Function) -> AlignmentResult:
         """Align two functions and return a complete AlignmentResult."""
@@ -949,6 +1052,32 @@ class FunctionAligner:
 
         for li, ri, sim in raw_alignment:
             if li is not None and ri is not None:
+                # Apply block similarity threshold: below threshold → single-sided
+                if sim < self.block_similarity_threshold:
+                    ba_left = BlockAlignment(
+                        left=left_blocks[li],
+                        right=None,
+                        kind=AlignmentKind.LEFT_ONLY,
+                        instruction_alignments=[
+                            InstructionAlignment(left=inst, right=None, kind=AlignmentKind.LEFT_ONLY)
+                            for inst in left_blocks[li].instructions
+                        ],
+                    )
+                    block_alignments.append(ba_left)
+                    result.cost.block_mismatches += 1
+                    ba_right = BlockAlignment(
+                        left=None,
+                        right=right_blocks[ri],
+                        kind=AlignmentKind.RIGHT_ONLY,
+                        instruction_alignments=[
+                            InstructionAlignment(left=None, right=inst, kind=AlignmentKind.RIGHT_ONLY)
+                            for inst in right_blocks[ri].instructions
+                        ],
+                    )
+                    block_alignments.append(ba_right)
+                    result.cost.block_mismatches += 1
+                    continue
+
                 matched_left.add(li)
                 matched_right.add(ri)
 

@@ -159,7 +159,7 @@ class TestBoundedModelCheckerEquivalent:
 
     def test_bmc_config_defaults(self):
         cfg = BMCConfig()
-        assert cfg.max_unroll_depth == 10
+        assert cfg.max_unroll_depth == 128
         assert cfg.strategy == LoopUnrollStrategy.INCREASING
         assert cfg.produce_counterexample is True
 
