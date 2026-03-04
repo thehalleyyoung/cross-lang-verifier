@@ -3,7 +3,7 @@ setup(
     name="semrec",
     version="0.2.0",
     description="SemRec: Verification Oracle for Cross-Language Equivalence",
-    packages=find_packages(where="src") + find_packages(where="."),
+    packages=find_packages(where="."),
     package_dir={"": "."},
     python_requires=">=3.9",
     install_requires=["z3-solver>=4.12", "openai>=1.0"],
