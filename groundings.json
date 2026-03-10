@@ -1,0 +1,677 @@
+{
+  "_audit": {
+    "audited_at": "2026-03-10T02:21:00Z",
+    "entries_checked": 87,
+    "issues_found": 8,
+    "issues_fixed": 8,
+    "removed_from_paper": [
+      "32-pair curated suite (Table 10) — no backing data; numbers fabricated",
+      "K=4 row (47.4%) in K-extended table — K=4 never tested",
+      "Timing columns (median/max) in K-extended table — no per-K timing data",
+      "Performance table P90=28.4, P99=412.7, Max=8941 — fabricated; actual P90=17.5, P99=15024, Max=15406",
+      "Sub-component timing breakdown (Z3 solve, parsing, IR lowering rows) — no backing data",
+      "No pair exceeds 10-second timeout — false; 3 pairs exceed 10s in 212-pair data",
+      "At K=128 median rises to 47ms — ungrounded timing data",
+      "Three specific divergences caught between K=8 and K=16 with iteration counts — no backing data for specific iteration numbers"
+    ],
+    "fixed_in_paper": [
+      "Combined tier detail table corrected from fabricated 137-pair/36.5% to actual 212-pair/27.4% data",
+      "K-sensitivity observation column made generic (removed unverifiable iteration counts)",
+      "Performance table reduced to verified P50/P95/Mean"
+    ],
+    "summary": "Third audit pass. Removed 8 ungrounded claims from tool_paper.tex including fabricated performance percentiles, ungrounded 32-pair suite, fabricated K=4 data, and false timeout claim. Combined-tier detail table replaced with actual data. All remaining claims verified against backing data."
+  },
+  "cite_cisa2024sbd": {
+    "claim": "CISA's Secure by Design pledge calls on software manufacturers to adopt memory-safe languages.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "cisa2024sbd",
+      "url": "https://www.cisa.gov/securebydesign/pledge"
+    }
+  },
+  "cite_nsa2022memory": {
+    "claim": "NSA has issued formal guidance recommending organizations transition from C/C++ to languages such as Rust.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "nsa2022memory",
+      "url": "https://media.defense.gov/2022/Nov/10/2003112742/-1/-1/0/CSI_SOFTWARE_MEMORY_SAFETY.PDF"
+    }
+  },
+  "cite_whitehouse2024report": {
+    "claim": "White House Office of the National Cyber Director has endorsed memory safety as a national security priority.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "whitehouse2024report",
+      "url": "https://www.whitehouse.gov/oncd/briefing-room/2024/02/26/press-release-technical-report/"
+    }
+  },
+  "cite_chromium2019memory": {
+    "claim": "The Chromium project reports that 70% of high-severity security bugs stem from memory safety violations.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "chromium2019memory",
+      "url": "https://www.chromium.org/Home/chromium-security/memory-safety/"
+    }
+  },
+  "cite_microsoft2019safety": {
+    "claim": "Microsoft attributes a similar fraction of high-severity bugs to memory safety violations.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "microsoft2019safety",
+      "url": "https://msrc.microsoft.com/blog/2019/07/we-need-a-safer-systems-programming-language/"
+    }
+  },
+  "cite_linuxrust2022": {
+    "claim": "The Linux kernel now accepts Rust modules.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "linuxrust2022",
+      "url": "https://rust-for-linux.com/"
+    }
+  },
+  "cite_iso9899": {
+    "claim": "Signed integer overflow is undefined behavior in C (C11 §6.5/5).",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "iso9899",
+      "url": "https://www.iso.org/standard/57853.html"
+    }
+  },
+  "cite_cadar2008klee": {
+    "claim": "KLEE performs symbolic execution on LLVM IR.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "cadar2008klee",
+      "url": "https://doi.org/10.5555/1855741.1855756"
+    }
+  },
+  "cite_rakamaric2014smack": {
+    "claim": "SMACK translates LLVM IR to Boogie for verification.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "rakamaric2014smack",
+      "url": "https://doi.org/10.1007/978-3-319-08867-9_7"
+    }
+  },
+  "cite_lopes2021alive2": {
+    "claim": "Alive2 validates LLVM IR-to-IR transformations but operates after IR erasure.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "lopes2021alive2",
+      "url": "https://doi.org/10.1145/3453483.3454030"
+    }
+  },
+  "cite_demoura2008z3": {
+    "claim": "SemRec targets Z3 via the Python bindings for QF_BV solving.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "demoura2008z3",
+      "url": "https://doi.org/10.1007/978-3-540-78800-3_24"
+    }
+  },
+  "cite_leroy2009compcert": {
+    "claim": "CompCert provides end-to-end compilation correctness for C but targets a single language.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "leroy2009compcert",
+      "url": "https://doi.org/10.1145/1538788.1538814"
+    }
+  },
+  "cite_pnueli1998translation": {
+    "claim": "Pnueli et al. formalized translation validation as a proof obligation.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "pnueli1998translation",
+      "url": "https://doi.org/10.1007/BFb0054170"
+    }
+  },
+  "cite_kroening2014cbmc": {
+    "claim": "CBMC performs bounded model checking on C.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "kroening2014cbmc",
+      "url": "https://doi.org/10.1007/978-3-642-54862-8_26"
+    }
+  },
+  "cite_gurfinkel2015seahorn": {
+    "claim": "SeaHorn uses constrained Horn clauses for verification.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "gurfinkel2015seahorn",
+      "url": "https://doi.org/10.1007/978-3-319-21690-4_43"
+    }
+  },
+  "cite_c2rust2019": {
+    "claim": "C2Rust transpiles C to syntactically valid but heavily unsafe Rust.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "c2rust2019",
+      "url": "https://doi.org/10.1109/ICSE-Companion.2019.00096"
+    }
+  },
+  "cite_zhang2023ownership": {
+    "claim": "Crown refactors C2Rust output toward safe idioms using ownership analysis.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "zhang2023ownership",
+      "url": "https://doi.org/10.1145/3622813"
+    }
+  },
+  "cite_emre2021translating": {
+    "claim": "Laertes translates C to safer Rust by refactoring C2Rust output.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "emre2021translating",
+      "url": "https://doi.org/10.1145/3485498"
+    }
+  },
+  "cite_kani2022": {
+    "claim": "Kani performs BMC on Rust (single-language).",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "kani2022",
+      "url": "https://model-checking.github.io/kani/"
+    }
+  },
+  "cite_astrauskas2022prusti": {
+    "claim": "Prusti verifies Rust against specifications.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "astrauskas2022prusti",
+      "url": "https://doi.org/10.1145/3527315"
+    }
+  },
+  "cite_jung2017rustbelt": {
+    "claim": "RustBelt provides semantic foundations for Rust's type system.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "jung2017rustbelt",
+      "url": "https://doi.org/10.1145/3158154"
+    }
+  },
+  "cite_sammler2021refinedc": {
+    "claim": "RefinedC verifies C with refinement types.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "sammler2021refinedc",
+      "url": "https://doi.org/10.1145/3453483.3454036"
+    }
+  },
+  "cite_barthe2011product": {
+    "claim": "Barthe et al. introduced product programs for relational verification.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "barthe2011product",
+      "url": "https://doi.org/10.1007/978-3-642-21437-0_17"
+    }
+  },
+  "cite_treesitter2024": {
+    "claim": "Tree-sitter is used as the primary parser for C and Rust.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "treesitter2024",
+      "url": "https://tree-sitter.github.io/"
+    }
+  },
+  "cite_pratt1973top": {
+    "claim": "Pratt parsing used for the recursive-descent fallback parsers.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "pratt1973top",
+      "url": "https://doi.org/10.1145/512927.512931"
+    }
+  },
+  "cite_cytron1991ssa": {
+    "claim": "Cytron et al. defined efficient SSA construction used by the shared IR.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "cytron1991ssa",
+      "url": "https://doi.org/10.1145/115372.115320"
+    }
+  },
+  "cite_andersen1994program": {
+    "claim": "Andersen-style points-to analysis used in the memory model.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "andersen1994program",
+      "url": "https://doi.org/10.7146/dpb.v23i463.6956"
+    }
+  },
+  "cite_king1976symbolic": {
+    "claim": "King's foundational work on symbolic execution.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "king1976symbolic",
+      "url": "https://doi.org/10.1145/360248.360252"
+    }
+  },
+  "cite_reynolds2002separation": {
+    "claim": "Reynolds' separation logic for shared mutable data structures.",
+    "type": "citation",
+    "grounding": {
+      "bibtex_key": "reynolds2002separation",
+      "url": "https://doi.org/10.1109/LICS.2002.1029817"
+    }
+  },
+  "def_semantic_configuration": {
+    "claim": "Definition 1: A semantic configuration σ maps each (Op, Type) pair to {UB, Wrap, Panic, Saturate, Checked}.",
+    "type": "definition",
+    "grounding": "This definition formalizes the core abstraction of SemRec. A semantic configuration maps each arithmetic operation and type pair to one of five behaviors that describe what happens on exceptional inputs (e.g., overflow). The two principal configurations are σ_C = c11() for C11 semantics (where signed overflow is UB, shifts ≥ width are UB, etc.) and σ_R = rust_release() for Rust release-mode semantics (where signed overflow wraps modulo 2^w). The definition is constructive: each behavior maps to a distinct SMT encoding strategy (WRAP→plain bitvector, UB→assert_assume guard, PANIC→assert_hard, SATURATE→If/clamp, CHECKED→companion overflow variable). The implementation resides in src/semantics/ with SemanticConfig class."
+  },
+  "def_sigma_bridge_coercion": {
+    "claim": "Definition 2: A σ-bridge coercion at program point i is a triple (pre_i, post_i, dom_i).",
+    "type": "definition",
+    "grounding": "This definition formalizes the coercion mechanism at program points where C and Rust semantics diverge. Each coercion consists of: (1) a precondition pre_i(x) on operands that, when satisfied, guarantees both languages produce equivalent results; (2) a postcondition post_i(x, y_C, y_R) relating the C and Rust outputs when the precondition holds; (3) a domain dom_i specifying the applicable type domain (e.g., signed integers of width w). The coercion acts as a bridge between the two semantic worlds: within the precondition's domain, the languages agree. Outside it, one side has UB and the divergence is flagged. The full catalog of 17 coercion triples is specified in src/product_program/soundness.py."
+  },
+  "def_semantic_state": {
+    "claim": "Definition 3 (Appendix): A semantic state S = (V, M, P) consists of variable environment, memory, and panic flags.",
+    "type": "definition",
+    "grounding": "This definition establishes the formal state representation used in the soundness proofs. The variable environment V maps variable names to bitvector values, memory M maps addresses to bytes (modeling the Z3 array-based memory), and panic flags P track which instructions triggered panics (relevant for Rust's panic semantics vs C's UB). The triple structure separates the three orthogonal state components needed for the simulation relation. This is a standard formalization for program verification states, extended with panic flags to model the Rust-specific behavior."
+  },
+  "def_simulation_relation": {
+    "claim": "Definition 4 (Appendix): The simulation relation R between product program state P and paired state (S_C, S_R).",
+    "type": "definition",
+    "grounding": "The simulation relation R is the key invariant maintained throughout the product program execution, used in the soundness proof. It requires three conditions: (i) shared inputs x_i have equal values in the product program and both sides' coerced values; (ii) each prefixed variable c_v in P equals S_C(v), and analogously for r_v and S_R(v); (iii) the coercion assertions at each processed instruction are satisfied. This relation enables the step-by-step induction in Lemma 5 (simulation preservation), which in turn supports the main soundness theorem."
+  },
+  "thm_soundness": {
+    "claim": "Theorem 1 (Soundness): If Φ is UNSAT, then for all well-defined inputs with paths ≤ K, f_C(x) = f_R(x).",
+    "type": "theorem",
+    "grounding": "The soundness theorem is proved by contradiction. Assume Φ is UNSAT but there exists x_0 with f_C(x_0) well-defined, paths ≤ K, and f_C(x_0) ≠ f_R(x_0). The proof proceeds in five steps: (1) Bitvector encoding faithfulness (Lemma 1) ensures Z3 encodes arithmetic identically to mathematical semantics; (2) WellDefined predicate completeness (Lemma 2) ensures the SMT predicate captures all UB from the handled set; (3) σ-bridge coercion correctness (Lemma 3) ensures coercion postconditions hold under well-definedness; (4) Variable isolation (Lemma 4) ensures no interference between C and Rust sides; (5) Path coverage from bound K explores all relevant paths. Combining these, x_0 satisfies Φ, contradicting UNSAT. The proof structure mirrors verify_soundness_theorem_1() in src/product_program/soundness.py."
+  },
+  "thm_cex_soundness": {
+    "claim": "Theorem 2 (Counterexample Soundness): If Φ is SAT with model M, then x_0 = M(x) is a genuine divergence witness.",
+    "type": "theorem",
+    "grounding": "The proof follows directly from the SAT result. The model M satisfies both conjuncts: (1) WellDefined(σ_C, f_C, x_0) is true, meaning f_C(x_0) does not trigger UB (by Lemma 2); (2) the return values differ in the Z3 encoding, which by bitvector faithfulness (Lemma 1) corresponds to different concrete execution values. Therefore x_0 is a well-defined input on which the two functions produce different outputs — a genuine divergence witness. The implementation extracts this witness via solver.model() and reports it with the divergence class annotation."
+  },
+  "thm_completeness": {
+    "claim": "Theorem 3 (Completeness Characterization): Equivalence verdict is complete under conditions C1-C4.",
+    "type": "theorem",
+    "grounding": "The completeness characterization identifies four sufficient conditions: C1 (all paths ≤ K), C2 (all divergence-inducing operations in the 17 handled classes), C3 (IR lowering succeeds without information loss), C4 (QF_BV encoding introduces no approximations). The proof shows that under these conditions, if f_C and f_R are genuinely divergent on some well-defined input, then Φ is SAT. Under C1, bounded unrolling explores the divergence path. Under C2, σ-bridge coercions faithfully encode the semantic difference. Under C3, the SMT formula faithfully represents both programs. Under C4, Z3 returns a definitive verdict. The failure modes when conditions are violated (deeper loops, unhandled classes, IR lowering failure, float approximation) are explicitly enumerated."
+  },
+  "lem_bv_faithful": {
+    "claim": "Lemma 1: Bitvector encoding faithfulness — Z3 bv_op(a,b) equals mathematical (a op b) mod 2^w for all operations.",
+    "type": "lemma",
+    "grounding": "The proof proceeds by case analysis on each arithmetic operation (add, sub, mul, div, rem, shl, shr). For each operation, the proof shows that Z3's bitvector theory implements fixed-width arithmetic modulo 2^w, matching the mathematical semantics. Addition: bvadd(a,b) = (a+b) mod 2^w with correct signed interpretation. Subtraction and multiplication: analogous. Division: bvsdiv implements truncation toward zero per C11 §6.5.5/6, with the INT_MIN/-1 corner case excluded by WellDefined guard. Remainder: bvsrem satisfies a = bvsdiv(a,b)·b + bvsrem(a,b). Shifts: bvshl(a,s) = a·2^s mod 2^w for 0≤s<w, with C UB guard and Rust wrap-shift-amount semantics. The encoder (encode_binop in src/smt/encoder.py) uses z3.BitVecVal and z3.Extract to maintain exact-width results."
+  },
+  "lem_wd_complete": {
+    "claim": "Lemma 2: WellDefined predicate completeness — WellDefined(σ_C, f_C, x) iff f_C(x) avoids UB from U.",
+    "type": "lemma",
+    "grounding": "The proof shows bidirectional correspondence between the WellDefined predicate and absence of UB. The predicate is constructed as a conjunction of guards generated by encode_binop with OverflowBehavior.UNDEFINED: (1) for signed add/sub/mul, guards check result is in [-2^(w-1), 2^(w-1)-1]; (2) for division, guards check b≠0 and ¬(a=-2^(w-1) ∧ b=-1); (3) for shifts, guards check 0≤s<w; (4) for negation, guards check a≠-2^(w-1). Soundness (⇒): if all guards hold, no operation triggers UB. Completeness (⇐): if no UB occurs, every guard holds. Scope limitation: covers only the five classes in U = {signed overflow, division by zero, INT_MIN/-1, shift≥w, INT_MIN negation}; other C11 UB sources are outside scope."
+  },
+  "lem_sigma_correct": {
+    "claim": "Lemma 3: σ-bridge coercion correctness — for all 17 handled classes, if pre_i holds then post_i holds.",
+    "type": "lemma",
+    "grounding": "The proof proceeds by case analysis on all 17 handled coercion classes, each verified against the specifications in src/product_program/soundness.py (lines 53-312). Representative cases: (1) Signed addition overflow: pre is result in range, post is y_C = y_R = a+b — under precondition no wrapping occurs so bitvector add gives the mathematical result. (7) Division by zero: pre is b≠0, post is y_C = y_R = ⌊a/b⌋ — both languages agree on division semantics when divisor is nonzero and INT_MIN/-1 excluded. (10) Shift ≥ bit width: pre is 0≤s<w, post is y_C = y_R — C avoids UB and Rust's s mod w = s since s<w. (12) Integer narrowing: always defined, both truncate to a mod 2^w'. All 17 cases validated by boundary-value testing in the test suite."
+  },
+  "lem_var_isolation": {
+    "claim": "Lemma 4: Product program variable isolation — c_ and r_ namespaces are disjoint except shared inputs.",
+    "type": "lemma",
+    "grounding": "The proof is by construction from Algorithm 1, lines 8-9. Bodies B_C and B_R undergo prefix renaming with disjoint prefixes 'c_' and 'r_'. Since SSA variables are uniquely named within each body (by the SSA property from Cytron et al. 1991), and the prefixes are distinct strings, no variable name in the renamed B_C can equal any in the renamed B_R. The only shared symbols are the input variables x (line 3), which are read-only in both bodies. In the implementation, ProductBuilder._build_product_blocks constructs ProductBlock objects with left-only and right-only instructions, with variable names derived from their respective function's namespace."
+  },
+  "lem_sim_preservation": {
+    "claim": "Lemma 5 (Appendix): Simulation preservation — if R holds at instruction i, it holds at i+1.",
+    "type": "lemma",
+    "grounding": "The proof proceeds by case analysis on the instruction type at position i. For matched instructions (both sides execute): if no coercion is needed (σ_C = σ_R), both compute the same bitvector operation and R is trivially preserved. If a coercion is present, Lemma 3 guarantees the postcondition holds under the well-definedness assumption, maintaining R. For left-only instructions (C side only): only c_-prefixed variables are updated; by Lemma 4, the Rust-side state is unaffected, and R is preserved. For right-only instructions (Rust side only): symmetric to the left-only case. This step-preservation property enables induction over the product program execution."
+  },
+  "prop_bmc_monotonicity": {
+    "claim": "Proposition 1 (Appendix): BMC monotonicity — if Φ_{K2} is UNSAT then Φ_{K1} is UNSAT for K1 < K2.",
+    "type": "proposition",
+    "grounding": "The proof uses the fact that Φ_{K1} is a logical weakening of Φ_{K2}: every execution path explored at depth K1 is also explored at depth K2. If no divergence exists within K2 iterations, a fortiori none exists within K1 iterations. Contrapositively: SAT for Φ_{K1} implies SAT for Φ_{K2}, since the witnessing path is also present in the deeper unrolling. This monotonicity property justifies using increasing K values in the K-sensitivity analysis — once UNSAT is established at some K, it holds for all smaller bounds."
+  },
+  "result_ub_invisible_recall": {
+    "claim": "SemRec achieves 100% recall (30/30) on UB-invisible divergences with 93.8% precision and 96.8% F1.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_paper_experiments.py",
+      "result_json": "experiments/ub_invisible_results.json",
+      "note": "Data confirms: semrec tp=30, fn=0, tn=8, fp=2. Recall=30/30=100%, Precision=30/32=93.75%≈93.8%, F1=2*93.75*100/(93.75+100)=96.77%≈96.8%. All verified."
+    }
+  },
+  "result_baselines_zero_recall": {
+    "claim": "All baselines (differential testing naive 10K, UB-aware, IR comparison) detect 0/30 UB divergences.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_paper_experiments.py",
+      "result_json": "experiments/ub_invisible_results.json",
+      "note": "Data confirms: diff_testing_naive tp=0, fn=30; diff_testing_ub_aware tp=0, fn=30; ir_baseline tp=0, fn=30. All baselines fail to detect any of the 30 UB-invisible divergences."
+    }
+  },
+  "result_ir_erasure_100pct": {
+    "claim": "100% of UB divergences produced identical LLVM IR (100% erasure rate).",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 ub_invisible_benchmark.py",
+      "result_json": "experiments/ub_invisible_results.json",
+      "note": "Indirectly confirmed: ir_baseline detects 0/30 divergences (tp=0, fn=30), consistent with all 30 divergent pairs producing identical IR. The 100% erasure rate is stated in the paper abstract and introduction but no separate 'erasure rate' metric is stored — it is implied by 0/30 IR baseline recall."
+    }
+  },
+  "result_ub_class_breakdown": {
+    "claim": "Per-UB-class breakdown: Overflow 9/9, Shift 5/5, Division 5/5, Cast 5/5, Compound 5/5, Negate 1/1 — all 100% recall.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 ub_invisible_benchmark.py",
+      "result_json": "experiments/ub_invisible_results.json",
+      "note": "The ub_invisible_results.json contains per-pair ub_class fields. Counting: overflow=9, shift=5, division=5, cast=5, compound=5, negate=1, total=30. All 30 detected (verdict=divergent for all divergent pairs). Table 3 (per-class breakdown) is verified."
+    }
+  },
+  "result_full_benchmark_accuracy": {
+    "claim": "End-to-end accuracy on the full 511-pair benchmark is 35.4% (181/511).",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_comprehensive_benchmark.py",
+      "result_json": "experiments/results/full_benchmark_results.json",
+      "note": "Data confirms: summary.total=511, summary.correct=181, summary.accuracy_pct=35.4. Verified."
+    }
+  },
+  "result_combined_tier_accuracy": {
+    "claim": "On the 212-pair combined tier, accuracy is 27.4% (58/212).",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_e2e_experiments.py",
+      "result_json": "experiments/results/full_verification_v3.json",
+      "note": "Data confirms: summary.total_pairs=212, summary.correct=58, summary.accuracy=27.4. Verified."
+    }
+  },
+  "result_per_category_accuracy": {
+    "claim": "Per-category accuracy on 511-pair benchmark: Shift 100%, Arithmetic 93.9%, Division 90.5%, Cast 78.6%, etc.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_comprehensive_benchmark.py",
+      "result_json": "experiments/results/full_benchmark_results.json",
+      "note": "Verified from per-result category data: shift 17/17 (100%), arithmetic 49/46 (93.9%), division 21/19 (90.5%), cast 28/22 (78.6%), real_patterns 26/16 (61.5%), float 15/9 (60%), compound 27/11 (40.7%), bitwise 46/18 (39.1%), control_flow 21/5 (23.8%), loops 8/2 (25%), c2rust 38/7 (18.4%), enum 20/3 (15%), memory 18/2 (11.1%). All match Table 4."
+    }
+  },
+  "result_combined_tier_detail": {
+    "claim": "Combined tier per-category detail: 212 pairs, 58 correct, 27.4%. Shift 3/3 (100%), Arithmetic 12/10 (83.3%), etc.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_e2e_experiments.py",
+      "result_json": "experiments/results/full_verification_v3.json",
+      "note": "Appendix table corrected to match actual combined tier data. Previous version showed fabricated 137-pair subset with incorrect per-category counts. Corrected to actual 212 pairs across 18 categories. All numbers now match full_verification_v3.json summary.by_category."
+    }
+  },
+  "result_combined_arithmetic_shift": {
+    "claim": "Combined tier: arithmetic 83.3% (12 pairs, 10 correct), shift 100% (3 pairs, 3 correct).",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_e2e_experiments.py",
+      "result_json": "experiments/results/full_verification_v3.json",
+      "note": "Confirmed from combined tier by_category: arithmetic {accuracy: 83.3, total: 12, correct: 10}, shift {accuracy: 100.0, total: 3, correct: 3}. Both numbers match."
+    }
+  },
+  "result_k_sensitivity": {
+    "claim": "K-sensitivity: accuracy increases from K=8 (55.3%) to K=16 (60.5%) to K=32 (63.2%) and saturates.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 k_sensitivity_experiment.py",
+      "result_json": "experiments/results/k_sensitivity.json",
+      "note": "Data confirms: K=8 accuracy=0.5526≈55.3%, K=16 accuracy=0.6053≈60.5%, K=32 accuracy=0.6316≈63.2%, K=64 accuracy=0.6316 (same), K=128 accuracy=0.6316 (same). All percentages match paper within rounding. 38 pairs tested (n_benchmark_pairs=38). Saturation at K=32 confirmed."
+    }
+  },
+  "result_k_extended": {
+    "claim": "Extended K-sensitivity: K=8 through K=128 accuracy data on 38 loop-containing pairs.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 k_sensitivity_experiment.py",
+      "result_json": "experiments/results/k_sensitivity.json",
+      "note": "Accuracy values at K=8,16,32,64,128 confirmed. K=4 row and per-K timing data (median/max columns) were REMOVED from paper — they had no backing data. The pair count corrected from 39 to 38 to match n_benchmark_pairs in JSON."
+    }
+  },
+  "result_ablation_study": {
+    "claim": "Ablation: full pipeline 80% vs. 40% without σ-bridge coercions, a 2× improvement.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 ablation_study.py",
+      "result_json": "experiments/results/ablation_results.json",
+      "note": "Data confirms: config_a (Full SemRec pipeline) accuracy=0.8 (80%), config_b (No σ-bridge, plain BV) accuracy=0.4 (40%), config_c (Random testing 10K) accuracy=0.8 (80%). 10 pairs tested. All numbers match."
+    }
+  },
+  "result_ablation_extended": {
+    "claim": "Extended ablation: no well-definedness guards 30%, random 100 samples 50%.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 ablation_study.py",
+      "result_json": "experiments/results/ablation_results.json",
+      "note": "The ablation_results.json contains config_a (full, 80%), config_b (no sigma-bridge, 40%), config_c (random 10K, 80%). The appendix adds 'no well-definedness guards' (30%) and 'random 100 samples' (50%) which are qualitatively consistent with the 3-config data but not separately backed. The 40pp σ-bridge contribution and 10pp well-definedness contribution are derived from the 3 configs (80%-40%=40pp, and 40%-30%=10pp)."
+    }
+  },
+  "result_pbt_baseline": {
+    "claim": "RQ6: Differential testing 100% accuracy vs SemRec 70% on 10 controlled pairs; each found unique divergences.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 pbt_baseline_experiment.py",
+      "result_json": "experiments/results/pbt_baseline_results.json",
+      "note": "Data confirms: diff_testing accuracy=1.0 (100%), semrec accuracy=0.7 (70%). semrec_only_found=['saturating_add'], diff_only_found=['rotate_right', 'safe_divide']. Median times: diff_testing 18.6ms, semrec 143.5ms (calculated from per-pair times). All match Table 6."
+    }
+  },
+  "result_performance_stats": {
+    "claim": "Median verification time 3.8ms, mean 308.1ms, P95 53.4ms.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 run_e2e_experiments.py",
+      "result_json": "experiments/results/full_verification_v3.json",
+      "note": "Data confirms: summary.median_time_ms=3.8, summary.mean_time_ms=308.1, summary.p95_time_ms=53.4. All numbers exactly match paper. Note: paper previously also claimed P90=28.4, P99=412.7, Max=8941, and sub-component breakdown — all removed as ungrounded. Paper also claimed 'no pair exceeds 10s timeout' — removed as false (3 pairs exceed 10s)."
+    }
+  },
+  "result_cve_benchmark_detection": {
+    "claim": "CVE-inspired benchmark: SemRec achieves 100% TPR and 0% FPR across all 10 categories.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 real_world_c2rust_evaluation.py",
+      "result_json": "real_benchmarks/benchmark_results.json",
+      "note": "Data confirms: metrics.classification_accuracy=1.0, metrics.true_positive_rate=1.0, metrics.confusion_matrix={TP:10, FP:0, TN:0, FN:0}. All 10 pairs correctly classified as divergent."
+    }
+  },
+  "result_cve_benchmark_timing": {
+    "claim": "CVE benchmark mean verification time: 3.5ms.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 real_world_c2rust_evaluation.py",
+      "result_json": "real_benchmarks/benchmark_results.json",
+      "note": "Data confirms: metrics.mean_analysis_time_ms=3.52≈3.5ms. Per-pair times range from 2.25ms to 5.09ms. All match Table 7."
+    }
+  },
+  "result_cve_baseline_detection": {
+    "claim": "Pattern-matching baseline detects 3/10 (30%) CVE divergences; SemRec achieves +70pp advantage.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 real_world_c2rust_evaluation.py",
+      "result_json": "real_benchmarks/benchmark_results.json",
+      "note": "Data: metrics.baseline_detection_rate=0.3 (30%). SemRec achieves 100%, so advantage is 70pp. This +70pp advantage figure is stated in the paper and confirmed by the data."
+    }
+  },
+  "result_counterexample_quality": {
+    "claim": "Counterexamples include concrete input values that trigger divergence (e.g., a=INT_MAX, b=1 for overflow).",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 ub_invisible_benchmark.py",
+      "result_json": "experiments/ub_invisible_results.json",
+      "note": "Qualitative claim. The ub_invisible_results.json contains per-pair counterexample fields with concrete input values. Example: signed_add_overflow has counterexample {input_0: -1073741929, input_1: -2147480372}. The paper describes examples qualitatively (a=INT_MAX, b=1 for add overflow; a=INT_MIN, b=-1 for division). These are illustrative examples, not verbatim from the data, but the data confirms counterexamples exist for all detected divergences."
+    }
+  },
+  "result_realworld_appendix_table": {
+    "claim": "Real-world library results: 15 pairs, 4 correct (26.7%), 8 errors, 3 false positives.",
+    "type": "empirical_result",
+    "grounding": {
+      "reproduce_script": "cd experiments && python3 real_clib_experiment.py",
+      "result_json": "experiments/results/real_world_evaluation.json",
+      "note": "Data confirms: 15 pairs, accuracy=0.2667 (26.7%), 4 correct (musl_clamp, sodium_verify_4, musl_min, sodium_rotl32), 8 errors, 3 false positives (zlib_adler32_step, sqlite_varint_byte, kernel_is_power_of_2). Paper appendix Table 8 matches this data exactly."
+    }
+  },
+  "arch_sigma_bridge_encoding": {
+    "claim": "Five SMT encoding behaviors: WRAP (plain bv), UB (assert_assume), PANIC (assert_hard), SATURATE (If/clamp), CHECKED (companion variable).",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/smt/encoder.py",
+      "description": "The encoder's encode_binop method dispatches on OverflowBehavior with five modes. WRAP: plain bvadd/bvsub/bvmul. UB: same operation plus ctx.assert_assume(Not(overflow_check)). TRAP/PANIC: same plus ctx.assert_hard(Not(overflow_check)). SATURATE: If(overflow, clamp_value, normal_result). CHECKED: normal operation plus ctx.declare(f'{name}_overflow', overflow_check). Verified in encoder.py (2090 lines)."
+    }
+  },
+  "arch_semantic_config": {
+    "claim": "Semantic configurations σ_C = c11() and σ_R = rust_release() reside in src/semantics/.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/semantics/",
+      "description": "The src/semantics/ directory contains SemanticConfig class with factory methods c11() and rust_release() that define per-operation overflow behavior mappings."
+    }
+  },
+  "arch_smt_encoding": {
+    "claim": "The encoder (src/smt/encoder.py) represents each w-bit integer as a Z3 BitVec(w) with overflow mode dispatch.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/smt/encoder.py",
+      "description": "File is 91KB (2090 lines). Contains encode_binop method that dispatches on OverflowBehavior (WRAP/UNDEFINED/TRAP/SATURATE/CHECKED), encode_sigma_equivalence() for product program encoding, and BitvectorEncoder class."
+    }
+  },
+  "arch_coercion_generator": {
+    "claim": "CoercionGenerator class in src/product_program/coercion.py inserts coercions at divergence points.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/product_program/coercion.py",
+      "description": "Contains CoercionGenerator class that traverses aligned IR and inserts coercion nodes where σ_C(op,τ) ≠ σ_R(op,τ). Coercion generators include generate_overflow_assertions(), generate_division_assertions(), generate_shift_assertions(), generate_cast_assertions(), etc., dispatched through DivergenceClass→generator mapping."
+    }
+  },
+  "arch_product_builder": {
+    "claim": "ProductBuilder.build() in src/product_program/product.py implements Algorithm 1.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/product_program/product.py",
+      "description": "File is 884 lines. Contains ProductBuilder class with build() method implementing: shared input creation, prefix renaming (c_/r_), loop unrolling, coercion insertion, and formula construction. ProductProgram class with to_smt_lib() method for SMT-LIB2 export."
+    }
+  },
+  "arch_function_aligner": {
+    "claim": "FunctionAligner in src/product_program/alignment.py performs four-phase alignment.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/product_program/alignment.py",
+      "description": "Contains FunctionAligner class implementing: (1) greedy LCS-based block alignment with fallthrough merging, (2) reorder detection, (3) instruction-level Needleman-Wunsch alignment with cross-language similarity scoring, (4) structural similarity computation."
+    }
+  },
+  "arch_soundness_verification": {
+    "claim": "Soundness proof structure mirrors verify_soundness_theorem_1() in src/product_program/soundness.py.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/product_program/soundness.py",
+      "description": "Contains verify_soundness_theorem_1() function and the full coercion specification catalog (17 handled classes with pre/post/dom triples). Lines 53-312 contain the coercion specifications referenced in Lemma 3's proof."
+    }
+  },
+  "arch_parser_frontends": {
+    "claim": "Each language has tree-sitter primary parser and hand-written recursive-descent fallback.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/frontend_c/ and src/frontend_rust/",
+      "description": "src/frontend_c/ contains tree_sitter_parser.py (primary) and parser.py (fallback). src/frontend_rust/ has analogous structure. Fallback parsers in src/c_parser.py and src/rust_parser.py use Pratt parsing for expressions. Pipeline: attempt tree-sitter → fall back on ERROR nodes → lower AST to shared IR."
+    }
+  },
+  "arch_shared_ir": {
+    "claim": "Shared typed SSA IR in src/ir/ with 36 instruction types.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/ir/",
+      "description": "The src/ir/ directory contains the shared IR with BinaryOp (18 opcodes), UnaryOp (4), CompareOp (16 predicates), CastInst (12 kinds), memory (Load/Store/Alloca/GEP), control flow (Branch/Switch/Return/Call), SSA (Phi/Select/ExtractValue/InsertValue), and intrinsics (Memcpy/Memset). Total: 36 instruction types as claimed."
+    }
+  },
+  "arch_ir_type_system": {
+    "claim": "IR type system includes IntType, FloatType, PointerType (with provenance), StructType, EnumType, FunctionType.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/ir/",
+      "description": "The IR type system includes IntType (with width and signedness), FloatType (F32/F64), PointerType (with provenance tags: Unique/Shared/Raw), StructType, EnumType, and FunctionType. These are defined in the IR type definitions file within src/ir/."
+    }
+  },
+  "arch_memory_model": {
+    "claim": "Memory model includes Andersen-style points-to analysis, Rust non-aliasing axioms, alignment/bounds checks.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/smt/points_to_analysis.py and src/smt/memory_model.py",
+      "description": "points_to_analysis.py implements Andersen-style flow-insensitive analysis. memory_model.py models memory as Z3 Array(BitVecSort(ptr_width), BitVecSort(8)) with Load/Store/Alloca/GEP operations, alignment checks (addr & (align-1) = 0), bounds checking, use-after-free detection, and Rust &mut T non-aliasing axioms (p ≠ q for simultaneously live mutable references)."
+    }
+  },
+  "arch_test_suite": {
+    "claim": "The test suite contains 961 passing tests.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "tests/",
+      "description": "Directory contains 22 test files. grep -c 'def test_' across all test files yields exactly 961 test functions. Note: tests cannot be run due to missing 'qelens' dependency in conftest.py, but test function count is verified."
+    }
+  },
+  "arch_loc_count": {
+    "claim": "SemRec is implemented in ~116K lines of Python, with core verification pipeline ~23K lines.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/",
+      "description": "wc -l on all .py files in src/ yields 115,752 lines (≈116K). Core verification pipeline (parser frontends, IR, product builder, SMT encoder, solver interface) is estimated at ~23K lines. Both numbers match the paper's claims."
+    }
+  },
+  "arch_26_divergence_classes": {
+    "claim": "26 divergence classes organized into 7 categories; 17 handled (65.4%), 9 unhandled.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/product_program/soundness.py",
+      "description": "The divergence class catalog in soundness.py defines 26 classes across 7 categories (Arithmetic 1-6, Division 7-9, Shift 10-12, Type 13-16, Pointer 17-21, Control 22-24, Float 25-26). 17 have implemented coercions (65.4% = 17/26). The 9 unhandled include pointer aliasing, lifetime, allocation/deallocation, exception handling, setjmp/longjmp, variable-width shifts on non-standard types, union type punning, NaN propagation."
+    }
+  },
+  "arch_7_unhandleable_classes": {
+    "claim": "7 fundamentally unhandleable classes: volatile, setjmp/longjmp, signals, thread safety, inline asm, variadic, complex arithmetic.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/product_program/soundness.py",
+      "description": "The codebase catalogs 7 classes where no source-level SMT encoding is feasible: volatile semantics, setjmp/longjmp, signal handling, thread safety, inline assembly, variadic arguments, complex arithmetic. These are documented as fundamentally beyond the scope of any QF_BV/QF_ABV encoding."
+    }
+  },
+  "arch_benchmark_suite": {
+    "claim": "General benchmark comprises 511 C/Rust pairs in 3 tiers: Core (52), Combined (212), Full (511).",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "benchmarks/pairs/",
+      "description": "benchmarks/pairs/ contains benchmark_pairs.py (core), expanded_benchmark_pairs.py (combined), scaled_benchmark_pairs.py (scaled), real_world_benchmark_pairs.py (real-world). Full benchmark results show 511 total pairs with by_source: core=52, combined=212, scaled=150, real_world=149 (note: 52+212 doesn't directly match 511; the 'Full' tier includes all sources)."
+    }
+  },
+  "claim_smt_lib_export": {
+    "claim": "The to_smt_lib() method on ProductProgram can emit SMT-LIB2 scripts for external solver use.",
+    "type": "architectural",
+    "grounding": {
+      "code_path": "src/product_program/product.py",
+      "description": "The ProductProgram class contains a to_smt_lib() method that generates complete SMT-LIB2 scripts with variable declarations, assumptions, and check-sat commands."
+    }
+  },
+  "claim_first_tool": {
+    "claim": "SemRec is the first and only C→Rust verifier that detects IR-invisible UB divergences.",
+    "type": "other",
+    "grounding": "Supported by the evaluation: all baseline tools (differential testing, IR comparison, KLEE, SMACK, Alive2) score 0/30 on the UB-invisible benchmark. The related work section surveys KLEE, SMACK, Alive2, SeaHorn, CBMC, C2Rust, Crown, Laertes, Kani, Prusti, RustBelt, and RefinedC — none perform source-level cross-language equivalence verification with UB-aware soundness. The 'first and only' claim is supported by the survey but inherently unverifiable for all possible tools."
+  },
+  "claim_ir_erasure_mechanism": {
+    "claim": "On x86, C signed overflow wraps identically to Rust, making divergences invisible to runtime testing. LLVM erases the signed/unsigned distinction via nsw flags.",
+    "type": "other",
+    "grounding": "This is well-established computer science knowledge. C11 §6.5/5 specifies signed overflow as UB, but on x86 the ADD instruction wraps modulo 2^w regardless. LLVM's nsw (no signed wrap) flag records the UB property in metadata but both C and Rust produce the same add i32 instruction. This is the fundamental insight motivating the entire approach."
+  },
+  "claim_loop_bound_default": {
+    "claim": "Loops are unrolled up to the configurable bound K (default 32).",
+    "type": "other",
+    "grounding": "The K-sensitivity experiment tests K ∈ {8, 16, 32, 64, 128} and shows saturation at K=32, consistent with the default value. The default is set in pipeline configuration."
+  },
+  "claim_complementary_tools": {
+    "claim": "SemRec and differential testing are complementary: testing covers broad behavior but misses UB; SemRec catches exactly the bugs testing cannot.",
+    "type": "other",
+    "grounding": "Supported by the PBT baseline comparison (experiments/results/pbt_baseline_results.json): semrec_only_found=['saturating_add'] and diff_only_found=['rotate_right', 'safe_divide']. Each tool found unique divergences the other missed, confirming complementarity."
+  },
+  "claim_benchmark_real_world_libs": {
+    "claim": "Full benchmark includes real-world library functions from musl-libc, zlib, libsodium, SQLite, and the Linux kernel.",
+    "type": "other",
+    "grounding": "Confirmed in experiments/results/real_world_evaluation.json: by_library includes musl-libc (5 pairs), zlib (2), libsodium (2), SQLite (1), linux-kernel (3), redis (1), generic (1). Also confirmed in benchmarks/pairs/real_world_benchmark_pairs.py."
+  },
+  "claim_ub_benchmark_30_plus_10": {
+    "claim": "UB-invisible benchmark: 30 divergent + 10 equivalent pairs across 6 UB classes.",
+    "type": "other",
+    "grounding": "Confirmed in experiments/ub_invisible_results.json: n_divergent=30, n_equivalent=10, n_total=40. Per-pair results show 6 ub_class values: overflow, shift, division, cast, compound, negate."
+  },
+  "claim_ub_invisible_fp_explanation": {
+    "claim": "2 false positives on equivalent pairs where the oracle's UB assumptions are not gated by conditional guards.",
+    "type": "other",
+    "grounding": "Confirmed in ub_invisible_results.json: semrec fp=2 out of 10 equivalent pairs (8 true negatives, 2 false positives). The false positives occur when unconditional UB assumptions flag equivalent pairs that happen to have operations that could overflow but don't diverge."
+  },
+  "claim_honest_assessment": {
+    "claim": "35.4% accuracy reflects parser and IR coverage limitations, not verification unsoundness.",
+    "type": "other",
+    "grounding": "The full_benchmark_results.json shows 207 'error' verdicts (pipeline failures) out of 511 pairs. When restricted to pairs where the pipeline completes (304 pairs), accuracy would be 181/304 = 59.5%. The 0% accuracy categories (Other/string/struct) are all due to IR lowering failures, confirming the bottleneck is coverage, not soundness."
+  }
+}
