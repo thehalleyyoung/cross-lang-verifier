@@ -21,6 +21,7 @@
 \usepackage{pifont}
 \newcommand{\cmark}{\ding{51}}
 \newcommand{\xmark}{\ding{55}}
+\newcommand{\tbd}{\textbf{[TBD]}}
 \geometry{margin=1in}
 
 \newtheorem{theorem}{Theorem}
@@ -478,8 +479,8 @@ Loops are unrolled up to the configurable bound~$K$ (default~32).
 Phi nodes are threaded across iterations via a \texttt{prev\_defs}
 mapping in the encoder.  This is the fundamental limitation of the
 bounded approach: divergences requiring more than $K$ iterations
-are missed.  The $K$-sensitivity analysis
-(Section~\ref{sec:eval-k}) empirically justifies $K{=}32$.
+are missed.  A $K$-sensitivity analysis
+(Section~\ref{sec:eval-k}) is planned to empirically justify $K{=}32$.
 
 \paragraph{SMT backend.}
 \textsc{SemRec} targets Z3~\cite{demoura2008z3} via the Python
@@ -682,7 +683,9 @@ Other            & 156 & 0   & 0.0\%  & IR lowering failure \\
 
 Table~\ref{tab:accuracy} reports accuracy by category.  End-to-end
 accuracy on the full benchmark is 35.4\% (181/511).
-On the 212-pair combined tier, accuracy is 27.4\% (58/212).
+On the 212-pair combined tier, accuracy is 27.4\% (58/212),
+with a 95\% Clopper--Pearson confidence interval of
+$[21.8\%,\; 33.7\%]$.
 The strongest categories are shift (100\%), arithmetic (93.9\%),
 and division (90.5\%); the weakest involve struct, iterator, and
 string handling where IR lowering fails entirely.  The improvement
@@ -712,29 +715,32 @@ insertion alone.
 \begin{table}[t]
 \centering
 \small
-\caption{BMC bound sensitivity on loop-containing pairs.  Accuracy
-saturates at $K{=}32$; no additional divergences found beyond.}
+\caption{BMC bound sensitivity on loop-containing pairs.
+\textbf{Not yet validated}: the experiment script does not propagate~$K$
+to the verifier (see text).  All cells are~\tbd{}.}
 \label{tab:k-sensitivity}
 \begin{tabular}{@{}rccl@{}}
 \toprule
 $K$ & Accuracy & $\Delta$ & Observation \\
 \midrule
-8   & 55.3\% & ---     & Baseline \\
-16  & 60.5\% & +5.2pp  & Additional loop-depth divergences caught \\
-32  & 63.2\% & +2.7pp  & Saturation point \\
-64  & 63.2\% & +0.0pp  & No change \\
-128 & 63.2\% & +0.0pp  & Confirms saturation \\
+8   & \tbd{} & ---     & Baseline \\
+16  & \tbd{} & \tbd{}  & Additional loop-depth divergences caught \\
+32  & \tbd{} & \tbd{}  & Saturation point \\
+64  & \tbd{} & \tbd{}  & No change \\
+128 & \tbd{} & \tbd{}  & Confirms saturation \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:k-sensitivity} shows that accuracy increases
-monotonically from $K{=}8$ to $K{=}32$ and then saturates.  This
-is an artifact of our benchmark's loop-depth distribution, not a
-general property: real-world code with deeper loops would require
-larger bounds, with corresponding increases in solving time.  All
-pairs produce definitive verdicts at all $K$ values (no timeouts),
-consistent with QF\_BV decidability.
+Table~\ref{tab:k-sensitivity} shows that accuracy is expected to
+increase monotonically with~$K$ and then saturate.  However,
+\textbf{these results are not yet available}: the current
+\texttt{k\_sensitivity\_experiment.py} does not propagate~$K$ to the
+verification pipeline, so all values in the table remain~\tbd{}.
+This is an implementation gap, not a design limitation; we include
+the table to document the planned experiment and will update it
+once the script is corrected.  Until then, no empirical claims
+about $K$-sensitivity should be drawn from this section.
 
 \subsection{Counterexample Quality (RQ4)}\label{sec:eval-cex}
 
@@ -766,7 +772,7 @@ property-based differential testing (10K random inputs per pair):
 \toprule
 Method & Accuracy & Unique finds & Median time \\
 \midrule
-Differential testing (10K inputs) & 100\% & 1 & 18.6\,ms \\
+Differential testing (10K inputs) & 100\% & 2 & 18.6\,ms \\
 \textsc{SemRec} (bounded, $K{=}32$) & 70\% & 1 & 143.5\,ms \\
 \bottomrule
 \end{tabular}
@@ -813,39 +819,47 @@ promotion tracking, and preprocessor macro handling.
 \centering
 \small
 \caption{CVE-inspired benchmark results.  \textsc{SemRec} achieves
-100\% classification accuracy across all 10 UB categories.
-A pattern-matching baseline detects 3/10 (30\%); SemRec's semantic
-analysis provides a +70pp advantage.}
+\tbd{} classification accuracy across all 10 UB categories.
+A pattern-matching baseline detects \tbd{} (baseline); SemRec's semantic
+analysis provides a \tbd{} advantage.}
 \label{tab:cve-benchmark}
 \begin{tabular}{@{}llccc@{}}
 \toprule
 Test Case & UB Category & Expected & Detected & Time (ms) \\
 \midrule
-\texttt{integer\_overflow}      & Signed overflow     & Div & \cmark & 5.1 \\
-\texttt{null\_pointer}          & Null dereference    & Div & \cmark & 3.3 \\
-\texttt{buffer\_access}         & Buffer OOB          & Div & \cmark & 2.9 \\
-\texttt{string\_handling}       & String handling     & Div & \cmark & 4.1 \\
-\texttt{union\_type\_punning}   & Union type punning  & Div & \cmark & 3.5 \\
-\texttt{bitshift\_overflow}     & Bitshift UB         & Div & \cmark & 2.8 \\
-\texttt{uninitialized\_memory}  & Uninitialized mem   & Div & \cmark & 4.2 \\
-\texttt{aliasing\_violation}    & Strict aliasing     & Div & \cmark & 3.9 \\
-\texttt{floating\_point}        & Float-to-int UB     & Div & \cmark & 3.2 \\
-\texttt{varargs\_handling}      & Varargs             & Div & \cmark & 2.3 \\
+\texttt{integer\_overflow}      & Signed overflow     & Div & \tbd{} & \tbd{} \\
+\texttt{null\_pointer}          & Null dereference    & Div & \tbd{} & \tbd{} \\
+\texttt{buffer\_access}         & Buffer OOB          & Div & \tbd{} & \tbd{} \\
+\texttt{string\_handling}       & String handling     & Div & \tbd{} & \tbd{} \\
+\texttt{union\_type\_punning}   & Union type punning  & Div & \tbd{} & \tbd{} \\
+\texttt{bitshift\_overflow}     & Bitshift UB         & Div & \tbd{} & \tbd{} \\
+\texttt{uninitialized\_memory}  & Uninitialized mem   & Div & \tbd{} & \tbd{} \\
+\texttt{aliasing\_violation}    & Strict aliasing     & Div & \tbd{} & \tbd{} \\
+\texttt{floating\_point}        & Float-to-int UB     & Div & \tbd{} & \tbd{} \\
+\texttt{varargs\_handling}      & Varargs             & Div & \tbd{} & \tbd{} \\
 \midrule
-\multicolumn{2}{@{}l}{\textbf{Aggregate}} & \textbf{10/10} & \textbf{10/10} & \textbf{3.5} \\
+\multicolumn{2}{@{}l}{\textbf{Aggregate}} & \textbf{10/10} & \tbd{} & \tbd{} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Table~\ref{tab:cve-benchmark} reports per-pair results.
-\textsc{SemRec} achieves 100\% true positive rate (TPR) and 0\% false
+\textsc{SemRec} achieves \tbd{} true positive rate (TPR) and \tbd{} false
 positive rate (FPR) across all 10 categories, with a mean
-verification time of 3.5\,ms.  A pattern-matching baseline detects
-3 of the 10 divergences (30\%); the remaining 7 divergences are
+verification time of \tbd{}\,ms.  A pattern-matching baseline detects
+\tbd{} of the 10 divergences (\tbd{}); the remaining divergences are
 invisible to approaches that do not model source-level UB semantics.
 
+\paragraph{Limitation: one-sided benchmark.}
+All 10 CVE-inspired pairs are expected-divergent; this benchmark
+contains \emph{no} equivalent (negative-control) pairs.  The results
+therefore measure only recall (true positive rate) and cannot
+assess false-positive rate or precision.  A balanced benchmark
+with equivalent pairs is needed to evaluate specificity and is
+planned as future work.
+
 \paragraph{Advantage over baseline.}
-The +70pp advantage (100\% vs.\ 30\% on UB-dependent divergences)
+The \tbd{} advantage (\tbd{} vs.\ \tbd{} on UB-dependent divergences)
 highlights a fundamental limitation of pattern-matching and testing
 approaches: when UB is
 ``benign'' on the target platform, sampling-based and syntactic
@@ -1547,9 +1561,9 @@ $\Phi$ (by the preceding three conditions), Z3 returns SAT.
 \emph{Failure modes when conditions are violated:}
 \begin{itemize}[nosep]
   \item \textbf{C1 violated}: divergence hidden beyond the loop
-    bound.  Increasing $K$ may help; the $K$-sensitivity analysis
-    (Section~\ref{sec:eval-k}) shows saturation at $K{=}32$ for
-    our benchmarks.
+    bound.  Increasing $K$ may help; a $K$-sensitivity experiment
+    is planned but not yet validated
+    (Section~\ref{sec:eval-k}).
   \item \textbf{C2 violated}: unhandled divergence class (e.g.,
     pointer aliasing).  The tool reports \textsc{Unknown} or a
     false \textsc{Equivalent}.
@@ -2132,16 +2146,16 @@ Configuration & Accuracy & $\Delta$ vs.\ full \\
 \midrule
 Full pipeline (with $\sigma$-bridge) & 80\% & --- \\
 No $\sigma$-bridge (plain bitvector) & 40\% & $-$40pp \\
-No well-definedness guards & 30\% & $-$50pp \\
+No well-definedness guards & \tbd{} & \tbd{} \\
 Random testing (10K samples) & 80\% & +0pp \\
-Random testing (100 samples) & 50\% & $-$30pp \\
+Random testing (100 samples) & \tbd{} & \tbd{} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The $\sigma$-bridge framework contributes a 40pp improvement over
 naive bitvector comparison.  Well-definedness guards contribute an
-additional 10pp.  Random testing with sufficient samples matches
+additional \tbd{}.  Random testing with sufficient samples matches
 \textsc{SemRec}'s accuracy on this small subset, but cannot provide
 equivalence guarantees and degrades sharply with fewer samples.
 
@@ -2171,23 +2185,24 @@ performance.
 \begin{table}[h!]
 \centering
 \small
-\caption{Extended $K$-sensitivity analysis.}
+\caption{Extended $K$-sensitivity analysis.
+\textbf{Pending}: experiment script does not propagate~$K$.}
 \label{tab:k-extended}
 \begin{tabular}{@{}rcc@{}}
 \toprule
 $K$ & Accuracy & Pairs with loops \\
 \midrule
-8   & 55.3\% & 38 \\
-16  & 60.5\% & 38 \\
-32  & 63.2\% & 38 \\
-64  & 63.2\% & 38 \\
-128 & 63.2\% & 38 \\
+8   & \tbd{} & 38 \\
+16  & \tbd{} & 38 \\
+32  & \tbd{} & 38 \\
+64  & \tbd{} & 38 \\
+128 & \tbd{} & 38 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The saturation at $K{=}32$ means the default bound captures all
-divergences in our benchmark.
+Pending re-execution with a corrected experiment that passes~$K$ to
+the verification pipeline.
 
 \subsection{Threats to Validity}
 
