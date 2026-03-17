@@ -1,0 +1,1282 @@
+{
+  "benchmark_info": {
+    "total_pairs": 20,
+    "equivalent_pairs": 14,
+    "buggy_pairs": 6,
+    "run_timestamp": 1773115707.019161,
+    "categories": [
+      "string",
+      "array",
+      "memory",
+      "math",
+      "sorting",
+      "linked_list",
+      "crypto",
+      "algorithm"
+    ]
+  },
+  "detailed_results": [
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "strlen_basic",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 38.71893882751465,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "strcpy_basic",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 11.769771575927734,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "array_sum",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 0.759124755859375,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "linear_search",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 10.343790054321289,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "safe_malloc",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 14.011144638061523,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "factorial",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 9.149312973022461,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "bubble_sort",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 10.504961013793945,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "find_max",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 0.5910396575927734,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "create_node",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 11.014223098754883,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "binary_search",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 10.615825653076172,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "strcat_safe",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 10.746240615844727,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "reverse_array",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 10.490655899047852,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "simple_hash",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 10.726690292358398,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "matrix_transpose",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 11.037111282348633,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "strcpy_overflow_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 9.52291488647461,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "array_copy_off_by_one",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 0.8590221405029297,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "null_pointer_handling",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 0.3762245178222656,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "overflow_behavior",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 0.42510032653808594,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "memory_leak_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 0.32401084899902344,
+      "details": {
+        "counterexample": "[]",
+        "z3_result": "sat"
+      }
+    },
+    {
+      "method_name": "Z3_SMT",
+      "pair_name": "comparison_semantics",
+      "predicted_equivalent": true,
+      "confidence": 0.85,
+      "verification_time_ms": 0.2570152282714844,
+      "details": {
+        "z3_result": "unsat"
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "strlen_basic",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0030994415283203125,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "strcpy_basic",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0007152557373046875,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "array_sum",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "linear_search",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "safe_malloc",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "factorial",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "bubble_sort",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "find_max",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "create_node",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "binary_search",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "strcat_safe",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "reverse_array",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "simple_hash",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "matrix_transpose",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "strcpy_overflow_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "array_copy_off_by_one",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "null_pointer_handling",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "overflow_behavior",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "memory_leak_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.9,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Differential_Testing",
+      "pair_name": "comparison_semantics",
+      "predicted_equivalent": true,
+      "confidence": 0.8,
+      "verification_time_ms": 0.0,
+      "details": {
+        "test_cases": 100
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "strlen_basic",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.010967254638671875,
+      "details": {
+        "c_signature": "int my_strlen(const char *s)",
+        "rust_signature": "fn my_strlen(s: &[u8]) -> i32"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "strcpy_basic",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.007152557373046875,
+      "details": {
+        "c_signature": "char* my_strcpy(char *dest, const char *src)",
+        "rust_signature": "fn my_strcpy(dest: &mut [u8], src: &[u8]) -> usize"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "array_sum",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.0026226043701171875,
+      "details": {
+        "c_signature": "int array_sum(int *arr, int len)",
+        "rust_signature": "fn array_sum(arr: &[i32]) -> i32"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "linear_search",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.0040531158447265625,
+      "details": {
+        "c_signature": "int linear_search(int *arr, int len, int target)",
+        "rust_signature": "fn linear_search(arr: &[i32], target: i32) -> i32"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "safe_malloc",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.003814697265625,
+      "details": {
+        "c_signature": "int* safe_malloc(int count)",
+        "rust_signature": "fn safe_malloc(count: usize) -> Option<Vec<i32>>"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "factorial",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.0030994415283203125,
+      "details": {
+        "c_signature": "unsigned long factorial(int n)",
+        "rust_signature": "fn factorial(n: i32) -> u64"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "bubble_sort",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.0040531158447265625,
+      "details": {
+        "c_signature": "void bubble_sort(int *arr, int len)",
+        "rust_signature": "fn bubble_sort(arr: &mut [i32])"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "find_max",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.003814697265625,
+      "details": {
+        "c_signature": "int find_max(int *arr, int len)",
+        "rust_signature": "fn find_max(arr: &[i32]) -> Option<i32>"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "create_node",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.005245208740234375,
+      "details": {
+        "c_signature": "Node* create_node(int data)",
+        "rust_signature": "fn create_node(data: i32) -> Box<Node>"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "binary_search",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.003814697265625,
+      "details": {
+        "c_signature": "int binary_search(int *arr, int len, int target)",
+        "rust_signature": "fn binary_search(arr: &[i32], target: i32) -> i32"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "strcat_safe",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.006198883056640625,
+      "details": {
+        "c_signature": "int safe_strcat(char *dest, int dest_size, const char *src)",
+        "rust_signature": "fn safe_strcat(dest: &mut [u8], src: &[u8]) -> usize"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "reverse_array",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.00286102294921875,
+      "details": {
+        "c_signature": "void reverse_array(int *arr, int len)",
+        "rust_signature": "fn reverse_array(arr: &mut [i32])"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "simple_hash",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.0030994415283203125,
+      "details": {
+        "c_signature": "unsigned int simple_hash(const char *str)",
+        "rust_signature": "fn simple_hash(s: &[u8]) -> u32"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "matrix_transpose",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.0026226043701171875,
+      "details": {
+        "c_signature": "void transpose(int matrix[4][4], int result[4][4])",
+        "rust_signature": "fn transpose(matrix: &[[i32; 4]; 4]) -> [[i32; 4]; 4]"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "strcpy_overflow_bug",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.0040531158447265625,
+      "details": {
+        "c_signature": "char* unsafe_strcpy(char *dest, const char *src)",
+        "rust_signature": "fn unsafe_strcpy(dest: &mut [u8], src: &[u8]) -> usize"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "array_copy_off_by_one",
+      "predicted_equivalent": false,
+      "confidence": 0.4,
+      "verification_time_ms": 0.0030994415283203125,
+      "details": {
+        "c_signature": "void copy_array(int *src, int *dest, int len)",
+        "rust_signature": "fn copy_array(src: &[i32], dest: &mut [i32])"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "null_pointer_handling",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.0019073486328125,
+      "details": {
+        "c_signature": "int safe_deref(int *ptr)",
+        "rust_signature": "fn safe_deref(ptr: Option<&i32>) -> i32"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "overflow_behavior",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.0019073486328125,
+      "details": {
+        "c_signature": "int multiply_numbers(int a, int b)",
+        "rust_signature": "fn multiply_numbers(a: i32, b: i32) -> Option<i32>"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "memory_leak_bug",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.0040531158447265625,
+      "details": {
+        "c_signature": "int* create_and_fill(int size, int value)",
+        "rust_signature": "fn create_and_fill(size: usize, value: i32) -> Vec<i32>"
+      }
+    },
+    {
+      "method_name": "Type_Signatures",
+      "pair_name": "comparison_semantics",
+      "predicted_equivalent": true,
+      "confidence": 0.6,
+      "verification_time_ms": 0.003814697265625,
+      "details": {
+        "c_signature": "int compare_strings(const char *a, const char *b)",
+        "rust_signature": "fn compare_strings(a: &[u8], b: &[u8]) -> i32"
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "strlen_basic",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "strcpy_basic",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "array_sum",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "linear_search",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "safe_malloc",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "factorial",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "bubble_sort",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "find_max",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "create_node",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "binary_search",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "strcat_safe",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "reverse_array",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "simple_hash",
+      "predicted_equivalent": true,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "matrix_transpose",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "strcpy_overflow_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "array_copy_off_by_one",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "null_pointer_handling",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "overflow_behavior",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "memory_leak_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "LLVM_IR",
+      "pair_name": "comparison_semantics",
+      "predicted_equivalent": false,
+      "confidence": 0.75,
+      "verification_time_ms": 0.0,
+      "details": {
+        "ir_similarity": 0.8
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "strlen_basic",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0040531158447265625,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "strcpy_basic",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0019073486328125,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "array_sum",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "linear_search",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0019073486328125,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "safe_malloc",
+      "predicted_equivalent": true,
+      "confidence": 0.7,
+      "verification_time_ms": 0.006198883056640625,
+      "details": {
+        "checklist_score": 0.9000000000000001
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "factorial",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.3
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "bubble_sort",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0019073486328125,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "find_max",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0011920928955078125,
+      "details": {
+        "checklist_score": 0.7
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "create_node",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0021457672119140625,
+      "details": {
+        "checklist_score": 0.7
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "binary_search",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0019073486328125,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "strcat_safe",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0019073486328125,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "reverse_array",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0021457672119140625,
+      "details": {
+        "checklist_score": 0.5
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "simple_hash",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.3
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "matrix_transpose",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.3
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "strcpy_overflow_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.0
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "array_copy_off_by_one",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.0
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "null_pointer_handling",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.2
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "overflow_behavior",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0,
+      "details": {
+        "checklist_score": 0.0
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "memory_leak_bug",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.0011920928955078125,
+      "details": {
+        "checklist_score": 0.0
+      }
+    },
+    {
+      "method_name": "Manual_Checklist",
+      "pair_name": "comparison_semantics",
+      "predicted_equivalent": false,
+      "confidence": 0.7,
+      "verification_time_ms": 0.00095367431640625,
+      "details": {
+        "checklist_score": 0.0
+      }
+    }
+  ],
+  "method_summaries": {
+    "Z3_SMT": {
+      "method_name": "Z3_SMT",
+      "total_pairs": 20,
+      "correct_predictions": 9,
+      "accuracy": 0.45,
+      "true_positives": 3,
+      "false_positives": 8,
+      "false_negatives": 3,
+      "precision": 0.2727272727272727,
+      "recall": 0.5,
+      "f1_score": 0.3529411764705882,
+      "avg_time_ms": 8.61215591430664
+    },
+    "Differential_Testing": {
+      "method_name": "Differential_Testing",
+      "total_pairs": 20,
+      "correct_predictions": 19,
+      "accuracy": 0.95,
+      "true_positives": 5,
+      "false_positives": 0,
+      "false_negatives": 1,
+      "precision": 1.0,
+      "recall": 0.8333333333333334,
+      "f1_score": 0.9090909090909091,
+      "avg_time_ms": 0.0003337860107421875
+    },
+    "Type_Signatures": {
+      "method_name": "Type_Signatures",
+      "total_pairs": 20,
+      "correct_predictions": 7,
+      "accuracy": 0.35,
+      "true_positives": 1,
+      "false_positives": 8,
+      "false_negatives": 5,
+      "precision": 0.1111111111111111,
+      "recall": 0.16666666666666666,
+      "f1_score": 0.13333333333333333,
+      "avg_time_ms": 0.004112720489501953
+    },
+    "LLVM_IR": {
+      "method_name": "LLVM_IR",
+      "total_pairs": 20,
+      "correct_predictions": 15,
+      "accuracy": 0.75,
+      "true_positives": 6,
+      "false_positives": 5,
+      "false_negatives": 0,
+      "precision": 0.5454545454545454,
+      "recall": 1.0,
+      "f1_score": 0.7058823529411764,
+      "avg_time_ms": 0.0001430511474609375
+    },
+    "Manual_Checklist": {
+      "method_name": "Manual_Checklist",
+      "total_pairs": 20,
+      "correct_predictions": 7,
+      "accuracy": 0.35,
+      "true_positives": 6,
+      "false_positives": 13,
+      "false_negatives": 0,
+      "precision": 0.3157894736842105,
+      "recall": 1.0,
+      "f1_score": 0.4799999999999999,
+      "avg_time_ms": 0.0017046928405761719
+    }
+  },
+  "ranking_by_accuracy": [
+    [
+      "Differential_Testing",
+      {
+        "method_name": "Differential_Testing",
+        "total_pairs": 20,
+        "correct_predictions": 19,
+        "accuracy": 0.95,
+        "true_positives": 5,
+        "false_positives": 0,
+        "false_negatives": 1,
+        "precision": 1.0,
+        "recall": 0.8333333333333334,
+        "f1_score": 0.9090909090909091,
+        "avg_time_ms": 0.0003337860107421875
+      }
+    ],
+    [
+      "LLVM_IR",
+      {
+        "method_name": "LLVM_IR",
+        "total_pairs": 20,
+        "correct_predictions": 15,
+        "accuracy": 0.75,
+        "true_positives": 6,
+        "false_positives": 5,
+        "false_negatives": 0,
+        "precision": 0.5454545454545454,
+        "recall": 1.0,
+        "f1_score": 0.7058823529411764,
+        "avg_time_ms": 0.0001430511474609375
+      }
+    ],
+    [
+      "Z3_SMT",
+      {
+        "method_name": "Z3_SMT",
+        "total_pairs": 20,
+        "correct_predictions": 9,
+        "accuracy": 0.45,
+        "true_positives": 3,
+        "false_positives": 8,
+        "false_negatives": 3,
+        "precision": 0.2727272727272727,
+        "recall": 0.5,
+        "f1_score": 0.3529411764705882,
+        "avg_time_ms": 8.61215591430664
+      }
+    ],
+    [
+      "Type_Signatures",
+      {
+        "method_name": "Type_Signatures",
+        "total_pairs": 20,
+        "correct_predictions": 7,
+        "accuracy": 0.35,
+        "true_positives": 1,
+        "false_positives": 8,
+        "false_negatives": 5,
+        "precision": 0.1111111111111111,
+        "recall": 0.16666666666666666,
+        "f1_score": 0.13333333333333333,
+        "avg_time_ms": 0.004112720489501953
+      }
+    ],
+    [
+      "Manual_Checklist",
+      {
+        "method_name": "Manual_Checklist",
+        "total_pairs": 20,
+        "correct_predictions": 7,
+        "accuracy": 0.35,
+        "true_positives": 6,
+        "false_positives": 13,
+        "false_negatives": 0,
+        "precision": 0.3157894736842105,
+        "recall": 1.0,
+        "f1_score": 0.4799999999999999,
+        "avg_time_ms": 0.0017046928405761719
+      }
+    ]
+  ],
+  "ranking_by_f1": [
+    [
+      "Differential_Testing",
+      {
+        "method_name": "Differential_Testing",
+        "total_pairs": 20,
+        "correct_predictions": 19,
+        "accuracy": 0.95,
+        "true_positives": 5,
+        "false_positives": 0,
+        "false_negatives": 1,
+        "precision": 1.0,
+        "recall": 0.8333333333333334,
+        "f1_score": 0.9090909090909091,
+        "avg_time_ms": 0.0003337860107421875
+      }
+    ],
+    [
+      "LLVM_IR",
+      {
+        "method_name": "LLVM_IR",
+        "total_pairs": 20,
+        "correct_predictions": 15,
+        "accuracy": 0.75,
+        "true_positives": 6,
+        "false_positives": 5,
+        "false_negatives": 0,
+        "precision": 0.5454545454545454,
+        "recall": 1.0,
+        "f1_score": 0.7058823529411764,
+        "avg_time_ms": 0.0001430511474609375
+      }
+    ],
+    [
+      "Manual_Checklist",
+      {
+        "method_name": "Manual_Checklist",
+        "total_pairs": 20,
+        "correct_predictions": 7,
+        "accuracy": 0.35,
+        "true_positives": 6,
+        "false_positives": 13,
+        "false_negatives": 0,
+        "precision": 0.3157894736842105,
+        "recall": 1.0,
+        "f1_score": 0.4799999999999999,
+        "avg_time_ms": 0.0017046928405761719
+      }
+    ],
+    [
+      "Z3_SMT",
+      {
+        "method_name": "Z3_SMT",
+        "total_pairs": 20,
+        "correct_predictions": 9,
+        "accuracy": 0.45,
+        "true_positives": 3,
+        "false_positives": 8,
+        "false_negatives": 3,
+        "precision": 0.2727272727272727,
+        "recall": 0.5,
+        "f1_score": 0.3529411764705882,
+        "avg_time_ms": 8.61215591430664
+      }
+    ],
+    [
+      "Type_Signatures",
+      {
+        "method_name": "Type_Signatures",
+        "total_pairs": 20,
+        "correct_predictions": 7,
+        "accuracy": 0.35,
+        "true_positives": 1,
+        "false_positives": 8,
+        "false_negatives": 5,
+        "precision": 0.1111111111111111,
+        "recall": 0.16666666666666666,
+        "f1_score": 0.13333333333333333,
+        "avg_time_ms": 0.004112720489501953
+      }
+    ]
+  ]
+}

@@ -30,10 +30,25 @@ from .eval import (
     Interval,
 )
 
+from .struct_layout import (
+    StructLayoutAnalyzer,
+    StructLayout,
+    FieldLayout,
+    LayoutDivergence,
+    LayoutDivergenceKind,
+    LayoutAnalysisReport,
+    LayoutConfig,
+    Platform,
+    compute_struct_layout,
+)
+
 __all__ = [
     "DivergenceClass", "DivergenceType", "CSemantics", "RustSemantics",
     "DivergenceEntry", "DivergenceTable", "DivergenceAnalyzer",
     "OverflowMode", "FloatModel", "ErrorModel", "PointerModel",
     "IntegerPromotionModel", "SemanticConfig",
     "EvalResult", "EvalFlags", "SemanticEvaluator", "Interval",
+    "StructLayoutAnalyzer", "StructLayout", "FieldLayout",
+    "LayoutDivergence", "LayoutDivergenceKind", "LayoutAnalysisReport",
+    "LayoutConfig", "Platform", "compute_struct_layout",
 ]

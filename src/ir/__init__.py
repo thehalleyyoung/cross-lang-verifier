@@ -49,6 +49,14 @@ from .builder import IRBuilder
 from .printer import IRPrinter
 from .validator import IRValidator
 
+from .integer_promotion import (
+    IntegerPromotionTracker,
+    PromotionChain,
+    PromotionStep,
+    PromotionKind,
+    PromotionDivergence,
+)
+
 __all__ = [
     "IRType", "IntType", "FloatType", "PointerType", "ArrayType",
     "StructType", "StructField", "UnionType", "EnumType", "FunctionType", "VoidType",
@@ -57,4 +65,6 @@ __all__ = [
     "type_join", "type_meet", "are_layout_compatible", "type_from_dict",
     "Instruction", "Value", "Constant", "BinaryOp", "UnaryOp", "CompareOp",
     "BasicBlock", "Function", "Module", "IRBuilder", "IRPrinter", "IRValidator",
+    "IntegerPromotionTracker", "PromotionChain", "PromotionStep",
+    "PromotionKind", "PromotionDivergence",
 ]

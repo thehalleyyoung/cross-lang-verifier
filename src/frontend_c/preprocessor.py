@@ -83,6 +83,11 @@ class HeaderMap:
         self.system_headers.setdefault("assert.h", _ASSERT_H)
         self.system_headers.setdefault("errno.h", _ERRNO_H)
         self.system_headers.setdefault("math.h", _MATH_H)
+        self.system_headers.setdefault("stdarg.h", _STDARG_H)
+        self.system_headers.setdefault("signal.h", _SIGNAL_H)
+        self.system_headers.setdefault("setjmp.h", _SETJMP_H)
+        self.system_headers.setdefault("float.h", _FLOAT_H)
+        self.system_headers.setdefault("inttypes.h", _INTTYPES_H)
 
     def resolve(self, path: str, is_system: bool = False) -> Optional[str]:
         """Resolve a header path to its content."""
@@ -722,6 +727,213 @@ class CPreprocessor:
 
         return body
 
+    # -------------------------------------------------------------------
+    # Real-world C handling: __attribute__, __builtin_*, typeof, GCC exts
+    # -------------------------------------------------------------------
+
+    _ATTRIBUTE_RE = re.compile(
+        r'__attribute__\s*\(\((?:[^()]*|\((?:[^()]*|\([^()]*\))*\))*\)\)',
+    )
+
+    _TYPEOF_RE = re.compile(
+        r'__typeof__\s*\(([^)]+)\)|typeof\s*\(([^)]+)\)',
+    )
+
+    _BUILTIN_MAP: dict[str, str] = {
+        # Arithmetic / overflow builtins → identity or zero stub
+        "__builtin_add_overflow": "0",
+        "__builtin_sub_overflow": "0",
+        "__builtin_mul_overflow": "0",
+        "__builtin_sadd_overflow": "0",
+        "__builtin_ssub_overflow": "0",
+        "__builtin_smul_overflow": "0",
+        # Bit-manipulation builtins
+        "__builtin_clz": "0",
+        "__builtin_ctz": "0",
+        "__builtin_popcount": "0",
+        "__builtin_parity": "0",
+        "__builtin_ffs": "0",
+        "__builtin_clzl": "0",
+        "__builtin_ctzl": "0",
+        "__builtin_popcountl": "0",
+        "__builtin_clzll": "0",
+        "__builtin_ctzll": "0",
+        "__builtin_popcountll": "0",
+        # Byte-swap builtins
+        "__builtin_bswap16": "0",
+        "__builtin_bswap32": "0",
+        "__builtin_bswap64": "0",
+        # Memory builtins (stub as function declarations are enough)
+        "__builtin_memcpy": "memcpy",
+        "__builtin_memset": "memset",
+        "__builtin_memmove": "memmove",
+        "__builtin_memcmp": "memcmp",
+        "__builtin_strlen": "strlen",
+        "__builtin_strcmp": "strcmp",
+        # Floating-point classification builtins
+        "__builtin_inff": "(1.0f/0.0f)",
+        "__builtin_inf": "(1.0/0.0)",
+        "__builtin_nanf": "(0.0f/0.0f)",
+        "__builtin_nan": "(0.0/0.0)",
+        "__builtin_huge_val": "(1.0/0.0)",
+        "__builtin_huge_valf": "(1.0f/0.0f)",
+        "__builtin_isnan": "0",
+        "__builtin_isinf": "0",
+        "__builtin_isfinite": "1",
+        # Expect / unreachable (optimization hints, not semantic)
+        "__builtin_expect": "",
+        "__builtin_unreachable": "((void)0)",
+        "__builtin_trap": "((void)0)",
+        "__builtin_assume": "((void)0)",
+        # Alloca
+        "__builtin_alloca": "malloc",
+        # Address-of / frame
+        "__builtin_return_address": "((void*)0)",
+        "__builtin_frame_address": "((void*)0)",
+        # Atomic (simplified stubs)
+        "__sync_fetch_and_add": "0",
+        "__sync_fetch_and_sub": "0",
+        "__sync_val_compare_and_swap": "0",
+        "__sync_synchronize": "((void)0)",
+        "__atomic_load_n": "0",
+        "__atomic_store_n": "((void)0)",
+        "__atomic_exchange_n": "0",
+        "__atomic_compare_exchange_n": "0",
+    }
+
+    _GCC_EXTENSION_KEYWORDS = frozenset({
+        "__extension__", "__inline__", "__inline", "__volatile__",
+        "__volatile", "__signed__", "__signed", "__unsigned__",
+        "__const__", "__const", "__restrict__", "__restrict",
+        "__asm__", "__asm", "_Alignof", "_Alignas",
+        "__alignof__", "__alignof",
+    })
+
+    _EXTENSION_REPLACEMENTS: dict[str, str] = {
+        "__extension__": "",
+        "__inline__": "inline",
+        "__inline": "inline",
+        "__volatile__": "volatile",
+        "__volatile": "volatile",
+        "__signed__": "signed",
+        "__signed": "signed",
+        "__unsigned__": "unsigned",
+        "__const__": "const",
+        "__const": "const",
+        "__restrict__": "restrict",
+        "__restrict": "restrict",
+        "__asm__": "asm",
+        "__asm": "asm",
+        "__alignof__": "_Alignof",
+        "__alignof": "_Alignof",
+    }
+
+    def strip_attributes(self, source: str) -> str:
+        """Strip all __attribute__((...)) annotations from source."""
+        return self._ATTRIBUTE_RE.sub('', source)
+
+    def replace_typeof(self, source: str) -> str:
+        """Replace __typeof__(...) and typeof(...) with int as a stub type.
+        Real typeof resolution needs a full type system; this is a best-effort
+        stub that lets the parser proceed."""
+        return self._TYPEOF_RE.sub('int', source)
+
+    def stub_builtins(self, source: str) -> str:
+        """Replace __builtin_* calls with stubs.
+
+        For function-like builtins (e.g. __builtin_expect(x, v) → (x)),
+        we handle the argument pass-through.  For simple identifier builtins,
+        we replace the name with its stub value.
+        """
+        # Special case: __builtin_expect(expr, val) → (expr)
+        source = re.sub(
+            r'__builtin_expect\s*\(\s*([^,]+),\s*[^)]+\)',
+            r'(\1)',
+            source,
+        )
+        # Special case: __builtin_offsetof(type, field) → 0
+        source = re.sub(
+            r'__builtin_offsetof\s*\([^)]*\)',
+            '0',
+            source,
+        )
+        # Special case: __builtin_types_compatible_p(t1, t2) → 0
+        source = re.sub(
+            r'__builtin_types_compatible_p\s*\([^)]*\)',
+            '0',
+            source,
+        )
+        # Special case: __builtin_constant_p(x) → 0
+        source = re.sub(
+            r'__builtin_constant_p\s*\([^)]*\)',
+            '0',
+            source,
+        )
+        # Special case: __builtin_choose_expr(c, a, b) → (b) (conservative)
+        source = re.sub(
+            r'__builtin_choose_expr\s*\([^,]*,\s*[^,]*,\s*([^)]+)\)',
+            r'(\1)',
+            source,
+        )
+
+        # Replace remaining builtins by name (function-call forms)
+        for builtin, stub in self._BUILTIN_MAP.items():
+            if builtin in source:
+                # If stub is a simple value and the builtin is called as function
+                pattern = re.escape(builtin) + r'\s*\(([^)]*)\)'
+                if stub and not stub.startswith('('):
+                    source = re.sub(pattern, f'{stub}(\\1)', source)
+                elif stub:
+                    source = re.sub(pattern, stub, source)
+                else:
+                    # Empty stub for hints — pass through first argument
+                    source = re.sub(pattern, r'(\1)', source)
+                # Also replace standalone identifier uses
+                source = re.sub(r'\b' + re.escape(builtin) + r'\b(?!\s*\()', stub or '0', source)
+
+        return source
+
+    def replace_gcc_extensions(self, source: str) -> str:
+        """Replace GCC extension keywords with standard C equivalents."""
+        for ext, replacement in self._EXTENSION_REPLACEMENTS.items():
+            source = re.sub(r'\b' + re.escape(ext) + r'\b', replacement, source)
+        return source
+
+    def strip_asm_blocks(self, source: str) -> str:
+        """Remove inline assembly blocks: asm(...) and __asm__(...) statements."""
+        # Remove asm("...") or asm volatile("...")
+        source = re.sub(
+            r'\b(?:__)?asm(?:__)?(?:\s+volatile)?\s*\((?:[^()]*|\((?:[^()]*|\([^()]*\))*\))*\)\s*;',
+            ';',
+            source,
+        )
+        return source
+
+    def preprocess_real_world(self, source: str, filename: str = "<input>") -> str:
+        """Full preprocessing pipeline for real-world C code.
+
+        Applies:
+          1. Standard preprocessing (#include, #define, #ifdef, etc.)
+          2. __attribute__ stripping
+          3. __builtin_* replacement with stubs
+          4. typeof → stub type
+          5. GCC extension keyword normalization
+          6. Inline assembly removal
+        """
+        # Phase 1: standard CPP
+        result = self.preprocess(source, filename)
+        # Phase 2: strip attributes
+        result = self.strip_attributes(result)
+        # Phase 3: stub builtins
+        result = self.stub_builtins(result)
+        # Phase 4: typeof
+        result = self.replace_typeof(result)
+        # Phase 5: GCC extensions
+        result = self.replace_gcc_extensions(result)
+        # Phase 6: asm
+        result = self.strip_asm_blocks(result)
+        return result
+
 
 # ---------------------------------------------------------------------------
 # Minimal system header stubs
@@ -876,4 +1088,59 @@ int isfinite(double x);
 #define INFINITY (__builtin_inff())
 #define NAN (__builtin_nanf(""))
 #define HUGE_VAL (__builtin_huge_val())
+"""
+
+_STDARG_H = """
+typedef __builtin_va_list va_list;
+#define va_start(ap, param) ((void)0)
+#define va_end(ap) ((void)0)
+#define va_arg(ap, type) ((type)0)
+#define va_copy(dest, src) ((void)0)
+"""
+
+_SIGNAL_H = """
+typedef void (*sighandler_t)(int);
+#define SIG_DFL ((sighandler_t)0)
+#define SIG_IGN ((sighandler_t)1)
+#define SIG_ERR ((sighandler_t)-1)
+#define SIGABRT 6
+#define SIGFPE 8
+#define SIGILL 4
+#define SIGINT 2
+#define SIGSEGV 11
+#define SIGTERM 15
+sighandler_t signal(int signum, sighandler_t handler);
+int raise(int sig);
+"""
+
+_SETJMP_H = """
+typedef int jmp_buf[64];
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
+"""
+
+_FLOAT_H = """
+#define FLT_MIN 1.17549435e-38F
+#define FLT_MAX 3.40282347e+38F
+#define FLT_EPSILON 1.19209290e-07F
+#define DBL_MIN 2.2250738585072014e-308
+#define DBL_MAX 1.7976931348623157e+308
+#define DBL_EPSILON 2.2204460492503131e-16
+#define FLT_MANT_DIG 24
+#define DBL_MANT_DIG 53
+#define FLT_RADIX 2
+"""
+
+_INTTYPES_H = """
+#include <stdint.h>
+#define PRId8 "d"
+#define PRId16 "d"
+#define PRId32 "d"
+#define PRId64 "ld"
+#define PRIu8 "u"
+#define PRIu16 "u"
+#define PRIu32 "u"
+#define PRIu64 "lu"
+#define PRIx32 "x"
+#define PRIx64 "lx"
 """

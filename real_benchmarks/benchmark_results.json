@@ -1,0 +1,2149 @@
+{
+  "benchmark": "semrec_real_c_rust_pairs",
+  "version": "1.0.0",
+  "timestamp": "2026-03-04T16:46:05",
+  "total_pairs": 10,
+  "metrics": {
+    "true_positive_rate": 1.0,
+    "false_positive_rate": 0.0,
+    "true_negative_rate": 1.0,
+    "false_negative_rate": 0.0,
+    "classification_accuracy": 1.0,
+    "mean_analysis_time_ms": 3.52,
+    "total_smt_queries": 209,
+    "mean_ub_patterns": 19.7,
+    "mean_elimination_rate": 0.9235,
+    "baseline_detection_rate": 0.3,
+    "semrec_advantage": 0.7,
+    "confusion_matrix": {
+      "TP": 10,
+      "FP": 0,
+      "TN": 0,
+      "FN": 0
+    }
+  },
+  "results": [
+    {
+      "name": "integer_overflow",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 15,
+      "ub_categories": [
+        "strict_aliasing",
+        "uninitialized"
+      ],
+      "ub_eliminated": 15,
+      "ub_elimination_rate": 1.0,
+      "divergences": [
+        {
+          "category": "strict_aliasing",
+          "location": "line 46",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 10",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 11",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 13",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 14",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 15",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 16",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 22",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 25",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 5.09,
+      "smt_query_count": 16,
+      "baseline_would_detect": false,
+      "ground_truth_detail": {
+        "description": "Signed integer overflow is UB in C (C11 \u00a76.5/5). Rust wraps (release) or panics (debug). Functions: alloc_items, midpoint (JDK-5045582 pattern), safe_abs (INT_MIN negation), increment_counter.",
+        "cve_references": [
+          "CVE-2014-1266",
+          "CVE-2021-21300",
+          "JDK-5045582"
+        ],
+        "expected_ub_categories": [
+          "signed_overflow"
+        ]
+      }
+    },
+    {
+      "name": "null_pointer",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 22,
+      "ub_categories": [
+        "null_deref",
+        "buffer_overflow",
+        "strict_aliasing",
+        "uninitialized"
+      ],
+      "ub_eliminated": 20,
+      "ub_elimination_rate": 0.9091,
+      "divergences": [
+        {
+          "category": "null_deref",
+          "location": "line 50",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "null_deref",
+          "location": "line 66",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 22",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 27",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 2",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 3",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 5",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 6",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 39",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 41",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 42",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 47",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 51",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 58",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 60",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 64",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 67",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 10",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 11",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 35",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 3.27,
+      "smt_query_count": 23,
+      "baseline_would_detect": true,
+      "ground_truth_detail": {
+        "description": "NULL dereference is UB in C (C11 \u00a76.5.3.2/4). Rust uses Option<&T> \u2014 compiler enforces null check. get_value_if_valid: dereference-before-check pattern.",
+        "cve_references": [
+          "CVE-2009-1897",
+          "CVE-2018-1000001"
+        ],
+        "expected_ub_categories": [
+          "null_deref"
+        ]
+      }
+    },
+    {
+      "name": "buffer_access",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 18,
+      "ub_categories": [
+        "buffer_overflow",
+        "uninitialized",
+        "division_by_zero"
+      ],
+      "ub_eliminated": 16,
+      "ub_elimination_rate": 0.8889,
+      "divergences": [
+        {
+          "category": "buffer_overflow",
+          "location": "line 29",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 34",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 9",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 10",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 11",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 13",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 14",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 15",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 16",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 24",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 53",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 2",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 2.91,
+      "smt_query_count": 19,
+      "baseline_would_detect": true,
+      "ground_truth_detail": {
+        "description": "Out-of-bounds array access is UB in C. Rust slices are bounds-checked. Heartbleed-style read-past-buffer, off-by-one, stack buffer overflow.",
+        "cve_references": [
+          "CVE-2014-0160",
+          "CVE-2021-3156"
+        ],
+        "expected_ub_categories": [
+          "buffer_overflow"
+        ]
+      }
+    },
+    {
+      "name": "string_handling",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 20,
+      "ub_categories": [
+        "null_deref",
+        "buffer_overflow",
+        "uninitialized",
+        "division_by_zero"
+      ],
+      "ub_eliminated": 19,
+      "ub_elimination_rate": 0.95,
+      "divergences": [
+        {
+          "category": "null_deref",
+          "location": "line 61",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 14",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 19",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 71",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 9",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 26",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 41",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 42",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 43",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 44",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 45",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 46",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 47",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 48",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 49",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 50",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 51",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 52",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 53",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 3",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 4.12,
+      "smt_query_count": 21,
+      "baseline_would_detect": true,
+      "ground_truth_detail": {
+        "description": "C string functions (strcpy, strcat) have no bounds checking. Rust String/&str is length-prefixed and bounds-checked. Integer overflow in length computation.",
+        "cve_references": [
+          "CVE-2019-14287"
+        ],
+        "expected_ub_categories": [
+          "buffer_overflow",
+          "signed_overflow"
+        ]
+      }
+    },
+    {
+      "name": "union_type_punning",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 22,
+      "ub_categories": [
+        "null_deref",
+        "buffer_overflow",
+        "uninitialized",
+        "division_by_zero"
+      ],
+      "ub_eliminated": 18,
+      "ub_elimination_rate": 0.8182,
+      "divergences": [
+        {
+          "category": "null_deref",
+          "location": "line 77",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "null_deref",
+          "location": "line 87",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 29",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 34",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 9",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 10",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 11",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 13",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 14",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 15",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 16",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 24",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 43",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 77",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 80",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 2",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 3.46,
+      "smt_query_count": 23,
+      "baseline_would_detect": false,
+      "ground_truth_detail": {
+        "description": "Type punning through unions is legal in C11 (\u00a76.5.2.3) but reading wrong variant of Rust union is UB. Pointer casts in the code also trigger strict aliasing violations. Idiomatic Rust uses to_bits()/from_bits() or transmute.",
+        "cve_references": [],
+        "expected_ub_categories": [
+          "strict_aliasing"
+        ]
+      }
+    },
+    {
+      "name": "bitshift_overflow",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 19,
+      "ub_categories": [
+        "shift_overflow",
+        "uninitialized",
+        "division_by_zero"
+      ],
+      "ub_eliminated": 19,
+      "ub_elimination_rate": 1.0,
+      "divergences": [
+        {
+          "category": "uninitialized",
+          "location": "line 9",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 10",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 11",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 13",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 14",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 15",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 16",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 46",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        },
+        {
+          "category": "shift_overflow",
+          "location": "line 26",
+          "severity": "medium",
+          "description": "Shift amount may exceed bit width",
+          "c_behavior": "UB: Shift amount may exceed bit width",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-682"
+        },
+        {
+          "category": "shift_overflow",
+          "location": "line 33",
+          "severity": "medium",
+          "description": "Shift amount may exceed bit width",
+          "c_behavior": "UB: Shift amount may exceed bit width",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-682"
+        },
+        {
+          "category": "shift_overflow",
+          "location": "line 38",
+          "severity": "medium",
+          "description": "Shift amount may exceed bit width",
+          "c_behavior": "UB: Shift amount may exceed bit width",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-682"
+        },
+        {
+          "category": "shift_overflow",
+          "location": "line 43",
+          "severity": "medium",
+          "description": "Shift amount may exceed bit width",
+          "c_behavior": "UB: Shift amount may exceed bit width",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-682"
+        },
+        {
+          "category": "shift_overflow",
+          "location": "line 48",
+          "severity": "medium",
+          "description": "Shift amount may exceed bit width",
+          "c_behavior": "UB: Shift amount may exceed bit width",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-682"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 2.75,
+      "smt_query_count": 20,
+      "baseline_would_detect": false,
+      "ground_truth_detail": {
+        "description": "Shift by >= type width is UB in C (C11 \u00a76.5.7). Rust wrapping_shl/shr wraps the shift amount (mod width). shift_by_32: UB in C, returns x in Rust.",
+        "cve_references": [
+          "CVE-2015-0235"
+        ],
+        "expected_ub_categories": [
+          "shift_overflow"
+        ]
+      }
+    },
+    {
+      "name": "uninitialized_memory",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 24,
+      "ub_categories": [
+        "buffer_overflow",
+        "uninitialized",
+        "division_by_zero"
+      ],
+      "ub_eliminated": 22,
+      "ub_elimination_rate": 0.9167,
+      "divergences": [
+        {
+          "category": "buffer_overflow",
+          "location": "line 30",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 35",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 10",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 11",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 13",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 14",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 15",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 16",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 22",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 25",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 44",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 45",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 56",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 57",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 58",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 59",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 87",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 70",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 4.18,
+      "smt_query_count": 25,
+      "baseline_would_detect": false,
+      "ground_truth_detail": {
+        "description": "Reading uninitialized memory is UB in C (C11 \u00a76.3.2.1/2). Rust compiler enforces initialization before use. parse_header: uninit on error path; partial struct init.",
+        "cve_references": [
+          "CVE-2019-15166",
+          "CVE-2017-12172"
+        ],
+        "expected_ub_categories": [
+          "uninitialized"
+        ]
+      }
+    },
+    {
+      "name": "aliasing_violation",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 27,
+      "ub_categories": [
+        "uninitialized",
+        "buffer_overflow",
+        "signed_overflow",
+        "null_deref",
+        "strict_aliasing"
+      ],
+      "ub_eliminated": 22,
+      "ub_elimination_rate": 0.8148,
+      "divergences": [
+        {
+          "category": "signed_overflow",
+          "location": "line 6",
+          "severity": "critical",
+          "description": "Signed integer arithmetic may overflow (undefined in C)",
+          "c_behavior": "UB: Signed integer arithmetic may overflow (undefined in C)",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-190"
+        },
+        {
+          "category": "signed_overflow",
+          "location": "line 69",
+          "severity": "critical",
+          "description": "Signed integer arithmetic may overflow (undefined in C)",
+          "c_behavior": "UB: Signed integer arithmetic may overflow (undefined in C)",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-190"
+        },
+        {
+          "category": "null_deref",
+          "location": "line 46",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "null_deref",
+          "location": "line 52",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "null_deref",
+          "location": "line 75",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 32",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "buffer_overflow",
+          "location": "line 37",
+          "severity": "critical",
+          "description": "Unbounded write to buffer",
+          "c_behavior": "UB: Unbounded write to buffer",
+          "rust_behavior": "Prevented by bounds_checking",
+          "cwe_id": "CWE-120"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 46",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 52",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 69",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 70",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "strict_aliasing",
+          "location": "line 75",
+          "severity": "high",
+          "description": "Pointer cast may violate strict aliasing rules",
+          "c_behavior": "UB: Pointer cast may violate strict aliasing rules",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-843"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 13",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 14",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 15",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 16",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 22",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 23",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 24",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 27",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 58",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 3.93,
+      "smt_query_count": 28,
+      "baseline_would_detect": false,
+      "ground_truth_detail": {
+        "description": "Strict aliasing violation: accessing int through float pointer is UB (C11 \u00a76.5/7). Rust uses safe from_bits()/to_bits(). TBAA exploitation can cause miscompilation.",
+        "cve_references": [
+          "CVE-2008-1447"
+        ],
+        "expected_ub_categories": [
+          "strict_aliasing"
+        ]
+      }
+    },
+    {
+      "name": "floating_point",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 16,
+      "ub_categories": [
+        "null_deref",
+        "uninitialized",
+        "division_by_zero"
+      ],
+      "ub_eliminated": 15,
+      "ub_elimination_rate": 0.9375,
+      "divergences": [
+        {
+          "category": "null_deref",
+          "location": "line 73",
+          "severity": "critical",
+          "description": "Pointer dereference without null check",
+          "c_behavior": "UB: Pointer dereference without null check",
+          "rust_behavior": "Prevented by option_type",
+          "cwe_id": "CWE-476"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 12",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 13",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 14",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 15",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 16",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 22",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 23",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 24",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 3",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 71",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        },
+        {
+          "category": "integer_promotion",
+          "severity": "critical",
+          "description": "C integer promotion widens i16/i16 \u2192 i32 before 'add'. Rust keeps i16: overflow behavior diverges.",
+          "c_behavior": "Operands promoted from i16/i16 to i32. Arithmetic performed in 32-bit, no overflow.",
+          "rust_behavior": "Operands stay as i16. Arithmetic in 16-bit, may overflow/panic."
+        },
+        {
+          "category": "integer_promotion",
+          "severity": "warning",
+          "description": "C implicitly converts i32 and u32 to u32 for comparison. Sign-dependent comparison results may differ.",
+          "c_behavior": "Mixed-sign comparison: i32 vs u32 \u2192 both promoted to u32 (C implicit conversion).",
+          "rust_behavior": "Rust rejects direct comparison of i32 and u32. Requires explicit cast."
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 2,
+      "promotion_chains": 4,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 3.19,
+      "smt_query_count": 19,
+      "baseline_would_detect": false,
+      "ground_truth_detail": {
+        "description": "Float-to-int conversion is UB when value doesn't fit (C11 \u00a76.3.1.4). Rust saturates since 1.45: INFINITY\u2192MAX, NaN\u21920. audio_float_to_int16: NaN passes clamping checks in C.",
+        "cve_references": [
+          "CVE-2020-36385"
+        ],
+        "expected_ub_categories": [
+          "signed_overflow"
+        ]
+      }
+    },
+    {
+      "name": "varargs_handling",
+      "classification": "divergent",
+      "ground_truth": "divergent",
+      "classification_correct": true,
+      "ub_patterns_found": 14,
+      "ub_categories": [
+        "uninitialized",
+        "division_by_zero"
+      ],
+      "ub_eliminated": 14,
+      "ub_elimination_rate": 1.0,
+      "divergences": [
+        {
+          "category": "uninitialized",
+          "location": "line 17",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 18",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 19",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 20",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 21",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 22",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 23",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 24",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 25",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 26",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 27",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 28",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "uninitialized",
+          "location": "line 29",
+          "severity": "high",
+          "description": "Variable declared without initialization",
+          "c_behavior": "UB: Variable declared without initialization",
+          "rust_behavior": "Prevented by type_system",
+          "cwe_id": "CWE-457"
+        },
+        {
+          "category": "division_by_zero",
+          "location": "line 49",
+          "severity": "high",
+          "description": "Division where divisor may be zero",
+          "c_behavior": "UB: Division where divisor may be zero",
+          "rust_behavior": "Prevented by checked_arithmetic",
+          "cwe_id": "CWE-369"
+        }
+      ],
+      "struct_layout_divergences": 0,
+      "promotion_divergences": 0,
+      "promotion_chains": 0,
+      "preprocessor_applied": true,
+      "preprocessor_warnings": 0,
+      "analysis_time_ms": 2.25,
+      "smt_query_count": 15,
+      "baseline_would_detect": false,
+      "ground_truth_detail": {
+        "description": "C variadic functions have no type safety. Wrong va_arg type is UB. Rust uses typed slices \u2014 no varargs in safe code. Type mismatch: caller passes float, callee reads int.",
+        "cve_references": [],
+        "expected_ub_categories": [
+          "format_string"
+        ]
+      }
+    }
+  ]
+}

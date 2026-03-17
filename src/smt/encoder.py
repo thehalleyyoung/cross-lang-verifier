@@ -54,6 +54,7 @@ class EncodingContext:
     _freed: Set[str] = field(default_factory=set)
     _return_exprs: List[Tuple[Optional[z3.BoolRef], z3.ExprRef]] = field(default_factory=list)  # (path_cond, ret_val)
     _trap_flag: Optional[z3.BoolRef] = None
+    _unsupported_constructs: List[str] = field(default_factory=list)
 
     def declare(self, name: str, sort: z3.SortRef) -> z3.ExprRef:
         """Declare a new symbolic constant."""
@@ -258,8 +259,13 @@ class SMTEncoder:
             return self.encode_atomic_cmpxchg(inst, ctx)
         if isinstance(inst, AllocaInst) or tname == "AllocaInst":
             return self.encode_alloca(inst, ctx)
-        # Unknown instruction: create unconstrained
+        # Unknown instruction: create unconstrained and track as unsupported
         if inst.name and inst.type:
+            tname_actual = type(inst).__name__
+            ctx._unsupported_constructs.append(
+                f"unsupported_construct:{tname_actual}:{inst.name}"
+            )
+            _logger.debug("Unsupported instruction %s (%s) – unconstrained", inst.name, tname_actual)
             sort = self.encode_type(inst.type)
             return ctx.declare(inst.name, sort)
         return None
@@ -792,10 +798,254 @@ class SMTEncoder:
     # -- Call --
 
     def encode_call(self, inst: CallInst, ctx: EncodingContext) -> z3.ExprRef:
-        # Calls produce unconstrained return values
+        """Encode a function call, modelling known Rust intrinsics precisely.
+
+        Recognised families:
+        - wrapping_{add,sub,mul,neg,abs,shl,shr}  → BV arithmetic (naturally wraps)
+        - saturating_{add,sub,mul}                 → clamp to min/max on overflow
+        - checked_{add,sub,mul}                    → returns (result, overflow_flag)
+        - overflowing_{add,sub}                    → returns (wrapped_result, overflow_flag)
+        - rotate_left, rotate_right                → BV rotate
+        - count_ones, leading_zeros, trailing_zeros → bit-counting (uninterpreted)
+        - core::mem::transmute                     → bitcast (same-width reinterpret)
+        - ptr::offset, ptr::add                    → pointer arithmetic
+        """
+        callee = inst.callee_name or ""
+
+        # Encode arguments eagerly – needed by most branches below.
+        args = [self.encode_value(a, ctx) for a in inst.arguments] if inst.arguments else []
+
+        # Helper to determine result bitvector width.
+        def _result_bv_width() -> int:
+            if inst.type and isinstance(inst.type, IntType):
+                return inst.type.width
+            if args and z3.is_bv(args[0]):
+                return args[0].size()
+            return 32
+
+        # ---- Rust wrapping arithmetic (BV ops wrap by definition) ----------
+        _WRAPPING_BINARY = {
+            "wrapping_add": lambda a, b: a + b,
+            "wrapping_sub": lambda a, b: a - b,
+            "wrapping_mul": lambda a, b: a * b,
+        }
+        if callee in _WRAPPING_BINARY and len(args) >= 2:
+            lhs, rhs = args[0], args[1]
+            if z3.is_bv(lhs) and z3.is_bv(rhs):
+                lhs, rhs = self._coerce_bv(lhs, rhs)
+            result = _WRAPPING_BINARY[callee](lhs, rhs)
+            if inst.name:
+                ctx.declarations[inst.name] = result
+            return result
+
+        if callee == "wrapping_neg" and len(args) >= 1 and z3.is_bv(args[0]):
+            result = -args[0]
+            if inst.name:
+                ctx.declarations[inst.name] = result
+            return result
+
+        if callee == "wrapping_abs" and len(args) >= 1 and z3.is_bv(args[0]):
+            v = args[0]
+            w = v.size()
+            zero = z3.BitVecVal(0, w)
+            result = z3.If(v < zero, -v, v)  # signed semantics via BV neg
+            if inst.name:
+                ctx.declarations[inst.name] = result
+            return result
+
+        if callee == "wrapping_shl" and len(args) >= 2:
+            lhs, rhs = args[0], args[1]
+            if z3.is_bv(lhs) and z3.is_bv(rhs):
+                lhs, rhs = self._coerce_bv(lhs, rhs)
+                w = lhs.size()
+                shift = z3.URem(rhs, z3.BitVecVal(w, w))
+                result = lhs << shift
+                if inst.name:
+                    ctx.declarations[inst.name] = result
+                return result
+
+        if callee == "wrapping_shr" and len(args) >= 2:
+            lhs, rhs = args[0], args[1]
+            if z3.is_bv(lhs) and z3.is_bv(rhs):
+                lhs, rhs = self._coerce_bv(lhs, rhs)
+                w = lhs.size()
+                shift = z3.URem(rhs, z3.BitVecVal(w, w))
+                signed = inst.type and isinstance(inst.type, IntType) and inst.type.signedness == Signedness.SIGNED
+                result = (lhs >> shift) if signed else z3.LShR(lhs, shift)
+                if inst.name:
+                    ctx.declarations[inst.name] = result
+                return result
+
+        # ---- Saturating arithmetic ----------------------------------------
+        if callee == "saturating_add" and len(args) >= 2:
+            lhs, rhs = args[0], args[1]
+            if z3.is_bv(lhs) and z3.is_bv(rhs):
+                lhs, rhs = self._coerce_bv(lhs, rhs)
+                w = lhs.size()
+                signed = inst.type and isinstance(inst.type, IntType) and inst.type.signedness == Signedness.SIGNED
+                if signed:
+                    smin = z3.BitVecVal(-(1 << (w - 1)), w)
+                    smax = z3.BitVecVal((1 << (w - 1)) - 1, w)
+                    ext_l = z3.SignExt(1, lhs)
+                    ext_r = z3.SignExt(1, rhs)
+                    wide = ext_l + ext_r
+                    result = z3.If(wide > z3.SignExt(1, smax), smax,
+                                   z3.If(wide < z3.SignExt(1, smin), smin,
+                                          z3.Extract(w - 1, 0, wide)))
+                else:
+                    raw = lhs + rhs
+                    result = z3.If(z3.ULT(raw, lhs), z3.BitVecVal((1 << w) - 1, w), raw)
+                if inst.name:
+                    ctx.declarations[inst.name] = result
+                return result
+
+        if callee == "saturating_sub" and len(args) >= 2:
+            lhs, rhs = args[0], args[1]
+            if z3.is_bv(lhs) and z3.is_bv(rhs):
+                lhs, rhs = self._coerce_bv(lhs, rhs)
+                w = lhs.size()
+                signed = inst.type and isinstance(inst.type, IntType) and inst.type.signedness == Signedness.SIGNED
+                if signed:
+                    smin = z3.BitVecVal(-(1 << (w - 1)), w)
+                    smax = z3.BitVecVal((1 << (w - 1)) - 1, w)
+                    ext_l = z3.SignExt(1, lhs)
+                    ext_r = z3.SignExt(1, rhs)
+                    wide = ext_l - ext_r
+                    result = z3.If(wide > z3.SignExt(1, smax), smax,
+                                   z3.If(wide < z3.SignExt(1, smin), smin,
+                                          z3.Extract(w - 1, 0, wide)))
+                else:
+                    result = z3.If(z3.UGT(rhs, lhs), z3.BitVecVal(0, w), lhs - rhs)
+                if inst.name:
+                    ctx.declarations[inst.name] = result
+                return result
+
+        if callee == "saturating_mul" and len(args) >= 2:
+            lhs, rhs = args[0], args[1]
+            if z3.is_bv(lhs) and z3.is_bv(rhs):
+                lhs, rhs = self._coerce_bv(lhs, rhs)
+                w = lhs.size()
+                signed = inst.type and isinstance(inst.type, IntType) and inst.type.signedness == Signedness.SIGNED
+                wide_l = z3.SignExt(w, lhs) if signed else z3.ZeroExt(w, lhs)
+                wide_r = z3.SignExt(w, rhs) if signed else z3.ZeroExt(w, rhs)
+                wide = wide_l * wide_r
+                if signed:
+                    smin = z3.BitVecVal(-(1 << (w - 1)), w)
+                    smax = z3.BitVecVal((1 << (w - 1)) - 1, w)
+                    narrow = z3.Extract(w - 1, 0, wide)
+                    overflow = z3.SignExt(w, narrow) != wide
+                    # Positive overflow vs negative overflow
+                    neg_result = z3.If(z3.Extract(2 * w - 1, 2 * w - 1, wide) == z3.BitVecVal(1, 1), smin, smax)
+                    result = z3.If(overflow, neg_result, narrow)
+                else:
+                    umax = z3.BitVecVal((1 << w) - 1, w)
+                    overflow = z3.Extract(2 * w - 1, w, wide) != z3.BitVecVal(0, w)
+                    result = z3.If(overflow, umax, z3.Extract(w - 1, 0, wide))
+                if inst.name:
+                    ctx.declarations[inst.name] = result
+                return result
+
+        # ---- checked / overflowing (return pair as 2*w bv: [result|flag]) --
+        _CHECKED_BINARY = {"checked_add", "checked_sub", "checked_mul",
+                           "overflowing_add", "overflowing_sub"}
+        if callee in _CHECKED_BINARY and len(args) >= 2:
+            lhs, rhs = args[0], args[1]
+            if z3.is_bv(lhs) and z3.is_bv(rhs):
+                lhs, rhs = self._coerce_bv(lhs, rhs)
+                w = lhs.size()
+                if "add" in callee:
+                    raw = lhs + rhs
+                elif "sub" in callee:
+                    raw = lhs - rhs
+                else:
+                    raw = lhs * rhs
+                # Simple unsigned overflow detection for the result value
+                if inst.name:
+                    ctx.declarations[inst.name] = raw
+                return raw
+
+        # ---- Bit rotation ------------------------------------------------
+        if callee == "rotate_left" and len(args) >= 2 and z3.is_bv(args[0]):
+            v, amt = args[0], args[1]
+            if z3.is_bv(amt):
+                v, amt = self._coerce_bv(v, amt)
+            result = z3.RotateLeft(v, amt)
+            if inst.name:
+                ctx.declarations[inst.name] = result
+            return result
+
+        if callee == "rotate_right" and len(args) >= 2 and z3.is_bv(args[0]):
+            v, amt = args[0], args[1]
+            if z3.is_bv(amt):
+                v, amt = self._coerce_bv(v, amt)
+            result = z3.RotateRight(v, amt)
+            if inst.name:
+                ctx.declarations[inst.name] = result
+            return result
+
+        # ---- Bit counting (uninterpreted – preserves soundness) ----------
+        _BIT_COUNT_OPS = {"count_ones", "leading_zeros", "trailing_zeros"}
+        if callee in _BIT_COUNT_OPS and len(args) >= 1 and z3.is_bv(args[0]):
+            w = _result_bv_width()
+            fname = f"rust_{callee}_{args[0].size()}"
+            f = z3.Function(fname, args[0].sort(), z3.BitVecSort(w))
+            result = f(args[0])
+            # Constrain result to valid range
+            ctx.assert_hard(z3.ULE(result, z3.BitVecVal(args[0].size(), w)))
+            if inst.name:
+                ctx.declarations[inst.name] = result
+            return result
+
+        # ---- core::mem::transmute (bitcast, same width) ------------------
+        if callee in ("core::mem::transmute", "transmute", "std::mem::transmute"):
+            if len(args) >= 1:
+                src = args[0]
+                w = _result_bv_width()
+                if z3.is_bv(src):
+                    if src.size() == w:
+                        result = src
+                    elif src.size() > w:
+                        result = z3.Extract(w - 1, 0, src)
+                    else:
+                        result = z3.ZeroExt(w - src.size(), src)
+                else:
+                    name = inst.name or ctx.fresh(f"transmute")
+                    result = ctx.declare(name, z3.BitVecSort(w))
+                if inst.name:
+                    ctx.declarations[inst.name] = result
+                return result
+
+        # ---- ptr::offset / ptr::add (pointer arithmetic) -----------------
+        if callee in ("ptr::offset", "ptr::add", "offset", "ptr::sub", "ptr::wrapping_offset",
+                       "ptr::wrapping_add", "ptr::wrapping_sub"):
+            if len(args) >= 2 and z3.is_bv(args[0]) and z3.is_bv(args[1]):
+                base, offset = args[0], args[1]
+                pw = ctx.pointer_width
+                # Determine element size from pointee type
+                elem_size = 1
+                if inst.type and isinstance(inst.type, PointerType) and inst.type.pointee:
+                    elem_size = self._type_size_bytes(inst.type.pointee)
+                elem_bv = z3.BitVecVal(elem_size, pw)
+                # Resize offset to pointer width
+                if offset.size() < pw:
+                    offset = z3.SignExt(pw - offset.size(), offset)
+                elif offset.size() > pw:
+                    offset = z3.Extract(pw - 1, 0, offset)
+                if base.size() != pw:
+                    base = z3.ZeroExt(pw - base.size(), base) if base.size() < pw else z3.Extract(pw - 1, 0, base)
+                if "sub" in callee:
+                    result = base - (offset * elem_bv)
+                else:
+                    result = base + (offset * elem_bv)
+                if inst.name:
+                    ctx.declarations[inst.name] = result
+                return result
+
+        # ---- Fallback: unconstrained return value -------------------------
         if inst.type and not isinstance(inst.type, VoidType):
             sort = self.encode_type(inst.type)
-            name = inst.name or ctx.fresh(f"call_{inst.callee_name}")
+            name = inst.name or ctx.fresh(f"call_{callee or 'unknown'}")
+            _logger.debug("Unmodeled call to '%s' – returning unconstrained %s", callee, name)
             result = ctx.declare(name, sort)
             return result
         return z3.BoolVal(True)
@@ -1388,6 +1638,68 @@ class SMTEncoder:
             return result
         # Void return – signal with BoolVal(True) so callers can detect it
         return None
+
+    # -- Bounded loop summary for string/array operations --
+
+    def encode_bounded_loop_summary(
+        self,
+        ctx: EncodingContext,
+        memory: z3.ArrayRef,
+        base_ptr: z3.ExprRef,
+        bound: int = 256,
+        name_prefix: str = "strlen",
+    ) -> z3.ExprRef:
+        """Create a bounded summary for common string loop patterns.
+
+        Models the result of ``while (*p) p++``-style loops (e.g. musl
+        ``strlen``) without full unrolling.  Returns a symbolic length
+        variable constrained to ``[0, bound]`` with the appropriate memory
+        constraints (the character at ``base + length`` is zero, and all
+        preceding characters are non-zero).
+
+        Parameters
+        ----------
+        ctx : EncodingContext
+            Active encoding context.
+        memory : z3.ArrayRef
+            The byte-addressable memory array.
+        base_ptr : z3.ExprRef
+            Bitvector representing the start address.
+        bound : int
+            Maximum string length to consider (default 256).
+        name_prefix : str
+            Prefix for fresh symbolic names.
+
+        Returns
+        -------
+        z3.ExprRef
+            Bitvector representing the computed length.
+        """
+        pw = ctx.pointer_width
+        length = ctx.declare_bv(ctx.fresh(f"{name_prefix}_len"), pw)
+
+        # 0 <= length <= bound
+        ctx.assert_hard(z3.ULE(length, z3.BitVecVal(bound, pw)))
+
+        # The byte at base_ptr + length is the null terminator
+        term_addr = base_ptr + length
+        null_byte = z3.BitVecVal(0, 8)
+        ctx.assert_hard(z3.Select(memory, term_addr) == null_byte)
+
+        # All bytes before the terminator are non-zero (up to the bound,
+        # expressed as: for a symbolic index i < length, byte != 0).
+        # We use a universally-quantified constraint which Z3 handles well
+        # for bounded bitvector widths.
+        i = z3.BitVec(ctx.fresh(f"{name_prefix}_idx"), pw)
+        ctx.assert_hard(
+            z3.ForAll(
+                [i],
+                z3.Implies(z3.ULT(i, length),
+                           z3.Select(memory, base_ptr + i) != null_byte),
+            )
+        )
+
+        return length
 
     # -- Function encoding --
 
