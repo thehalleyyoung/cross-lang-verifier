@@ -513,11 +513,11 @@ full verification---loops exceeding $K$ iterations may miss bugs.
 The oracle exposes a simple programmatic interface:
 
 \begin{lstlisting}[language=Python,caption={Oracle API returning structured triples.},label={lst:api}]
-from semrec import VerificationOracle
+from src.oracle.oracle import VerificationOracle
 oracle = VerificationOracle()
 result = oracle.verify(c_code, rust_code)
 # result.verdict:        "equivalent" | "divergent" | "unknown" | "error"
-# result.counterexample: {inputs, c_output, rust_output, divergence_class}
+# result.counterexample: {inputs, c_behavior, rust_behavior, divergence_class}
 # result.repair_hint:    {description, suggested_fix, fix_category}
 \end{lstlisting}
 
@@ -1874,12 +1874,12 @@ Run the CEGAR loop with an LLM.
 # CEGAR with GPT-4.1-nano, 5 iterations
 semrec cegar --source-file overflow.c --model gpt-4.1-nano --max-iter 5
 
-# With custom temperature
+# CEGAR with more iterations
 semrec cegar --source-file rotate.c --model gpt-4.1-nano \
-  --max-iter 10 --temperature 0.2
+  --max-iter 10
 
-# Batch CEGAR over a directory
-semrec cegar --source-dir benchmarks/core/ --model gpt-4.1-nano \
+# CEGAR on a single file with JSON output
+semrec cegar --source-file benchmarks/core/add.c --model gpt-4.1-nano \
   --output cegar_results.json
 \end{lstlisting}
 
@@ -1904,9 +1904,9 @@ semrec bench --verbose --output results.json
 \subsection{Python API}
 
 \begin{lstlisting}[language=Python,caption={Full Oracle API usage.},label={lst:api-full}]
-from semrec import VerificationOracle
+from src.oracle.oracle import VerificationOracle
 
-oracle = VerificationOracle(timeout=10)
+oracle = VerificationOracle(timeout_ms=10000)
 
 # Verify a pair
 result = oracle.verify(
@@ -1915,15 +1915,15 @@ result = oracle.verify(
 )
 
 print(result.verdict)          # "equivalent" | "divergent" | "unknown" | "error"
-print(result.counterexample)   # None or CounterExample object
+print(result.counterexample)   # None or CounterexampleInfo object
 print(result.repair_hint)      # None or RepairHint object
-print(result.time_seconds)     # float
+print(result.time_ms)          # float (milliseconds)
 
 if result.verdict == "divergent":
     cex = result.counterexample
     print(f"Inputs: {cex.inputs}")
-    print(f"C output: {cex.c_output}")
-    print(f"Rust output: {cex.rust_output}")
+    print(f"C behavior: {cex.c_behavior}")
+    print(f"Rust behavior: {cex.rust_behavior}")
     print(f"Class: {cex.divergence_class}")
 
     hint = result.repair_hint
@@ -1935,18 +1935,18 @@ if result.verdict == "divergent":
 
 \begin{lstlisting}[language=Python,caption={Oracle data types.},label={lst:api-types}]
 @dataclass
-class VerificationResult:
+class OracleResult:
     verdict: str          # "equivalent" | "divergent" | "unknown" | "error"
-    counterexample: Optional[CounterExample]
+    counterexample: Optional[CounterexampleInfo]
     repair_hint: Optional[RepairHint]
-    time_seconds: float
-    smt_stats: Optional[SMTStats]
+    time_ms: float
+    smt_queries: int
 
 @dataclass
-class CounterExample:
-    inputs: Dict[str, int]
-    c_output: Union[int, str]   # str for UB description
-    rust_output: Union[int, str]
+class CounterexampleInfo:
+    inputs: Dict[str, str]
+    c_behavior: Optional[str]   # str for UB description
+    rust_behavior: Optional[str]
     divergence_class: str       # "undefined_behavior" | "output_mismatch" |
                                 # "type_mismatch" | "panic_divergence"
 

@@ -311,17 +311,21 @@ diagnostic information when the answer is ``no.''
 The oracle exposes a simple interface:
 
 \begin{lstlisting}[language=Python,caption={Verification Oracle API},label={lst:api}]
-class VerificationResult:
-    verdict: str          # "equivalent", "divergent", "unknown"
-    counterexample: dict  # input values triggering divergence
-    c_output: int         # C function output on counterexample
-    rust_output: int      # Rust function output on counterexample
-    bug_class: str        # classified divergence type
-    diagnostic: str       # human-readable explanation
+class OracleResult:
+    verdict: str                           # "equivalent", "divergent", "unknown", "error"
+    counterexample: Optional[CounterexampleInfo]
+    repair_hint: Optional[RepairHint]
+    time_ms: float
+    smt_queries: int
 
-def verify(c_source: str, rust_source: str,
-           timeout: int = 30) -> VerificationResult:
-    """Compare C and Rust functions for semantic equivalence."""
+class CounterexampleInfo:
+    inputs: Dict[str, str]
+    c_behavior: Optional[str]
+    rust_behavior: Optional[str]
+    divergence_class: str
+
+oracle = VerificationOracle()
+result = oracle.verify(c_code, rust_code, func_name="add")
 \end{lstlisting}
 
 \subsection{Counterexample Diagnostics}
