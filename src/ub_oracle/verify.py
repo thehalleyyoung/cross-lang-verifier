@@ -28,6 +28,7 @@ from typing import Dict, List, Optional
 
 from .plugin import (
     REGISTRY,
+    ALL_ORACLES,
     DivergenceOracle,
     OracleResult,
     OracleVerdict,
@@ -101,23 +102,20 @@ class VerifyReport:
 def applicable_oracles(unit: Dict) -> List[DivergenceOracle]:
     """Oracles that apply to ``unit``, respecting any declared language pair.
 
-    If the unit declares ``source_lang``/``target_lang``, only oracles validated
-    on exactly that pair are eligible — a unit declaring an unsupported pair
-    (e.g. ``go``->``rust``) therefore matches *no* oracle and is honestly
-    reported as ``NOT_COVERED`` rather than silently treated as the anchor pair.
-    Units that omit the languages default to the anchor pair each oracle exposes.
+    A unit may declare ``source_lang``/``target_lang``; oracles validated on a
+    *different* pair are never eligible, so a unit declaring an unsupported pair
+    (e.g. ``go``->``rust``) honestly matches *no* oracle and is reported as
+    ``NOT_COVERED`` rather than silently treated as the anchor pair. Units that
+    omit the languages default to the C->Rust anchor pair, so the legacy
+    benchmark/verify behaviour is preserved exactly while a unit that *opts in*
+    to a second target (``target_lang: "go"``) is routed to that pair's oracles.
     """
-    src = unit.get("source_lang")
-    tgt = unit.get("target_lang")
+    src = unit.get("source_lang") or "c"
+    tgt = unit.get("target_lang") or "rust"
 
-    def pair_ok(o: DivergenceOracle) -> bool:
-        if src is not None and src != o.source_lang:
-            return False
-        if tgt is not None and tgt != o.target_lang:
-            return False
-        return True
-
-    return [o for o in REGISTRY.values() if pair_ok(o) and o.applies_to(unit)]
+    return [o for o in ALL_ORACLES
+            if o.source_lang == src and o.target_lang == tgt
+            and o.applies_to(unit)]
 
 
 def verify_unit(
@@ -135,7 +133,8 @@ def verify_unit(
     ``DIVERGENT`` verdict. Otherwise such a witness is reported as ``CANDIDATE``.
     """
     status = status or toolchain_available()
-    tool_ok = status.full
+    tgt_lang = unit.get("target_lang") or "rust"
+    tool_ok = status.full_for(tgt_lang)
     if confirm and tool_ok and harness is None:
         harness = ReexecHarness(status)
 

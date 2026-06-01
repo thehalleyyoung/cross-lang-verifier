@@ -763,3 +763,137 @@ def test_guard_manifest_example_verifies_and_emits_sarif(tmp_path):
     # without confirmation the overflow/shift/etc. units are CANDIDATE warnings.
     assert any(r["level"] == "warning" for r in doc["runs"][0]["results"])
     assert rc == 1  # --fail-on candidate trips on the symbolic witnesses
+
+
+# ── C -> Go: the second language pair (step 37) ──────────────────────────────
+
+from src.ub_oracle.verify import verify_unit, applicable_oracles, VerifyVerdict
+from src.ub_oracle import plugin as _plugin
+from src.ub_oracle.reexec import RunOutcome
+
+_requires_go = pytest.mark.skipif(
+    not _TC.full_for("go"),
+    reason=f"needs C+UBSan+go toolchain ({_TC})")
+
+# (probe-free) C->Go units, one per Go oracle.
+_GO_UNITS = {
+    "signed_overflow": {"kind": "binop_const", "op": "add", "const": 2147483647,
+                        "width": 32, "var": "x", "signed": True},
+    "shift_oob": {"kind": "shift", "width": 32, "value": 1},
+    "div_by_zero": {"kind": "div", "width": 32, "a": "a", "b": "b"},
+    "array_oob": {"kind": "array_index", "length": 4},
+}
+
+
+def _go_unit(class_key):
+    u = dict(_GO_UNITS[class_key])
+    u["source_lang"], u["target_lang"] = "c", "go"
+    return u
+
+
+def test_go_pair_is_registered_as_a_second_language_pair():
+    pairs = _plugin.language_pairs()
+    assert ("c", "rust") in pairs
+    assert ("c", "go") in pairs
+    go_oracles = _plugin.oracles_for(source_lang="c", target_lang="go")
+    classes = {o.divergence_class for o in go_oracles}
+    # the four argv-driven classes plus INT_MIN/-1 are covered for Go.
+    assert {"signed_overflow", "shift_oob", "div_by_zero",
+            "array_oob", "intmin_div_neg1"} <= classes
+
+
+def test_anchor_registry_is_unchanged_by_the_go_pair():
+    # the legacy REGISTRY must still expose exactly the C->Rust anchor oracles
+    # (one per class) so metrics/ablation/head-to-head are untouched.
+    for key, orc in _plugin.REGISTRY.items():
+        assert (orc.source_lang, orc.target_lang) == ("c", "rust")
+        assert orc.divergence_class == key
+
+
+@pytest.mark.parametrize("class_key", list(_GO_UNITS))
+def test_go_oracle_emits_go_target_source_symbolically(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "go")
+    res = orc.find_divergence(_go_unit(class_key))
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert ce.target_lang == "go"
+    # real Go source markers (no toolchain needed to check this).
+    assert ce.target_snippet.startswith("package main")
+    assert "func main()" in ce.target_snippet
+    # the C source is identical to the C->Rust anchor's (generality reuse).
+    anchor = _plugin.get_oracle_for(class_key, "c", "rust")
+    anchor_ce = anchor.find_divergence(dict(_GO_UNITS[class_key])).counterexample
+    assert ce.source_snippet == anchor_ce.source_snippet
+
+
+def test_go_unit_is_routed_only_to_go_oracles():
+    unit = _go_unit("div_by_zero")
+    applicable = applicable_oracles(unit)
+    assert applicable, "a C->Go unit must match the Go oracles"
+    assert all(o.target_lang == "go" for o in applicable)
+
+
+def test_c_rust_unit_is_not_routed_to_go_oracles():
+    # a unit that omits languages defaults to the C->Rust anchor — Go oracles
+    # must never fire on it.
+    unit = {"kind": "div", "width": 32, "a": "a", "b": "b"}
+    applicable = applicable_oracles(unit)
+    assert applicable
+    assert all(o.target_lang == "rust" for o in applicable)
+
+
+def test_run_outcome_go_definedness_predicate():
+    # Go's defined return codes: 0 (value) or 2 (runtime panic). 101 (Rust's
+    # panic code) is NOT a defined Go outcome.
+    assert RunOutcome(0, "x", "").target_outcome_defined("go")
+    assert RunOutcome(2, "", "panic").target_outcome_defined("go")
+    assert not RunOutcome(101, "", "").target_outcome_defined("go")
+    assert not RunOutcome(139, "", "").target_outcome_defined("go")
+    # Rust's predicate is unchanged.
+    assert RunOutcome(101, "", "").target_outcome_defined("rust")
+    assert not RunOutcome(2, "", "").target_outcome_defined("rust")
+
+
+@_requires_go
+@pytest.mark.parametrize("class_key", list(_GO_UNITS))
+def test_go_divergence_confirmed_against_real_clang_and_go(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "go")
+    res = orc.confirm(orc.find_divergence(_go_unit(class_key)), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available, rr.reason
+    assert rr.ub_reachable, "UBSan must trap on the witness (C is UB)"
+    assert rr.rust_defined, "Go must produce a defined, deterministic outcome"
+    assert rr.confirmed, rr.reason
+    assert res.counterexample.confirmed
+    assert res.counterexample.target_observed is not None
+
+
+@_requires_go
+def test_go_intmin_div_neg1_confirmed_end_to_end():
+    from src.ub_oracle.catalogue import INT_MIN_DIV_NEG1
+    unit = {"kind": "div", "width": 32, "signed": True, "a": "a", "b": "b",
+            "source_lang": "c", "target_lang": "go",
+            "probe": INT_MIN_DIV_NEG1.key}
+    report = verify_unit(unit)
+    assert report.verdict is VerifyVerdict.DIVERGENT
+    assert report.divergence.divergence_class == INT_MIN_DIV_NEG1.key
+
+
+@_requires_go
+def test_equivalent_go_translation_is_not_confirmed():
+    # negative control: a Go program whose answer matches a *defined* C program
+    # (no UB) must NOT be confirmed as a divergence — the sanitizer never traps.
+    harness = ReexecHarness(_TC)
+    c_src = ("#include <stdio.h>\n#include <stdlib.h>\n"
+             "int f(int a,int b){ return a + b; }\n"
+             "int main(int c,char**v){ if(c<3)return 2;"
+             " printf(\"%d\\n\", f(atoi(v[1]),atoi(v[2]))); return 0; }\n")
+    go_src = ("package main\nimport (\n\t\"fmt\"\n\t\"os\"\n\t\"strconv\"\n)\n"
+              "func f(a int32, b int32) int32 { return a + b }\n"
+              "func main(){ av,_:=strconv.Atoi(os.Args[1]); bv,_:=strconv.Atoi(os.Args[2]);"
+              " fmt.Println(f(int32(av), int32(bv))) }\n")
+    rr = harness.confirm_trap_vs_defined(c_src, go_src, ["2", "3"],
+                                         "division_by_zero", target_lang="go")
+    assert rr.available
+    assert not rr.ub_reachable
+    assert not rr.confirmed

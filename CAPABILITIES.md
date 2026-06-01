@@ -18,12 +18,12 @@ supported divergence classes.
 
 | Axis | Supported now | Status |
 |---|---|---|
-| Language pair | **C → Rust** (the anchor) | flagship, validated end-to-end |
+| Language pair | **C → Rust** (the anchor) and **C → Go** (second pair) | both validated end-to-end against real compilers |
 | Divergence classes (catalogue) | 12 classes enumerated in `src/ub_oracle/catalogue.py` | catalogue is data-complete; see oracle status below |
-| Divergence **oracles** (executable) | **signed integer overflow** (`add`, `sub`; widths 32, 64); **shift-out-of-range**; **division/remainder by zero**; **`INT_MIN / -1`**; **out-of-bounds array access**; **strict-aliasing violation**; **floating-point contraction (FMA fusion)** | each finds a Z3 witness **and** confirms it against real clang+UBSan and rustc |
+| Divergence **oracles** (executable) | **signed integer overflow** (`add`, `sub`; widths 32, 64); **shift-out-of-range**; **division/remainder by zero**; **`INT_MIN / -1`**; **out-of-bounds array access**; **strict-aliasing violation**; **floating-point contraction (FMA fusion)**; the five argv-driven integer/memory classes are also implemented for the **C → Go** pair | each finds a Z3 witness **and** confirms it against real clang+UBSan and the target compiler (rustc / go) |
 | Multi-oracle entry point | `verify_unit` runs every applicable oracle under a **sound-for-divergence** policy with **loud abstention** (`DIVERGENT` / `CANDIDATE` / `NO_DIVERGENCE_FOUND` / `UNKNOWN` / `NOT_COVERED`); oracles are **gated by declared language pair** so an unsupported pair is honestly `NOT_COVERED`, never silently treated as the anchor | `src/ub_oracle/verify.py` |
 | Per-class precision/recall | labelled benchmark; **P = R = 1.0** symbolically and after real-compiler confirmation | `src/ub_oracle/metrics.py` |
-| Ground-truth confirmation | real `clang -O0 / -O2 / -fsanitize=undefined` + real `rustc -O`, in three modes (`exploited`, `trap_vs_defined`, `optimizer_exploited`) | `src/ub_oracle/reexec.py` |
+| Ground-truth confirmation | real `clang -O0 / -O2 / -fsanitize=undefined` + the target compiler (`rustc -O` or `go build`), in three modes (`exploited`, `trap_vs_defined`, `optimizer_exploited`); each target language carries its own definedness predicate (Rust rc∈{0,101}, Go rc∈{0,2}) | `src/ub_oracle/reexec.py` |
 | Honest aggregate reporting | `aggregate_reports` emits **decided / abstained / unknown** fractions broken down by language pair and divergence class, with candidate-vs-not-covered sub-buckets and an explicit "not a proof of equivalence" disclaimer | `src/ub_oracle/report.py` |
 | SARIF 2.1.0 output | `to_sarif` renders confirmed `DIVERGENT` findings at `error` level and unconfirmed `CANDIDATE` witnesses at `warning` level, with catalogue-derived rules and partial fingerprints; physical locations are emitted only when a unit declares one (never fabricated) | `src/ub_oracle/report.py` |
 | Command-line verifier | `cross-lang-verify` (a.k.a. `python -m ub_oracle`): manifest-driven, pair-aware CLI with colored verdicts, the abstention summary, optional `--sarif`, and a `--fail-on` CI gate (exit 1 on confirmed divergence by default) | `src/ub_oracle/cli.py` |
@@ -77,8 +77,10 @@ fused and unfused results actually differ in printed output.
   The framework (`src/ub_oracle/plugin.py`) is designed for them to be added as
   plugins; until then the tool **abstains loudly** (`NOT_COVERED`) rather than
   guessing.
-- **Other language pairs** (C→Go, Python→Rust, ...) are part of the roadmap
-  (Step 37) but not implemented here.
+- **Further language pairs** (Python→Rust, C++→Rust, ...) are part of the
+  roadmap; **C → Go** is implemented and validated end-to-end (Step 37) as the
+  generality proof that a new target only needs target-source emission plus a
+  definedness predicate — the witness search and verifier are reused unchanged.
 - **General whole-program equivalence**: no claim. The oracle reasons about the
   specific divergence classes it implements, on the units it is given.
 - **Loops/recursion of unbounded depth, pointers/heap, concurrency**: not modeled

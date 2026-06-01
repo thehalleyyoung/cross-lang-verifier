@@ -39,6 +39,7 @@ class ToolchainStatus:
     cc: Optional[str]
     rustc: Optional[str]
     ubsan: bool
+    go: Optional[str] = None
 
     @property
     def c_available(self) -> bool:
@@ -49,8 +50,21 @@ class ToolchainStatus:
         return self.rustc is not None
 
     @property
+    def go_available(self) -> bool:
+        return self.go is not None
+
+    def target_available(self, target_lang: str = "rust") -> bool:
+        return {"rust": self.rust_available,
+                "go": self.go_available}.get(target_lang, False)
+
+    def full_for(self, target_lang: str = "rust") -> bool:
+        """Whether the full pipeline (C + UBSan + the requested target) is
+        available. ``full`` is preserved as the Rust-anchor shorthand."""
+        return self.c_available and self.ubsan and self.target_available(target_lang)
+
+    @property
     def full(self) -> bool:
-        return self.c_available and self.rust_available and self.ubsan
+        return self.full_for("rust")
 
 
 def _find_cc() -> Optional[str]:
@@ -82,8 +96,9 @@ def _check_ubsan(cc: str) -> bool:
 def toolchain_available() -> ToolchainStatus:
     cc = _find_cc()
     rustc = shutil.which("rustc")
+    go = shutil.which("go")
     ubsan = _check_ubsan(cc) if cc else False
-    return ToolchainStatus(cc=cc, rustc=rustc, ubsan=ubsan)
+    return ToolchainStatus(cc=cc, rustc=rustc, ubsan=ubsan, go=go)
 
 
 @dataclass
@@ -109,6 +124,21 @@ class RunOutcome:
         if self.timed_out:
             return False
         return self.returncode in (0, 101)
+
+    def target_outcome_defined(self, target_lang: str = "rust") -> bool:
+        """Whether this run is a *defined* outcome for the given target
+        language. Each safe target language has its own set of return codes
+        that correspond to language-defined behaviour:
+
+        * Rust : 0 (value) or 101 (clean unwinding panic).
+        * Go   : 0 (value) or 2 (runtime panic, e.g. divide-by-zero / index
+                 out of range — a defined, deterministic abort).
+
+        Anything else (timeout, unexpected signal) is treated as non-defined."""
+        if self.timed_out:
+            return False
+        defined_codes = {"rust": (0, 101), "go": (0, 2)}.get(target_lang, (0,))
+        return self.returncode in defined_codes
 
 
 @dataclass
@@ -178,6 +208,41 @@ class ReexecHarness:
             return None
         return opath
 
+    def _compile_go(self, src: str, workdir: str, name: str) -> Optional[str]:
+        # A single ``package main`` file builds standalone with ``go build`` —
+        # no go.mod needed. We pin GOFLAGS=-mod=mod and a workdir-local build
+        # cache so the harness is hermetic and never touches a project module.
+        gpath = os.path.join(workdir, f"{name}.go")
+        opath = os.path.join(workdir, f"{name}.out")
+        with open(gpath, "w") as f:
+            f.write(src)
+        env = dict(os.environ)
+        env.setdefault("GOCACHE", os.path.join(workdir, ".gocache"))
+        env["GOFLAGS"] = "-mod=mod"
+        r = subprocess.run([self.status.go, "build", "-o", opath, gpath],
+                           capture_output=True, text=True, timeout=self.timeout,
+                           env=env)
+        if r.returncode != 0:
+            return None
+        return opath
+
+    def _compile_target(self, src: str, target_lang: str,
+                        workdir: str, name: str) -> Optional[str]:
+        if target_lang == "go":
+            return self._compile_go(src, workdir, name)
+        return self._compile_rust(src, workdir, name)
+
+    @staticmethod
+    def _missing_for(status: "ToolchainStatus", target_lang: str) -> List[str]:
+        missing = []
+        if not status.c_available:
+            missing.append("C compiler")
+        if not status.ubsan:
+            missing.append("UBSan")
+        if not status.target_available(target_lang):
+            missing.append("rustc" if target_lang == "rust" else target_lang)
+        return missing
+
     # ── the anchor confirmation: signed-overflow style UB divergence ─────
     def confirm_ub_divergence(
         self,
@@ -185,25 +250,22 @@ class ReexecHarness:
         rust_src: str,
         argv_inputs: List[str],
         divergence_class: str = "signed_overflow",
+        target_lang: str = "rust",
     ) -> ReexecResult:
         """
         ``c_src`` and ``rust_src`` must each define a program that reads its
         integer arguments from ``argv`` and prints a single integer result.
+        ``rust_src`` is the *target* source; ``target_lang`` selects which
+        compiler (``rust`` or ``go``) builds and runs it.
 
         Returns a fully-populated :class:`ReexecResult`.
         """
-        res = ReexecResult(available=self.status.full,
+        res = ReexecResult(available=self.status.full_for(target_lang),
                            divergence_class=divergence_class,
                            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
-        if not self.status.full:
-            missing = []
-            if not self.status.c_available:
-                missing.append("C compiler")
-            if not self.status.ubsan:
-                missing.append("UBSan")
-            if not self.status.rust_available:
-                missing.append("rustc")
-            res.reason = "toolchain unavailable: " + ", ".join(missing)
+        if not self.status.full_for(target_lang):
+            res.reason = "toolchain unavailable: " + ", ".join(
+                self._missing_for(self.status, target_lang))
             return res
 
         with tempfile.TemporaryDirectory() as d:
@@ -214,9 +276,9 @@ class ReexecHarness:
                 ["-O1", "-fsanitize=undefined", "-fno-sanitize-recover=all"],
                 d, "c_san",
             )
-            rs = self._compile_rust(rust_src, d, "rs")
+            rs = self._compile_target(rust_src, target_lang, d, "tgt")
             if not all((o0, o2, san, rs)):
-                res.reason = "compilation failed (o0=%s o2=%s san=%s rs=%s)" % (
+                res.reason = "compilation failed (o0=%s o2=%s san=%s tgt=%s)" % (
                     bool(o0), bool(o2), bool(san), bool(rs))
                 res.available = False
                 return res
@@ -254,6 +316,7 @@ class ReexecHarness:
         rust_src: str,
         argv_inputs: List[str],
         divergence_class: str = "division_by_zero",
+        target_lang: str = "rust",
     ) -> ReexecResult:
         """
         Confirm a *definedness* divergence: on the same concrete input, the C
@@ -269,19 +332,13 @@ class ReexecHarness:
         established by running the Rust binary twice and requiring identical,
         defined outcomes.
         """
-        res = ReexecResult(available=self.status.full,
+        res = ReexecResult(available=self.status.full_for(target_lang),
                            divergence_class=divergence_class,
                            mode="trap_vs_defined",
                            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
-        if not self.status.full:
-            missing = []
-            if not self.status.c_available:
-                missing.append("C compiler")
-            if not self.status.ubsan:
-                missing.append("UBSan")
-            if not self.status.rust_available:
-                missing.append("rustc")
-            res.reason = "toolchain unavailable: " + ", ".join(missing)
+        if not self.status.full_for(target_lang):
+            res.reason = "toolchain unavailable: " + ", ".join(
+                self._missing_for(self.status, target_lang))
             return res
 
         with tempfile.TemporaryDirectory() as d:
@@ -291,16 +348,16 @@ class ReexecHarness:
                 d, "c_san",
             )
             o0 = self._compile_c(c_src, ["-O0"], d, "c_o0")
-            rs = self._compile_rust(rust_src, d, "rs")
+            rs = self._compile_target(rust_src, target_lang, d, "tgt")
             if not all((san, o0, rs)):
-                res.reason = "compilation failed (san=%s o0=%s rs=%s)" % (
+                res.reason = "compilation failed (san=%s o0=%s tgt=%s)" % (
                     bool(san), bool(o0), bool(rs))
                 res.available = False
                 return res
 
             res.c_runs["san"] = self._run([san, *argv_inputs])
             res.c_runs["O0"] = self._run([o0, *argv_inputs])
-            # Determinism check: run the Rust binary twice.
+            # Determinism check: run the target binary twice.
             rust_a = self._run([rs, *argv_inputs])
             rust_b = self._run([rs, *argv_inputs])
             res.rust_run = rust_a
@@ -313,7 +370,8 @@ class ReexecHarness:
             and rust_a.stdout == rust_b.stdout
         )
         res.rust_defined = (
-            rust_a.rust_outcome_defined and rust_b.rust_outcome_defined
+            rust_a.target_outcome_defined(target_lang)
+            and rust_b.target_outcome_defined(target_lang)
             and rust_deterministic
         )
         # The "consequence" of the divergence is precisely the definedness gap:
@@ -342,6 +400,7 @@ class ReexecHarness:
         divergence_class: str = "strict_aliasing",
         c_flags_a: Optional[List[str]] = None,
         c_flags_b: Optional[List[str]] = None,
+        target_lang: str = "rust",
     ) -> ReexecResult:
         """
         Confirm a divergence for a class that **no sanitizer can trap** (e.g.
@@ -370,15 +429,16 @@ class ReexecHarness:
                            divergence_class=divergence_class,
                            mode="optimizer_exploited",
                            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
-        if not (self.status.c_available and self.status.rust_available):
+        if not (self.status.c_available and self.status.target_available(target_lang)):
             res.available = False
-            res.reason = "toolchain unavailable: needs a C and Rust compiler"
+            res.reason = ("toolchain unavailable: needs a C compiler and "
+                          + ("rustc" if target_lang == "rust" else target_lang))
             return res
 
         with tempfile.TemporaryDirectory() as d:
             o0 = self._compile_c(c_src, flags_a, d, "c_a")
             o2 = self._compile_c(c_src, flags_b, d, "c_b")
-            rs = self._compile_rust(rust_src, d, "rs")
+            rs = self._compile_target(rust_src, target_lang, d, "tgt")
             if not all((o0, o2, rs)):
                 res.reason = "compilation failed (a=%s b=%s rs=%s)" % (
                     bool(o0), bool(o2), bool(rs))
@@ -406,7 +466,8 @@ class ReexecHarness:
             and rust_a.stdout == rust_b.stdout
         )
         res.rust_defined = (
-            rust_a.rust_outcome_defined and rust_b.rust_outcome_defined
+            rust_a.target_outcome_defined(target_lang)
+            and rust_b.target_outcome_defined(target_lang)
             and rust_deterministic
         )
         res.confirmed = res.ub_consequential and res.rust_defined

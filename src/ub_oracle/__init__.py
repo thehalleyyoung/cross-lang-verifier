@@ -41,6 +41,9 @@ from .plugin import (
     REGISTRY,
     register,
     get_oracle,
+    get_oracle_for,
+    oracles_for,
+    language_pairs,
     list_oracles,
 )
 from .replay import Counterexample, REPLAY_SCHEMA_VERSION
@@ -75,6 +78,9 @@ __all__ = [
     "REGISTRY",
     "register",
     "get_oracle",
+    "get_oracle_for",
+    "oracles_for",
+    "language_pairs",
     "list_oracles",
     "Counterexample",
     "REPLAY_SCHEMA_VERSION",
