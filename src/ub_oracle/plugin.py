@@ -54,6 +54,10 @@ class DivergenceOracle(abc.ABC):
     #: anchor language pair this plugin is validated on
     source_lang: str = "c"
     target_lang: str = "rust"
+    #: how the ground-truth harness should confirm this class.
+    #: "exploited"        — UB flips the observable value across opt levels.
+    #: "trap_vs_defined"  — C is UB on a defined input while Rust is defined.
+    confirmation_mode: str = "exploited"
 
     @abc.abstractmethod
     def applies_to(self, unit: Dict) -> bool:
@@ -73,8 +77,12 @@ class DivergenceOracle(abc.ABC):
             return result
         harness = harness or ReexecHarness()
         argv = [str(v) for v in ce.inputs.values()]
-        rr = harness.confirm_ub_divergence(
-            ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
+        if self.confirmation_mode == "trap_vs_defined":
+            rr = harness.confirm_trap_vs_defined(
+                ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
+        else:
+            rr = harness.confirm_ub_divergence(
+                ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
         result.reexec = rr
         if rr.available:
             ce.confirmed = rr.confirmed

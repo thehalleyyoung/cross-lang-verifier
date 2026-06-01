@@ -96,5 +96,57 @@
   ],
   "fuzz_seed": 0,
   "fuzz_trials": 200000,
-  "language_pair": "c->rust"
+  "language_pair": "c->rust",
+  "precision_recall_symbolic": {
+    "num_cases": 11,
+    "num_negative": 3,
+    "num_positive": 8,
+    "overall": {
+      "divergence_class": "__overall__",
+      "fn": 0,
+      "fp": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "tn": 36,
+      "tp": 8
+    },
+    "per_class": {
+      "div_by_zero": {
+        "divergence_class": "div_by_zero",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 9,
+        "tp": 2
+      },
+      "intmin_div_neg1": {
+        "divergence_class": "intmin_div_neg1",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 10,
+        "tp": 1
+      },
+      "shift_oob": {
+        "divergence_class": "shift_oob",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 9,
+        "tp": 2
+      },
+      "signed_overflow": {
+        "divergence_class": "signed_overflow",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 8,
+        "tp": 3
+      }
+    }
+  }
 }

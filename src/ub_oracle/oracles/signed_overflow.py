@@ -49,6 +49,8 @@ class SignedOverflowOracle(DivergenceOracle):
     target_lang = "rust"
 
     def applies_to(self, unit: Dict) -> bool:
+        if unit.get("probe") not in (None, self.divergence_class):
+            return False
         return (
             unit.get("kind") == "binop_const"
             and unit.get("op") in _SUPPORTED_OPS

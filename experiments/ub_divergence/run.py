@@ -33,6 +33,7 @@ from src.ub_oracle import oracles  # noqa: F401  (registers plugins)
 from src.ub_oracle.plugin import get_oracle
 from src.ub_oracle.diff_testing import measure_fuzzing_gap
 from src.ub_oracle.reexec import ReexecHarness, toolchain_available
+from src.ub_oracle.metrics import evaluate_symbolic
 
 # A fixed, ordered set of anchor units.  Deterministic by construction.
 UNITS: List[Dict] = [
@@ -87,6 +88,7 @@ def build_results() -> Dict:
         "fuzz_trials": FUZZ_TRIALS,
         "fuzz_seed": FUZZ_SEED,
         "cases": cases,
+        "precision_recall_symbolic": evaluate_symbolic(),
     }
 
 

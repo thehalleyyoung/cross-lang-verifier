@@ -101,12 +101,24 @@ class RunOutcome:
         # SIGABRT from -fno-sanitize-recover shows up as 134 (128+6) or -6.
         return self.returncode in (134, -6) and "runtime error:" in self.stderr
 
+    @property
+    def rust_outcome_defined(self) -> bool:
+        """A Rust run with a *defined* outcome: a normal exit (0) or a clean
+        unwinding panic (101). Both are defined behavior in safe Rust; only a
+        timeout or an unexpected signal would be non-defined here."""
+        if self.timed_out:
+            return False
+        return self.returncode in (0, 101)
+
 
 @dataclass
 class ReexecResult:
     available: bool
     divergence_class: str
     inputs: Dict[str, object]
+    # mode: "exploited" (UB changes the observable value across opt levels) or
+    # "trap_vs_defined" (C is UB on a defined input while Rust is defined).
+    mode: str = "exploited"
     c_runs: Dict[str, RunOutcome] = field(default_factory=dict)
     rust_run: Optional[RunOutcome] = None
     ub_reachable: bool = False
@@ -233,4 +245,90 @@ class ReexecHarness:
             )
         else:
             res.reason = "not all confirmation conditions met"
+        return res
+
+    # ── definedness confirmation: trap-in-C vs defined-in-Rust ───────────
+    def confirm_trap_vs_defined(
+        self,
+        c_src: str,
+        rust_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "division_by_zero",
+    ) -> ReexecResult:
+        """
+        Confirm a *definedness* divergence: on the same concrete input, the C
+        program executes undefined behaviour (the UBSan build traps) while the
+        Rust program has a fully defined outcome (a normal exit or a clean,
+        deterministic panic).
+
+        Unlike :meth:`confirm_ub_divergence`, this does **not** require the two
+        optimisation levels to disagree on stdout — many UB classes (division
+        by zero, out-of-range shift, ``INT_MIN / -1``) crash rather than
+        silently producing a different value, so the consequential signal is
+        the trap itself, not an observable value flip. Rust definedness is
+        established by running the Rust binary twice and requiring identical,
+        defined outcomes.
+        """
+        res = ReexecResult(available=self.status.full,
+                           divergence_class=divergence_class,
+                           mode="trap_vs_defined",
+                           inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
+        if not self.status.full:
+            missing = []
+            if not self.status.c_available:
+                missing.append("C compiler")
+            if not self.status.ubsan:
+                missing.append("UBSan")
+            if not self.status.rust_available:
+                missing.append("rustc")
+            res.reason = "toolchain unavailable: " + ", ".join(missing)
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            san = self._compile_c(
+                c_src,
+                ["-O1", "-fsanitize=undefined", "-fno-sanitize-recover=all"],
+                d, "c_san",
+            )
+            o0 = self._compile_c(c_src, ["-O0"], d, "c_o0")
+            rs = self._compile_rust(rust_src, d, "rs")
+            if not all((san, o0, rs)):
+                res.reason = "compilation failed (san=%s o0=%s rs=%s)" % (
+                    bool(san), bool(o0), bool(rs))
+                res.available = False
+                return res
+
+            res.c_runs["san"] = self._run([san, *argv_inputs])
+            res.c_runs["O0"] = self._run([o0, *argv_inputs])
+            # Determinism check: run the Rust binary twice.
+            rust_a = self._run([rs, *argv_inputs])
+            rust_b = self._run([rs, *argv_inputs])
+            res.rust_run = rust_a
+
+        san_run = res.c_runs["san"]
+
+        res.ub_reachable = san_run.ub_trapped
+        rust_deterministic = (
+            rust_a.returncode == rust_b.returncode
+            and rust_a.stdout == rust_b.stdout
+        )
+        res.rust_defined = (
+            rust_a.rust_outcome_defined and rust_b.rust_outcome_defined
+            and rust_deterministic
+        )
+        # The "consequence" of the divergence is precisely the definedness gap:
+        # C is undefined here while Rust is defined.
+        res.ub_consequential = res.ub_reachable and res.rust_defined
+        res.confirmed = res.ub_reachable and res.rust_defined
+        if res.confirmed:
+            kind = "value" if rust_a.returncode == 0 else "panic"
+            res.reason = (
+                f"UB reachable (sanitizer trapped: {san_run.stderr.splitlines()[0] if san_run.stderr else 'trap'!r}); "
+                f"Rust defined & deterministic ({kind}, rc={rust_a.returncode}, out={rust_a.stdout!r})"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: ub_reachable={res.ub_reachable}, "
+                f"rust_defined={res.rust_defined} (deterministic={rust_deterministic})"
+            )
         return res

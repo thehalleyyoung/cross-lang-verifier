@@ -50,6 +50,12 @@ from .reexec import (
     toolchain_available,
     ToolchainStatus,
 )
+from .verify import (
+    verify_unit,
+    VerifyVerdict,
+    VerifyReport,
+    applicable_oracles,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -73,4 +79,8 @@ __all__ = [
     "ReexecHarness",
     "toolchain_available",
     "ToolchainStatus",
+    "verify_unit",
+    "VerifyVerdict",
+    "VerifyReport",
+    "applicable_oracles",
 ]

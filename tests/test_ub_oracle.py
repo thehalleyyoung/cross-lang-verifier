@@ -192,3 +192,170 @@ def test_equivalent_translation_is_not_flagged_by_reexec():
     assert rr.available
     assert not rr.ub_reachable
     assert not rr.confirmed
+
+
+# ── integer-model oracles: shift / div-by-zero / INT_MIN÷-1 (step 18) ────────
+from src.ub_oracle import verify_unit, VerifyVerdict, applicable_oracles
+from src.ub_oracle.metrics import (
+    evaluate_symbolic,
+    evaluate_confirmed,
+    POSITIVE_CASES,
+    NEGATIVE_CASES,
+    ALL_CASES,
+)
+
+
+def test_integer_ub_oracles_registered():
+    names = set(list_oracles())
+    assert {"shift_oob", "div_by_zero", "intmin_div_neg1"} <= names
+
+
+@pytest.mark.parametrize("key,unit", [
+    ("shift_oob", {"kind": "shift", "width": 32}),
+    ("shift_oob", {"kind": "shift", "width": 64}),
+    ("div_by_zero", {"kind": "div", "width": 32}),
+    ("div_by_zero", {"kind": "rem", "width": 32}),
+    ("intmin_div_neg1", {"kind": "div", "width": 32, "signed": True}),
+])
+def test_integer_oracle_finds_witness_symbolically(key, unit):
+    orc = get_oracle(key)
+    res = orc.find_divergence(unit)
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert ce is not None and ce.source_snippet and ce.target_snippet
+    # divergence is a definedness divergence: source is UB.
+    assert ce.source_definedness == Definedness.UNDEFINED.value
+
+
+def test_shift_witness_is_smallest_out_of_range_amount():
+    res = get_oracle("shift_oob").find_divergence({"kind": "shift", "width": 32})
+    assert res.counterexample.inputs["s"] == 32  # exactly the bit width
+
+
+def test_intmin_div_witness_is_the_unique_overflow_pair():
+    res = get_oracle("intmin_div_neg1").find_divergence(
+        {"kind": "div", "width": 32, "signed": True})
+    inp = res.counterexample.inputs
+    assert inp["a"] == -(2 ** 31) and inp["b"] == -1
+
+
+def test_probe_routes_div_unit_to_a_single_oracle():
+    # A bare div unit is understood by both div oracles ...
+    assert len(applicable_oracles({"kind": "div", "width": 32})) == 2
+    # ... but a probed unit is routed to exactly one.
+    only = applicable_oracles({"kind": "div", "width": 32, "probe": "div_by_zero"})
+    assert [o.divergence_class for o in only] == ["div_by_zero"]
+
+
+def test_integer_oracles_declare_trap_vs_defined_mode():
+    for key in ("shift_oob", "div_by_zero", "intmin_div_neg1"):
+        assert get_oracle(key).confirmation_mode == "trap_vs_defined"
+
+
+# ── sound-for-divergence verify entry point (steps 5 & 33) ───────────────────
+def test_verify_unit_never_claims_equivalence():
+    for verdict in VerifyVerdict:
+        assert verdict.claims_equivalence is False
+
+
+def test_verify_unit_not_covered_is_loud():
+    r = verify_unit({"kind": "string_concat", "width": 32})
+    assert r.verdict is VerifyVerdict.NOT_COVERED
+    assert not r.is_sound_claim
+    assert "NOT COVERED" in r.banner()
+
+
+def test_verify_unit_no_divergence_found_is_not_equivalence():
+    # add of 0 never overflows: the oracle applies but finds nothing.
+    r = verify_unit({"kind": "binop_const", "op": "add", "const": 0,
+                     "width": 32, "var": "x", "signed": True})
+    assert r.verdict is VerifyVerdict.NO_DIVERGENCE_FOUND
+    assert not r.verdict.claims_equivalence
+    assert "NOT a proof of equivalence" in r.banner()
+
+
+def test_verify_unit_candidate_when_confirmation_disabled():
+    # With confirm disabled, a symbolic witness must NOT be asserted as a
+    # divergence (soundness): it is only a CANDIDATE.
+    r = verify_unit({"kind": "shift", "width": 32}, confirm=False)
+    assert r.verdict is VerifyVerdict.CANDIDATE
+    assert not r.verdict.claims_divergence
+
+
+# ── precision / recall harness (step 23) ─────────────────────────────────────
+def test_symbolic_precision_recall_is_perfect():
+    m = evaluate_symbolic()
+    assert m["num_positive"] == len(POSITIVE_CASES)
+    assert m["num_negative"] == len(NEGATIVE_CASES)
+    assert m["overall"]["precision"] == 1.0
+    assert m["overall"]["recall"] == 1.0
+    assert m["overall"]["fp"] == 0 and m["overall"]["fn"] == 0
+    for key, sc in m["per_class"].items():
+        assert sc["precision"] == 1.0, key
+        assert sc["recall"] == 1.0, key
+
+
+def test_symbolic_metrics_cover_every_registered_oracle():
+    m = evaluate_symbolic()
+    assert set(m["per_class"]) == set(list_oracles())
+
+
+# ── toolchain-backed confirmations for the new classes ───────────────────────
+@_requires_toolchain
+@pytest.mark.parametrize("key,unit", [
+    ("shift_oob", {"kind": "shift", "width": 32}),
+    ("div_by_zero", {"kind": "div", "width": 32}),
+    ("intmin_div_neg1", {"kind": "div", "width": 32, "signed": True}),
+])
+def test_trap_vs_defined_confirmed_against_real_compilers(key, unit):
+    orc = get_oracle(key)
+    res = orc.confirm(orc.find_divergence(unit), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available
+    assert rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan must trap on the witness (C is UB)"
+    assert rr.rust_defined, "Rust must be defined & deterministic"
+    assert rr.confirmed
+    assert res.counterexample.confirmed
+
+
+@_requires_toolchain
+def test_division_negative_control_is_not_confirmed():
+    # b = 1 (a defined divisor): C is NOT UB and Rust is defined -> no trap,
+    # so the trap_vs_defined confirmation must fail.
+    harness = ReexecHarness(_TC)
+    c_src = (
+        "#include <stdio.h>\n#include <stdlib.h>\n"
+        "int f(int a,int b){ return a/b; }\n"
+        "int main(int c,char**v){ if(c<3) return 2; "
+        "int a=atoi(v[1]),b=atoi(v[2]); printf(\"%d\\n\",f(a,b)); return 0; }\n"
+    )
+    rust_src = (
+        "fn f(a:i32,b:i32)->i32{ a/b }\n"
+        "fn main(){ let v:Vec<String>=std::env::args().collect(); "
+        "let a:i32=v[1].parse().unwrap(); let b:i32=v[2].parse().unwrap(); "
+        "println!(\"{}\",f(a,b)); }\n"
+    )
+    rr = harness.confirm_trap_vs_defined(c_src, rust_src, ["7", "1"], "div_by_zero")
+    assert rr.available
+    assert not rr.ub_reachable
+    assert not rr.confirmed
+
+
+@_requires_toolchain
+def test_confirmed_precision_recall_is_perfect():
+    m = evaluate_confirmed(ReexecHarness(_TC))
+    assert m["overall"]["precision"] == 1.0
+    assert m["overall"]["recall"] == 1.0
+    for key, sc in m["per_class"].items():
+        assert sc["precision"] == 1.0, key
+        assert sc["recall"] == 1.0, key
+
+
+@_requires_toolchain
+def test_verify_unit_confirms_divergence_end_to_end():
+    r = verify_unit({"kind": "div", "width": 32, "probe": "div_by_zero"})
+    assert r.verdict is VerifyVerdict.DIVERGENT
+    assert r.is_sound_claim
+    assert r.divergence is not None
+    assert r.divergence.reexec.confirmed
