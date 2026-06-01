@@ -65,6 +65,12 @@ POSITIVE_CASES: List[LabeledCase] = [
     LabeledCase("intmin_div_w32",
                 {"kind": "div", "width": 32, "signed": True,
                  "probe": "intmin_div_neg1"}, "intmin_div_neg1"),
+    LabeledCase("oob_len4",
+                {"kind": "array_index", "length": 4, "probe": "array_oob"},
+                "array_oob"),
+    LabeledCase("alias_pun",
+                {"kind": "type_pun", "probe": "strict_aliasing"},
+                "strict_aliasing"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus

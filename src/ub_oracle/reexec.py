@@ -332,3 +332,81 @@ class ReexecHarness:
                 f"rust_defined={res.rust_defined} (deterministic={rust_deterministic})"
             )
         return res
+
+    # ── exploited-without-trap: O0 != O2 vs defined Rust ─────────────────
+    def confirm_optimizer_exploited(
+        self,
+        c_src: str,
+        rust_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "strict_aliasing",
+    ) -> ReexecResult:
+        """
+        Confirm a divergence for a class that **no sanitizer can trap** (e.g.
+        strict-aliasing violations, unspecified evaluation order): the evidence
+        of source-side under-determinedness is that the *same* C source, on the
+        *same* input, produces **different observable output at -O0 vs -O2**.
+
+        Two builds of one deterministic program disagreeing is itself a proof
+        that the program's result is not fixed by the language (it depends on
+        UB/unspecified behaviour the optimiser is free to resolve either way),
+        whereas the Rust translation runs to a single, deterministic, defined
+        result. That gap is the cross-language divergence — established here
+        without relying on a sanitizer.
+        """
+        res = ReexecResult(available=self.status.full,
+                           divergence_class=divergence_class,
+                           mode="optimizer_exploited",
+                           inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
+        if not (self.status.c_available and self.status.rust_available):
+            res.available = False
+            res.reason = "toolchain unavailable: needs a C and Rust compiler"
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            o0 = self._compile_c(c_src, ["-O0"], d, "c_o0")
+            o2 = self._compile_c(c_src, ["-O2", "-fstrict-aliasing"], d, "c_o2")
+            rs = self._compile_rust(rust_src, d, "rs")
+            if not all((o0, o2, rs)):
+                res.reason = "compilation failed (o0=%s o2=%s rs=%s)" % (
+                    bool(o0), bool(o2), bool(rs))
+                res.available = False
+                return res
+
+            res.c_runs["O0"] = self._run([o0, *argv_inputs])
+            res.c_runs["O2"] = self._run([o2, *argv_inputs])
+            rust_a = self._run([rs, *argv_inputs])
+            rust_b = self._run([rs, *argv_inputs])
+            res.rust_run = rust_a
+
+        o0_run = res.c_runs["O0"]
+        o2_run = res.c_runs["O2"]
+
+        # consequential iff the two builds disagree on stdout (both ran cleanly)
+        res.ub_consequential = (
+            o0_run.returncode == 0 and o2_run.returncode == 0
+            and o0_run.stdout != o2_run.stdout
+        )
+        # the under-determinedness *is* the reachable source-side divergence
+        res.ub_reachable = res.ub_consequential
+        rust_deterministic = (
+            rust_a.returncode == rust_b.returncode
+            and rust_a.stdout == rust_b.stdout
+        )
+        res.rust_defined = (
+            rust_a.rust_outcome_defined and rust_b.rust_outcome_defined
+            and rust_deterministic
+        )
+        res.confirmed = res.ub_consequential and res.rust_defined
+        if res.confirmed:
+            res.reason = (
+                f"same C source under-determined: O0={o0_run.stdout!r} vs "
+                f"O2={o2_run.stdout!r}; Rust defined & deterministic="
+                f"{rust_a.stdout!r}"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: O0!=O2={res.ub_consequential}, "
+                f"rust_defined={res.rust_defined} (deterministic={rust_deterministic})"
+            )
+        return res

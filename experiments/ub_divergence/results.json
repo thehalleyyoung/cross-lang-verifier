@@ -98,26 +98,35 @@
   "fuzz_trials": 200000,
   "language_pair": "c->rust",
   "precision_recall_symbolic": {
-    "num_cases": 11,
+    "num_cases": 13,
     "num_negative": 3,
-    "num_positive": 8,
+    "num_positive": 10,
     "overall": {
       "divergence_class": "__overall__",
       "fn": 0,
       "fp": 0,
       "precision": 1.0,
       "recall": 1.0,
-      "tn": 36,
-      "tp": 8
+      "tn": 68,
+      "tp": 10
     },
     "per_class": {
+      "array_oob": {
+        "divergence_class": "array_oob",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 12,
+        "tp": 1
+      },
       "div_by_zero": {
         "divergence_class": "div_by_zero",
         "fn": 0,
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 9,
+        "tn": 11,
         "tp": 2
       },
       "intmin_div_neg1": {
@@ -126,7 +135,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 10,
+        "tn": 12,
         "tp": 1
       },
       "shift_oob": {
@@ -135,7 +144,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 9,
+        "tn": 11,
         "tp": 2
       },
       "signed_overflow": {
@@ -144,8 +153,17 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 8,
+        "tn": 10,
         "tp": 3
+      },
+      "strict_aliasing": {
+        "divergence_class": "strict_aliasing",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 12,
+        "tp": 1
       }
     }
   }

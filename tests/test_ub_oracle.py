@@ -359,3 +359,80 @@ def test_verify_unit_confirms_divergence_end_to_end():
     assert r.is_sound_claim
     assert r.divergence is not None
     assert r.divergence.reexec.confirmed
+
+
+# ── memory-shape oracles: array-OOB & strict-aliasing (steps 15-16) ──────────
+def test_memory_shape_oracles_registered():
+    names = set(list_oracles())
+    assert {"array_oob", "strict_aliasing"} <= names
+
+
+def test_oob_oracle_finds_smallest_out_of_bounds_index():
+    res = get_oracle("array_oob").find_divergence(
+        {"kind": "array_index", "length": 4})
+    assert res.verdict is OracleVerdict.DIVERGENT
+    assert res.counterexample.inputs["i"] == 4  # first OOB index
+    assert res.counterexample.source_definedness == Definedness.UNDEFINED.value
+
+
+def test_oob_oracle_confirmation_mode():
+    assert get_oracle("array_oob").confirmation_mode == "trap_vs_defined"
+
+
+def test_aliasing_oracle_finds_distinguishing_values():
+    res = get_oracle("strict_aliasing").find_divergence({"kind": "type_pun"})
+    assert res.verdict is OracleVerdict.DIVERGENT
+    # A must differ from the low 32 bits of B (that is what the optimizer can
+    # resolve two different ways).
+    assert "A=" in res.detail and "B=" in res.detail
+
+
+def test_aliasing_oracle_confirmation_mode():
+    assert get_oracle("strict_aliasing").confirmation_mode == "optimizer_exploited"
+
+
+def test_aliasing_unit_not_matched_by_arithmetic_oracles():
+    only = applicable_oracles({"kind": "type_pun"})
+    assert [o.divergence_class for o in only] == ["strict_aliasing"]
+
+
+@_requires_toolchain
+def test_oob_confirmed_against_real_compilers():
+    orc = get_oracle("array_oob")
+    res = orc.confirm(orc.find_divergence({"kind": "array_index", "length": 4}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable and rr.rust_defined and rr.confirmed
+    assert res.counterexample.confirmed
+
+
+@_requires_toolchain
+def test_strict_aliasing_confirmed_via_optimizer_exploited():
+    orc = get_oracle("strict_aliasing")
+    res = orc.confirm(orc.find_divergence({"kind": "type_pun"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "optimizer_exploited"
+    # the very same C source diverges across -O0 and -O2 ...
+    assert rr.c_runs["O0"].stdout != rr.c_runs["O2"].stdout
+    # ... while Rust is defined & deterministic.
+    assert rr.rust_defined and rr.confirmed
+
+
+@_requires_toolchain
+def test_optimizer_exploited_negative_control():
+    """A well-defined C program must NOT diverge across -O0 / -O2."""
+    harness = ReexecHarness(_TC)
+    c_src = (
+        "#include <stdio.h>\n#include <stdlib.h>\n"
+        "int main(int c,char**v){ if(c<2) return 2; int x=atoi(v[1]); "
+        "printf(\"%d\\n\", x*2); return 0; }\n"
+    )
+    rust_src = (
+        "fn main(){ let x:i32=std::env::args().nth(1).unwrap().parse().unwrap(); "
+        "println!(\"{}\", x.wrapping_mul(2)); }\n"
+    )
+    rr = harness.confirm_optimizer_exploited(c_src, rust_src, ["3"], "strict_aliasing")
+    assert rr.available
+    assert not rr.ub_consequential   # O0 and O2 agree
+    assert not rr.confirmed

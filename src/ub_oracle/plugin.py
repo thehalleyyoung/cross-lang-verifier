@@ -55,8 +55,11 @@ class DivergenceOracle(abc.ABC):
     source_lang: str = "c"
     target_lang: str = "rust"
     #: how the ground-truth harness should confirm this class.
-    #: "exploited"        — UB flips the observable value across opt levels.
-    #: "trap_vs_defined"  — C is UB on a defined input while Rust is defined.
+    #: "exploited"           — UB flips the observable value across opt levels.
+    #: "trap_vs_defined"     — C is UB on a defined input while Rust is defined.
+    #: "optimizer_exploited" — same C source yields different output at -O0 vs
+    #:                         -O2 (under-determined; no sanitizer can trap it)
+    #:                         while Rust is defined & deterministic.
     confirmation_mode: str = "exploited"
 
     @abc.abstractmethod
@@ -79,6 +82,9 @@ class DivergenceOracle(abc.ABC):
         argv = [str(v) for v in ce.inputs.values()]
         if self.confirmation_mode == "trap_vs_defined":
             rr = harness.confirm_trap_vs_defined(
+                ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
+        elif self.confirmation_mode == "optimizer_exploited":
+            rr = harness.confirm_optimizer_exploited(
                 ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
         else:
             rr = harness.confirm_ub_divergence(

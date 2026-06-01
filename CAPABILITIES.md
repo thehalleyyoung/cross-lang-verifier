@@ -20,10 +20,10 @@ supported divergence classes.
 |---|---|---|
 | Language pair | **C → Rust** (the anchor) | flagship, validated end-to-end |
 | Divergence classes (catalogue) | 11 classes enumerated in `src/ub_oracle/catalogue.py` | catalogue is data-complete; see oracle status below |
-| Divergence **oracles** (executable) | **signed integer overflow** (`add`, `sub`; widths 32, 64); **shift-out-of-range**; **division/remainder by zero**; **`INT_MIN / -1`** | each finds a Z3 witness **and** confirms it against real clang+UBSan and rustc |
+| Divergence **oracles** (executable) | **signed integer overflow** (`add`, `sub`; widths 32, 64); **shift-out-of-range**; **division/remainder by zero**; **`INT_MIN / -1`**; **out-of-bounds array access**; **strict-aliasing violation** | each finds a Z3 witness **and** confirms it against real clang+UBSan and rustc |
 | Multi-oracle entry point | `verify_unit` runs every applicable oracle under a **sound-for-divergence** policy with **loud abstention** (`DIVERGENT` / `CANDIDATE` / `NO_DIVERGENCE_FOUND` / `UNKNOWN` / `NOT_COVERED`) | `src/ub_oracle/verify.py` |
 | Per-class precision/recall | labelled benchmark; **P = R = 1.0** symbolically and after real-compiler confirmation | `src/ub_oracle/metrics.py` |
-| Ground-truth confirmation | real `clang -O0 / -O2 / -fsanitize=undefined` + real `rustc -O`, in two modes (`exploited`, `trap_vs_defined`) | `src/ub_oracle/reexec.py` |
+| Ground-truth confirmation | real `clang -O0 / -O2 / -fsanitize=undefined` + real `rustc -O`, in three modes (`exploited`, `trap_vs_defined`, `optimizer_exploited`) | `src/ub_oracle/reexec.py` |
 | Differential-testing baseline | exact + seeded-empirical fuzzing-gap measurement | `src/ub_oracle/diff_testing.py` |
 
 ### What the executable oracles soundly establish
@@ -49,13 +49,19 @@ input on which
 
 A divergence is reported as **confirmed** only when these conditions hold.
 
+The **strict-aliasing** oracle uses a third mode, `optimizer_exploited`: no
+sanitizer can trap a strict-aliasing violation, so the evidence is that the
+**same C source produces different output at `-O0` vs `-O2 -fstrict-aliasing`** —
+two builds of one deterministic program disagreeing proves the C result is
+under-determined — while the Rust translation is a single defined value.
+
 ## What it does NOT do yet (abstains / out of scope here)
 
-- **Remaining divergence classes** (aliasing, out-of-bounds/provenance,
-  uninitialized reads, use-after-free, eval-order, ...) are **catalogued but not
-  yet executable oracles**. The framework (`src/ub_oracle/plugin.py`) is designed
-  for them to be added as plugins; until then the tool **abstains loudly**
-  (`NOT_COVERED`) rather than guessing.
+- **Remaining divergence classes** (uninitialized reads, use-after-free,
+  null-deref, eval-order, ...) are **catalogued but not yet executable oracles**.
+  The framework (`src/ub_oracle/plugin.py`) is designed for them to be added as
+  plugins; until then the tool **abstains loudly** (`NOT_COVERED`) rather than
+  guessing.
 - **Other language pairs** (C→Go, Python→Rust, ...) are part of the roadmap
   (Step 37) but not implemented here.
 - **General whole-program equivalence**: no claim. The oracle reasons about the
