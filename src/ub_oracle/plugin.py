@@ -57,10 +57,14 @@ class DivergenceOracle(abc.ABC):
     #: how the ground-truth harness should confirm this class.
     #: "exploited"           — UB flips the observable value across opt levels.
     #: "trap_vs_defined"     — C is UB on a defined input while Rust is defined.
-    #: "optimizer_exploited" — same C source yields different output at -O0 vs
-    #:                         -O2 (under-determined; no sanitizer can trap it)
+    #: "optimizer_exploited" — same C source yields different output under two
+    #:                         conforming compilations (no sanitizer can trap it)
     #:                         while Rust is defined & deterministic.
     confirmation_mode: str = "exploited"
+    #: for "optimizer_exploited" oracles, the pair of C flag-sets whose
+    #: disagreement evidences the divergence (e.g. FP contraction off vs fast).
+    #: None falls back to the harness default (-O0 vs -O2 -fstrict-aliasing).
+    optimizer_flag_variants: Optional[tuple] = None
 
     @abc.abstractmethod
     def applies_to(self, unit: Dict) -> bool:
@@ -84,8 +88,14 @@ class DivergenceOracle(abc.ABC):
             rr = harness.confirm_trap_vs_defined(
                 ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
         elif self.confirmation_mode == "optimizer_exploited":
-            rr = harness.confirm_optimizer_exploited(
-                ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
+            flags = self.optimizer_flag_variants
+            if flags is not None:
+                rr = harness.confirm_optimizer_exploited(
+                    ce.source_snippet, ce.target_snippet, argv, ce.divergence_class,
+                    c_flags_a=list(flags[0]), c_flags_b=list(flags[1]))
+            else:
+                rr = harness.confirm_optimizer_exploited(
+                    ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)
         else:
             rr = harness.confirm_ub_divergence(
                 ce.source_snippet, ce.target_snippet, argv, ce.divergence_class)

@@ -340,20 +340,32 @@ class ReexecHarness:
         rust_src: str,
         argv_inputs: List[str],
         divergence_class: str = "strict_aliasing",
+        c_flags_a: Optional[List[str]] = None,
+        c_flags_b: Optional[List[str]] = None,
     ) -> ReexecResult:
         """
         Confirm a divergence for a class that **no sanitizer can trap** (e.g.
-        strict-aliasing violations, unspecified evaluation order): the evidence
-        of source-side under-determinedness is that the *same* C source, on the
-        *same* input, produces **different observable output at -O0 vs -O2**.
+        strict-aliasing violations, floating-point contraction, unspecified
+        evaluation order): the evidence of source-side under-determinedness is
+        that the *same* C source, on the *same* input, produces **different
+        observable output under two standard-conforming compilations**
+        (``c_flags_a`` vs ``c_flags_b``).
 
         Two builds of one deterministic program disagreeing is itself a proof
         that the program's result is not fixed by the language (it depends on
-        UB/unspecified behaviour the optimiser is free to resolve either way),
+        UB/unspecified behaviour the compiler is free to resolve either way),
         whereas the Rust translation runs to a single, deterministic, defined
         result. That gap is the cross-language divergence — established here
         without relying on a sanitizer.
+
+        ``c_flags_a``/``c_flags_b`` default to ``-O0`` vs
+        ``-O2 -fstrict-aliasing`` (the optimisation-exploitation pair); an oracle
+        whose class is resolved by a different licence (e.g. FP contraction) can
+        pass an apt flag pair such as ``-ffp-contract=off`` vs
+        ``-ffp-contract=fast``.
         """
+        flags_a = c_flags_a if c_flags_a is not None else ["-O0"]
+        flags_b = c_flags_b if c_flags_b is not None else ["-O2", "-fstrict-aliasing"]
         res = ReexecResult(available=self.status.full,
                            divergence_class=divergence_class,
                            mode="optimizer_exploited",
@@ -364,23 +376,23 @@ class ReexecHarness:
             return res
 
         with tempfile.TemporaryDirectory() as d:
-            o0 = self._compile_c(c_src, ["-O0"], d, "c_o0")
-            o2 = self._compile_c(c_src, ["-O2", "-fstrict-aliasing"], d, "c_o2")
+            o0 = self._compile_c(c_src, flags_a, d, "c_a")
+            o2 = self._compile_c(c_src, flags_b, d, "c_b")
             rs = self._compile_rust(rust_src, d, "rs")
             if not all((o0, o2, rs)):
-                res.reason = "compilation failed (o0=%s o2=%s rs=%s)" % (
+                res.reason = "compilation failed (a=%s b=%s rs=%s)" % (
                     bool(o0), bool(o2), bool(rs))
                 res.available = False
                 return res
 
-            res.c_runs["O0"] = self._run([o0, *argv_inputs])
-            res.c_runs["O2"] = self._run([o2, *argv_inputs])
+            res.c_runs["A"] = self._run([o0, *argv_inputs])
+            res.c_runs["B"] = self._run([o2, *argv_inputs])
             rust_a = self._run([rs, *argv_inputs])
             rust_b = self._run([rs, *argv_inputs])
             res.rust_run = rust_a
 
-        o0_run = res.c_runs["O0"]
-        o2_run = res.c_runs["O2"]
+        o0_run = res.c_runs["A"]
+        o2_run = res.c_runs["B"]
 
         # consequential iff the two builds disagree on stdout (both ran cleanly)
         res.ub_consequential = (
@@ -400,13 +412,13 @@ class ReexecHarness:
         res.confirmed = res.ub_consequential and res.rust_defined
         if res.confirmed:
             res.reason = (
-                f"same C source under-determined: O0={o0_run.stdout!r} vs "
-                f"O2={o2_run.stdout!r}; Rust defined & deterministic="
-                f"{rust_a.stdout!r}"
+                f"same C source under-determined: build_A({' '.join(flags_a)})="
+                f"{o0_run.stdout!r} vs build_B({' '.join(flags_b)})="
+                f"{o2_run.stdout!r}; Rust defined & deterministic={rust_a.stdout!r}"
             )
         else:
             res.reason = (
-                f"not confirmed: O0!=O2={res.ub_consequential}, "
+                f"not confirmed: A!=B={res.ub_consequential}, "
                 f"rust_defined={res.rust_defined} (deterministic={rust_deterministic})"
             )
         return res

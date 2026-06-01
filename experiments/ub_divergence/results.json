@@ -98,17 +98,17 @@
   "fuzz_trials": 200000,
   "language_pair": "c->rust",
   "precision_recall_symbolic": {
-    "num_cases": 13,
+    "num_cases": 14,
     "num_negative": 3,
-    "num_positive": 10,
+    "num_positive": 11,
     "overall": {
       "divergence_class": "__overall__",
       "fn": 0,
       "fp": 0,
       "precision": 1.0,
       "recall": 1.0,
-      "tn": 68,
-      "tp": 10
+      "tn": 87,
+      "tp": 11
     },
     "per_class": {
       "array_oob": {
@@ -117,7 +117,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 12,
+        "tn": 13,
         "tp": 1
       },
       "div_by_zero": {
@@ -126,8 +126,17 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 11,
+        "tn": 12,
         "tp": 2
+      },
+      "fp_contraction": {
+        "divergence_class": "fp_contraction",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 13,
+        "tp": 1
       },
       "intmin_div_neg1": {
         "divergence_class": "intmin_div_neg1",
@@ -135,7 +144,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 12,
+        "tn": 13,
         "tp": 1
       },
       "shift_oob": {
@@ -144,7 +153,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 11,
+        "tn": 12,
         "tp": 2
       },
       "signed_overflow": {
@@ -153,7 +162,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 10,
+        "tn": 11,
         "tp": 3
       },
       "strict_aliasing": {
@@ -162,7 +171,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 12,
+        "tn": 13,
         "tp": 1
       }
     }

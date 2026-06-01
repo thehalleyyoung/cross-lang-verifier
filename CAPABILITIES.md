@@ -55,6 +55,15 @@ sanitizer can trap a strict-aliasing violation, so the evidence is that the
 two builds of one deterministic program disagreeing proves the C result is
 under-determined — while the Rust translation is a single defined value.
 
+The **floating-point contraction** oracle (`fp_contraction`) reuses the
+`optimizer_exploited` mode with a contraction-sensitive flag pair: C's `a*b + c`
+may be fused into a single-rounding FMA at the implementation's discretion (C17
+6.5p8 / `FP_CONTRACT`, *unspecified*), so `-ffp-contract=off` (two roundings)
+and `-ffp-contract=fast` (one rounding) **disagree on the same source and input**,
+while Rust's `a*b + c` always rounds twice (a single deterministic value). Z3's
+floating-point theory finds a heavily-cancelling witness `(a,b,c)` where the
+fused and unfused results actually differ in printed output.
+
 ## What it does NOT do yet (abstains / out of scope here)
 
 - **Remaining divergence classes** (uninitialized reads, use-after-free,

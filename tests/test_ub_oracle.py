@@ -413,8 +413,8 @@ def test_strict_aliasing_confirmed_via_optimizer_exploited():
     res = orc.confirm(orc.find_divergence({"kind": "type_pun"}), ReexecHarness(_TC))
     rr = res.reexec
     assert rr.available and rr.mode == "optimizer_exploited"
-    # the very same C source diverges across -O0 and -O2 ...
-    assert rr.c_runs["O0"].stdout != rr.c_runs["O2"].stdout
+    # the very same C source diverges across the two conforming builds ...
+    assert rr.c_runs["A"].stdout != rr.c_runs["B"].stdout
     # ... while Rust is defined & deterministic.
     assert rr.rust_defined and rr.confirmed
 
@@ -436,3 +436,46 @@ def test_optimizer_exploited_negative_control():
     assert rr.available
     assert not rr.ub_consequential   # O0 and O2 agree
     assert not rr.confirmed
+
+# ── floating-point contraction oracle (step 19) ──────────────────────────────
+
+def test_fp_contraction_in_catalogue():
+    e = entry_for("fp_contraction")
+    assert e.source_definedness is Definedness.UNSPECIFIED
+    assert e.rust_outcome.value == "defined_value"
+    assert e.c_standard_ref
+
+
+def test_fp_contraction_symbolic_find():
+    orc = get_oracle("fp_contraction")
+    assert orc.applies_to({"kind": "fp_fma"})
+    res = orc.find_divergence({"kind": "fp_fma", "probe": "fp_contraction"})
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert set(ce.inputs) == {"a", "b", "c"}
+    for v in ce.inputs.values():
+        assert isinstance(v, float)
+    # fma(a,b,c) must actually differ from round(round(a*b)+c)
+    import math
+    a, b, c = ce.inputs["a"], ce.inputs["b"], ce.inputs["c"]
+    assert math.fma(a, b, c) != (a * b) + c
+
+
+def test_fp_contraction_does_not_apply_to_other_kinds():
+    orc = get_oracle("fp_contraction")
+    assert not orc.applies_to({"kind": "array_index", "length": 4})
+    assert not orc.applies_to({"kind": "fp_fma", "probe": "signed_overflow"})
+
+
+@_requires_toolchain
+def test_fp_contraction_confirmed_off_vs_fast():
+    orc = get_oracle("fp_contraction")
+    res = orc.confirm(
+        orc.find_divergence({"kind": "fp_fma", "probe": "fp_contraction"}),
+        ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "optimizer_exploited"
+    # -ffp-contract=off and -ffp-contract=fast disagree on the same source ...
+    assert rr.c_runs["A"].stdout != rr.c_runs["B"].stdout
+    # ... while Rust (always two roundings) is defined & deterministic.
+    assert rr.rust_defined and rr.confirmed

@@ -71,6 +71,9 @@ POSITIVE_CASES: List[LabeledCase] = [
     LabeledCase("alias_pun",
                 {"kind": "type_pun", "probe": "strict_aliasing"},
                 "strict_aliasing"),
+    LabeledCase("fp_fma",
+                {"kind": "fp_fma", "probe": "fp_contraction"},
+                "fp_contraction"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus

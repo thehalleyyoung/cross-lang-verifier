@@ -85,6 +85,7 @@ STRICT_ALIASING = DivergenceClass("strict_aliasing", "Type-based (strict) aliasi
 USE_AFTER_FREE = DivergenceClass("use_after_free", "Use of freed / dangling storage")
 EVAL_ORDER = DivergenceClass("eval_order", "Unspecified evaluation order / sequencing")
 INT_CONVERSION = DivergenceClass("int_conversion", "Out-of-range integer conversion")
+FP_CONTRACTION = DivergenceClass("fp_contraction", "Floating-point contraction (FMA fusion)")
 
 
 @dataclass(frozen=True)
@@ -230,6 +231,21 @@ _ENTRIES: List[DivergenceEntry] = [
         severity=Severity.MODERATE,
         witness_recipe="Convert a value outside the destination signed range.",
         int_widths=(8, 16, 32, 64),
+    ),
+    DivergenceEntry(
+        cls=FP_CONTRACTION,
+        source_definedness=Definedness.UNSPECIFIED,
+        source_rule="An implementation may contract `a*b + c` into a single "
+                    "fused multiply-add (one rounding) at its discretion; whether "
+                    "it does is unspecified, so the result is not uniquely fixed.",
+        c_standard_ref="C17 6.5p8 / FP_CONTRACT pragma 7.12.2",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="Rust never auto-contracts: `a*b + c` always rounds twice "
+                    "(fusion only via explicit `f64::mul_add`), so it is a single "
+                    "deterministic, defined value.",
+        severity=Severity.MODERATE,
+        witness_recipe="Pick a,b,c with heavy cancellation so the rounding of "
+                       "`a*b` is observable: fma(a,b,c) != round(round(a*b)+c).",
     ),
 ]
 
