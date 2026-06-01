@@ -56,6 +56,7 @@ from .verify import (
     VerifyReport,
     applicable_oracles,
 )
+from .report import aggregate_reports, to_sarif, pair_of
 
 __all__ = [
     "DivergenceClass",
@@ -83,4 +84,7 @@ __all__ = [
     "VerifyVerdict",
     "VerifyReport",
     "applicable_oracles",
+    "aggregate_reports",
+    "to_sarif",
+    "pair_of",
 ]

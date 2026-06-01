@@ -479,3 +479,132 @@ def test_fp_contraction_confirmed_off_vs_fast():
     assert rr.c_runs["A"].stdout != rr.c_runs["B"].stdout
     # ... while Rust (always two roundings) is defined & deterministic.
     assert rr.rust_defined and rr.confirmed
+
+# ── honest aggregate reporting + SARIF + CLI (steps 47, 55, 57) ───────────────
+
+from src.ub_oracle.report import aggregate_reports, to_sarif, pair_of  # noqa: E402
+from src.ub_oracle.verify import verify_unit, VerifyVerdict  # noqa: E402
+from src.ub_oracle import cli as _cli  # noqa: E402
+
+
+def _reports_no_confirm():
+    """A representative spread of verdicts without needing the toolchain."""
+    units = [
+        {"name": "ovf", "kind": "binop_const", "op": "add", "const": 1,
+         "width": 32, "var": "x", "signed": True, "probe": "signed_overflow",
+         "source_lang": "c", "target_lang": "rust"},
+        {"name": "noovf", "kind": "binop_const", "op": "add", "const": 0,
+         "width": 32, "var": "x", "signed": True, "probe": "signed_overflow",
+         "source_lang": "c", "target_lang": "rust"},
+        {"name": "opaque", "kind": "string_concat", "width": 32,
+         "source_lang": "c", "target_lang": "rust"},
+        {"name": "go_unit", "kind": "binop_const", "op": "add", "const": 1,
+         "width": 32, "var": "x", "signed": True,
+         "source_lang": "go", "target_lang": "rust"},
+    ]
+    return units, [verify_unit(u, confirm=False) for u in units]
+
+
+def test_declared_unsupported_pair_is_not_covered():
+    # a go->rust unit must match NO oracle (honest pair gating), not be treated
+    # as the c->rust anchor.
+    rep = verify_unit({"kind": "binop_const", "op": "add", "const": 1,
+                       "width": 32, "var": "x", "signed": True,
+                       "source_lang": "go", "target_lang": "rust"},
+                      confirm=False)
+    assert rep.verdict is VerifyVerdict.NOT_COVERED
+    assert pair_of(rep) == "go->rust"
+
+
+def test_aggregate_reports_buckets_and_fractions():
+    _, reports = _reports_no_confirm()
+    agg = aggregate_reports(reports)
+    ov = agg["overall"]
+    assert ov["total"] == 4
+    # ovf -> CANDIDATE (symbolic, not confirmed) => abstained
+    # noovf -> NO_DIVERGENCE_FOUND => decided
+    # opaque (c->rust, unknown kind) -> NOT_COVERED => abstained
+    # go_unit -> NOT_COVERED => abstained
+    assert ov["candidate"] == 1
+    assert ov["no_divergence_found"] == 1
+    assert ov["not_covered"] == 2
+    assert ov["decided"] == 1 and ov["abstained"] == 3 and ov["unknown"] == 0
+    assert abs(ov["decided_fraction"] - 0.25) < 1e-9
+    # per-pair breakdown surfaces the uncovered go pair.
+    assert agg["by_pair"]["go->rust"]["not_covered"] == 1
+    assert "equivalence" in agg["disclaimer"].lower()
+
+
+def test_to_sarif_shape_for_candidate_and_clean():
+    _, reports = _reports_no_confirm()
+    doc = to_sarif(reports)
+    assert doc["version"] == "2.1.0" and "$schema" in doc
+    run = doc["runs"][0]
+    assert run["tool"]["driver"]["name"] == "cross-lang-verifier"
+    ruleids = {r["id"] for r in run["tool"]["driver"]["rules"]}
+    # only the CANDIDATE (warning) becomes a finding here; clean/not-covered do not.
+    assert len(run["results"]) == 1
+    res = run["results"][0]
+    assert res["level"] == "warning"
+    assert res["ruleId"] in ruleids
+    assert res["message"]["text"]
+    assert res["locations"][0]["logicalLocations"][0]["name"] == "ovf"
+    assert res["partialFingerprints"]
+
+
+def test_to_sarif_physical_location_only_when_declared():
+    rep = verify_unit({"name": "with_loc", "kind": "binop_const", "op": "add",
+                       "const": 1, "width": 32, "var": "x", "signed": True,
+                       "probe": "signed_overflow", "source_file": "src/a.c",
+                       "line": 42}, confirm=False)
+    res = to_sarif([rep])["runs"][0]["results"][0]
+    phys = res["locations"][0]["physicalLocation"]
+    assert phys["artifactLocation"]["uri"] == "src/a.c"
+    assert phys["region"]["startLine"] == 42
+
+
+def test_cli_text_and_exit_code(tmp_path, capsys):
+    manifest = tmp_path / "units.json"
+    manifest.write_text(json.dumps({"units": [
+        {"name": "ovf", "kind": "binop_const", "op": "add", "const": 1,
+         "width": 32, "var": "x", "signed": True, "probe": "signed_overflow"},
+        {"name": "go_unit", "kind": "binop_const", "op": "add", "const": 1,
+         "width": 32, "var": "x", "signed": True,
+         "source_lang": "go", "target_lang": "rust"},
+    ]}))
+    # without confirmation the overflow unit is CANDIDATE, not DIVERGENT, so the
+    # default (fail-on divergent) yields exit 0.
+    rc = _cli.run(["--units", str(manifest), "--no-confirm", "--color", "never"])
+    out = capsys.readouterr().out
+    assert "CANDIDATE" in out and "NOT-COVERED" in out
+    assert "Summary" in out and "by pair" in out
+    assert rc == 0
+    # but --fail-on candidate must flip the exit code.
+    rc2 = _cli.run(["--units", str(manifest), "--no-confirm", "--color", "never",
+                    "--fail-on", "candidate"])
+    capsys.readouterr()
+    assert rc2 == 1
+
+
+def test_cli_json_format_and_sarif_file(tmp_path, capsys):
+    manifest = tmp_path / "units.json"
+    manifest.write_text(json.dumps([
+        {"name": "noovf", "kind": "binop_const", "op": "add", "const": 0,
+         "width": 32, "var": "x", "signed": True, "probe": "signed_overflow"},
+    ]))
+    sarif = tmp_path / "out.sarif"
+    rc = _cli.run(["--units", str(manifest), "--no-confirm", "--format", "json",
+                   "--sarif", str(sarif)])
+    out = capsys.readouterr().out
+    parsed = json.loads(out)
+    assert parsed["summary"]["overall"]["total"] == 1
+    assert parsed["units"][0]["verdict"] == "no_divergence_found"
+    assert json.loads(sarif.read_text())["version"] == "2.1.0"
+    assert rc == 0
+
+
+def test_cli_bad_manifest_returns_2(tmp_path, capsys):
+    bad = tmp_path / "bad.json"
+    bad.write_text("{not json")
+    rc = _cli.run(["--units", str(bad)])
+    assert rc == 2

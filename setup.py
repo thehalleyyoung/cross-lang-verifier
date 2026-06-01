@@ -10,5 +10,6 @@ setup(
     extras_require={"dev": ["pytest", "pytest-cov"]},
     entry_points={"console_scripts": [
         "semrec=src.semrec_cli:main",
+        "cross-lang-verify=src.ub_oracle.cli:main",
     ]},
 )

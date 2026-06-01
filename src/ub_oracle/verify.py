@@ -99,7 +99,25 @@ class VerifyReport:
 
 
 def applicable_oracles(unit: Dict) -> List[DivergenceOracle]:
-    return [o for o in REGISTRY.values() if o.applies_to(unit)]
+    """Oracles that apply to ``unit``, respecting any declared language pair.
+
+    If the unit declares ``source_lang``/``target_lang``, only oracles validated
+    on exactly that pair are eligible — a unit declaring an unsupported pair
+    (e.g. ``go``->``rust``) therefore matches *no* oracle and is honestly
+    reported as ``NOT_COVERED`` rather than silently treated as the anchor pair.
+    Units that omit the languages default to the anchor pair each oracle exposes.
+    """
+    src = unit.get("source_lang")
+    tgt = unit.get("target_lang")
+
+    def pair_ok(o: DivergenceOracle) -> bool:
+        if src is not None and src != o.source_lang:
+            return False
+        if tgt is not None and tgt != o.target_lang:
+            return False
+        return True
+
+    return [o for o in REGISTRY.values() if pair_ok(o) and o.applies_to(unit)]
 
 
 def verify_unit(

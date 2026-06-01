@@ -1,0 +1,37 @@
+{
+  "units": [
+    {
+      "name": "add1_w32",
+      "kind": "binop_const", "op": "add", "const": 1, "width": 32,
+      "var": "x", "signed": true, "probe": "signed_overflow",
+      "source_lang": "c", "target_lang": "rust"
+    },
+    {
+      "name": "shift_w32",
+      "kind": "shift", "width": 32, "probe": "shift_oob",
+      "source_lang": "c", "target_lang": "rust"
+    },
+    {
+      "name": "oob_len4",
+      "kind": "array_index", "length": 4, "probe": "array_oob",
+      "source_lang": "c", "target_lang": "rust"
+    },
+    {
+      "name": "fp_fma",
+      "kind": "fp_fma", "probe": "fp_contraction",
+      "source_lang": "c", "target_lang": "rust"
+    },
+    {
+      "name": "noovf_add0_w32",
+      "kind": "binop_const", "op": "add", "const": 0, "width": 32,
+      "var": "x", "signed": true, "probe": "signed_overflow",
+      "source_lang": "c", "target_lang": "rust"
+    },
+    {
+      "name": "go_to_rust_stub",
+      "kind": "binop_const", "op": "add", "const": 1, "width": 32,
+      "var": "x", "signed": true,
+      "source_lang": "go", "target_lang": "rust"
+    }
+  ]
+}

@@ -19,11 +19,14 @@ supported divergence classes.
 | Axis | Supported now | Status |
 |---|---|---|
 | Language pair | **C → Rust** (the anchor) | flagship, validated end-to-end |
-| Divergence classes (catalogue) | 11 classes enumerated in `src/ub_oracle/catalogue.py` | catalogue is data-complete; see oracle status below |
-| Divergence **oracles** (executable) | **signed integer overflow** (`add`, `sub`; widths 32, 64); **shift-out-of-range**; **division/remainder by zero**; **`INT_MIN / -1`**; **out-of-bounds array access**; **strict-aliasing violation** | each finds a Z3 witness **and** confirms it against real clang+UBSan and rustc |
-| Multi-oracle entry point | `verify_unit` runs every applicable oracle under a **sound-for-divergence** policy with **loud abstention** (`DIVERGENT` / `CANDIDATE` / `NO_DIVERGENCE_FOUND` / `UNKNOWN` / `NOT_COVERED`) | `src/ub_oracle/verify.py` |
+| Divergence classes (catalogue) | 12 classes enumerated in `src/ub_oracle/catalogue.py` | catalogue is data-complete; see oracle status below |
+| Divergence **oracles** (executable) | **signed integer overflow** (`add`, `sub`; widths 32, 64); **shift-out-of-range**; **division/remainder by zero**; **`INT_MIN / -1`**; **out-of-bounds array access**; **strict-aliasing violation**; **floating-point contraction (FMA fusion)** | each finds a Z3 witness **and** confirms it against real clang+UBSan and rustc |
+| Multi-oracle entry point | `verify_unit` runs every applicable oracle under a **sound-for-divergence** policy with **loud abstention** (`DIVERGENT` / `CANDIDATE` / `NO_DIVERGENCE_FOUND` / `UNKNOWN` / `NOT_COVERED`); oracles are **gated by declared language pair** so an unsupported pair is honestly `NOT_COVERED`, never silently treated as the anchor | `src/ub_oracle/verify.py` |
 | Per-class precision/recall | labelled benchmark; **P = R = 1.0** symbolically and after real-compiler confirmation | `src/ub_oracle/metrics.py` |
 | Ground-truth confirmation | real `clang -O0 / -O2 / -fsanitize=undefined` + real `rustc -O`, in three modes (`exploited`, `trap_vs_defined`, `optimizer_exploited`) | `src/ub_oracle/reexec.py` |
+| Honest aggregate reporting | `aggregate_reports` emits **decided / abstained / unknown** fractions broken down by language pair and divergence class, with candidate-vs-not-covered sub-buckets and an explicit "not a proof of equivalence" disclaimer | `src/ub_oracle/report.py` |
+| SARIF 2.1.0 output | `to_sarif` renders confirmed `DIVERGENT` findings at `error` level and unconfirmed `CANDIDATE` witnesses at `warning` level, with catalogue-derived rules and partial fingerprints; physical locations are emitted only when a unit declares one (never fabricated) | `src/ub_oracle/report.py` |
+| Command-line verifier | `cross-lang-verify` (a.k.a. `python -m ub_oracle`): manifest-driven, pair-aware CLI with colored verdicts, the abstention summary, optional `--sarif`, and a `--fail-on` CI gate (exit 1 on confirmed divergence by default) | `src/ub_oracle/cli.py` |
 | Differential-testing baseline | exact + seeded-empirical fuzzing-gap measurement | `src/ub_oracle/diff_testing.py` |
 
 ### What the executable oracles soundly establish
