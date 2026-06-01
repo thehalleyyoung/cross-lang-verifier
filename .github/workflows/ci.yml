@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ub-oracle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install z3-solver pytest pytest-cov
+
+      - name: Ensure Rust toolchain
+        run: rustc --version && cargo --version
+
+      - name: Ensure clang + UBSan
+        run: clang --version
+
+      - name: Credibility guard (no simulated results)
+        run: bash scripts/check_no_simulated_results.sh
+
+      - name: Reproduce trusted results byte-identically
+        run: make reproduce-check PYTHON=python
+
+      - name: ub_oracle test suite (incl. real-compiler confirmation)
+        run: python -m pytest tests/test_ub_oracle.py -q

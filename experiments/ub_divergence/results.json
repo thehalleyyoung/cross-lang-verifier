@@ -1,0 +1,100 @@
+{
+  "artifact": "ub_divergence_anchor",
+  "cases": [
+    {
+      "c_src_sha16": "682fa2dbe6d87bcd",
+      "const": 1,
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=2147483647 (UB); the optimizer may assume `x + 1 > x` is always true, whereas the wrapping Rust translation evaluates it on the real wrapped value.",
+      "fuzzing_gap": {
+        "empirical_hits": 0,
+        "hit_probability": 2.3283064365386963e-10,
+        "oracle_hit_probability": 1.0,
+        "overflow_inputs": 1,
+        "seed": 0,
+        "total_inputs": 4294967296,
+        "trials": 200000
+      },
+      "op": "add",
+      "rust_src_sha16": "1b1245bc9bb49a1e",
+      "source_definedness": "undefined",
+      "verdict": "divergent",
+      "width": 32,
+      "witness": {
+        "x": 2147483647
+      }
+    },
+    {
+      "c_src_sha16": "a77a1ed926042964",
+      "const": 7,
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=2147483641 (UB); the optimizer may assume `x + 7 > x` is always true, whereas the wrapping Rust translation evaluates it on the real wrapped value.",
+      "fuzzing_gap": {
+        "empirical_hits": 0,
+        "hit_probability": 1.6298145055770874e-09,
+        "oracle_hit_probability": 1.0,
+        "overflow_inputs": 7,
+        "seed": 0,
+        "total_inputs": 4294967296,
+        "trials": 200000
+      },
+      "op": "add",
+      "rust_src_sha16": "c9b063d8f49d01bf",
+      "source_definedness": "undefined",
+      "verdict": "divergent",
+      "width": 32,
+      "witness": {
+        "x": 2147483641
+      }
+    },
+    {
+      "c_src_sha16": "e4c9f7226b969903",
+      "const": 1,
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed sub overflow at x=-2147483648 (UB); the optimizer may assume `x - 1 < x` is always true, whereas the wrapping Rust translation evaluates it on the real wrapped value.",
+      "fuzzing_gap": {
+        "empirical_hits": 0,
+        "hit_probability": 2.3283064365386963e-10,
+        "oracle_hit_probability": 1.0,
+        "overflow_inputs": 1,
+        "seed": 0,
+        "total_inputs": 4294967296,
+        "trials": 200000
+      },
+      "op": "sub",
+      "rust_src_sha16": "db708ee3674a86e8",
+      "source_definedness": "undefined",
+      "verdict": "divergent",
+      "width": 32,
+      "witness": {
+        "x": -2147483648
+      }
+    },
+    {
+      "c_src_sha16": "6467f05745ca1aa0",
+      "const": 1,
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=9223372036854775807 (UB); the optimizer may assume `x + 1 > x` is always true, whereas the wrapping Rust translation evaluates it on the real wrapped value.",
+      "fuzzing_gap": {
+        "empirical_hits": 0,
+        "hit_probability": 5.421010862427522e-20,
+        "oracle_hit_probability": 1.0,
+        "overflow_inputs": 1,
+        "seed": 0,
+        "total_inputs": 18446744073709551616,
+        "trials": 200000
+      },
+      "op": "add",
+      "rust_src_sha16": "5910ac22b75803c0",
+      "source_definedness": "undefined",
+      "verdict": "divergent",
+      "width": 64,
+      "witness": {
+        "x": 9223372036854775807
+      }
+    }
+  ],
+  "fuzz_seed": 0,
+  "fuzz_trials": 200000,
+  "language_pair": "c->rust"
+}

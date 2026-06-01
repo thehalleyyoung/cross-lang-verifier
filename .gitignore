@@ -12,6 +12,9 @@ target/
 *.a
 # OS junk
 .DS_Store
+
+# Local strategy roadmap (intentionally untracked)
+100_STEPS.md
 # Python cache
 __pycache__/
 *.pyc
@@ -26,3 +29,6 @@ __pycache__/
 **/critique_responses.json
 **/reviewer_persona_cache*.json
 
+
+# Environment-dependent confirmation artifact (real-compiler runs)
+experiments/ub_divergence/confirmations.json
