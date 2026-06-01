@@ -23,6 +23,7 @@ from src.ub_oracle import (
     Counterexample,
     REPLAY_SCHEMA_VERSION,
     ReexecHarness,
+    ToolchainStatus,
     toolchain_available,
 )
 from src.ub_oracle import oracles  # noqa: F401  (registers plugins)
@@ -897,3 +898,131 @@ def test_equivalent_go_translation_is_not_confirmed():
     assert rr.available
     assert not rr.ub_reachable
     assert not rr.confirmed
+
+
+# ── Step 39: pluggable target-semantics packs (C->Swift third pair) ──────────
+
+from src.ub_oracle.target_semantics import PACKS, TargetPack, get_pack
+from src.ub_oracle.oracles import target_pairs as _tp
+from src.ub_oracle.oracles.signed_overflow import SignedOverflowOracle
+from src.ub_oracle.oracles.integer_ub import DivisionByZeroOracle
+from src.ub_oracle.oracles.memory_shape import ArrayOutOfBoundsOracle
+
+_requires_swift = pytest.mark.skipif(
+    not _TC.full_for("swift"),
+    reason=f"needs C+UBSan+swiftc toolchain ({_TC})")
+
+_SWIFT_UNITS = {
+    "signed_overflow": {"kind": "binop_const", "op": "add", "const": 2147483647,
+                        "width": 32, "var": "x", "signed": True},
+    "shift_oob": {"kind": "shift", "width": 32, "value": 1},
+    "div_by_zero": {"kind": "div", "width": 32, "a": "a", "b": "b"},
+    "array_oob": {"kind": "array_index", "length": 4},
+}
+
+
+def _swift_unit(class_key):
+    u = dict(_SWIFT_UNITS[class_key])
+    u["source_lang"], u["target_lang"] = "c", "swift"
+    return u
+
+
+def test_target_packs_encode_defined_returncodes_as_data():
+    assert PACKS["rust"].defined_returncodes == (0, 101)
+    assert PACKS["go"].defined_returncodes == (0, 2)
+    # Swift fatal traps are SIGTRAP, which Python's subprocess reports as -5.
+    assert PACKS["swift"].defined_returncodes == (0, -5)
+    # every pack documents how it resolves each core UB class (data-driven).
+    for name in ("rust", "go", "swift"):
+        res = PACKS[name].class_resolution
+        assert {"signed_overflow", "div_by_zero", "array_oob"} <= set(res)
+
+
+def test_get_pack_raises_loudly_for_unknown_target():
+    with pytest.raises(ValueError):
+        get_pack("haskell")
+
+
+def test_swift_pair_is_a_third_registered_language_pair():
+    pairs = _plugin.language_pairs()
+    assert ("c", "swift") in pairs
+    sw = _plugin.oracles_for(source_lang="c", target_lang="swift")
+    classes = {o.divergence_class for o in sw}
+    assert {"signed_overflow", "shift_oob", "div_by_zero",
+            "array_oob", "intmin_div_neg1"} <= classes
+
+
+def test_generated_target_oracles_reuse_anchor_search_not_new_code():
+    # adding a target is *configuration*: the generated oracle is a subclass of
+    # the very anchor oracle whose Z3 witness search it reuses unchanged.
+    assert isinstance(_plugin.get_oracle_for("signed_overflow", "c", "swift"),
+                      SignedOverflowOracle)
+    assert isinstance(_plugin.get_oracle_for("div_by_zero", "c", "swift"),
+                      DivisionByZeroOracle)
+    assert isinstance(_plugin.get_oracle_for("array_oob", "c", "go"),
+                      ArrayOutOfBoundsOracle)
+
+
+@pytest.mark.parametrize("class_key", list(_SWIFT_UNITS))
+def test_swift_oracle_emits_swift_source_symbolically(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "swift")
+    res = orc.find_divergence(_swift_unit(class_key))
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert ce.target_lang == "swift"
+    assert ce.target_snippet.startswith("import Foundation")
+    assert "func f(" in ce.target_snippet
+    # the C source is byte-identical to the anchor's (single witness search).
+    anchor = _plugin.get_oracle_for(class_key, "c", "rust")
+    anchor_ce = anchor.find_divergence(dict(_SWIFT_UNITS[class_key])).counterexample
+    assert ce.source_snippet == anchor_ce.source_snippet
+
+
+def test_run_outcome_definedness_is_pack_driven():
+    assert RunOutcome(0, "v", "").target_outcome_defined("swift")
+    assert RunOutcome(-5, "", "trap").target_outcome_defined("swift")  # SIGTRAP
+    assert not RunOutcome(2, "", "").target_outcome_defined("swift")
+    assert not RunOutcome(101, "", "").target_outcome_defined("swift")
+    # cross-checks: go/rust predicates are independent data.
+    assert RunOutcome(2, "", "").target_outcome_defined("go")
+    assert not RunOutcome(-5, "", "").target_outcome_defined("go")
+    with pytest.raises(ValueError):
+        RunOutcome(0, "", "").target_outcome_defined("haskell")
+
+
+def test_toolchain_status_is_pack_driven_and_pair_aware():
+    # a status with only the swift compiler present is full *for swift* only.
+    st = ToolchainStatus(cc="/usr/bin/clang", ubsan=True,
+                         targets=(("rust", None), ("go", None),
+                                  ("swift", "/usr/bin/swiftc")))
+    assert st.full_for("swift")
+    assert not st.full_for("rust")
+    assert not st.full_for("go")
+    assert st.target_path("swift") == "/usr/bin/swiftc"
+
+
+@_requires_swift
+@pytest.mark.parametrize("class_key", ["signed_overflow", "div_by_zero", "array_oob"])
+def test_swift_divergence_confirmed_against_real_clang_and_swiftc(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "swift")
+    res = orc.confirm(orc.find_divergence(_swift_unit(class_key)), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available, rr.reason
+    assert rr.ub_reachable, "UBSan must trap on the witness (C is UB)"
+    assert rr.rust_defined, "Swift must produce a defined, deterministic outcome"
+    assert rr.confirmed, rr.reason
+    assert res.counterexample.confirmed
+
+
+@_requires_swift
+def test_swift_value_vs_trap_resolutions_are_both_confirmed():
+    # signed overflow resolves to a *value* (rc 0); div-by-zero resolves to a
+    # *trap* (rc -5). Both are language-defined per the Swift pack, and both
+    # confirm — proving the pack's two definedness flavours work end-to-end.
+    harness = ReexecHarness(_TC)
+    sov = _plugin.get_oracle_for("signed_overflow", "c", "swift")
+    rr1 = sov.confirm(sov.find_divergence(_swift_unit("signed_overflow")), harness).reexec
+    assert rr1.confirmed and rr1.rust_run.returncode == 0
+    dv = _plugin.get_oracle_for("div_by_zero", "c", "swift")
+    rr2 = dv.confirm(dv.find_divergence(_swift_unit("div_by_zero")), harness).reexec
+    assert rr2.confirmed and rr2.rust_run.returncode == -5

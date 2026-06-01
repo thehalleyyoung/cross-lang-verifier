@@ -33,34 +33,56 @@ import tempfile
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
+from .target_semantics import PACKS, get_pack
+
 
 @dataclass(frozen=True)
 class ToolchainStatus:
+    """Availability of the C toolchain + each registered target compiler.
+
+    Target compilers are stored as an immutable tuple of ``(name, path)`` pairs
+    discovered from the :data:`~src.ub_oracle.target_semantics.PACKS` registry,
+    so adding a target language never changes this dataclass — it is pure data.
+    """
+
     cc: Optional[str]
-    rustc: Optional[str]
     ubsan: bool
-    go: Optional[str] = None
+    targets: Tuple[Tuple[str, Optional[str]], ...] = ()
+
+    def target_path(self, name: str = "rust") -> Optional[str]:
+        for n, p in self.targets:
+            if n == name:
+                return p
+        return None
 
     @property
     def c_available(self) -> bool:
         return self.cc is not None
 
+    def target_available(self, name: str = "rust") -> bool:
+        return self.target_path(name) is not None
+
+    # back-compat accessors for the anchor pair.
     @property
     def rust_available(self) -> bool:
-        return self.rustc is not None
+        return self.target_available("rust")
 
     @property
     def go_available(self) -> bool:
-        return self.go is not None
+        return self.target_available("go")
 
-    def target_available(self, target_lang: str = "rust") -> bool:
-        return {"rust": self.rust_available,
-                "go": self.go_available}.get(target_lang, False)
+    @property
+    def rustc(self) -> Optional[str]:
+        return self.target_path("rust")
 
-    def full_for(self, target_lang: str = "rust") -> bool:
+    @property
+    def go(self) -> Optional[str]:
+        return self.target_path("go")
+
+    def full_for(self, name: str = "rust") -> bool:
         """Whether the full pipeline (C + UBSan + the requested target) is
         available. ``full`` is preserved as the Rust-anchor shorthand."""
-        return self.c_available and self.ubsan and self.target_available(target_lang)
+        return self.c_available and self.ubsan and self.target_available(name)
 
     @property
     def full(self) -> bool:
@@ -93,12 +115,19 @@ def _check_ubsan(cc: str) -> bool:
             return False
 
 
+def _resolve_compiler(pack) -> Optional[str]:
+    for cand in pack.compiler_candidates:
+        path = shutil.which(cand)
+        if path:
+            return path
+    return None
+
+
 def toolchain_available() -> ToolchainStatus:
     cc = _find_cc()
-    rustc = shutil.which("rustc")
-    go = shutil.which("go")
     ubsan = _check_ubsan(cc) if cc else False
-    return ToolchainStatus(cc=cc, rustc=rustc, ubsan=ubsan, go=go)
+    targets = tuple((name, _resolve_compiler(pack)) for name, pack in PACKS.items())
+    return ToolchainStatus(cc=cc, ubsan=ubsan, targets=targets)
 
 
 @dataclass
@@ -118,27 +147,25 @@ class RunOutcome:
 
     @property
     def rust_outcome_defined(self) -> bool:
-        """A Rust run with a *defined* outcome: a normal exit (0) or a clean
-        unwinding panic (101). Both are defined behavior in safe Rust; only a
-        timeout or an unexpected signal would be non-defined here."""
-        if self.timed_out:
-            return False
-        return self.returncode in (0, 101)
+        """Back-compat shorthand for the Rust anchor's definedness predicate."""
+        return self.target_outcome_defined("rust")
 
     def target_outcome_defined(self, target_lang: str = "rust") -> bool:
         """Whether this run is a *defined* outcome for the given target
-        language. Each safe target language has its own set of return codes
-        that correspond to language-defined behaviour:
+        language, per that target's semantics pack. Each safe target declares
+        the set of process return codes (as observed by Python's subprocess)
+        that correspond to language-defined behaviour — a value or a guaranteed,
+        deterministic abort:
 
         * Rust : 0 (value) or 101 (clean unwinding panic).
-        * Go   : 0 (value) or 2 (runtime panic, e.g. divide-by-zero / index
-                 out of range — a defined, deterministic abort).
+        * Go   : 0 (value) or 2 (runtime panic, e.g. divide-by-zero / OOB).
+        * Swift: 0 (value) or -5 (SIGTRAP runtime trap).
 
-        Anything else (timeout, unexpected signal) is treated as non-defined."""
+        Anything else (timeout, unexpected signal) is treated as non-defined.
+        Unknown target names raise loudly rather than defaulting to value-only."""
         if self.timed_out:
             return False
-        defined_codes = {"rust": (0, 101), "go": (0, 2)}.get(target_lang, (0,))
-        return self.returncode in defined_codes
+        return self.returncode in get_pack(target_lang).defined_returncodes
 
 
 @dataclass
@@ -197,40 +224,29 @@ class ReexecHarness:
             return None
         return opath
 
-    def _compile_rust(self, src: str, workdir: str, name: str) -> Optional[str]:
-        rpath = os.path.join(workdir, f"{name}.rs")
-        opath = os.path.join(workdir, f"{name}.out")
-        with open(rpath, "w") as f:
-            f.write(src)
-        r = subprocess.run([self.status.rustc, "-O", "-o", opath, rpath],
-                           capture_output=True, text=True, timeout=self.timeout)
-        if r.returncode != 0:
-            return None
-        return opath
+    def _compile_target(self, src: str, target_lang: str,
+                        workdir: str, name: str) -> Optional[str]:
+        """Compile a single-file target program using its semantics pack.
 
-    def _compile_go(self, src: str, workdir: str, name: str) -> Optional[str]:
-        # A single ``package main`` file builds standalone with ``go build`` —
-        # no go.mod needed. We pin GOFLAGS=-mod=mod and a workdir-local build
-        # cache so the harness is hermetic and never touches a project module.
-        gpath = os.path.join(workdir, f"{name}.go")
+        Entirely data-driven: the pack supplies the source suffix, the compiler
+        argv and any hermetic build environment, so a new target language needs
+        no change here."""
+        pack = get_pack(target_lang)
+        compiler = self.status.target_path(target_lang)
+        if compiler is None:
+            return None
+        spath = os.path.join(workdir, f"{name}{pack.source_suffix}")
         opath = os.path.join(workdir, f"{name}.out")
-        with open(gpath, "w") as f:
+        with open(spath, "w") as f:
             f.write(src)
         env = dict(os.environ)
-        env.setdefault("GOCACHE", os.path.join(workdir, ".gocache"))
-        env["GOFLAGS"] = "-mod=mod"
-        r = subprocess.run([self.status.go, "build", "-o", opath, gpath],
+        env.update(pack.compile_env(workdir))
+        r = subprocess.run(pack.compile_argv(compiler, spath, opath),
                            capture_output=True, text=True, timeout=self.timeout,
                            env=env)
         if r.returncode != 0:
             return None
         return opath
-
-    def _compile_target(self, src: str, target_lang: str,
-                        workdir: str, name: str) -> Optional[str]:
-        if target_lang == "go":
-            return self._compile_go(src, workdir, name)
-        return self._compile_rust(src, workdir, name)
 
     @staticmethod
     def _missing_for(status: "ToolchainStatus", target_lang: str) -> List[str]:
@@ -240,7 +256,8 @@ class ReexecHarness:
         if not status.ubsan:
             missing.append("UBSan")
         if not status.target_available(target_lang):
-            missing.append("rustc" if target_lang == "rust" else target_lang)
+            pack = PACKS.get(target_lang)
+            missing.append(pack.compiler_candidates[0] if pack else target_lang)
         return missing
 
     # ── the anchor confirmation: signed-overflow style UB divergence ─────
@@ -425,14 +442,16 @@ class ReexecHarness:
         """
         flags_a = c_flags_a if c_flags_a is not None else ["-O0"]
         flags_b = c_flags_b if c_flags_b is not None else ["-O2", "-fstrict-aliasing"]
-        res = ReexecResult(available=self.status.full,
+        res = ReexecResult(available=(self.status.c_available
+                                      and self.status.target_available(target_lang)),
                            divergence_class=divergence_class,
                            mode="optimizer_exploited",
                            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
         if not (self.status.c_available and self.status.target_available(target_lang)):
             res.available = False
+            pack = PACKS.get(target_lang)
             res.reason = ("toolchain unavailable: needs a C compiler and "
-                          + ("rustc" if target_lang == "rust" else target_lang))
+                          + (pack.compiler_candidates[0] if pack else target_lang))
             return res
 
         with tempfile.TemporaryDirectory() as d:
