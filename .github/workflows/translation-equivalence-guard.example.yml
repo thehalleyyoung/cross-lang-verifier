@@ -1,0 +1,42 @@
+# Example: run the Translation Equivalence Guard on pull requests and upload
+# the divergences to GitHub code scanning. Copy this into a consumer repo's
+# .github/workflows/ and point `manifest` at your units file.
+name: translation-equivalence-guard
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+  security-events: write   # required to upload SARIF to code scanning
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure C + Rust toolchains (needed to confirm divergences)
+        run: clang --version && rustc --version
+
+      - name: Translation Equivalence Guard
+        id: guard
+        continue-on-error: true
+        uses: ./.github/actions/translation-equivalence-guard
+        with:
+          manifest: examples/units_manifest.json
+          sarif: cross-lang-verify.sarif
+          fail-on: divergent
+
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cross-lang-verify.sarif
+
+      - name: Fail the job if a divergence was confirmed
+        if: steps.guard.outputs.exit-code != '0'
+        run: |
+          echo "Confirmed translation divergence(s) found." >&2
+          exit 1

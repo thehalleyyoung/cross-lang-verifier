@@ -28,6 +28,9 @@ supported divergence classes.
 | SARIF 2.1.0 output | `to_sarif` renders confirmed `DIVERGENT` findings at `error` level and unconfirmed `CANDIDATE` witnesses at `warning` level, with catalogue-derived rules and partial fingerprints; physical locations are emitted only when a unit declares one (never fabricated) | `src/ub_oracle/report.py` |
 | Command-line verifier | `cross-lang-verify` (a.k.a. `python -m ub_oracle`): manifest-driven, pair-aware CLI with colored verdicts, the abstention summary, optional `--sarif`, and a `--fail-on` CI gate (exit 1 on confirmed divergence by default) | `src/ub_oracle/cli.py` |
 | Differential-testing baseline | exact + seeded-empirical fuzzing-gap measurement | `src/ub_oracle/diff_testing.py` |
+| Head-to-head vs differential testing | equal-budget fuzzing **+ UBSan** on the *same* real binaries vs. the oracle; tabulates the **false-negative gap** (sparse-UB divergences the oracle confirms but an equal-budget fuzzer misses) while showing dense-UB parity (the fuzzer finds out-of-range shifts immediately) | `src/ub_oracle/headtohead.py` |
+| Ablation study | disabling each class-oracle in turn over the labelled set; reports the per-class recall drop, the positives uniquely missed, and a **zero cross-class leak** check (each oracle covers only its own class) | `src/ub_oracle/ablation.py` |
+| Adoption: GitHub Action | "Translation Equivalence Guard" composite action + example workflow: runs the CLI on a manifest, emits SARIF, and uploads to code scanning | `.github/actions/translation-equivalence-guard/action.yml` |
 
 ### What the executable oracles soundly establish
 

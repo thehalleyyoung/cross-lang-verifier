@@ -608,3 +608,158 @@ def test_cli_bad_manifest_returns_2(tmp_path, capsys):
     bad.write_text("{not json")
     rc = _cli.run(["--units", str(bad)])
     assert rc == 2
+
+# ── ablation study (step 53) ─────────────────────────────────────────────────
+
+from src.ub_oracle.ablation import ablate_each_class  # noqa: E402
+from src.ub_oracle.metrics import LabeledCase  # noqa: E402
+
+
+def _small_positive_set():
+    # a fast subset (no FP Z3 search) covering three independent classes.
+    return [
+        LabeledCase("ovf_add1_w32",
+                    {"kind": "binop_const", "op": "add", "const": 1, "width": 32,
+                     "var": "x", "signed": True, "probe": "signed_overflow"},
+                    "signed_overflow"),
+        LabeledCase("shift_w32",
+                    {"kind": "shift", "width": 32, "probe": "shift_oob"},
+                    "shift_oob"),
+        LabeledCase("oob_len4",
+                    {"kind": "array_index", "length": 4, "probe": "array_oob"},
+                    "array_oob"),
+    ]
+
+
+def test_ablation_each_class_misses_only_its_own_positives():
+    pos = _small_positive_set()
+    rep = ablate_each_class(pos)
+    assert rep["recall_full"] == 1.0
+    # disabling each implemented class drops recall and misses exactly that
+    # class's own positive(s), with NO cross-class leakage.
+    for cls in ("signed_overflow", "shift_oob", "array_oob"):
+        row = rep["per_class"][cls]
+        assert row["recall_drop"] > 0, f"{cls} should be load-bearing"
+        assert row["cross_class_leak"] == [], f"{cls} leaked into another class"
+        owned = {c.name for c in pos if c.truth_class == cls}
+        assert set(row["newly_missed"]) == owned
+
+
+def test_ablation_unrelated_class_is_inert():
+    # disabling a class with no positive in the set must not change recall.
+    pos = _small_positive_set()
+    rep = ablate_each_class(pos)
+    row = rep["per_class"]["div_by_zero"]
+    assert row["recall_drop"] == 0.0
+    assert row["newly_missed"] == []
+
+
+# ── head-to-head vs differential testing (step 48) ───────────────────────────
+
+from src.ub_oracle.headtohead import (  # noqa: E402
+    FuzzUnit, head_to_head, differential_fuzz, default_units,
+)
+
+
+@_requires_toolchain
+def test_head_to_head_sparse_ub_gap_and_dense_ub_parity():
+    units = [
+        FuzzUnit("ovf_add1_w32",
+                 {"kind": "binop_const", "op": "add", "const": 1, "width": 32,
+                  "var": "x", "signed": True, "probe": "signed_overflow"},
+                 "signed_overflow", {"x": ("int", -(2 ** 31), 2 ** 31 - 1)}),
+        FuzzUnit("shift_w32",
+                 {"kind": "shift", "width": 32, "probe": "shift_oob"},
+                 "shift_oob",
+                 {"x": ("int", -(2 ** 31), 2 ** 31 - 1),
+                  "s": ("int", 0, 2 ** 16 - 1)}),
+    ]
+    rep = head_to_head(units, trials=250, seed=0, harness=ReexecHarness(_TC))
+    by = {r["name"]: r for r in rep["rows"]}
+    # the oracle confirms both divergences via real re-execution.
+    assert by["ovf_add1_w32"]["oracle_confirmed"]
+    assert by["shift_w32"]["oracle_confirmed"]
+    # equal-budget differential testing: misses the sparse signed-overflow UB ...
+    assert by["ovf_add1_w32"]["fuzz_hits"] == 0
+    assert by["ovf_add1_w32"]["false_negative_gap"] is True
+    # ... but finds the dense out-of-range-shift UB immediately (not rigged).
+    assert by["shift_w32"]["fuzz_found"] is True
+    assert by["shift_w32"]["false_negative_gap"] is False
+    assert "ovf_add1_w32" in rep["false_negative_gap_units"]
+    assert "shift_w32" not in rep["false_negative_gap_units"]
+
+
+@_requires_toolchain
+def test_differential_fuzz_returns_counts():
+    fu = FuzzUnit("shift_w32",
+                  {"kind": "shift", "width": 32, "probe": "shift_oob"},
+                  "shift_oob",
+                  {"x": ("int", -8, 8), "s": ("int", 0, 2 ** 16 - 1)})
+    hits, first = differential_fuzz(ReexecHarness(_TC), fu, trials=50, seed=1)
+    assert hits == 1 and first is not None and first >= 1
+
+
+def test_default_units_are_well_formed():
+    units = default_units()
+    assert {u.divergence_class for u in units} == {"signed_overflow", "shift_oob"}
+    for u in units:
+        assert u.domains, "each unit declares a sampling domain"
+        for name, dom in u.domains.items():
+            assert isinstance(name, str)
+            assert dom[0] in ("int", "float") and dom[1] <= dom[2]
+
+# ── GitHub Action: Translation Equivalence Guard (step 56) ───────────────────
+
+import os as _os  # noqa: E402
+
+_REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+_ACTION_YML = _os.path.join(
+    _REPO_ROOT, ".github", "actions", "translation-equivalence-guard", "action.yml")
+_WORKFLOW_YML = _os.path.join(
+    _REPO_ROOT, ".github", "workflows", "translation-equivalence-guard.example.yml")
+
+
+def test_guard_action_is_well_formed():
+    yaml = pytest.importorskip("yaml")
+    with open(_ACTION_YML) as fh:
+        action = yaml.safe_load(fh)
+    assert action["name"] == "Translation Equivalence Guard"
+    assert action["runs"]["using"] == "composite"
+    # the manifest input is required; sarif/fail-on have sane defaults.
+    assert action["inputs"]["manifest"]["required"] is True
+    assert action["inputs"]["fail-on"]["default"] == "divergent"
+    # the action must surface the SARIF path and exit code as outputs.
+    assert "sarif" in action["outputs"] and "exit-code" in action["outputs"]
+    # at least one step actually invokes the CLI we ship.
+    cmds = " ".join(str(s.get("run", "")) for s in action["runs"]["steps"])
+    assert "cross-lang-verify --units" in cmds
+    assert "--sarif" in cmds and "--fail-on" in cmds
+
+
+def test_guard_example_workflow_uploads_sarif():
+    yaml = pytest.importorskip("yaml")
+    with open(_WORKFLOW_YML) as fh:
+        wf = yaml.safe_load(fh)
+    # PyYAML parses the bare `on:` key as boolean True; tolerate both.
+    triggers = wf.get("on", wf.get(True))
+    assert "pull_request" in triggers
+    # needs security-events: write to upload to code scanning.
+    assert wf["permissions"]["security-events"] == "write"
+    steps = wf["jobs"]["guard"]["steps"]
+    uses = [s.get("uses", "") for s in steps]
+    assert any(u.endswith("translation-equivalence-guard") for u in uses)
+    assert any("codeql-action/upload-sarif" in u for u in uses)
+
+
+def test_guard_manifest_example_verifies_and_emits_sarif(tmp_path):
+    # the manifest the example workflow ships must really drive the CLI to a
+    # SARIF file (proving the action's core command works end-to-end).
+    manifest = _os.path.join(_REPO_ROOT, "examples", "units_manifest.json")
+    sarif = tmp_path / "guard.sarif"
+    rc = _cli.run(["--units", manifest, "--no-confirm", "--color", "never",
+                   "--sarif", str(sarif), "--fail-on", "candidate"])
+    doc = json.loads(sarif.read_text())
+    assert doc["version"] == "2.1.0"
+    # without confirmation the overflow/shift/etc. units are CANDIDATE warnings.
+    assert any(r["level"] == "warning" for r in doc["runs"][0]["results"])
+    assert rc == 1  # --fail-on candidate trips on the symbolic witnesses

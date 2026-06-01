@@ -1,0 +1,70 @@
+name: "Translation Equivalence Guard"
+description: >-
+  Verify a manifest of cross-language translation units for semantic divergence
+  (sound for divergence; C->Rust today) and emit SARIF for GitHub code scanning.
+author: "cross-lang-verifier"
+branding:
+  icon: "git-merge"
+  color: "red"
+
+inputs:
+  manifest:
+    description: "Path to the JSON units manifest to verify."
+    required: true
+  sarif:
+    description: "Path to write the SARIF 2.1.0 report."
+    required: false
+    default: "cross-lang-verify.sarif"
+  fail-on:
+    description: >-
+      Space-separated verdicts that fail the job: any of
+      divergent, candidate, unknown, not-covered. Default: divergent.
+    required: false
+    default: "divergent"
+  no-confirm:
+    description: >-
+      If 'true', skip ground-truth re-execution (symbolic only); witnesses are
+      reported as CANDIDATE, never DIVERGENT. Default: 'false'.
+    required: false
+    default: "false"
+  ref:
+    description: "Git ref of cross-lang-verifier to install."
+    required: false
+    default: "main"
+
+outputs:
+  sarif:
+    description: "Path to the SARIF report that was written."
+    value: ${{ steps.verify.outputs.sarif }}
+  exit-code:
+    description: "Exit code of the verifier (1 if a fail-on verdict occurred)."
+    value: ${{ steps.verify.outputs.exit_code }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install cross-lang-verifier
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install "git+https://github.com/thehalleyyoung/cross-lang-verifier.git@${{ inputs.ref }}"
+
+    - name: Verify translation units
+      id: verify
+      shell: bash
+      run: |
+        set +e
+        FLAGS=""
+        for v in ${{ inputs.fail-on }}; do FLAGS="$FLAGS --fail-on $v"; done
+        if [ "${{ inputs.no-confirm }}" = "true" ]; then FLAGS="$FLAGS --no-confirm"; fi
+        cross-lang-verify --units "${{ inputs.manifest }}" \
+          --sarif "${{ inputs.sarif }}" --color always $FLAGS
+        code=$?
+        echo "sarif=${{ inputs.sarif }}" >> "$GITHUB_OUTPUT"
+        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+        exit $code

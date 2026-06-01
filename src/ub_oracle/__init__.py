@@ -57,6 +57,8 @@ from .verify import (
     applicable_oracles,
 )
 from .report import aggregate_reports, to_sarif, pair_of
+from .ablation import ablate_each_class
+from .headtohead import head_to_head, differential_fuzz, FuzzUnit
 
 __all__ = [
     "DivergenceClass",
@@ -87,4 +89,8 @@ __all__ = [
     "aggregate_reports",
     "to_sarif",
     "pair_of",
+    "ablate_each_class",
+    "head_to_head",
+    "differential_fuzz",
+    "FuzzUnit",
 ]
