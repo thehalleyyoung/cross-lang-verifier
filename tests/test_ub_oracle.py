@@ -4634,3 +4634,53 @@ def test_multipair_corpus_hash_reproducible_and_three_pairs():
     mids = r1.by_function()["midpoint"]
     assert {v.lang for v in mids} == {"rust", "go", "swift"}
     assert all(v.ub_flagged for v in mids)
+
+
+from src.ub_oracle import transpiler_recipes as _tr  # noqa: E402
+
+
+def test_transpiler_recipes_registry_and_protocol():
+    names = _tr.recipe_names()
+    assert "c2rust" in names and "llm-transpiler" in names
+    assert any(n.startswith("reference-") for n in names)
+    # every recipe yields a Translator satisfying the protocol.
+    for name in names:
+        tr = _tr.get_recipe(name).translator()
+        assert isinstance(tr, _tr.Translator)
+        assert isinstance(tr.available(), bool)
+    # unknown recipe raises loudly.
+    try:
+        _tr.get_recipe("nope")
+        assert False, "expected ValueError"
+    except ValueError:
+        pass
+
+
+def test_transpiler_external_recipe_gated_no_fabrication():
+    # c2rust is not installed here; the recipe must report unavailable and never
+    # fabricate output.
+    tr = _tr.get_recipe("c2rust").translator()
+    if not tr.available():
+        assert tr.translate("int main(){return 0;}", "div_by_zero") is None
+
+
+@pytest.mark.skipif(not _full_rust, reason="need C+UBSan+rustc to verify a recipe")
+def test_transpiler_reference_recipe_pipeline_flags_real_divergence():
+    h = _tr.ReexecHarness(_tr.toolchain_available())
+    c = ("#include <stdio.h>\n#include <stdlib.h>\n"
+         "int main(int argc,char**argv){int a=atoi(argv[1]);int b=atoi(argv[2]);"
+         'printf("%d\\n",a/b);return 0;}\n')
+    tr = _tr.ReferenceTranslator("rust")
+    ub = _tr.verify_transpiled(c, tr, ["10", "0"], "div_by_zero", h)
+    safe = _tr.verify_transpiled(c, tr, ["10", "2"], "div_by_zero", h)
+    assert ub.translated and ub.diverged, ub.reason
+    assert safe.translated and not safe.diverged, safe.reason
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go and _full_swift),
+                    reason="need rust+go+swift to confirm all reference recipes")
+def test_transpiler_recipes_confirmation_all_reference_pairs():
+    conf = _tr.confirm_transpiler_recipes()
+    assert conf.available and conf.ok, conf.detail
+    assert conf.n_reference_pairs == 3
+    assert set(conf.external_recipes) == {"c2rust", "llm-transpiler"}

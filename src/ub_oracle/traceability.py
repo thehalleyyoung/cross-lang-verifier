@@ -665,6 +665,18 @@ def _thm_multipair_corpus() -> bool:
                 and conf.n_pairs >= 2)
 
 
+def _thm_transpiler_recipes() -> bool:
+    # The "translate with $tool, then verify with us" pipeline preserves the
+    # oracle's guarantees: for every available reference translator the
+    # translate->verify step flags a div-by-zero divergence on the UB input and
+    # stays silent on a safe input, and external transpiler recipes (c2rust,
+    # llm-transpiler) are registered and correctly gated (never fabricated).
+    # Consistency-only when no target toolchain is present.
+    from . import transpiler_recipes as tr
+    conf = tr.confirm_transpiler_recipes()
+    return bool(conf.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1359,6 +1371,27 @@ CLAIMS: List[Claim] = [
         ("confirm_multipair_corpus", "run_corpus", "CORPUS"),
         theorem=_thm_multipair_corpus,
         docs=("README.md",),
+    ),
+    claim(
+        "C44-transpiler-recipes",
+        "First-class, **pluggable transpiler-integration recipes** realise the "
+        "tool's workflow — *translate your C with `$tool`, then verify with us* — "
+        "so new transpilers and language pairs slot in as **data**, not code "
+        "(`ub_oracle.transpiler_recipes`). A `Translator` protocol is the "
+        "integration point; `ReferenceTranslator` ships built-in compilable "
+        "Rust/Go/Swift baselines and `ExternalCommandTranslator` shells out to a "
+        "real transpiler binary (**c2rust**, or an LLM-transpiler CLI) with "
+        "`{in}`/`{out}` placeholders, **gated** on the binary existing — when "
+        "absent it reports `unavailable` and returns no output (never "
+        "fabricated). `verify_transpiled` runs the **real oracle** on the "
+        "translator's output; on every available reference pair the "
+        "translate→verify step flags a div-by-zero divergence on the UB input "
+        "and stays silent on a safe input, proving the recipe pipeline preserves "
+        "the oracle's guarantees end to end (clang/UBSan + rustc/go/swiftc).",
+        "ub_oracle.transpiler_recipes",
+        ("confirm_transpiler_recipes", "verify_transpiled", "RECIPES"),
+        theorem=_thm_transpiler_recipes,
+        docs=("README.md", "docs/TRANSPILER_RECIPES.md"),
     ),
 ]
 

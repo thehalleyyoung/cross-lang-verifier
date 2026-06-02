@@ -325,6 +325,16 @@ python3 -m src.cli.main discover \
   proving **cross-pair invariance** — a UB-rooted divergence is flagged on every
   pair (it's a property of the source UB, not one target's quirks) and an
   equivalent function on none (15 function×pair verdicts, all correct)
+- **pluggable transpiler-integration recipes** (`transpiler_recipes.py`,
+  `docs/TRANSPILER_RECIPES.md`) that realise the tool's workflow —
+  *translate your C with `$tool`, then verify with us*: a `Translator` protocol
+  is the integration point, built-in `ReferenceTranslator`s ship compilable
+  Rust/Go/Swift baselines, and `ExternalCommandTranslator` shells out to a real
+  transpiler (c2rust, or an LLM-transpiler CLI) **gated** on the binary existing
+  — absent, it reports unavailable and fabricates nothing. On every available
+  pair the translate→verify step flags a div-by-zero divergence on the UB input
+  and stays silent on a safe one, proving the recipe preserves the oracle's
+  guarantees end to end
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
