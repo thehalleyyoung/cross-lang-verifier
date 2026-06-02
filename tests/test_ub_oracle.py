@@ -4359,3 +4359,67 @@ def test_product_program_content_hash_stable():
     c2 = _pp.confirm_product_program(langs=("rust",), per_class=1)
     assert c1.available and c2.available
     assert c1.content_hash == c2.content_hash and c1.content_hash
+
+# --------------------------------------------------------------------------- #
+# Step 71 — cross-language translation-validation framing.
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import translation_validation as _tv  # noqa: E402
+
+
+def test_translation_validation_verdict_constants_and_unavailable_target():
+    assert _tv.REFUTED == "REFUTED" and _tv.NOT_REFUTED == "NOT_REFUTED"
+    import pytest as _pt
+    with _pt.raises(ValueError):
+        _tv.validate("x", "y", [("0",)], target="fortran")
+
+
+def test_translation_validation_witness_fingerprint_is_stable_and_self_contained():
+    from src.ub_oracle import product_program as _pp
+    obs = _pp.ProductObservable(
+        target="rust", mode=_pp.TRAP_VS_DEFINED, o0_rc=136, o0_val="",
+        o2_rc=136, o2_val="", san_trapped=True, defined=True, deterministic=True)
+    w = _tv.CounterexampleWitness(
+        c_src="int main(){return 0;}", target_src="fn main(){}",
+        inputs=("5", "0"), target="rust", mode=_pp.TRAP_VS_DEFINED,
+        klass="div_by_zero", observable=obs, reason="R_m violated")
+    # the witness carries everything a third party needs to reproduce
+    assert w.c_src and w.target_src and w.inputs == ("5", "0") and w.target == "rust"
+    # fingerprint is a deterministic function of the witness inputs
+    assert w.fingerprint() == w.fingerprint()
+    assert _pp.product_violated(w.observable)
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="C/UBSan + a target toolchain unavailable")
+def test_translation_validation_confirms_witness_theorems_on_real_code():
+    langs = tuple(l for l in ("rust", "go")
+                  if (_full_rust if l == "rust" else _full_go))
+    conf = _tv.confirm_translation_validation(langs=langs, per_class=1)
+    assert conf.available and conf.ok, conf.detail
+    assert conf.n_refuted > 0 and conf.n_not_refuted > 0
+    for c in conf.checks:
+        assert c.agree, (c.item_id, c.verdict, c.replay_reproduced)
+        if c.declared_label == "divergent":
+            assert c.verdict == _tv.REFUTED
+            assert c.replay_reproduced and c.replay_deterministic
+        else:
+            assert c.verdict == _tv.NOT_REFUTED
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_translation_validation_witness_replays_against_fresh_compilation():
+    # End-to-end: validate a real divergent item, then replay the emitted
+    # witness from scratch and confirm it still violates R_m (witness soundness).
+    from src.ub_oracle import product_program as _pp
+    items = [it for it in _gt.enumerate_corpus(("rust",))
+             if it.declared_label == "divergent" and it.klass == "div_by_zero"]
+    assert items
+    it = items[0]
+    vr = _tv.validate(it.c_src, it.target_src, [tuple(it.inputs)],
+                      target="rust", mode=_pp.TRAP_VS_DEFINED, klass=it.klass)
+    assert vr.refuted and vr.witness is not None
+    fresh = vr.witness.replay()
+    assert fresh is not None and _pp.product_violated(fresh)
+    # determinism: a second replay reproduces the identical observable
+    again = vr.witness.replay()
+    assert again is not None and again.__dict__ == fresh.__dict__

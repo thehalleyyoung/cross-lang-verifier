@@ -287,6 +287,12 @@ python3 -m src.cli.main discover \
   soundness-and-relative-completeness theorem parameterized over the target
   semantics pack, discharged both by an exhaustive Boolean-equivalence check
   against the operational semantics and on real clang/UBSan + rustc/go runs
+- a **cross-language translation-validation interface** (`translation_validation.py`,
+  spec in `docs/TRANSLATION_VALIDATION.md`): the oracle exposed as a per-instance,
+  witness-producing validator that `REFUTES` a producer's faithfulness claim with
+  a **re-executable counterexample witness** (carrying both source texts + the
+  input) whose `replay()` recompiles both sides from scratch — proven on real
+  code to replay to the same divergence (witness soundness) and deterministically
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

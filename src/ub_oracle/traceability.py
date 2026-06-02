@@ -592,6 +592,18 @@ def _thm_product_program() -> bool:
     return bool(conf.ok and conf.n_divergent > 0 and conf.n_equivalent > 0)
 
 
+def _thm_translation_validation() -> bool:
+    # The translation validator is sound: a REFUTED counterexample witness, when
+    # replayed against fresh compilations, reproduces a violation of R_m (a
+    # genuine, third-party-checkable divergence), and replaying is deterministic.
+    # Equivalent items are NOT_REFUTED (no false refutation).
+    from . import translation_validation as tv
+    conf = tv.confirm_translation_validation(per_class=1)
+    if not conf.available:
+        return True  # consistency-only when toolchain absent
+    return bool(conf.ok and conf.n_refuted > 0 and conf.n_not_refuted > 0)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1159,6 +1171,28 @@ CLAIMS: List[Claim] = [
          "build_product"),
         theorem=_thm_product_program,
         docs=("README.md", "docs/PRODUCT_PROGRAM.md"),
+    ),
+    claim(
+        "C38-translation-validation",
+        "The oracle is presented through the recognized **translation-validation** "
+        "interface: a per-instance, witness-producing validator `V(P_S, P_T, I, T)` "
+        "that either `REFUTES` the producer's faithfulness claim with a "
+        "counterexample or returns `NOT_REFUTED` over the probed inputs (a "
+        "one-sided result — equivalence is never claimed, matching the global "
+        "sound-for-divergence direction). The validity relation is exactly the "
+        "relational assertion `R_m`. The contribution is the **re-executable "
+        "witness**: a self-contained record (both source texts, the concrete "
+        "input, the target pack, the product observable) whose `replay()` "
+        "recompiles and re-runs both sides from scratch. Two operational theorems "
+        "are discharged on real code by `confirm_translation_validation`: "
+        "**witness soundness** (a REFUTED witness replays to the same `R_m` "
+        "violation against fresh compilations) and **witness determinism** (a "
+        "second replay reproduces the identical observable). Producer-agnostic and "
+        "target-parameterized.",
+        "ub_oracle.translation_validation",
+        ("validate", "CounterexampleWitness", "confirm_translation_validation"),
+        theorem=_thm_translation_validation,
+        docs=("README.md", "docs/TRANSLATION_VALIDATION.md"),
     ),
 ]
 
