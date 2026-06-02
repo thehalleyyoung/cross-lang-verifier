@@ -2764,3 +2764,113 @@ def test_cegar_divergent_witness_confirmed_against_real_compilers():
     assert rr.confirmed
     # and the oracle really used the CEGAR witness (range was pinned to it).
     assert out.counterexample.inputs["x"] == res.witness
+
+
+# ── Step 74: k-induction for loops beyond bounded unrolling ──────────────────
+from src.ub_oracle import kinduction as _ki  # noqa: E402
+
+
+def test_kinduction_proves_safe_loop_with_auxiliary_invariant():
+    """The modular counter never overflows; the bare no-overflow property is not
+    inductive, but strengthening with the (itself-inductive) range invariant
+    closes the induction at k=1 — proving safety for *unbounded* iterations."""
+    ts, aux = _ki.saturating_counter(1000)
+    res = _ki.prove(ts, max_k=8, aux=aux)
+    assert res.verdict is _ki.KIndVerdict.SAFE
+    assert res.k == 1
+    assert res.aux_invariants_used == ["0<=i<M"]
+    # without the strengthening lemma the property is genuinely not k-inductive
+    # within the budget (a spurious unreachable CTI keeps breaking the step).
+    bare = _ki.prove(ts, max_k=6)
+    assert bare.verdict is _ki.KIndVerdict.UNKNOWN
+
+
+def test_kinduction_rejects_non_inductive_auxiliary_lemma():
+    """An auxiliary lemma that is not itself inductive must be discarded, so it
+    cannot be used to (unsoundly) close the induction."""
+    ts, _ = _ki.saturating_counter(1000)
+    # 'i <= 10' is true initially but NOT preserved by trans (i reaches 999),
+    # so the engine must refuse to use it and therefore not prove SAFE via it.
+    bogus = [("i<=10", lambda s: s["i"] <= 10)]
+    res = _ki.prove(ts, max_k=4, aux=bogus)
+    assert res.aux_invariants_used == []           # lemma was rejected
+    assert res.verdict is _ki.KIndVerdict.UNKNOWN  # and it did not help
+
+
+def test_kinduction_finds_genuine_overflow_witness():
+    """The accumulator reaches INT_MAX and the next update overflows; the base
+    case (which starts from init) returns a *reachable* counterexample at the
+    exact iteration the loop first goes undefined."""
+    ts = _ki.accumulator_overflow(_ki.INT32_MAX - 2, 1)
+    res = _ki.prove(ts, max_k=8)
+    assert res.verdict is _ki.KIndVerdict.DIVERGENT
+    assert res.witness_depth == 2
+    # the witness trace ends on the last in-range state (INT_MAX); its next
+    # increment is the UB.
+    assert res.witness_trace[-1]["acc"] == _ki.INT32_MAX
+
+
+def test_kinduction_agrees_with_brute_force_simulation():
+    """k-induction's verdict and witness depth must match an independent concrete
+    simulation of the same transition system."""
+    # SAFE case: simulate far beyond any unrolling and observe no violation.
+    ts_safe, aux = _ki.saturating_counter(1000)
+    safe, viol, _ = _ki.simulate(ts_safe, 5000)
+    assert safe and viol is None
+    assert _ki.prove(ts_safe, max_k=8, aux=aux).proved_safe
+    # DIVERGENT case: the simulator's first-violation depth equals the witness.
+    ts_div = _ki.accumulator_overflow(_ki.INT32_MAX - 2, 1)
+    ok, vdepth, _ = _ki.simulate(ts_div, 10)
+    assert not ok
+    res = _ki.prove(ts_div, max_k=8)
+    assert res.witness_depth == vdepth
+
+
+def test_kinduction_is_deterministic():
+    ts, aux = _ki.saturating_counter(777)
+    a = _ki.prove(ts, max_k=6, aux=aux)
+    b = _ki.prove(ts, max_k=6, aux=aux)
+    assert (a.verdict, a.k, a.aux_invariants_used) == (b.verdict, b.k, b.aux_invariants_used)
+
+
+@_requires_toolchain
+def test_kinduction_overflow_witness_traps_at_predicted_trip_count():
+    """Close the loop on real compilers: at exactly the k-induction-predicted
+    trip count the C loop executes UB (UBSan traps) while Rust stays defined —
+    and one trip earlier it does *not*, so the predicted boundary is exact."""
+    start, step = _ki.INT32_MAX - 2, 1
+    trips = _ki.trips_to_overflow(start, step)
+    # the engine's witness depth + 1 (the overflowing update) equals the trip count
+    res = _ki.prove(_ki.accumulator_overflow(start, step), max_k=8)
+    assert res.witness_depth + 1 == trips
+    c = _ki.accumulator_c_source(start, step)
+    rs = _ki.accumulator_rust_source(start, step)
+    h = ReexecHarness(_TC)
+    out = h.confirm_trap_vs_defined(c, rs, [str(trips)], "signed_overflow", "rust")
+    assert out.confirmed, out.reason
+    assert out.ub_reachable, "UBSan must trap at the predicted trip count"
+    assert out.rust_defined
+    # one fewer iteration stays in range — no UB, proving the boundary is exact.
+    safe = h.confirm_trap_vs_defined(c, rs, [str(trips - 1)], "signed_overflow", "rust")
+    assert not safe.ub_reachable, "the loop must not be UB one trip earlier"
+
+
+@_requires_toolchain
+@pytest.mark.parametrize("target", ["rust", "go", "swift"])
+def test_kinduction_safe_loop_no_divergence_across_pairs(target):
+    """The SAFE verdict transfers across pairs: at a large (effectively unbounded)
+    trip count the C modular counter and the target produce the *same* defined,
+    deterministic value with no UB — i.e. no divergence, exactly as k-induction
+    proved for unbounded iterations."""
+    if not _TC.full_for(target):
+        pytest.skip(f"toolchain missing for {target}")
+    M = 1000
+    c = _ki.saturating_c_source(M)
+    tgt_src = _ki._SATURATING_EMITTERS[target](M)
+    h = ReexecHarness(_TC)
+    res = h.confirm_ub_divergence(c, tgt_src, ["5000000"], "signed_overflow", target)
+    assert not res.ub_reachable, "the modular counter must never be UB"
+    assert not res.ub_consequential, "O0 and O2 must agree (defined)"
+    assert res.rust_defined
+    # C and the target agree on the defined result (5_000_000 mod 1000 == 0).
+    assert res.c_runs["O0"].stdout == res.rust_run.stdout == "0"

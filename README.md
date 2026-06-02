@@ -109,6 +109,14 @@ python3 -m src.cli.main discover \
   guarded input is undefined or in a concrete witness — whose verdict is checked
   against exact enumeration of the UB region and whose witnesses are confirmed
   against the real C `-O0`/`-O2` builds
+- a **k-induction engine for loops beyond bounded unrolling** (`kinduction.py`)
+  so a no-divergence claim is no longer "we unrolled N times and saw nothing":
+  the inductive step (optionally strengthened with auxiliary invariants the
+  engine first *proves* inductive) certifies safety for an **unbounded** trip
+  count, while the base case returns a reachable overflow witness at the **exact**
+  iteration the loop goes undefined — confirmed against real compilers (the C
+  loop traps under UBSan at precisely that trip count, and the SAFE verdict
+  transfers across C→Rust/Go/Swift)
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

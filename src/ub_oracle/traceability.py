@@ -140,9 +140,25 @@ def _thm_cegar_sound_and_refines() -> bool:
     return bool(sound_equiv and sound_div)
 
 
+def _thm_kinduction_safe_and_witness() -> bool:
+    # k-induction must (a) prove the modular counter SAFE only with the
+    # strengthening invariant, and (b) return a reachable overflow witness whose
+    # depth matches an independent concrete simulation.
+    from . import kinduction as k
+    ts, aux = k.saturating_counter(1000)
+    safe = k.prove(ts, max_k=8, aux=aux)
+    sound_safe = (safe.verdict is k.KIndVerdict.SAFE
+                  and k.prove(ts, max_k=6).verdict is k.KIndVerdict.UNKNOWN)
+    div = k.accumulator_overflow(k.INT32_MAX - 2, 1)
+    res = k.prove(div, max_k=8)
+    _, vdepth, _ = k.simulate(div, 10)
+    sound_div = (res.verdict is k.KIndVerdict.DIVERGENT
+                 and res.witness_depth == vdepth)
+    return bool(sound_safe and sound_div)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
-
 
 CLAIMS: List[Claim] = [
     claim(
@@ -262,6 +278,19 @@ CLAIMS: List[Claim] = [
         "ub_oracle.cegar",
         ("run_cegar", "brute_force_witness", "GuardedQuery"),
         theorem=_thm_cegar_sound_and_refines,
+        docs=("README.md",),
+    ),
+    claim(
+        "C14-kinduction-loops",
+        "Looping fragments are decided beyond bounded unrolling by k-induction: "
+        "the base case returns a reachable overflow witness at the exact iteration "
+        "the loop goes undefined, and the inductive step (optionally strengthened "
+        "with auxiliary invariants the engine first proves inductive) certifies "
+        "no-divergence for an unbounded iteration count.",
+        "ub_oracle.kinduction",
+        ("prove", "simulate", "TransitionSystem", "saturating_counter",
+         "accumulator_overflow"),
+        theorem=_thm_kinduction_safe_and_witness,
         docs=("README.md",),
     ),
 ]
