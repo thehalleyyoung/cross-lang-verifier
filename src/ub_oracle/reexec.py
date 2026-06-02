@@ -530,3 +530,34 @@ class ReexecHarness:
                 f"rust_defined={res.rust_defined} (deterministic={rust_deterministic})"
             )
         return res
+
+    # ── public single-shot build+run helpers (used by the N-language
+    #    consistency oracle, step 125) ─────────────────────────────────────
+    def build_and_run_c(self, c_src: str, flags: List[str],
+                        argv_inputs: List[str]) -> Optional[RunOutcome]:
+        """Compile ``c_src`` with ``flags`` and run it on ``argv_inputs``.
+
+        Returns the :class:`RunOutcome`, or ``None`` if the C toolchain is
+        absent or compilation fails."""
+        if not self.status.c_available:
+            return None
+        with tempfile.TemporaryDirectory() as d:
+            exe = self._compile_c(c_src, flags, d, "c_unit")
+            if exe is None:
+                return None
+            return self._run([exe, *argv_inputs])
+
+    def build_and_run_target(self, target_src: str, target_lang: str,
+                             argv_inputs: List[str]) -> Optional[RunOutcome]:
+        """Compile ``target_src`` for ``target_lang`` and run it on
+        ``argv_inputs``.
+
+        Returns the :class:`RunOutcome`, or ``None`` if that target compiler is
+        absent or compilation fails."""
+        if not self.status.target_available(target_lang):
+            return None
+        with tempfile.TemporaryDirectory() as d:
+            exe = self._compile_target(target_src, target_lang, d, "tgt")
+            if exe is None:
+                return None
+            return self._run([exe, *argv_inputs])

@@ -61,10 +61,12 @@ python3 -m src.cli.main discover \
   **pointer-provenance / address-space-overflow arithmetic**, **`-ffast-math`
   reassociation**, **`restrict`-aliasing violation**, and **`1 << 31` (UB in C,
   *defined* in C++20)** — the last proving the C/C++ boundary is itself a
-  divergence surface (each confirmed against real `clang`/`rustc`/`go`/`clang++`:
+  divergence surface (each confirmed against real
+  `clang`/`rustc`/`go`/`clang++`/`ocamlopt`:
   the same input is C UB — UBSan-trapping, or a value that flips across two
   conforming compilations no sanitizer can trap, with a sweep pinning the exact
-  `-O` level the UB first surfaces — while the safe Rust *and* Go *and* C++ ports
+  `-O` level the UB first surfaces — while the safe Rust *and* Go *and* C++ *and*
+  OCaml ports
   are defined and deterministic), plus an
   **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on
   a real three-point definedness-lattice dataflow analysis that flags reads of
@@ -334,6 +336,17 @@ python3 -m src.cli.main discover \
   proving **cross-pair invariance** — a UB-rooted divergence is flagged on every
   pair (it's a property of the source UB, not one target's quirks) and an
   equivalent function on none (15 function×pair verdicts, all correct)
+- a **5th target pair and multi-language oracles**: C→**OCaml** (a GC'd,
+  exception-based port, witnessed live on real `ocamlopt`) joins
+  Rust/Go/Swift/C++ in the byte-reproducible matrix (**36 confirmed cells**);
+  an **N-language consistency oracle** (`consistency.py`) compiles one C source
+  to ≥3 safe targets at once and flags the lone minority on live output (e.g.
+  Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a
+  **target-pack conformance suite** (`pack_conformance.py`) mechanically holds
+  every back end to the plugin SPI; and an **SMT-backed integer oracle**
+  (`smt_integer.py`) whose encoding is **Z3-proved equivalent to its spec on
+  every 32/64-bit input** and finds the one-in-2⁶⁴ `INT_MIN/-1` witness in
+  milliseconds where enumeration never does
 - **pluggable transpiler-integration recipes** (`transpiler_recipes.py`,
   `docs/TRANSPILER_RECIPES.md`) that realise the tool's workflow —
   *translate your C with `$tool`, then verify with us*: a `Translator` protocol

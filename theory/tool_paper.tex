@@ -55,7 +55,7 @@
 }
 \lstset{style=codestyle}
 
-\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++) via $\sigma$-Bridge Product Programs}}
+\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++/OCaml) via $\sigma$-Bridge Product Programs}}
 \date{}
 
 \author{halley-labs}
@@ -87,11 +87,21 @@ shift/division UB, \texttt{INT\_MIN/-1}, out-of-bounds access, strict-aliasing
 reassociation, VLA-bound, float$\to$int overflow, pointer-provenance /
 address-space-overflow arithmetic, \texttt{restrict}-aliasing, an
 uninitialized-read/definedness analysis, and a C/C++-boundary class
-(\texttt{1 << 31}, undefined in C yet defined in C++20)---driven across four
-target languages (Rust, Go, Swift, C++) by a deterministic, byte-reproducible
-cross-pair regression matrix whose 32 toolchain-backed cells are \emph{all}
+(\texttt{1 << 31}, undefined in C yet defined in C++20)---driven across five
+target languages (Rust, Go, Swift, C++, and a GC'd, exception-based OCaml port)
+by a deterministic, byte-reproducible
+cross-pair regression matrix whose 36 toolchain-backed cells are \emph{all}
 confirmed against real compilers (\texttt{clang}, \texttt{rustc}, \texttt{go},
-\texttt{clang++}). An optimization-level sweep additionally pins the exact
+\texttt{clang++}, \texttt{ocamlopt}). Beyond pairwise checks, an
+\emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
+targets at once and flags the minority target whose live output disagrees, and a
+target-pack conformance suite mechanically certifies that every back end
+satisfies the plugin SPI. For the integer-UB family we additionally ship an
+SMT-backed encoding whose equivalence to a human-readable specification is
+Z3-proved for \emph{every} 32/64-bit input, and which finds the rare overflow
+witnesses (e.g.\ \texttt{INT\_MIN/-1}, one input in $2^{64}$) in milliseconds
+where ordered enumeration exhausts its budget. An optimization-level sweep
+additionally pins the exact
 \texttt{-O} level at which each no-sanitizer-traps UB class first changes the
 program's observable output. On a labelled UB-divergence study (21 cases over 13
 classes) the oracle attains perfect precision and recall ($\mathrm{tp}=17,\
@@ -387,11 +397,13 @@ FP contraction (FMA)       & unspec. & IEEE-strict     & \textsc{opt} \\
 \paragraph{Cross-pair generality.} Because each class shares one
 \texttt{divergence\_class} key across language pairs, a single Z3 witness drives
 the class against \emph{every} target that implements it. The deterministic
-cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{4 language pairs}
-(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$C++) with 13, 12, 6, and 1 classes
-respectively---\textbf{32 cells in total}---and is byte-reproducible per fresh
-process. When the host toolchain is present, \emph{all 32 cells confirm against
-real \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}}. The C$\to$C++
+cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{5 language pairs}
+(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++) with 13, 12, 6, 4,
+and 1 classes
+respectively---\textbf{36 cells in total}---and is byte-reproducible per fresh
+process. When the host toolchain is present, \emph{all 36 cells confirm against
+real \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}}.
+The C$\to$C++
 pair is qualitatively distinct: its witness, the byte-identical token
 \texttt{1 << 31}, is \emph{undefined} in C (C17~6.5.7p4) yet \emph{defined} in
 C++20 (which mandates two's-complement and a modular shift,
@@ -533,7 +545,7 @@ known allocations, and use-after-free detection.
 \section{Evaluation}\label{sec:eval}
 %% ======================================================================
 
-We evaluate \textsc{SemRec} around six research questions.
+We evaluate \textsc{SemRec} around eleven research questions.
 All experiments run on a laptop
 (Apple M-series, 16\,GB RAM) using Python~3 and Z3.
 
@@ -548,7 +560,15 @@ All experiments run on a laptop
   \item[\textbf{RQ7}] Real-world CVE-inspired C/Rust divergences.
   \item[\textbf{RQ8}] Does every divergence class transfer across
     \emph{multiple} target languages and confirm against \emph{real}
-    compilers (\texttt{clang}/\texttt{rustc}/\texttt{go})?
+    compilers (\texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/%
+    \texttt{ocamlopt})?
+  \item[\textbf{RQ9}] At which optimization level does each
+    no-sanitizer-traps UB class first change observable output?
+  \item[\textbf{RQ10}] Given one C source ported to $\geq 3$ safe targets, can
+    the oracle flag the minority target on live output?
+  \item[\textbf{RQ11}] Can an SMT encoding of the integer-UB family be
+    \emph{proved} equivalent to its specification and beat enumeration at
+    finding rare witnesses?
 \end{enumerate}
 
 \subsection{UB-Invisible Benchmark (RQ1)}\label{sec:eval-ub}
@@ -929,18 +949,20 @@ regression matrix (\texttt{src/ub\_oracle/regression\_matrix.py}):
     in CI (\texttt{make matrix-check}).
   \item \textbf{Ground-truth layer.} Each cell's Z3 witness is compiled and run
     against real \texttt{clang} (under \texttt{-fsanitize=undefined}), real
-    \texttt{rustc}, real \texttt{go}, and real \texttt{clang++}; a cell is
+    \texttt{rustc}, real \texttt{go}, real \texttt{clang++}, and real
+    \texttt{ocamlopt}; a cell is
     \emph{confirmed} only when
     the C side is observably under-determined (a sanitizer trap, or two
     conforming compilations that disagree) \emph{and} the safe target is
     deterministic and defined.
 \end{enumerate}
 
-Table~\ref{tab:matrix} reports the matrix. It spans \textbf{4 target languages}
-and \textbf{32 cells} (C$\to$Rust: 13 classes; C$\to$Go: 12; C$\to$Swift: 6,
-the argv-driven integer/memory core; C$\to$C++: 1, the C/C++-boundary shift
-class). On a host with the full toolchain,
-\textbf{all 32 cells confirm against real compilers}---no verdict is taken on
+Table~\ref{tab:matrix} reports the matrix. It spans \textbf{5 target languages}
+and \textbf{36 cells} (C$\to$Rust: 13 classes; C$\to$Go: 12; C$\to$Swift: 6,
+the argv-driven integer/memory core; C$\to$OCaml: 4, a GC'd exception-based
+target; C$\to$C++: 1, the C/C++-boundary shift class). On a host with the full
+toolchain,
+\textbf{all 36 cells confirm against real compilers}---no verdict is taken on
 faith. Crucially, the matrix file contains \emph{no per-language branches}: it
 discovers pairs and oracles from the plugin registry, so adding a target
 language or a divergence class makes the corresponding cells appear
@@ -951,30 +973,33 @@ automatically, and the soundness obligation is discharged uniformly.
 \small
 \caption{Cross-pair regression matrix coverage. ``D'' = a symbolic divergence
 witness is found and (with toolchain) confirmed against real compilers; ``--'' =
-class not implemented for that pair. All 32 implemented cells confirm. The
+class not implemented for that pair. All 36 implemented cells confirm. The
 C$\to$C++ column carries the single C/C++-boundary class whose witness
-(\texttt{1 << 31}) is UB in C but defined in C++20.}
+(\texttt{1 << 31}) is UB in C but defined in C++20; the C$\to$OCaml column
+carries the integer/memory core, witnessed against real \texttt{ocamlopt}
+(division-by-zero and out-of-bounds raise \texttt{Division\_by\_zero} /
+\texttt{Invalid\_argument}; \texttt{Int32} arithmetic is exactly modular).}
 \label{tab:matrix}
-\begin{tabular}{@{}lcccc@{}}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-Divergence class & C$\to$Rust & C$\to$Go & C$\to$Swift & C$\to$C++ \\
+Divergence class & C$\to$Rust & C$\to$Go & C$\to$Swift & C$\to$OCaml & C$\to$C++ \\
 \midrule
-Signed overflow            & D & D & D & -- \\
-Shift $\geq$ width          & D & D & D & -- \\
-Division by zero           & D & D & D & -- \\
-\texttt{INT\_MIN / -1}     & D & D & D & -- \\
-Array out-of-bounds        & D & D & D & -- \\
-Uninitialized read         & D & D & D & -- \\
-Strict aliasing            & D & D & -- & -- \\
-VLA bound                  & D & D & -- & -- \\
-Float$\to$int overflow     & D & D & -- & -- \\
-\texttt{-ffast-math} reassoc.& D & D & -- & -- \\
-\texttt{restrict} violation & D & D & -- & -- \\
-Pointer provenance         & D & D & -- & -- \\
-FP contraction             & D & -- & -- & -- \\
-\texttt{1 << 31} (C/C++)   & -- & -- & -- & D \\
+Signed overflow            & D & D & D & D & -- \\
+Shift $\geq$ width          & D & D & D & -- & -- \\
+Division by zero           & D & D & D & D & -- \\
+\texttt{INT\_MIN / -1}     & D & D & D & D & -- \\
+Array out-of-bounds        & D & D & D & D & -- \\
+Uninitialized read         & D & D & D & -- & -- \\
+Strict aliasing            & D & D & -- & -- & -- \\
+VLA bound                  & D & D & -- & -- & -- \\
+Float$\to$int overflow     & D & D & -- & -- & -- \\
+\texttt{-ffast-math} reassoc.& D & D & -- & -- & -- \\
+\texttt{restrict} violation & D & D & -- & -- & -- \\
+Pointer provenance         & D & D & -- & -- & -- \\
+FP contraction             & D & -- & -- & -- & -- \\
+\texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D \\
 \midrule
-\textbf{Confirmed cells}   & \textbf{13} & \textbf{12} & \textbf{6} & \textbf{1} \\
+\textbf{Confirmed cells}   & \textbf{13} & \textbf{12} & \textbf{6} & \textbf{4} & \textbf{1} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1026,6 +1051,102 @@ Class & \texttt{-O0} & \texttt{-O1} & \texttt{-O2} & \texttt{-O3} & Onset \\
 Strict aliasing            & 0 & 1 & 1 & 1 & \texttt{-O1} \\
 \texttt{restrict} violation & 4 & 3 & 3 & 3 & \texttt{-O1} \\
 \texttt{-ffast-math} reassoc.& 0 & 1 & 1 & 1 & \texttt{-O1} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{$N$-Language Consistency: Majority Voting Across Live Ports
+(RQ10)}\label{sec:eval-consistency}
+
+Pairwise oracles answer ``does target $T$ diverge from C?''. A migration shop,
+however, often maintains \emph{several} candidate ports at once and wants a
+sharper question: given one C source compiled to $\geq 3$ safe targets, \emph{is
+any single target the odd one out?} The $N$-language consistency oracle
+(\texttt{src/ub\_oracle/consistency.py}) answers exactly this. It builds the C
+program and each available target (Rust, Go, Swift, OCaml), runs them all on the
+oracle's witness input, canonicalizes each observable outcome (a printed value,
+or an \texttt{ABORT} bucket for any trap/panic/uncaught exception), and applies
+majority voting: a target is \emph{flagged} when it disagrees with the modal
+outcome. The result is purely live---every label is a real process exit, not a
+model prediction.
+
+Two registered units make the behaviour concrete. On
+\emph{out-of-range shift}, Rust's \texttt{wrapping\_shl} \emph{masks} the shift
+amount modulo the width ($1 \ll 32 \equiv 1 \ll 0 = 1$) whereas Go and Swift
+yield $0$; the oracle flags \textbf{Rust} as the lone outlier among three safe
+languages---a genuine, defined-but-different divergence that no C-vs-one-target
+check would surface as ``majority disagreement''. On \emph{division by zero},
+all three targets abort, so the verdict is \emph{consistent}: a true negative
+that guards against over-flagging. Because the comparison reuses the same build
+harness and content-hashed outcomes as the pairwise path, its verdicts inherit
+the matrix's reproducibility contract.
+
+\subsection{Target-Pack Conformance: a Mechanized Back-End
+SPI}\label{sec:eval-conformance}
+
+Generality in \textsc{SemRec} is \emph{configuration, not code}: a new target
+language is a \emph{target pack} (compiler candidates, source suffix, the set of
+defined return codes, a compile-argv builder, and a class-resolution map) plus a
+table of per-class source emitters---no new harness or oracle logic. To keep
+that promise sound as packs proliferate, the conformance suite
+(\texttt{src/ub\_oracle/pack\_conformance.py}) discharges nine SPI obligations
+against \emph{every} registered pack (Rust, Go, Swift, C++, OCaml): the
+defined-outcome predicate is total and includes the success code; compiler
+candidates are non-empty and well-typed; the source suffix is a dotted
+extension; the compile-argv builder is deterministic and mentions both source
+and output paths; and the class-resolution map only names known divergence
+classes. A pack that violates any obligation fails CI before it can contribute a
+single unsound cell to the matrix---turning ``add a language'' into a checklist
+the machine, not the reviewer, enforces.
+
+\subsection{SMT-Backed Integer Oracle: Proved Encodings and a Witness-Search
+Speed-up (RQ11)}\label{sec:eval-smt}
+
+For the integer-UB family---signed overflow, out-of-range shift, division by
+zero, and the unique \texttt{INT\_MIN/-1} overflow---we promote the
+\emph{encoding itself} to a machine-checked artifact
+(\texttt{src/ub\_oracle/smt\_integer.py}). Each class carries two independent Z3
+bit-vector formulas: an \emph{operational} encoding (the formula the shipped
+oracle solves, e.g.\ \texttt{Not(BVSDivNoOverflow($a$,$b$))} excluding
+$b=0$) and a human-readable \emph{specification} (e.g.\ $a=\texttt{INT\_MIN}
+\wedge b=-1$). The tool then asks Z3 to prove the bi-implication valid over
+\emph{every} input at the real bit widths: the negation
+$\mathit{operational} \not\leftrightarrow \mathit{spec}$ is
+\textbf{unsatisfiable} for all four classes at both 32 and 64 bits (and, as a
+width-parametric sanity check, at 4/6/8 bits where the entire input space is
+also brute-forceable). This is the equisatisfiability obligation discharged not
+on a sample but universally---the SMT path and the specification accept exactly
+the same witnesses.
+
+The encoding is not merely elegant; it is \emph{necessary} for the rare classes.
+Table~\ref{tab:smtbench} contrasts the SMT search with an ordered enumeration
+that scans the input space for a witness. For dense classes (a zero divisor, an
+out-of-range shift) both paths answer instantly. But for the classes whose
+witness is vanishingly rare---signed overflow under an ordered scan, and
+\texttt{INT\_MIN/-1} (a single input pair in $2^{64}$)---enumeration exhausts a
+multi-million-probe budget and finds \emph{nothing}, while Z3 returns the
+witness in under a millisecond: a two-to-three-orders-of-magnitude speed-up that
+is the quantitative case for the symbolic encoding. A differential cross-check
+confirms the two paths agree on \emph{existence} at every fully enumerable
+width, and the SMT witness for \texttt{INT\_MIN/-1} coincides exactly with the
+pair the shipped operational oracle emits.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Witness search, SMT vs.\ ordered enumeration, at 32-bit width (probe
+budget $2^{20}$). For rare-witness classes enumeration spends its full budget
+without success while Z3 answers in sub-millisecond time; both paths are trivial
+on dense classes. Times are representative single-run wall-clock.}
+\label{tab:smtbench}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Class & SMT finds? & Enum finds? & Enum probes & Speed-up \\
+\midrule
+Division by zero        & yes & yes & 1            & --- \\
+Shift $\geq$ width       & yes & yes & 33           & --- \\
+Signed overflow         & yes & \textbf{no} & $2^{20}$ & $\sim$100$\times$ \\
+\texttt{INT\_MIN / -1}  & yes & \textbf{no} & $2^{20}$ & $\sim$800$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}

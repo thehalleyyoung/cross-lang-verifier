@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  2 JUN 2026 13:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  2 JUN 2026 15:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -620,47 +620,47 @@ LaTeX Font Info:    Trying to load font information for U+stmry on input line 6
 {/usr/local/texlive/2025basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 215.
+(hyperref)                removing `math shift' on input line 225.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 215.
+(hyperref)                removing `\sigma' on input line 225.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 215.
+(hyperref)                removing `math shift' on input line 225.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 224.
+(Font)              using `T1/cmr/m/scsl' instead on input line 234.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 224.
+(Font)              using `T1/cmr/m/scsl' instead on input line 234.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 224.
+(Font)              using `T1/cmr/m/scsl' instead on input line 234.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 224.
+(Font)              using `T1/cmr/m/scsl' instead on input line 234.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 225.
+(Font)              using `T1/cmr/m/scsl' instead on input line 235.
 
 
-Overfull \hbox (25.21313pt too wide) in paragraph at lines 238--240
+
+[2]
+Overfull \hbox (25.21313pt too wide) in paragraph at lines 248--250
 []\T1/cmr/m/sc/10 UB\T1/cmr/m/n/10 : bitvec-tor op-er-a-tion plus a well-define
 dness guard added to the as-sump-tion set (\T1/cmtt/m/n/10 ctx.assert_assume\T1
 /cmr/m/n/10 ). 
  []
 
 
-
-[2]
-Overfull \hbox (10.10947pt too wide) in paragraph at lines 249--256
+Overfull \hbox (10.10947pt too wide) in paragraph at lines 259--266
 [][]\T1/cmr/bx/n/10 Definition 2 \T1/cmr/m/n/10 ($\OML/cmm/m/it/10 ^^[$\T1/cmr/
 m/n/10 -Bridge Co-er-cion)\T1/cmr/bx/n/10 . []\T1/cmr/m/it/10 A $\OML/cmm/m/it/
 10 ^^[$\T1/cmr/m/it/10 -bridge co-er-cion at pro-gram point $\OML/cmm/m/it/10 i
@@ -669,18 +669,18 @@ ML/cmm/m/it/10 ; [][]; [][]\OT1/cmr/m/n/10 )$
  []
 
 
-Overfull \hbox (77.59837pt too wide) in paragraph at lines 268--270
+Overfull \hbox (77.59837pt too wide) in paragraph at lines 278--280
  []\T1/cmr/bx/n/10 Product pro-gram con-struc-tion.[] \T1/cmr/m/n/10 Al-go-rith
 m []1[] sum-ma-rizes the con-struc-tion, im-ple-mented in \T1/cmtt/m/n/10 Produ
 ctBuilder.build()
  []
 
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 272.
+put line 282.
 
 
 [3]
-Overfull \hbox (117.75385pt too wide) in paragraph at lines 407--410
+Overfull \hbox (117.75385pt too wide) in paragraph at lines 419--422
 \T1/cmr/m/n/10 We state the main sound-ness the-o-rem, cor-re-spond-ing to \T1/
 cmtt/m/n/10 verify_soundness_theorem_1() \T1/cmr/m/n/10 in \T1/cmtt/m/n/10 src/
 product_program/soundness.py\T1/cmr/m/n/10 . 
@@ -691,20 +691,20 @@ product_program/soundness.py\T1/cmr/m/n/10 .
 [4]
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 462.
+(Font)              using `T1/cmr/m/scsl' instead on input line 474.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 463.
+(Font)              using `T1/cmr/m/scsl' instead on input line 475.
 
 
-Overfull \hbox (13.40016pt too wide) in paragraph at lines 482--487
+Overfull \hbox (13.40016pt too wide) in paragraph at lines 494--499
  []\T1/cmr/bx/n/10 Parser fron-tends.[] \T1/cmr/m/n/10 Each lan-guage has two p
 ars-ing back-ends: tree-sitter-c 0.24 and tree-sitter-rust 0.24 [[]]
  []
 
 
-Overfull \hbox (1.0379pt too wide) in paragraph at lines 520--530
+Overfull \hbox (1.0379pt too wide) in paragraph at lines 532--542
  []\T1/cmr/bx/n/10 Memory model.[] \T1/cmr/m/n/10 For pointer-manipulating code
 , \T1/cmr/m/sc/10 Sem-Rec \T1/cmr/m/n/10 in-cor-po-rates Andersen-style flow-in
 sensitive
@@ -716,17 +716,17 @@ sensitive
 
 [6]
 
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 762.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 762.
+
+
+
 [7]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 742.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 742.
-
-
-Overfull \hbox (2.70706pt too wide) in paragraph at lines 769--775
+Overfull \hbox (2.70706pt too wide) in paragraph at lines 789--795
 \T1/cmr/m/n/10 val-ues that trig-ger the di-ver-gence. For ex-am-ple, on an \T1
 /cmtt/m/n/10 add \T1/cmr/m/n/10 pair, the coun-terex-am-ple $\OML/cmm/m/it/10 a
  \OT1/cmr/m/n/10 = 2[]147[]483[]647\OML/cmm/m/it/10 ; b \OT1/cmr/m/n/10 =
@@ -737,14 +737,16 @@ Overfull \hbox (2.70706pt too wide) in paragraph at lines 769--775
 [8]
 
 [9]
-Overfull \hbox (82.10422pt too wide) in paragraph at lines 982--993
+Overfull \hbox (82.10422pt too wide) in paragraph at lines 1007--1018
  []\T1/cmr/bx/n/10 Labelled pre-ci-sion/re-call.[] \T1/cmr/m/n/10 In-de-pen-den
 tly of the ma-trix, a la-belled UB-divergence study (\T1/cmtt/m/n/10 experiment
 s/ub_divergence\T1/cmr/m/n/10 )
  []
 
 
-Overfull \hbox (14.13248pt too wide) in paragraph at lines 997--1013
+
+[10]
+Overfull \hbox (14.13248pt too wide) in paragraph at lines 1022--1038
 \T1/cmr/m/n/10 The three \T1/cmr/m/sc/10 opt\T1/cmr/m/n/10 -mode classes that \
 T1/cmr/m/it/10 no san-i-tizer can trap\T1/cmr/m/n/10 ---strict alias-ing, \T1/c
 mtt/m/n/10 restrict \T1/cmr/m/n/10 vi-o-la-tion, and \T1/cmtt/m/n/10 -ffast-mat
@@ -752,15 +754,43 @@ h
  []
 
 
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1059.
 
-[10]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1059.
+
+
+Overfull \hbox (33.18387pt too wide) in paragraph at lines 1061--1072
+\T1/cmr/m/n/10 gets, \T1/cmr/m/it/10 is any sin-gle tar-get the odd one out? \T
+1/cmr/m/n/10 The $\OML/cmm/m/it/10 N$\T1/cmr/m/n/10 -language con-sis-tency or-
+a-cle (\T1/cmtt/m/n/10 src/ub_oracle/consistency.py\T1/cmr/m/n/10 )
+ []
+
+
+Overfull \hbox (7.05756pt too wide) in paragraph at lines 1105--1120
+\T1/cmr/m/n/10 For the integer-UB family---signed over-flow, out-of-range shift
+, di-vi-sion by zero, and the unique \T1/cmtt/m/n/10 INT_MIN/-1
+ []
+
+
+Overfull \hbox (10.29941pt too wide) in paragraph at lines 1105--1120
+\T1/cmr/m/n/10 overflow---we pro-mote the \T1/cmr/m/it/10 en-cod-ing it-self \T
+1/cmr/m/n/10 to a machine-checked ar-ti-fact (\T1/cmtt/m/n/10 src/ub_oracle/smt
+_integer.py\T1/cmr/m/n/10 ).
+ []
+
+
 
 [11]
 
 [12]
 
 [13]
-Overfull \hbox (15.13892pt too wide) in paragraph at lines 1389--1393
+
+[14]
+Overfull \hbox (15.13892pt too wide) in paragraph at lines 1510--1514
 \T1/cmr/m/n/10 en-coder (\T1/cmtt/m/n/10 encode_binop \T1/cmr/m/n/10 with \T1/c
 mtt/m/n/10 OverflowBehavior.UNDEFINED\T1/cmr/m/n/10 ) gen-er-ates these guards 
 as \T1/cmtt/m/n/10 ctx.assert_assume
@@ -768,47 +798,47 @@ as \T1/cmtt/m/n/10 ctx.assert_assume
 
 
 
-[14
+[15
 
 ]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1438.
+(hyperref)                removing `math shift' on input line 1559.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 1438.
+(hyperref)                removing `\sigma' on input line 1559.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1438.
+(hyperref)                removing `math shift' on input line 1559.
 
 
-
-[15]
 
 [16]
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1765.
-
+[17]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 1765.
+(hyperref)                removing `math shift' on input line 1886.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1765.
+(hyperref)                removing `\sigma' on input line 1886.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1886.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 
-[17]
-
 [18]
-Underfull \hbox (badness 1308) in paragraph at lines 1979--1980
+
+[19]
+Underfull \hbox (badness 1308) in paragraph at lines 2100--2101
 []|\T1/cmr/m/n/9 Integer pro-mo-tion: C im-plic-itly
  []
 
@@ -816,7 +846,7 @@ Underfull \hbox (badness 1308) in paragraph at lines 1979--1980
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2000--2000
+Underfull \hbox (badness 10000) in paragraph at lines 2121--2121
 []|\T1/cmr/m/n/9 Truncation to-ward
  []
 
@@ -824,55 +854,55 @@ Underfull \hbox (badness 10000) in paragraph at lines 2000--2000
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Overfull \hbox (1.83661pt too wide) in paragraph at lines 2010--2020
+Overfull \hbox (1.83661pt too wide) in paragraph at lines 2131--2141
 \T1/cmr/m/n/10 Integer nar-row-ing (class 13) is implementation-defined in C bu
 t uni-ver-sally trun-cates on two's-complement
  []
 
 
 
-[19]
-Underfull \hbox (badness 1648) in paragraph at lines 2075--2079
+[20]
+Underfull \hbox (badness 1648) in paragraph at lines 2196--2200
 \T1/cmr/m/n/9 UREM, FADD, FSUB, FMUL, FDIV,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2075--2079
+Underfull \hbox (badness 10000) in paragraph at lines 2196--2200
 \T1/cmr/m/n/9 FREM, SHL, LSHR, ASHR, AND,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2075--2079
+Underfull \hbox (badness 10000) in paragraph at lines 2196--2200
 \T1/cmr/m/n/9 OR, XOR. Each an-no-tated with
  []
 
 
-Underfull \hbox (badness 1117) in paragraph at lines 2082--2086
+Underfull \hbox (badness 1117) in paragraph at lines 2203--2207
 []|\T1/cmr/m/n/9 Signed (SLT/S-GT/SLE/SGE), un-signed
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2082--2086
+Underfull \hbox (badness 10000) in paragraph at lines 2203--2207
 \T1/cmr/m/n/9 (ULT/UGT/ULE/UGE), or-dered float
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2082--2086
+Underfull \hbox (badness 10000) in paragraph at lines 2203--2207
 \T1/cmr/m/n/9 (OE-Q/ONE/OLT/OGT/OLE/OGE),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2087--2090
+Underfull \hbox (badness 10000) in paragraph at lines 2208--2211
 []|\T1/cmr/m/n/9 TRUNC, ZEXT, SEXT, FP-TRUNC,
  []
 
 
-Underfull \hbox (badness 2717) in paragraph at lines 2087--2090
+Underfull \hbox (badness 2717) in paragraph at lines 2208--2211
 \T1/cmr/m/n/9 FPEXT, FP-TOSI, FP-TOUI, SITOFP,
  []
 
 
-Underfull \hbox (badness 2828) in paragraph at lines 2095--2096
+Underfull \hbox (badness 2828) in paragraph at lines 2216--2217
 []|\T1/cmr/m/n/9 Phi for SSA con-struc-tion; Se-lect for
  []
 
@@ -881,63 +911,63 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 
-[20] (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
+[21] (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
-Overfull \hbox (7.85013pt too wide) in paragraph at lines 2132--2135
+Overfull \hbox (7.85013pt too wide) in paragraph at lines 2253--2256
  []\T1/cmr/bx/n/10 Memory ar-ray model.[] \T1/cmr/m/n/10 Mem-ory is mod-eled as
  a Z3 \T1/cmtt/m/n/10 Array(BitVecSort(ptr_width), BitVecSort(8))
  []
 
 
 
-[21]
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-
 [22]
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2320.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2320.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 
 [23]
 
-[24] (./tool_paper.aux)
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2441.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2441.
+
+
+
+[24]
+
+[25] (./tool_paper.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `tool_paper.out' has not changed.
-(rerunfilecheck)             Checksum: EE86B6EF8F3694C591723FD51B15952E;9980.
+(rerunfilecheck)             Checksum: 688C851B68253EC23FAD0553A6AE8DE0;11202.
  ) 
 Here is how much of TeX's memory you used:
- 16392 strings out of 474662
- 251499 string characters out of 5751110
- 936760 words of memory out of 5000000
- 38947 multiletter control sequences out of 15000+600000
+ 16404 strings out of 474662
+ 251690 string characters out of 5751110
+ 937595 words of memory out of 5000000
+ 38954 multiletter control sequences out of 15000+600000
  599886 words of font info for 143 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 75i,15n,79p,591b,1438s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,15n,79p,760b,1438s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jkna
 ppen/ec/ectt0800.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var
 /fonts/pk/ljfour/jknappen/ec/ecrm0500.600pk> </Users/halleyyoung/Library/texliv
 e/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbi1000.600pk> </Users/halle
-yyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm0800
+yyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1000
 .600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour
-/jknappen/ec/tcrm1000.600pk> </Users/halleyyoung/Library/texlive/2025basic/texm
-f-var/fonts/pk/ljfour/jknappen/ec/ecit1000.600pk> </Users/halleyyoung/Library/t
-exlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecsc1000.600pk> </Users/
+/jknappen/ec/ecit1000.600pk> </Users/halleyyoung/Library/texlive/2025basic/texm
+f-var/fonts/pk/ljfour/jknappen/ec/ecsc1000.600pk> </Users/halleyyoung/Library/t
+exlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm0800.600pk> </Users/
 halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ecb
 x1200.600pk> </Users/halleyyoung/Library/texlive/2025basic/texmf-var/fonts/pk/l
 jfour/jknappen/ec/eccc1000.600pk> </Users/halleyyoung/Library/texlive/2025basic
@@ -965,22 +995,23 @@ texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/loc
 al/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/
 local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></u
 sr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><
-/usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb
-></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.p
-fb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy
-10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/
-cmsy5.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/
-cm/cmsy7.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfon
-ts/cm/cmsy9.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/ams
-fonts/cm/cmti10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public
-/amsfonts/symbols/msam10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/typ
-e1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2025basic/texmf-dist/
-fonts/type1/public/stmaryrd/stmary10.pfb></usr/local/texlive/2025basic/texmf-di
-st/fonts/type1/urw/zapfding/uzdr.pfb>
-Output written on tool_paper.pdf (24 pages, 516517 bytes).
+/usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb
+></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.p
+fb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9
+.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cm
+sy10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmsy5.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmsy7.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmsy9.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmti10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/publ
+ic/amsfonts/symbols/msam10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/t
+ype1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2025basic/texmf-dis
+t/fonts/type1/public/stmaryrd/stmary10.pfb></usr/local/texlive/2025basic/texmf-
+dist/fonts/type1/urw/zapfding/uzdr.pfb>
+Output written on tool_paper.pdf (25 pages, 535008 bytes).
 PDF statistics:
- 1605 PDF objects out of 1728 (max. 8388607)
- 714 compressed objects within 8 object streams
- 224 named destinations out of 1000 (max. 500000)
- 393 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1634 PDF objects out of 1728 (max. 8388607)
+ 736 compressed objects within 8 object streams
+ 229 named destinations out of 1000 (max. 500000)
+ 417 words of extra memory for PDF output out of 10000 (max. 10000000)
 

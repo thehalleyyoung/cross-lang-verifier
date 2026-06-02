@@ -215,6 +215,82 @@ def _swift_oob(length, var, idx):
     return src, note
 
 
+# ── OCaml source emitters (one per divergence class) ─────────────────────────
+# OCaml's fixed-width integers live in the Int32/Int64 modules: arithmetic is
+# modular (defined), division by zero raises Division_by_zero, and array indexing
+# is bounds-checked (Invalid_argument). Each emitted program reads its operands
+# from argv, applies the operation, and prints one integer — mirroring the C/Go
+# witnesses exactly so the same Z3-found input drives all targets.
+_OCAML_MOD = {32: ("Int32", "l", "%ld"), 64: ("Int64", "L", "%Ld")}
+
+
+def _ocaml_signed(op, c, width, var, witness):
+    mod, suf, _ = _OCAML_MOD[width]
+    fn = "add" if op == "add" else "sub"
+    op_word = "+" if op == "add" else "-"
+    cmp = ">" if op == "add" else "<"
+    src = (
+        f"let f {var} = if ({mod}.compare ({mod}.{fn} {var} {c}{suf}) {var}) {cmp} 0 "
+        f"then 1 else 0\n"
+        "let () =\n"
+        f"  let {var} = {mod}.of_string Sys.argv.(1) in\n"
+        f"  Printf.printf \"%d\\n\" (f {var})\n"
+    )
+    note = (f"C signed {op} overflow at {var}={witness} (UB; optimiser may assume "
+            f"`{var} {op_word} {c} {cmp} {var}` always holds), whereas OCaml's "
+            f"`{mod}.{fn}` is modular and yields a defined value.")
+    return src, note
+
+
+def _ocaml_binop(width, expr_mod, fn, avar, bvar):
+    mod, _, fmt = _OCAML_MOD[width]
+    return (
+        f"let f {avar} {bvar} = {expr_mod}.{fn} {avar} {bvar}\n"
+        "let () =\n"
+        f"  let {avar} = {mod}.of_string Sys.argv.(1) in\n"
+        f"  let {bvar} = {mod}.of_string Sys.argv.(2) in\n"
+        f"  Printf.printf \"{fmt}\\n\" (f {avar} {bvar})\n"
+    )
+
+
+def _ocaml_div(width, op, avar, bvar, a_val, b_val):
+    mod = _OCAML_MOD[width][0]
+    fn = "div" if op == "div" else "rem"
+    glyph = "/" if op == "div" else "%"
+    src = _ocaml_binop(width, mod, fn, avar, bvar)
+    note = (f"C `{avar} {glyph} {bvar}` with {bvar}=0 is UB; OCaml's `{mod}.{fn}` "
+            f"raises Division_by_zero, aborting deterministically (exit 2) — a "
+            f"defined, observable outcome.")
+    return src, note
+
+
+def _ocaml_intmin(width, op, avar, bvar, a_val, b_val):
+    mod = _OCAML_MOD[width][0]
+    fn = "div" if op == "div" else "rem"
+    glyph = "/" if op == "div" else "%"
+    src = _ocaml_binop(width, mod, fn, avar, bvar)
+    note = (f"C `{avar} {glyph} {bvar}` with {avar}={a_val}, {bvar}={b_val} overflows "
+            f"signed division (UB); OCaml's `{mod}.{fn}` wraps modularly to a "
+            f"defined value.")
+    return src, note
+
+
+def _ocaml_oob(length, var, idx):
+    mod, suf, fmt = _OCAML_MOD[32]
+    elems = "; ".join(f"{10 + k}{suf}" for k in range(length))
+    src = (
+        f"let a = [| {elems} |]\n"
+        f"let f {var} = a.({var})\n"
+        "let () =\n"
+        f"  let {var} = int_of_string Sys.argv.(1) in\n"
+        f"  Printf.printf \"{fmt}\\n\" (f {var})\n"
+    )
+    note = (f"C `a[{var}]` with {var}={idx} on a length-{length} array is UB; "
+            f"OCaml bounds-checks `a.({var})` and raises Invalid_argument, "
+            f"aborting deterministically (exit 2) — a defined outcome.")
+    return src, note
+
+
 # ── the declarative table: (anchor class, build method, class key) ───────────
 
 _SPECS = [
@@ -241,6 +317,15 @@ _EMITTERS: Dict[str, Dict[str, Callable]] = {
         "div_by_zero": _swift_div,
         "intmin_div_neg1": _swift_intmin,
         "array_oob": _swift_oob,
+    },
+    # OCaml supports every class except the bit-shift family: OCaml itself leaves
+    # `lsl`/`Int32.shift_left` by an out-of-range amount *unspecified*, so it is
+    # not a sound "defined target" for shift_oob and is deliberately omitted.
+    "ocaml": {
+        "signed_overflow": _ocaml_signed,
+        "div_by_zero": _ocaml_div,
+        "intmin_div_neg1": _ocaml_intmin,
+        "array_oob": _ocaml_oob,
     },
 }
 

@@ -67,10 +67,20 @@ def _thm_completeness_integer_classes() -> bool:
 def _thm_completeness_all_pairs() -> bool:
     from . import completeness as c
     by_pair = c.check_pair_completeness()
-    return bool(by_pair) and all(
-        results and all(r.complete for r in results)
-        for results in by_pair.values()
-    )
+    if not by_pair:
+        return False
+    # A pair that implements *none* of the integer-fragment classes (e.g. the C++
+    # defined-subset pair, whose only class is signed_shift_sign_bit) is
+    # legitimately empty and skipped; every pair that *does* implement fragment
+    # classes must be complete on all of them. Require the core integer pairs.
+    checked = 0
+    for results in by_pair.values():
+        if not results:
+            continue
+        checked += 1
+        if not all(r.complete for r in results):
+            return False
+    return checked >= 3
 
 def _thm_semantics_one_sided() -> bool:
     # A positive divergence verdict is impossible without source UB (clause P).

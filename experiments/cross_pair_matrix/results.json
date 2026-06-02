@@ -58,7 +58,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=9295311343239328.0, y=-1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=-1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=-9631285372737536.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -70,8 +70,8 @@
       "target_sha16": "7a91a217459e8a02",
       "verdict": "divergent",
       "witness": {
-        "x": 9295311343239328.0,
-        "y": -1.0
+        "x": -9631285372737536.0,
+        "y": 1.0
       }
     },
     {
@@ -239,6 +239,80 @@
     {
       "confirmation_mode": "trap_vs_defined",
       "divergence_class": "array_oob",
+      "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; OCaml bounds-checks `a.(i)` and raises Invalid_argument, aborting deterministically (exit 2) \u2014 a defined outcome.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "37d6391e15b84210",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "ocaml",
+      "target_sha16": "458266640e818575",
+      "verdict": "divergent",
+      "witness": {
+        "i": 4
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "div_by_zero",
+      "divergence_witness": "C `a / b` with b=0 is UB; OCaml's `Int32.div` raises Division_by_zero, aborting deterministically (exit 2) \u2014 a defined, observable outcome.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "ocaml",
+      "target_sha16": "ad332f1ae0b342af",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 0
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "C `a / b` with a=-2147483648, b=-1 overflows signed division (UB); OCaml's `Int32.div` wraps modularly to a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "ocaml",
+      "target_sha16": "ad332f1ae0b342af",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "exploited",
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=1073741824 (UB; optimiser may assume `x + 2147483647 > x` always holds), whereas OCaml's `Int32.add` is modular and yields a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "731ca036bd1ff713",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "ocaml",
+      "target_sha16": "81ce008dc02de9b5",
+      "verdict": "divergent",
+      "witness": {
+        "x": 1073741824
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "array_oob",
       "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Rust bounds-checks and panics deterministically (defined).",
       "source_definedness": "undefined",
       "source_lang": "c",
@@ -276,7 +350,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=9042383627091964.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=-9288674231451648.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -288,7 +362,7 @@
       "target_sha16": "51821464be323c10",
       "verdict": "divergent",
       "witness": {
-        "x": 9042383627091964.0,
+        "x": -9288674231451648.0,
         "y": 1.0
       }
     },
@@ -313,7 +387,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fp_contraction",
-      "divergence_witness": "C `a*b + c` with a=36.856344103938405, b=14.024598037907108, c=-516.895411204993 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "divergence_witness": "C `a*b + c` with a=-2.3500285296330072, b=1.923069968108641, c=4.519269289535997 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "994ef280de9c8299",
@@ -325,9 +399,9 @@
       "target_sha16": "7171facf9aec0f3f",
       "verdict": "divergent",
       "witness": {
-        "a": 36.856344103938405,
-        "b": 14.024598037907108,
-        "c": -516.895411204993
+        "a": -2.3500285296330072,
+        "b": 1.923069968108641,
+        "c": 4.519269289535997
       }
     },
     {
@@ -620,6 +694,18 @@
       "classes_covered": [
         "array_oob",
         "div_by_zero",
+        "intmin_div_neg1",
+        "signed_overflow"
+      ],
+      "n_classes": 4,
+      "n_divergent": 4,
+      "source_lang": "c",
+      "target_lang": "ocaml"
+    },
+    {
+      "classes_covered": [
+        "array_oob",
+        "div_by_zero",
         "fast_math_reassoc",
         "float_cast_overflow",
         "fp_contraction",
@@ -671,8 +757,9 @@
   "language_pairs": [
     "c->cpp",
     "c->go",
+    "c->ocaml",
     "c->rust",
     "c->swift"
   ],
-  "n_cells": 32
+  "n_cells": 36
 }

@@ -86,6 +86,20 @@ def _cpp_argv(cc: str, src: str, out: str) -> List[str]:
     return [cc, "-std=c++20", "-O2", "-o", out, src]
 
 
+def _ocaml_argv(cc: str, src: str, out: str) -> List[str]:
+    # ocamlopt produces a native binary; -O3 turns on flambda-style native
+    # optimisation where available (harmless otherwise). Int32/Int64 arithmetic
+    # is *modular* (defined) and the array/division operations raise defined
+    # exceptions, so the optimiser never has C-style UB latitude on the target.
+    return [cc, "-O3", "-o", out, src]
+
+
+def _ocaml_env(workdir: str) -> Dict[str, str]:
+    # ocamlopt drops .cmi/.cmx/.o artefacts beside the source; keep them (and any
+    # temporary objects) inside the hermetic work dir.
+    return {"TMPDIR": workdir}
+
+
 def _go_env(workdir: str) -> Dict[str, str]:
     # A single ``package main`` file builds standalone, but we still pin a
     # workdir-local cache + module mode so the build is hermetic and never
@@ -157,7 +171,30 @@ _CPP = TargetPack(
     },
 )
 
-PACKS: Dict[str, TargetPack] = {p.name: p for p in (_RUST, _GO, _SWIFT, _CPP)}
+# OCaml is the GC'd, exception-based target (100_STEPS step 121): a strict
+# native-compiled functional language whose fixed-width Int32/Int64 arithmetic is
+# *modular* (defined) and whose array / division faults raise exceptions that, if
+# uncaught, abort the process deterministically with exit code 2. So every C-UB
+# class either becomes a defined value (modular overflow) or a defined,
+# deterministic abort (uncaught Division_by_zero / Invalid_argument).
+_OCAML = TargetPack(
+    name="ocaml",
+    compiler_candidates=("ocamlopt", "ocamlopt.opt"),
+    source_suffix=".ml",
+    defined_returncodes=(0, 2),  # value, or uncaught-exception abort (OCaml: 2)
+    compile_argv=_ocaml_argv,
+    compile_env=_ocaml_env,
+    class_resolution={
+        "signed_overflow": "Int32/Int64 arithmetic is modular (defined wraparound)",
+        "div_by_zero": "raises Division_by_zero; uncaught -> deterministic exit 2",
+        "intmin_div_neg1": "Int32.div min_int (-1) wraps to a defined value",
+        "array_oob": "bounds-checked `a.(i)` raises Invalid_argument; "
+                     "uncaught -> deterministic exit 2",
+    },
+)
+
+PACKS: Dict[str, TargetPack] = {p.name: p for p in
+                                (_RUST, _GO, _SWIFT, _CPP, _OCAML)}
 
 
 def get_pack(name: str) -> TargetPack:

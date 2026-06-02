@@ -2346,16 +2346,24 @@ def test_ground_truth_predicates_match_the_c_rules():
 
 def test_completeness_holds_across_every_registered_pair():
     # completeness established on the shared symbolic search transfers to every
-    # language pair (C->Rust/Go/Swift), since the pairs differ only in the
-    # emitted target program, not the witness search.
+    # language pair, since the pairs differ only in the emitted target program,
+    # not the witness search.
     by_pair = _comp.check_pair_completeness()
     assert ("c", "rust") in by_pair and ("c", "go") in by_pair \
-        and ("c", "swift") in by_pair
+        and ("c", "swift") in by_pair and ("c", "ocaml") in by_pair
+    # the integer-fragment pairs must each be complete on the classes they
+    # implement; a pair that implements *none* of the fragment classes (e.g. the
+    # C++ defined-subset pair, whose only class is signed_shift_sign_bit) is
+    # legitimately empty and skipped — exactly as check_pair_completeness documents.
+    checked = 0
     for pair, results in by_pair.items():
-        assert results, pair
+        if not results:
+            continue
+        checked += 1
         for r in results:
             assert r.complete, (pair, r.divergence_class,
                                 r.mismatches[:3], r.bad_witnesses[:3])
+    assert checked >= 4, by_pair
 
 
 def test_out_of_fragment_classes_are_documented_not_claimed():
@@ -5574,3 +5582,391 @@ def test_opt_sweep_surfaces_each_latent_ub_at_a_real_O_level():
         assert r["onset_level"] in ("-O1", "-O2", "-O3"), r
         assert r["outputs"]["-O0"] != r["outputs"][r["onset_level"]]
     assert rep["n_with_onset"] == 3
+
+
+# ── Step 121: C->OCaml pair (GC'd, exception-based target) ───────────────────
+# OCaml is the project's fifth registered target language and the first GC'd,
+# exception-based one. Its fixed-width Int32/Int64 arithmetic is *modular*
+# (defined) and its division / array faults raise exceptions that, uncaught,
+# abort the process deterministically with exit code 2. Adding it was pure
+# configuration: a TargetPack plus per-class source emitters — no new oracle or
+# harness code — exactly as the generality thesis predicts.
+
+_requires_ocaml = pytest.mark.skipif(
+    not _TC.full_for("ocaml"),
+    reason=f"needs C+UBSan+ocamlopt toolchain ({_TC})")
+
+_OCAML_UNITS = {
+    "signed_overflow": {"kind": "binop_const", "op": "add", "const": 2147483647,
+                        "width": 32, "var": "x", "signed": True},
+    "div_by_zero": {"kind": "div", "width": 32, "a": "a", "b": "b"},
+    "intmin_div_neg1": {"kind": "div", "width": 32, "signed": True,
+                        "a": "a", "b": "b"},
+    "array_oob": {"kind": "array_index", "length": 4},
+}
+
+
+def _ocaml_unit(class_key):
+    u = dict(_OCAML_UNITS[class_key])
+    u["source_lang"], u["target_lang"] = "c", "ocaml"
+    return u
+
+
+def test_ocaml_pack_is_a_fifth_registered_language_pair():
+    pairs = _plugin.language_pairs()
+    assert ("c", "ocaml") in pairs
+    pack = PACKS["ocaml"]
+    # value (0) or an uncaught-exception abort (OCaml exits 2): pure data.
+    assert pack.defined_returncodes == (0, 2)
+    assert pack.source_suffix == ".ml"
+    assert pack.compile_argv("ocamlopt", "a.ml", "a.out")[0] == "ocamlopt"
+    # documents how it resolves each supported class (shift is *unspecified* in
+    # OCaml, so it is intentionally absent).
+    res = pack.class_resolution
+    assert {"signed_overflow", "div_by_zero", "intmin_div_neg1",
+            "array_oob"} <= set(res)
+    assert "shift_oob" not in res
+
+
+def test_ocaml_pair_registers_the_supported_classes_only():
+    oc = _plugin.oracles_for(source_lang="c", target_lang="ocaml")
+    classes = {o.divergence_class for o in oc}
+    assert classes == {"signed_overflow", "div_by_zero",
+                       "intmin_div_neg1", "array_oob"}
+    # shift_oob is *unspecified* in OCaml too -> not a sound defined target.
+    assert "shift_oob" not in classes
+
+
+def test_ocaml_oracles_reuse_anchor_search_not_new_code():
+    assert isinstance(_plugin.get_oracle_for("signed_overflow", "c", "ocaml"),
+                      SignedOverflowOracle)
+    assert isinstance(_plugin.get_oracle_for("div_by_zero", "c", "ocaml"),
+                      DivisionByZeroOracle)
+    assert isinstance(_plugin.get_oracle_for("array_oob", "c", "ocaml"),
+                      ArrayOutOfBoundsOracle)
+
+
+@pytest.mark.parametrize("class_key", list(_OCAML_UNITS))
+def test_ocaml_oracle_emits_ocaml_source_symbolically(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "ocaml")
+    res = orc.find_divergence(_ocaml_unit(class_key))
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert ce.target_lang == "ocaml"
+    assert "let () =" in ce.target_snippet
+    assert "Sys.argv" in ce.target_snippet
+    # the C source is byte-identical to the anchor's (one shared witness search).
+    anchor = _plugin.get_oracle_for(class_key, "c", "rust")
+    anchor_ce = anchor.find_divergence(dict(_OCAML_UNITS[class_key])).counterexample
+    assert ce.source_snippet == anchor_ce.source_snippet
+
+
+def test_run_outcome_definedness_for_ocaml_is_pack_driven():
+    assert RunOutcome(0, "v", "").target_outcome_defined("ocaml")        # value
+    assert RunOutcome(2, "", "exn").target_outcome_defined("ocaml")      # uncaught exn
+    assert not RunOutcome(101, "", "").target_outcome_defined("ocaml")
+    assert not RunOutcome(-5, "", "").target_outcome_defined("ocaml")
+
+
+@_requires_ocaml
+@pytest.mark.parametrize("class_key", list(_OCAML_UNITS))
+def test_ocaml_divergence_confirmed_against_real_clang_and_ocamlopt(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "ocaml")
+    res = orc.confirm(orc.find_divergence(_ocaml_unit(class_key)), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available, rr.reason
+    assert rr.ub_reachable, "UBSan must trap on the witness (C is UB)"
+    assert rr.rust_defined, "OCaml must produce a defined, deterministic outcome"
+    assert rr.confirmed, rr.reason
+    assert res.counterexample.confirmed
+    assert res.counterexample.target_observed is not None
+
+
+@_requires_ocaml
+def test_equivalent_ocaml_translation_is_not_confirmed():
+    # negative control: an OCaml port whose answer matches a *defined* C program
+    # (no UB) must NOT be confirmed — the sanitizer never traps.
+    harness = ReexecHarness(_TC)
+    c_src = ("#include <stdio.h>\n#include <stdlib.h>\n"
+             "int f(int a,int b){ return a + b; }\n"
+             "int main(int c,char**v){ if(c<3)return 2;"
+             " printf(\"%d\\n\", f(atoi(v[1]),atoi(v[2]))); return 0; }\n")
+    ml_src = ("let f a b = Int32.add a b\n"
+              "let () =\n"
+              "  let a = Int32.of_string Sys.argv.(1) in\n"
+              "  let b = Int32.of_string Sys.argv.(2) in\n"
+              "  Printf.printf \"%ld\\n\" (f a b)\n")
+    rr = harness.confirm_trap_vs_defined(c_src, ml_src, ["2", "3"],
+                                         "division_by_zero", target_lang="ocaml")
+    assert rr.available
+    assert not rr.ub_reachable
+    assert not rr.confirmed
+
+
+# ── Step 124: target-semantics-pack SPI conformance suite ────────────────────
+# Every TargetPack is the *only* per-language configuration the engine trusts, so
+# a pack that violates the SPI contract (a non-total "defined" predicate, a
+# compile_argv that forgets the output path, a class_resolution naming a class
+# that does not exist) would silently poison the re-execution harness. This suite
+# states those obligations as executable properties and runs them against every
+# registered pack — pure data, no compilers, in the fast gate.
+
+from src.ub_oracle import pack_conformance as _pc  # noqa: E402
+
+
+def test_pack_conformance_passes_for_every_registered_pack():
+    conf = _pc.confirm_pack_conformance()
+    assert conf.ok, conf.detail()
+    # the suite covers every pack the registry exposes (rust/go/swift/cpp/ocaml).
+    assert conf.n_packs == len(PACKS)
+    assert set(conf.by_pack) == set(PACKS)
+
+
+@pytest.mark.parametrize("name", sorted(PACKS))
+def test_every_pack_discharges_every_obligation(name):
+    pc = _pc.check_pack(name)
+    keys = {o.key for o in pc.obligations}
+    assert keys == set(_pc.OBLIGATION_KEYS), keys
+    assert pc.ok, [o.key + ": " + o.detail for o in pc.failures()]
+
+
+def test_predicate_totality_is_actually_enforced_by_the_suite():
+    # a deliberately *broken* pack (value-only data but a predicate that also
+    # accepts 2) must be caught by the predicate-totality obligation.
+    from src.ub_oracle.target_semantics import TargetPack
+    import src.ub_oracle.pack_conformance as P
+
+    class _Liar(TargetPack):
+        def is_defined_returncode(self, rc):
+            return rc in (0, 2)
+
+    liar = _Liar(name="liar", compiler_candidates=("x",), source_suffix=".x",
+                 defined_returncodes=(0,), compile_argv=lambda cc, s, o: [cc, "-o", o, s])
+    ob = P._check_predicate_is_total(liar)
+    assert not ob.passed and "disagrees" in ob.detail
+
+
+def test_compile_argv_obligation_catches_a_missing_output_path():
+    from src.ub_oracle.target_semantics import TargetPack
+    import src.ub_oracle.pack_conformance as P
+    broken = TargetPack(
+        name="broken", compiler_candidates=("cc",), source_suffix=".c",
+        defined_returncodes=(0,),
+        # forgets to wire the output path -> the harness would never find a binary.
+        compile_argv=lambda cc, s, o: [cc, s],
+    )
+    ob = P._check_compile_argv(broken)
+    assert not ob.passed and "output path" in ob.detail
+
+
+def test_resolution_keys_must_name_real_divergence_classes():
+    from src.ub_oracle.target_semantics import TargetPack
+    import src.ub_oracle.pack_conformance as P
+    bogus = TargetPack(
+        name="bogus", compiler_candidates=("cc",), source_suffix=".c",
+        defined_returncodes=(0,), compile_argv=lambda cc, s, o: [cc, "-o", o, s],
+        class_resolution={"not_a_real_class": "???"},
+    )
+    ob = P._check_resolutions_are_real(bogus)
+    assert not ob.passed and "not_a_real_class" in ob.detail
+
+
+# ── Step 125: N-language consistency oracle (>= 3 targets, witnessed live) ────
+# Given one C source translated to three or more targets, flag any translation
+# that disagrees with the majority. This is the multi-target generalisation of
+# the pairwise oracle, built entirely on the existing pluggable machinery.
+
+from src.ub_oracle import consistency as _cons  # noqa: E402
+
+_requires_three_targets = pytest.mark.skipif(
+    sum(_TC.target_available(t) for t in ("rust", "go", "swift", "ocaml")) < 3
+    or not (_TC.c_available and _TC.ubsan),
+    reason="needs C+UBSan and >=3 target compilers for the N-language oracle")
+
+
+def test_consistency_plan_is_pure_data_and_n_language():
+    # the participating targets for a class are exactly its registered oracles.
+    plan = _cons.plan_consistency("shift_oob")
+    assert plan.divergence_class == "shift_oob"
+    assert set(plan.targets) >= {"rust", "go", "swift"}
+    assert plan.is_n_language  # >= 3 translations to compare
+    # div_by_zero is implemented for every safe target too.
+    assert _cons.plan_consistency("div_by_zero").is_n_language
+    # a class only one pair implements is *not* an N-language case.
+    assert not _cons.plan_consistency("signed_shift_sign_bit").is_n_language
+
+
+def test_canonical_outcome_buckets_value_abort_and_timeout():
+    from src.ub_oracle.reexec import RunOutcome
+    assert _cons.canonical_outcome(RunOutcome(0, "7", ""), "rust") == "VALUE:7"
+    # a defined abort canonicalises to ABORT regardless of the (per-pack) code.
+    assert _cons.canonical_outcome(RunOutcome(101, "", ""), "rust") == "ABORT"
+    assert _cons.canonical_outcome(RunOutcome(2, "", ""), "go") == "ABORT"
+    assert _cons.canonical_outcome(RunOutcome(-5, "", ""), "swift") == "ABORT"
+    assert _cons.canonical_outcome(RunOutcome(2, "", ""), "ocaml") == "ABORT"
+    # a non-defined termination is surfaced, not hidden.
+    assert _cons.canonical_outcome(RunOutcome(139, "", ""), "rust") == "UNDEFINED:rc=139"
+    assert _cons.canonical_outcome(
+        RunOutcome(-1, "", "", timed_out=True), "rust") == "TIMEOUT"
+
+
+@_requires_three_targets
+def test_shift_oob_flags_rust_as_the_lone_outlier_live():
+    # Rust's wrapping_shl MASKS the shift amount (1 << (32 mod 32) == 1) while Go
+    # and Swift yield 0 on an out-of-range shift: three real compilers, one shared
+    # C source, Rust is the flagged minority.
+    cls, unit = "shift_oob", {"kind": "shift", "width": 32, "value": 1,
+                              "source_lang": "c", "target_lang": "rust"}
+    rep = _cons.check_consistency(cls, unit, ReexecHarness(_TC))
+    assert rep.available, rep.reason
+    assert rep.n_targets >= 3
+    assert rep.c_ub_reachable, "the shared C source must be UB on the witness"
+    assert rep.has_outlier and not rep.consistent
+    assert rep.flagged == ("rust",), rep.reason
+    # the majority printed 0; Rust printed 1.
+    assert rep.majority_token == "VALUE:0"
+    rust_obs = [o for o in rep.observations if o.target_lang == "rust"][0]
+    assert rust_obs.token == "VALUE:1"
+
+
+@_requires_three_targets
+def test_div_by_zero_is_consistent_every_target_aborts_live():
+    # every safe target aborts deterministically -> all canonicalise to ABORT,
+    # so the N translations are mutually CONSISTENT (no outlier).
+    cls, unit = "div_by_zero", {"kind": "div", "width": 32, "a": "a", "b": "b",
+                                "source_lang": "c", "target_lang": "rust"}
+    rep = _cons.check_consistency(cls, unit, ReexecHarness(_TC))
+    assert rep.available, rep.reason
+    assert rep.n_targets >= 3
+    assert rep.consistent and not rep.has_outlier
+    assert rep.majority_token == "ABORT"
+    assert all(o.token == "ABORT" for o in rep.observations)
+
+
+@_requires_three_targets
+@pytest.mark.parametrize("cls,unit", _cons.consistency_units())
+def test_curated_consistency_units_are_witnessed_live(cls, unit):
+    rep = _cons.check_consistency(cls, unit, ReexecHarness(_TC))
+    assert rep.available, rep.reason
+    assert rep.n_targets >= 3
+    # every observation is a *defined* token (no safe target is ever UNDEFINED).
+    assert all(not o.token.startswith("UNDEFINED") for o in rep.observations)
+    # the report's consistency verdict and the flagged set agree by construction.
+    assert rep.consistent == (len(rep.flagged) == 0)
+
+
+def test_consistency_is_not_available_without_three_targets():
+    # a host with only one target present cannot run the N-language comparison.
+    class _OneTarget:
+        cc = "/usr/bin/clang"
+        ubsan = True
+        def target_available(self, t):
+            return t == "rust"
+        @property
+        def c_available(self):
+            return True
+    class _H:
+        status = _OneTarget()
+    rep = _cons.check_consistency(
+        "shift_oob", {"kind": "shift", "width": 32, "value": 1}, _H())
+    assert not rep.available and ">=3" in rep.reason
+
+
+# --------------------------------------------------------------------------- #
+# Step 133 — SMT-backed oracle for the integer-UB family.
+# --------------------------------------------------------------------------- #
+
+from src.ub_oracle import smt_integer as _smt  # noqa: E402
+
+
+def test_smt_integer_covers_the_integer_family():
+    assert set(_smt.CLASSES) == {
+        "signed_overflow", "shift_oob", "div_by_zero", "intmin_div_neg1",
+    }
+
+
+def test_smt_encoding_is_equisatisfiable_at_shipped_widths():
+    # Z3 proves operational <-> spec for EVERY input at the real bit widths.
+    proofs = _smt.prove_all_equisatisfiable()
+    assert proofs and all(p.proved for p in proofs), \
+        [(p.class_key, p.width, p.detail) for p in proofs if not p.proved]
+
+
+def test_smt_encoding_is_equisatisfiable_at_small_widths():
+    # The equivalence is width-parametric: it holds for tiny widths too, where
+    # the whole input space is also brute-forceable (next test cross-checks it).
+    for c in _smt.CLASSES:
+        for w in (4, 6, 8):
+            p = _smt.prove_equisatisfiable(c, w)
+            assert p.proved, (c, w, p.detail)
+
+
+def test_smt_witness_satisfies_the_independent_python_predicate():
+    # The model Z3 returns must satisfy the reference (enumeration) semantics —
+    # the symbolic and concrete definitions of UB agree on the witness.
+    for c in _smt.CLASSES:
+        for w in (32, 64):
+            assert _smt.smt_path_agrees_with_predicate(c, w), (c, w)
+
+
+def test_smt_witnesses_match_the_known_canonical_inputs():
+    # div-by-zero -> b == 0 ; INT_MIN / -1 -> the unique overflow pair.
+    assert _smt.smt_witness("div_by_zero", 32)["b"] == 0
+    w = _smt.smt_witness("intmin_div_neg1", 32)
+    assert w == {"a": -(1 << 31), "b": -1}
+    w64 = _smt.smt_witness("intmin_div_neg1", 64)
+    assert w64 == {"a": -(1 << 63), "b": -1}
+
+
+def test_enumeration_reference_agrees_with_smt_on_existence_small_width():
+    # On a fully enumerable width, "SMT finds a witness" iff "enumeration does".
+    for c in _smt.CLASSES:
+        smt_found = _smt.smt_witness(c, 6) is not None
+        enum = _smt.enumerate_witness(c, 6, probe_budget=1 << 16)
+        assert enum.exhausted  # the whole space was scanned
+        assert (enum.found is not None) == smt_found, (c, enum)
+
+
+def test_enumerated_witness_also_satisfies_the_encoding():
+    # Decode an enumerated witness and confirm Z3's operational encoding accepts
+    # it — closing the loop between brute force and the symbolic path.
+    import z3
+    for c in _smt.CLASSES:
+        enum = _smt.enumerate_witness(c, 6, probe_budget=1 << 16)
+        assert enum.found is not None, c
+        vars_, operational, _spec = _smt._ENCODERS[c](6)
+        solver = z3.Solver()
+        for v in vars_:
+            solver.add(v == z3.BitVecVal(enum.found[str(v)], 6))
+        solver.add(operational)
+        assert solver.check() == z3.sat, (c, enum.found)
+
+
+def test_smt_beats_enumeration_on_the_rare_witness_classes():
+    # The headline benchmark: for classes whose witness is vanishingly rare,
+    # the SMT path answers in milliseconds while ordered enumeration blows its
+    # probe budget without finding anything.
+    for c in ("signed_overflow", "intmin_div_neg1"):
+        b = _smt.benchmark(c, 32, probe_budget=1 << 20)
+        assert b.smt_found
+        assert not b.enum_found            # enumeration could not find it
+        assert not b.enum_exhausted        # ...and did not exhaust the space
+        assert b.enum_probes >= (1 << 19)  # it really did spend the budget
+
+
+def test_smt_and_enumeration_both_trivial_on_dense_classes():
+    # For dense classes (zero divisor, out-of-range shift) both paths succeed.
+    for c in ("div_by_zero", "shift_oob"):
+        b = _smt.benchmark(c, 32, probe_budget=1 << 16)
+        assert b.smt_found and b.enum_found
+
+
+def test_smt_witness_matches_operational_oracle_for_intmin():
+    # The SMT encoding here is the SAME condition the shipped integer_ub oracle
+    # solves; the witnessing pair must coincide.
+    from src.ub_oracle.oracles.integer_ub import IntMinDivNeg1Oracle
+    res = IntMinDivNeg1Oracle().find_divergence(
+        {"kind": "div", "width": 32, "signed": True, "a": "a", "b": "b"})
+    assert res.verdict == OracleVerdict.DIVERGENT
+    smt = _smt.smt_witness("intmin_div_neg1", 32)
+    assert res.counterexample.inputs == smt
