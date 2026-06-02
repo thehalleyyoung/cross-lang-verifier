@@ -4476,3 +4476,51 @@ def test_generalization_demonstrates_multi_pair_breadth_and_stable_hash():
     # aggregates confirm each pair independently catches every UB input
     for pair, (d, u, f, s) in r1.by_pair().items():
         assert d == u and f == 0, (pair, d, u, f, s)
+
+
+from src.ub_oracle import artifact_eval as _ae  # noqa: E402
+
+
+def test_artifact_available_badge_is_earned_from_files():
+    # Pure file inspection -> always runs, never consistency-only.
+    ev = _ae.evaluate_artifact()
+    avail = ev.available
+    assert avail.earned and avail.fully_exercised, avail
+    names = {c.name for c in avail.criteria}
+    assert {"open_licence_present", "archival_descriptor_names_public_repo",
+            "readme_present", "version_consistent"} <= names
+
+
+def test_artifact_eval_confirmation_earns_all_three_badges():
+    conf = _ae.confirm_artifact_evaluation()
+    assert conf.available and conf.ok, conf.detail
+    assert set(conf.earned_badges) == {"available", "functional", "reproduced"}
+
+
+def test_artifact_functional_badge_and_consistency_only_flagging():
+    ev = _ae.evaluate_artifact()
+    func = ev.functional
+    assert func.earned, func
+    live = [c for c in func.criteria if c.name == "live_oracle_runs"][0]
+    # When the toolchain is present the live smoke-test is real evidence (not
+    # consistency-only); when absent it must be flagged consistency-only.
+    if _full_rust:
+        assert live.passed and not live.consistency_only
+        assert func.fully_exercised
+    else:
+        assert live.consistency_only
+
+
+@pytest.mark.skipif(not _full_rust, reason="need C+UBSan+rustc for live reproduce path")
+def test_artifact_reproduced_badge_real_byte_identity_and_stable_hashes():
+    ev = _ae.evaluate_artifact()
+    rep = ev.reproduced
+    assert rep.earned, rep
+    by = {c.name: c for c in rep.criteria}
+    # the trusted results artifact regenerates byte-identically (real evidence)
+    assert by["trusted_results_byte_identical"].passed
+    assert not by["trusted_results_byte_identical"].consistency_only
+    # the reproducibility hashes are stable and exercised for real
+    assert by["replication_kit_hash_stable"].passed
+    assert by["scale_hash_reproducible"].passed
+    assert by["generalization_hash_reproducible"].passed

@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this artifact, please cite it as below."
+title: "cross-lang-verifier: a cross-language UB-divergence oracle (C -> Rust/Go/Swift)"
+abstract: >-
+  A per-instance, witness-producing translation validator that detects when a
+  translation of a C unit into Rust, Go or Swift diverges specifically because
+  the C source relied on undefined behaviour. Every divergence is a
+  re-executable counterexample, confirmed against real clang/UBSan + rustc/go/
+  swiftc binaries.
+authors:
+  - name: "Halley Labs"
+license: MIT
+repository-code: "https://github.com/thehalleyyoung/cross-lang-verifier"
+version: "0.3.0"
+keywords:
+  - translation validation
+  - undefined behavior
+  - cross-language equivalence
+  - differential testing
+  - C to Rust

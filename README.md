@@ -299,6 +299,14 @@ python3 -m src.cli.main discover \
   **invariant across every cell** — detection rate 1.0 on UB inputs and zero
   false positives on safe inputs for every pair and style — so the result is not
   an artefact of one pair, one transpiler, or one input distribution
+- an **ACM artifact-evaluation harness** (`artifact_eval.py`): the criteria for
+  the **Available / Functional / Reproduced** badges are encoded as *checked
+  predicates* — open licence + citation descriptor + version consistency
+  (Available), self-documentation + exercisable entry points + a **live** real-
+  oracle smoke-test (Functional), and byte-identical results plus stable
+  replication/scale/generalization reproducibility hashes (Reproduced) — so
+  "we earn the badges" is itself an entry in the traceability matrix (see
+  `docs/ARTIFACT.md`)
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
