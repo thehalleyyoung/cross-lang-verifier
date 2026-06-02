@@ -56,10 +56,13 @@ python3 -m src.cli.main discover \
 - SMT-backed equivalence checking in `src/`
 - a growing catalogue of **undefined-behavior divergence oracles** — signed
   overflow, shift-out-of-range, division-by-zero, `INT_MIN/-1`, array
-  out-of-bounds, strict aliasing, floating-point contraction, **variable-length-array
-  (VLA) bound**, **float→int out-of-range conversion** (both C→Rust *and* C→Go:
-  the same input is C UB that UBSan traps, while the safe port is defined and
-  deterministic), and an
+  out-of-bounds, strict aliasing (type-punning), floating-point contraction,
+  **variable-length-array (VLA) bound**, **float→int out-of-range conversion**,
+  **pointer-provenance / address-space-overflow arithmetic**, **`-ffast-math`
+  reassociation**, and **`restrict`-aliasing violation** (each confirmed against
+  real `clang`/`rustc`/`go`: the same input is C UB — UBSan-trapping, or a value
+  that flips across two conforming compilations no sanitizer can trap — while the
+  safe Rust *and* Go ports are defined and deterministic), plus an
   **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on
   a real three-point definedness-lattice dataflow analysis that flags reads of
   slots never written on all paths and confirms them across C→Rust/Go/Swift
