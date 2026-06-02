@@ -88,6 +88,34 @@ fused and unfused results actually differ in printed output.
   by the current oracles.
 - **Soundness for equivalence**: never claimed.
 
+## Installation
+
+The flagship verifier is a real, pip-installable distribution
+(`cross-lang-verifier`) whose only runtime dependency is `z3-solver`; the
+ground-truth confirmation step additionally discovers real compilers
+(`clang`/`rustc`/`go`/`swiftc`) on `PATH` at run time.
+
+```sh
+pip install .                 # from a checkout (PEP 621 / pyproject.toml)
+# or, from a built wheel:
+pip wheel . --no-deps -w dist && pip install dist/cross_lang_verifier-*.whl
+```
+
+This installs the self-contained `ub_oracle` top-level package and two console
+scripts — `cross-lang-verify` and the alias `cross-lang-verifier` — both bound
+to `ub_oracle.cli:main`:
+
+```sh
+cross-lang-verify --units examples/units_manifest.json            # ground-truth
+cross-lang-verify --units examples/units_manifest.json --no-confirm  # symbolic
+```
+
+`make package-check` is the reproducible proof: it builds the wheel, installs it
+into a **fresh** virtualenv (with `PYTHONPATH` unset and run from a neutral
+directory so nothing leaks in from the source tree), imports the installed
+top-level package, and runs the console script end-to-end — confirming real
+divergences against actual compilers and asserting the CI gate exit code.
+
 ## Reproducibility
 
 - `make reproduce` regenerates `experiments/ub_divergence/results.json`

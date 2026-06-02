@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cross-lang-verifier"
+version = "0.3.0"
+description = "Sound-for-divergence oracle for cross-language translation (C -> Rust / Go / Swift)"
+readme = "CAPABILITIES.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Halley Labs" }]
+keywords = [
+    "verification", "translation-validation", "undefined-behavior",
+    "cross-language", "c-to-rust", "smt", "z3",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Compilers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: POSIX",
+]
+# Pinned to a tested, compatible range. z3-solver is the only runtime dependency;
+# the ground-truth confirmation step additionally shells out to real compilers
+# (clang/rustc/go/swiftc), which are discovered on PATH at run time.
+dependencies = [
+    "z3-solver>=4.12,<5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-cov"]
+
+[project.scripts]
+# The console script and a long alias matching the distribution name both point
+# at the pair-aware CLI entry, fixing the historical name/script mismatch.
+cross-lang-verify = "ub_oracle.cli:main"
+cross-lang-verifier = "ub_oracle.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/thehalleyyoung/cross-lang-verifier"
+Source = "https://github.com/thehalleyyoung/cross-lang-verifier"
+
+[tool.setuptools]
+# The flagship package is self-contained under src/ and uses only relative
+# imports, so it installs cleanly as the top-level `ub_oracle` package.
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ub_oracle*"]

@@ -35,5 +35,8 @@ jobs:
       - name: Cross-pair regression matrix reproduces byte-identically
         run: make matrix-check PYTHON=python
 
+      - name: Packaging — build wheel, install in a fresh venv, run the CLI
+        run: make package-check PYTHON=python
+
       - name: ub_oracle test suite (incl. real-compiler confirmation)
         run: python -m pytest tests/test_ub_oracle.py -q

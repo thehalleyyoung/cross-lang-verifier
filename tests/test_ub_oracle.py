@@ -1118,3 +1118,66 @@ def test_matrix_confirm_runs_every_cell_against_real_compilers():
     assert conf["n_attempted"] == len(_plugin.ALL_ORACLES)
     assert conf["all_attempted_confirmed"], \
         [c for c in conf["cells"] if not c.get("confirmed")]
+
+
+# ── Step 59: real, installable packaging (pip install cross-lang-verifier) ───
+
+def _load_pyproject():
+    try:
+        import tomllib  # py3.11+
+    except ModuleNotFoundError:  # pragma: no cover
+        import tomli as tomllib  # type: ignore
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    with open(_os.path.join(root, "pyproject.toml"), "rb") as f:
+        return tomllib.load(f)
+
+
+def test_pyproject_declares_distribution_and_fixed_entry_points():
+    pp = _load_pyproject()
+    proj = pp["project"]
+    assert proj["name"] == "cross-lang-verifier"
+    # version is pinned (a concrete, parseable version string).
+    assert proj["version"].count(".") >= 2
+    # both console scripts point at the real, importable CLI entry.
+    scripts = proj["scripts"]
+    assert scripts["cross-lang-verify"] == "ub_oracle.cli:main"
+    assert scripts["cross-lang-verifier"] == "ub_oracle.cli:main"
+    # z3 is the single runtime dependency, version-bounded (no stray openai).
+    deps = " ".join(proj["dependencies"])
+    assert "z3-solver" in deps and ">=" in deps
+    assert "openai" not in deps
+
+
+def test_pyproject_packages_only_the_self_contained_ub_oracle_tree():
+    pp = _load_pyproject()
+    st = pp["tool"]["setuptools"]
+    assert st["package-dir"] == {"": "src"}
+    find = st["packages"]["find"]
+    assert find["where"] == ["src"]
+    # scoped discovery: never package src/tests/experiments/benchmarks.
+    assert find["include"] == ["ub_oracle*"]
+
+
+def test_no_stale_setup_py_with_mismatched_name():
+    # the historical setup.py declared name="semrec" with an src.* entry point;
+    # Step 59 removes that name/script mismatch in favour of pyproject.
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    assert not _os.path.exists(_os.path.join(root, "setup.py"))
+
+
+def test_cli_main_entry_point_is_importable_and_callable():
+    # the console script resolves to `ub_oracle.cli:main`; in-repo that module is
+    # `src.ub_oracle.cli` (the installed-wheel top-level import is proven
+    # separately by scripts/verify_packaging.sh).
+    from src.ub_oracle.cli import main as _entry
+    assert callable(_entry)
+    # a trivial empty manifest verifies the entry runs without a toolchain.
+    import tempfile, json as _json
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
+        _json.dump({"units": []}, fh)
+        path = fh.name
+    try:
+        rc = _entry(["--units", path, "--no-confirm"])
+    finally:
+        _os.unlink(path)
+    assert rc == 0

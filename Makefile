@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check guard test-ub ci matrix matrix-confirm matrix-check
+.PHONY: help reproduce reproduce-confirm reproduce-check guard test-ub ci matrix matrix-confirm matrix-check package-check
 
 help:
 	@echo "Targets:"
@@ -15,6 +15,7 @@ help:
 	@echo "  matrix            regenerate the cross-pair regression matrix (deterministic)"
 	@echo "  matrix-confirm    regenerate matrix + confirm every cell against real compilers"
 	@echo "  matrix-check      assert the cross-pair matrix regenerates byte-identically"
+	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
 	@echo "  guard             run the credibility guard (no simulated results)"
 	@echo "  test-ub           run the ub_oracle test suite only"
 	@echo "  ci                guard + reproduce-check + matrix-check + test-ub"
@@ -36,6 +37,9 @@ matrix-confirm:
 
 matrix-check:
 	$(PYTHON) -m experiments.cross_pair_matrix.run --check
+
+package-check:
+	bash scripts/verify_packaging.sh
 
 guard:
 	bash scripts/check_no_simulated_results.sh
