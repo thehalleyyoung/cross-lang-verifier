@@ -4829,3 +4829,38 @@ def test_single_binary_matches_library_end_to_end():
     assert rep.available and rep.ok, rep.detail
     assert rep.built and rep.runs and rep.matches_library
     assert rep.size_bytes > 0
+
+
+from src.ub_oracle import divergence_zoo as _zoo  # noqa: E402
+
+
+def test_zoo_index_and_json_are_structured_and_complete():
+    idx = _zoo.index_by_class_and_pair()
+    assert idx, "zoo index must not be empty"
+    # every divergent corpus exhibit is indexed by class and pair.
+    div_ids = {e.exhibit_id for e in _zoo.EXHIBITS if e.declared_label == "divergent"}
+    indexed = {i for c in idx.values() for p in c.values() for i in p}
+    assert div_ids == indexed
+    j = _zoo.to_json()
+    assert j["schema"] == "divergence-zoo/1"
+    assert set(j["classes"]) == {e.divergence_class for e in _zoo.EXHIBITS}
+    # content hash is stable across calls.
+    assert _zoo.content_hash() == _zoo.content_hash()
+
+
+def test_zoo_markdown_generates_and_lists_every_divergent_exhibit():
+    path = _zoo.generate_zoo()
+    text = path.read_text()
+    for e in _zoo.EXHIBITS:
+        if e.declared_label == "divergent":
+            assert f"`{e.exhibit_id}`" in text, e.exhibit_id
+    assert "Auto-generated" in text
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go and _full_swift),
+                    reason="need rust+go+swift to re-confirm every exhibit")
+def test_zoo_every_witness_reconfirms_live():
+    rep = _zoo.confirm_zoo()
+    assert rep.available and rep.ok, rep.detail
+    assert rep.n_confirmed == rep.n_divergent
+    assert all(c.confirmed for c in rep.checks)

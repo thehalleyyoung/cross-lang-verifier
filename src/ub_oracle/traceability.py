@@ -732,6 +732,17 @@ def _thm_single_binary() -> bool:
     return bool(rep.ok)
 
 
+def _thm_divergence_zoo() -> bool:
+    # The divergence zoo is a structured, indexed catalogue whose every divergent
+    # exhibit is RE-CONFIRMABLE: the oracle re-run on each exhibit's witnessing
+    # input still flags the divergence and stays silent on the safe input, so the
+    # zoo cannot contain an unreproducible exhibit. Consistency-only when no
+    # target toolchain is present.
+    from . import divergence_zoo as zoo
+    rep = zoo.confirm_zoo()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1541,6 +1552,27 @@ CLAIMS: List[Claim] = [
         "ub_oracle.single_binary",
         ("confirm_single_binary", "build_pyz"),
         theorem=_thm_single_binary,
+        docs=("README.md",),
+    ),
+    claim(
+        "C50-divergence-zoo",
+        "A structured, continuously-verifiable **divergence zoo** "
+        "(`ub_oracle.divergence_zoo`) is the canonical, machine-readable "
+        "reference for the cross-language divergence patterns the tool catches: "
+        "it aggregates every catalogued exhibit from the live corpora into an "
+        "**index keyed by `(divergence_class, language_pair)`**, a deterministic "
+        "`zoo.json` export and a generated `docs/zoo.md` (so it cannot drift from "
+        "the catalogue), and each exhibit carries a concrete **witnessing "
+        "input**. What makes it a *zoo* rather than a static list is that every "
+        "exhibit is **re-confirmable**: `confirm_zoo()` re-runs the **real "
+        "oracle** on each divergent exhibit's witness and requires the divergence "
+        "to still be flagged on the witness and stay silent on the safe input — "
+        "14 exhibits across rust/go/swift re-confirmed live here; an exhibit that "
+        "cannot be reproduced is rejected. The index is content-hash-stable; "
+        "consistency-only when no target toolchain is present.",
+        "ub_oracle.divergence_zoo",
+        ("confirm_zoo", "index_by_class_and_pair", "EXHIBITS"),
+        theorem=_thm_divergence_zoo,
         docs=("README.md",),
     ),
 ]

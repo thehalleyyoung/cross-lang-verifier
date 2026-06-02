@@ -364,6 +364,12 @@ python3 -m src.cli.main discover \
   `./cross-lang-verify.pyz --units …` with just a Python interpreter (no pip, no
   venv) — complementing the `docker run` image. Proven byte-identical to the
   in-process CLI by running the built `.pyz` as a subprocess on a real manifest
+- a structured, continuously-verifiable **divergence zoo** (`divergence_zoo.py`,
+  `docs/zoo.md`): the canonical machine-readable catalogue indexed by
+  `(class, pair)`, exported as `zoo.json`, where every exhibit carries a concrete
+  witnessing input and is **re-confirmed live** — the oracle re-run on each
+  witness must still flag the divergence (14 exhibits across rust/go/swift here);
+  an unreproducible exhibit is rejected
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

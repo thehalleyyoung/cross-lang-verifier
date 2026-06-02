@@ -19,6 +19,7 @@ nav:
   - Home: index.md
   - Tutorial (quickstart): tutorial.md
   - Gallery of caught divergences: gallery.md
+  - Divergence zoo (indexed): zoo.md
   - Concepts:
       - Problem statement: problem_statement.md
       - Architecture: architecture.md
