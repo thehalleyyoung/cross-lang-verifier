@@ -2542,3 +2542,18 @@ def test_traceability_detects_a_broken_claim():
                    for p in problems)
     finally:
         _trace.CLAIMS[:] = saved
+
+
+# ── positioning vs adjacent verifiers (Step 82) ──────────────────────────────
+
+def test_positioning_doc_covers_each_adjacent_tool_family():
+    doc = _os.path.join(_os.path.dirname(_os.path.dirname(__file__)),
+                        "docs", "POSITIONING.md")
+    with open(doc) as f:
+        text = f.read()
+    # Each adjacent family the step requires must be addressed by name.
+    for needle in ("CBMC", "Kani", "Prusti", "equivalence", "differential",
+                   "Rust", "Go", "Swift"):
+        assert needle in text, f"POSITIONING.md does not address {needle!r}"
+    # And it must state the gap as the design goal (the summary row).
+    assert "design goal" in text

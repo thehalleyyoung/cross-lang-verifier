@@ -118,6 +118,10 @@ python3 -m src.cli.main discover \
   reports a witness *exactly* when one exists (no false negatives), across every
   registered language pair, with one diverging unit per class confirmed end-to-end
   against real compilers
+- a **positioning vs adjacent verifiers** ([`docs/POSITIONING.md`](docs/POSITIONING.md)):
+  a precise account of the cross-language UB-rooted-divergence gap that BMC for C
+  (CBMC/ESBMC), same-language equivalence/translation validators, target-language
+  verifiers (Kani/Prusti/Miri) and undirected differential fuzzing each leave open
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout
