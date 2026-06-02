@@ -267,6 +267,12 @@ python3 -m src.cli.main discover \
   finds **nothing** while the oracle catches **every** one — a total
   false-negative gap, with value-exploited UB reported honestly in the per-class
   breakdown
+- an **external replication kit** (`Dockerfile` + `make reproduce-kit` +
+  `scripts/reproduce_kit.sh`, confirmed by `replication.py`): a stranger runs one
+  hermetic image to regenerate every byte-reproducible table and re-confirm every
+  oracle against the real toolchain, ending with a content-hash manifest whose
+  `kit_hash` (over corpus stats, the tool-applicability table and kit file hashes)
+  reproduces identically across runs — the diffability an artifact evaluator needs
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

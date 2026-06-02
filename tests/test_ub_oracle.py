@@ -4183,3 +4183,44 @@ def test_external_baselines_div0_is_invisible_to_same_language():
     assert base_found is False
     ev = _xb.gt.label_item(h, item)
     assert ev.observed_label == "divergent"
+
+
+# --------------------------------------------------------------------------- #
+# Step 54 — external replication kit (Docker + make reproduce-kit)
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import replication as _repl  # noqa: E402
+
+
+def test_replication_kit_files_present_and_corpus_large():
+    rep = _repl.confirm_replication_kit(quick=True)
+    # the stranger really can build & run the kit
+    assert rep.files_ok, rep.files
+    assert "Dockerfile" in rep.files and rep.files["Dockerfile"]
+    assert "scripts/reproduce_kit.sh" in rep.files and rep.files["scripts/reproduce_kit.sh"]
+    assert "Makefile" in rep.files and rep.files["Makefile"]
+    # the reproduced tables draw from a >=500-pair, 2-language corpus
+    assert rep.corpus_ok and rep.corpus_size >= 500 and rep.n_langs >= 2
+    assert rep.ok
+
+
+def test_replication_manifest_hash_is_stable():
+    m1 = _repl.manifest(_repl.confirm_replication_kit(quick=True))
+    m2 = _repl.manifest(_repl.confirm_replication_kit(quick=True))
+    assert m1["kit_hash"] == m2["kit_hash"]
+    # the hash is computed over deterministic layers only
+    assert "corpus_stats" in m1["stable_layers"]
+    assert "applicability_table" in m1["stable_layers"]
+    assert "kit_files" in m1["stable_layers"]
+    assert m1["corpus_size"] >= 500
+
+
+def test_replication_kit_makefile_targets_exist():
+    import os as __os
+    root = __os.path.abspath(__os.path.join(__os.path.dirname(__file__), ".."))
+    mk = open(__os.path.join(root, "Makefile")).read()
+    for target in ("reproduce-kit:", "docker-build:", "docker-reproduce:"):
+        assert target in mk, target
+    df = open(__os.path.join(root, "Dockerfile")).read()
+    # the image pins the real toolchain the oracles need
+    for tool in ("clang", "rust", "go", "z3"):
+        assert tool in df.lower(), tool

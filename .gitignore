@@ -44,3 +44,6 @@ experiments/redteam/attack.json
 build/
 dist/
 *.egg-info/
+
+# Step 54 replication kit manifest (regenerated, not tracked)
+reproduction_manifest.json

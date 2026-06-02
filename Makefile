@@ -5,11 +5,14 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check package-check coverage coverage-check
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check package-check coverage coverage-check
 
 help:
 	@echo "Targets:"
 	@echo "  reproduce         regenerate trusted results (deterministic, no toolchain)"
+	@echo "  reproduce-kit     full external replication kit (guard + regen + re-confirm + manifest)"
+	@echo "  docker-build      build the hermetic replication image"
+	@echo "  docker-reproduce  build + run the replication kit inside the image"
 	@echo "  reproduce-confirm regenerate + confirm against real C/Rust compilers"
 	@echo "  reproduce-check   assert results regenerate byte-identically"
 	@echo "  matrix            regenerate the cross-pair regression matrix (deterministic)"
@@ -30,6 +33,15 @@ help:
 
 reproduce:
 	$(PYTHON) -m experiments.ub_divergence.run
+
+reproduce-kit:
+	bash scripts/reproduce_kit.sh
+
+docker-build:
+	docker build -t cross-lang-verifier .
+
+docker-reproduce: docker-build
+	docker run --rm cross-lang-verifier
 
 reproduce-confirm:
 	$(PYTHON) -m experiments.ub_divergence.run --confirm

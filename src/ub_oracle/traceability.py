@@ -532,6 +532,19 @@ def _thm_headtohead_external_gap() -> bool:
     return conf.ok
 
 
+def _thm_replication_kit() -> bool:
+    # The external replication kit's files must exist with the expected entry
+    # points, the corpus it reproduces must be >= 500 pairs across >= 2 language
+    # pairs, and the deterministic manifest hash must be stable across runs.
+    from . import replication as r
+    rep = r.confirm_replication_kit(quick=True)
+    if not (rep.files_ok and rep.corpus_ok):
+        return False
+    h1 = r.manifest(r.confirm_replication_kit(quick=True))["kit_hash"]
+    h2 = r.manifest(r.confirm_replication_kit(quick=True))["kit_hash"]
+    return h1 == h2
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1031,6 +1044,26 @@ CLAIMS: List[Claim] = [
         ("run_head_to_head", "confirm_head_to_head", "applicability_table",
          "CATEGORIES"),
         theorem=_thm_headtohead_external_gap,
+        docs=("README.md",),
+    ),
+    claim(
+        "C35-replication-kit",
+        "A stranger can regenerate every byte-reproducible table and re-confirm "
+        "every oracle against the real toolchain from a single hermetic artifact: "
+        "a pinned Dockerfile (clang/UBSan, rustc, go, z3/boolector, Python) plus "
+        "`make reproduce-kit` / `scripts/reproduce_kit.sh`, which runs the "
+        "credibility guard, the byte-identical regeneration of the trusted result "
+        "tables, the corpus/ground-truth/scale re-confirmations against real code, "
+        "and a content-hash manifest. The manifest's `kit_hash` is computed over "
+        "only the run-to-run-stable layers (corpus statistics, the external-tool "
+        "applicability table, kit file hashes) so two independent reproductions on "
+        "the same checkout produce the identical hash — the diffability an artifact "
+        "evaluator needs. The kit's integrity (file presence, entry points, corpus "
+        ">=500 pairs across >=2 language pairs, hash stability) is itself a checked "
+        "theorem.",
+        "ub_oracle.replication",
+        ("confirm_replication_kit", "manifest", "render"),
+        theorem=_thm_replication_kit,
         docs=("README.md",),
     ),
 ]
