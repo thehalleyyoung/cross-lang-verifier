@@ -33,6 +33,9 @@ nav:
       - Translation validation: TRANSLATION_VALIDATION.md
       - VLA-bound divergence class: vla_bound.md
       - Float-cast-overflow divergence class: float_cast.md
+      - Fast-math reassociation divergence class: fast_math.md
+      - Restrict-violation divergence class: restrict_alias.md
+      - Pointer-provenance divergence class: pointer_provenance.md
   - Soundness & completeness:
       - Per-pair soundness statements: COMPLETENESS.md
       - Mechanized soundness (Lean): MECHANIZED_SOUNDNESS.md

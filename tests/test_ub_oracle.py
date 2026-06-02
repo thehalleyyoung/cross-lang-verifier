@@ -5270,3 +5270,167 @@ def test_float_cast_go_confirmed_against_real_compilers():
     assert rr.ub_reachable, "UBSan float-cast-overflow must trap on the OOB value"
     assert rr.rust_defined, "Go conversion must be defined & deterministic"
     assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 107 — -ffast-math reassociation divergence oracle
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import fast_math as _fastmath  # noqa: E402,F401
+
+
+def test_fast_math_oracle_registered_for_rust_and_go_optimizer_mode():
+    rust = _plugin.get_oracle_for("fast_math_reassoc", "c", "rust")
+    go = _plugin.get_oracle_for("fast_math_reassoc", "c", "go")
+    assert rust.confirmation_mode == "optimizer_exploited"
+    assert go.confirmation_mode == "optimizer_exploited"
+    assert rust.optimizer_flag_variants == (["-O2", "-fno-fast-math"],
+                                            ["-O2", "-ffast-math"])
+    assert "fast_math_reassoc" in CATALOGUE
+
+
+def test_fast_math_witness_swallows_y_and_is_applicable():
+    orc = _plugin.get_oracle_for("fast_math_reassoc", "c", "rust")
+    r = orc.find_divergence({"kind": "fp_reassoc"})
+    assert r.verdict is _plugin.OracleVerdict.DIVERGENT
+    x = r.counterexample.inputs["x"]
+    y = r.counterexample.inputs["y"]
+    # IEEE-strict (x+y)-x rounds to 0 (y swallowed) while reassociated value is y.
+    assert y != 0.0
+    assert (x + y) - x == 0.0
+    # not applicable to a non-reassociation unit.
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not _TC.full_for("rust"),
+                    reason="needs C+rustc toolchain")
+def test_fast_math_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("fast_math_reassoc", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "fp_reassoc"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "optimizer_exploited"
+    assert rr.ub_consequential, "-fno-fast-math and -ffast-math must disagree"
+    assert rr.rust_defined, "Rust must be IEEE-strict, deterministic & defined"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+go toolchain")
+def test_fast_math_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("fast_math_reassoc", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "fp_reassoc"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "optimizer_exploited"
+    assert rr.ub_consequential, "-fno-fast-math and -ffast-math must disagree"
+    assert rr.rust_defined, "Go must be IEEE-strict, deterministic & defined"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 109 — restrict-violation divergence oracle
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import restrict_alias as _restrict  # noqa: E402,F401
+
+
+def test_restrict_oracle_registered_for_rust_and_go_optimizer_mode():
+    rust = _plugin.get_oracle_for("restrict_violation", "c", "rust")
+    go = _plugin.get_oracle_for("restrict_violation", "c", "go")
+    assert rust.confirmation_mode == "optimizer_exploited"
+    assert go.confirmation_mode == "optimizer_exploited"
+    assert rust.optimizer_flag_variants == (["-O0"], ["-O2"])
+    assert "restrict_violation" in CATALOGUE
+    assert CATALOGUE["restrict_violation"].is_ub_rooted()
+
+
+def test_restrict_witness_is_nonzero_selector_and_honors_range():
+    orc = _plugin.get_oracle_for("restrict_violation", "c", "rust")
+    r = orc.find_divergence({"kind": "restrict_pair"})
+    assert r.verdict is _plugin.OracleVerdict.DIVERGENT
+    assert r.counterexample.inputs["sel"] == 1
+    r2 = orc.find_divergence({"kind": "restrict_pair", "selector_range": [5, 9]})
+    assert r2.counterexample.inputs["sel"] == 5
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not _TC.full_for("rust"),
+                    reason="needs C+rustc toolchain")
+def test_restrict_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("restrict_violation", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "restrict_pair"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "optimizer_exploited"
+    assert rr.ub_consequential, "-O0 and -O2 must disagree on the aliasing input"
+    assert rr.rust_defined, "Rust &mut cannot alias: deterministic & defined"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+go toolchain")
+def test_restrict_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("restrict_violation", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "restrict_pair"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "optimizer_exploited"
+    assert rr.ub_consequential, "-O0 and -O2 must disagree on the aliasing input"
+    assert rr.rust_defined, "Go has no restrict: deterministic & defined"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 102 — pointer-provenance / pointer-arithmetic-overflow divergence oracle
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import pointer_provenance as _prov  # noqa: E402,F401
+
+
+def test_pointer_provenance_oracle_registered_for_rust_and_go_trap_mode():
+    rust = _plugin.get_oracle_for("pointer_provenance", "c", "rust")
+    go = _plugin.get_oracle_for("pointer_provenance", "c", "go")
+    assert rust.confirmation_mode == "trap_vs_defined"
+    assert go.confirmation_mode == "trap_vs_defined"
+    assert "pointer_provenance" in CATALOGUE
+    assert CATALOGUE["pointer_provenance"].is_ub_rooted()
+
+
+def test_pointer_provenance_witness_overflows_address_space_and_honors_range():
+    orc = _plugin.get_oracle_for("pointer_provenance", "c", "rust")
+    # 4-byte ints: least n with n*4 >= 2**64 is 2**62.
+    r32 = orc.find_divergence({"kind": "pointer_offset", "width": 32})
+    assert r32.verdict is _plugin.OracleVerdict.DIVERGENT
+    assert r32.counterexample.inputs["n"] == (1 << 62)
+    # 8-byte ints: least n with n*8 >= 2**64 is 2**61.
+    r64 = orc.find_divergence({"kind": "pointer_offset", "width": 64})
+    assert r64.counterexample.inputs["n"] == (1 << 61)
+    # honour a declared range: pick the least overflowing offset within it.
+    r3 = orc.find_divergence(
+        {"kind": "pointer_offset", "width": 32,
+         "offset_range": [(1 << 62) + 5, (1 << 62) + 9]})
+    assert r3.counterexample.inputs["n"] == (1 << 62) + 5
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not _TC.full_for("rust"),
+                    reason="needs C+UBSan+rustc toolchain")
+def test_pointer_provenance_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("pointer_provenance", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "pointer_offset", "width": 32}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan pointer-overflow must trap on the offset"
+    assert rr.rust_defined, "Rust checked index is deterministic & defined"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+UBSan+go toolchain")
+def test_pointer_provenance_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("pointer_provenance", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "pointer_offset", "width": 64}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan pointer-overflow must trap on the offset"
+    assert rr.rust_defined, "Go bounds-checked index is deterministic & defined"
+    assert rr.confirmed and res.counterexample.confirmed

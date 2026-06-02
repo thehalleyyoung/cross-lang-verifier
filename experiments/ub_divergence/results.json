@@ -98,17 +98,17 @@
   "fuzz_trials": 200000,
   "language_pair": "c->rust",
   "precision_recall_symbolic": {
-    "num_cases": 18,
+    "num_cases": 21,
     "num_negative": 4,
-    "num_positive": 14,
+    "num_positive": 17,
     "overall": {
       "divergence_class": "__overall__",
       "fn": 0,
       "fp": 0,
       "precision": 1.0,
       "recall": 1.0,
-      "tn": 166,
-      "tp": 14
+      "tn": 256,
+      "tp": 17
     },
     "per_class": {
       "array_oob": {
@@ -117,7 +117,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 17,
+        "tn": 20,
         "tp": 1
       },
       "div_by_zero": {
@@ -126,8 +126,17 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 16,
+        "tn": 19,
         "tp": 2
+      },
+      "fast_math_reassoc": {
+        "divergence_class": "fast_math_reassoc",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 20,
+        "tp": 1
       },
       "float_cast_overflow": {
         "divergence_class": "float_cast_overflow",
@@ -135,7 +144,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 17,
+        "tn": 20,
         "tp": 1
       },
       "fp_contraction": {
@@ -144,7 +153,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 17,
+        "tn": 20,
         "tp": 1
       },
       "intmin_div_neg1": {
@@ -153,7 +162,25 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 17,
+        "tn": 20,
+        "tp": 1
+      },
+      "pointer_provenance": {
+        "divergence_class": "pointer_provenance",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 20,
+        "tp": 1
+      },
+      "restrict_violation": {
+        "divergence_class": "restrict_violation",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 20,
         "tp": 1
       },
       "shift_oob": {
@@ -162,7 +189,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 16,
+        "tn": 19,
         "tp": 2
       },
       "signed_overflow": {
@@ -171,7 +198,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 15,
+        "tn": 18,
         "tp": 3
       },
       "strict_aliasing": {
@@ -180,7 +207,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 17,
+        "tn": 20,
         "tp": 1
       },
       "uninit_read": {
@@ -189,7 +216,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 17,
+        "tn": 20,
         "tp": 1
       },
       "vla_bound": {
@@ -198,7 +225,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 17,
+        "tn": 20,
         "tp": 1
       }
     }

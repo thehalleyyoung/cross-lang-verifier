@@ -88,6 +88,9 @@ INT_CONVERSION = DivergenceClass("int_conversion", "Out-of-range integer convers
 FP_CONTRACTION = DivergenceClass("fp_contraction", "Floating-point contraction (FMA fusion)")
 VLA_BOUND = DivergenceClass("vla_bound", "Variable-length-array bound is non-positive")
 FLOAT_CAST_OVERFLOW = DivergenceClass("float_cast_overflow", "Float-to-integer conversion out of range")
+FAST_MATH_REASSOC = DivergenceClass("fast_math_reassoc", "Floating-point reassociation under -ffast-math")
+RESTRICT_VIOLATION = DivergenceClass("restrict_violation", "Aliasing through restrict-qualified pointers")
+POINTER_PROVENANCE = DivergenceClass("pointer_provenance", "Pointer arithmetic out of object provenance / address overflow")
 
 
 @dataclass(frozen=True)
@@ -284,6 +287,70 @@ _ENTRIES: List[DivergenceEntry] = [
         witness_recipe="Read a double from input and pick the least-extreme value "
                        "just past the destination integer range (e.g. INT_MAX+1); "
                        "the UBSan build traps while the target is defined.",
+        int_widths=(32, 64),
+    ),
+    DivergenceEntry(
+        cls=FAST_MATH_REASSOC,
+        source_definedness=Definedness.UNSPECIFIED,
+        source_rule="Under `-ffast-math`/`-Ofast` the implementation is licensed "
+                    "to reassociate floating-point arithmetic as if it were over "
+                    "the reals (dropping the IEEE no-reassociation guarantee), so "
+                    "the value of an expression like `(x+y)-x` is not uniquely "
+                    "fixed: `-fno-fast-math` rounds at each step (IEEE) while "
+                    "`-ffast-math` may fold `(x+y)-x` to `y`.",
+        c_standard_ref="C17 Annex F (IEC 60559) / -ffast-math non-conformance",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="Rust and Go never auto-reassociate floating arithmetic: "
+                    "`(x+y)-x` always evaluates IEEE-strict (round at each step), "
+                    "so the target is a single deterministic, defined value.",
+        severity=Severity.MODERATE,
+        witness_recipe="Pick x,y with x+y rounding back to x (y swallowed) but "
+                       "y != 0; `-ffast-math` then yields y while IEEE-strict "
+                       "yields 0 — a visible, reproducible reassociation gap.",
+    ),
+    DivergenceEntry(
+        cls=RESTRICT_VIOLATION,
+        source_definedness=Definedness.UNDEFINED,
+        source_rule="If two `restrict`-qualified pointers in scope are used to "
+                    "access the same object and at least one access is a store, "
+                    "the behavior is undefined; the optimizer is entitled to "
+                    "assume they never alias, so `-O2` may keep a stale cached "
+                    "value where `-O0` re-reads memory.",
+        c_standard_ref="C17 6.7.3.1p4",
+        rust_outcome=RustOutcomeKind.OWNERSHIP_REJECTED,
+        target_rule="Rust's `&mut` references are guaranteed unique (the borrow "
+                    "checker forbids two live `&mut` to one object at compile "
+                    "time), so the idiomatic safe port cannot alias and computes "
+                    "a single deterministic, defined value; Go has no `restrict` "
+                    "and never performs the aliasing-based rewrite.",
+        severity=Severity.CRITICAL,
+        witness_recipe="Feed the function two pointers to the *same* object; the "
+                       "`-O0` build re-reads (aliased) memory while `-O2` assumes "
+                       "no alias and returns the stale value — the same C source "
+                       "diverges across optimisation levels, with no sanitizer "
+                       "able to trap it.",
+    ),
+    DivergenceEntry(
+        cls=POINTER_PROVENANCE,
+        source_definedness=Definedness.UNDEFINED,
+        source_rule="A pointer may only be computed within the elements of the "
+                    "array object it points into, plus the one-past-the-end "
+                    "position; forming a pointer further out (in the limit, one "
+                    "whose address-space computation overflows) is undefined. The "
+                    "pointer's *provenance* is the original object, so the "
+                    "optimiser may assume the offset stays in range.",
+        c_standard_ref="C17 6.5.6p8",
+        rust_outcome=RustOutcomeKind.BOUNDS_CHECKED,
+        target_rule="The idiomatic safe translation keeps an *index* and accesses "
+                    "through a checked operation (`a.get(i)` / a bounds-checked "
+                    "slice index), so a far-out offset becomes a deterministic, "
+                    "defined value — a raw out-of-provenance pointer is never "
+                    "formed.",
+        severity=Severity.CRITICAL,
+        witness_recipe="Read an offset n and pick the least n whose byte "
+                       "displacement n*sizeof(T) overflows a 64-bit address space "
+                       "(n*sizeof(T) >= 2**64); the UBSan `pointer-overflow` check "
+                       "traps while the target's checked index is defined.",
         int_widths=(32, 64),
     ),
 ]

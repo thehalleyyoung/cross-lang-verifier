@@ -87,6 +87,16 @@ POSITIVE_CASES: List[LabeledCase] = [
                 {"kind": "float_cast", "width": 32, "var": "x",
                  "probe": "float_cast_overflow"},
                 "float_cast_overflow"),
+    LabeledCase("fast_math_reassoc",
+                {"kind": "fp_reassoc", "probe": "fast_math_reassoc"},
+                "fast_math_reassoc"),
+    LabeledCase("restrict_alias",
+                {"kind": "restrict_pair", "probe": "restrict_violation"},
+                "restrict_violation"),
+    LabeledCase("pointer_provenance",
+                {"kind": "pointer_offset", "width": 32, "var": "n",
+                 "probe": "pointer_provenance"},
+                "pointer_provenance"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus

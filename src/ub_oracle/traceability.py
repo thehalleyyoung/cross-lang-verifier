@@ -922,6 +922,106 @@ def _thm_float_cast_overflow_oracle() -> bool:
 
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
+
+
+def _thm_fast_math_reassoc_oracle() -> bool:
+    # The -ffast-math reassociation oracle is sound on the anchor and the Go
+    # pair. For each target the oracle (a) finds a finite-normal witness (x,y)
+    # for which IEEE-strict (x+y)-x is 0 while the reassociated value is a
+    # non-zero y, and (b) when the toolchain is present, the *same* C source
+    # compiled `-fno-fast-math` vs `-ffast-math` produces different observable
+    # output while the safe target (Rust/Go, no auto-reassociation) is defined
+    # and deterministic. The structural witness check is unconditional; the
+    # real-compiler confirmation runs only when the toolchain exists.
+    from . import oracles as _oracles  # noqa: F401, WPS433  (register plugins)
+    from .plugin import get_oracle_for, OracleVerdict
+    from .reexec import ReexecHarness, toolchain_available
+
+    status = toolchain_available()
+    h = ReexecHarness(status)
+    for target in ("rust", "go"):
+        orc = get_oracle_for("fast_math_reassoc", "c", target)
+        if orc.confirmation_mode != "optimizer_exploited":
+            return False
+        res = orc.find_divergence({"kind": "fp_reassoc"})
+        if res.verdict is not OracleVerdict.DIVERGENT:
+            return False
+        x, y = res.counterexample.inputs["x"], res.counterexample.inputs["y"]
+        # the witness must genuinely swallow y: IEEE-strict (x+y)-x rounds to 0
+        # while the reassociated value y is non-zero.
+        if y == 0.0 or ((x + y) - x) != 0.0:
+            return False
+        if not status.full_for(target):
+            continue
+        rr = orc.confirm(res, h).reexec
+        if not (rr.available and rr.ub_consequential and rr.rust_defined and rr.confirmed):
+            return False
+    return True
+
+
+def _thm_restrict_violation_oracle() -> bool:
+    # The restrict-violation oracle is sound on the anchor and the Go pair. For
+    # each target the oracle (a) finds an aliasing selector that triggers the
+    # restrict violation, and (b) when the toolchain is present, the *same* C
+    # source compiled `-O0` vs `-O2` disagrees on stdout (the optimizer caches a
+    # value the restrict promise let it keep) while the safe target — Rust's
+    # unique `&mut` / Go's restrict-free pointers — is defined and
+    # deterministic. No sanitizer can trap this class, so the optimisation-level
+    # disagreement is the divergence evidence.
+    from . import oracles as _oracles  # noqa: F401, WPS433  (register plugins)
+    from .plugin import get_oracle_for, OracleVerdict
+    from .reexec import ReexecHarness, toolchain_available
+
+    status = toolchain_available()
+    h = ReexecHarness(status)
+    for target in ("rust", "go"):
+        orc = get_oracle_for("restrict_violation", "c", target)
+        if orc.confirmation_mode != "optimizer_exploited":
+            return False
+        res = orc.find_divergence({"kind": "restrict_pair"})
+        if res.verdict is not OracleVerdict.DIVERGENT:
+            return False
+        if res.counterexample.inputs["sel"] == 0:
+            return False
+        if not status.full_for(target):
+            continue
+        rr = orc.confirm(res, h).reexec
+        if not (rr.available and rr.ub_consequential and rr.rust_defined and rr.confirmed):
+            return False
+    return True
+
+
+def _thm_pointer_provenance_oracle() -> bool:
+    # The pointer-provenance oracle is sound on the anchor and the Go pair. For
+    # each target the oracle (a) finds — via Z3 — the least offset whose byte
+    # displacement is guaranteed to overflow a 64-bit address space, and (b) when
+    # the toolchain is present, the `-fsanitize=undefined` build traps via the
+    # `pointer-overflow` check on that input while the safe target keeps an index
+    # and accesses through a checked operation, yielding a deterministic, defined
+    # value. The confirmation runs in `trap_vs_defined` mode.
+    from . import oracles as _oracles  # noqa: F401, WPS433  (register plugins)
+    from .plugin import get_oracle_for, OracleVerdict
+    from .reexec import ReexecHarness, toolchain_available
+
+    status = toolchain_available()
+    h = ReexecHarness(status)
+    for target, width in (("rust", 32), ("go", 64)):
+        orc = get_oracle_for("pointer_provenance", "c", target)
+        if orc.confirmation_mode != "trap_vs_defined":
+            return False
+        res = orc.find_divergence({"kind": "pointer_offset", "width": width})
+        if res.verdict is not OracleVerdict.DIVERGENT:
+            return False
+        if res.counterexample.inputs["n"] <= 0:
+            return False
+        if not status.full_for(target):
+            continue
+        rr = orc.confirm(res, h).reexec
+        if not (rr.available and rr.ub_reachable and rr.rust_defined and rr.confirmed):
+            return False
+    return True
+
+
 CLAIMS: List[Claim] = [
     claim(
         "C1-soundness",
@@ -1939,6 +2039,69 @@ CLAIMS: List[Claim] = [
         "ub_oracle.oracles.float_cast",
         ("FloatCastOverflowOracle", "GoFloatCastOverflowOracle"),
         theorem=_thm_float_cast_overflow_oracle,
+        docs=("README.md",),
+    ),
+    claim(
+        "C60-fast-math-reassociation-divergence",
+        "A **`-ffast-math` reassociation** divergence oracle "
+        "(`ub_oracle.oracles.fast_math`) for both C->Rust and C->Go. IEEE-754 "
+        "arithmetic is not associative, so `(x+y)-x` is not the same value as "
+        "`y`; under `-ffast-math`/`-Ofast` the compiler is licensed to "
+        "reassociate floating arithmetic as if over the reals and may fold "
+        "`(x+y)-x` to `y`, so the **same** C source yields **different** "
+        "observable output under `-fno-fast-math` (IEEE-strict, rounds to 0 when "
+        "`x` swallows `y`) vs `-ffast-math` (returns `y`). Rust and Go never "
+        "auto-reassociate floating arithmetic, so each safe-target port is a "
+        "single deterministic, defined value. The witness `(x,y)` is found with "
+        "Z3's floating-point theory (a large `x` that exactly swallows a non-zero "
+        "`y`, a maximally visible gap) and confirmed end-to-end against real "
+        "clang (`-fno-fast-math` vs `-ffast-math`) + rustc/go in "
+        "`optimizer_exploited` mode -- no sanitizer is needed or able to trap it.",
+        "ub_oracle.oracles.fast_math",
+        ("FastMathReassocOracle", "GoFastMathReassocOracle"),
+        theorem=_thm_fast_math_reassoc_oracle,
+        docs=("README.md",),
+    ),
+    claim(
+        "C61-restrict-violation-divergence",
+        "A **`restrict`-violation** divergence oracle "
+        "(`ub_oracle.oracles.restrict_alias`) for both C->Rust and C->Go. Calling "
+        "`f(int *restrict a, int *restrict b)` with aliasing pointers is "
+        "**undefined** (C17 6.7.3.1p4) and the optimizer *relies* on the "
+        "non-aliasing promise: the **same** C source on the aliasing input "
+        "returns 4 under `-O0` (honest re-read) but 3 under `-O2` "
+        "(restrict-based caching of `*a`). No sanitizer traps this -- the "
+        "optimisation-level disagreement is the evidence. The idiomatic safe port "
+        "cannot reproduce the hazard: Rust's `&mut` references are unique by the "
+        "borrow checker (non-aliasing by construction) and Go has no `restrict`, "
+        "so each target is a single deterministic, defined value. The witnessing "
+        "aliasing selector is found with Z3 and the divergence is confirmed "
+        "end-to-end against real clang (`-O0` vs `-O2`) + rustc/go in "
+        "`optimizer_exploited` mode.",
+        "ub_oracle.oracles.restrict_alias",
+        ("RestrictViolationOracle", "GoRestrictViolationOracle"),
+        theorem=_thm_restrict_violation_oracle,
+        docs=("README.md",),
+    ),
+    claim(
+        "C62-pointer-provenance-divergence",
+        "A **pointer-provenance / pointer-arithmetic-overflow** divergence oracle "
+        "(`ub_oracle.oracles.pointer_provenance`) for both C->Rust and C->Go. "
+        "Forming `a + n` so the result leaves the array's provenance — and, in "
+        "the limit, overflows the address-space computation `n*sizeof(T)` — is "
+        "**undefined** (C17 6.5.6p8): `-fsanitize=undefined` traps via the "
+        "`pointer-overflow` check while `-O0` derives from a wild pointer. The "
+        "idiomatic *safe* port never forms a raw out-of-provenance pointer; it "
+        "keeps an **index** and accesses through a **checked** operation "
+        "(Rust `a.get(i)`, Go bounds-checked index), so the same offset becomes a "
+        "deterministic, defined value. The witnessing offset is found with Z3 "
+        "(the least `n` with `n*sizeof(T) >= 2**64`, guaranteed to overflow any "
+        "64-bit base address — e.g. `2**62` for 4-byte ints) rather than "
+        "hard-coded, and the divergence is confirmed end-to-end against real "
+        "clang/UBSan + rustc/go in `trap_vs_defined` mode.",
+        "ub_oracle.oracles.pointer_provenance",
+        ("PointerProvenanceOracle", "GoPointerProvenanceOracle"),
+        theorem=_thm_pointer_provenance_oracle,
         docs=("README.md",),
     ),
 ]
