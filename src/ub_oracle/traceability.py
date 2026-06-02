@@ -792,6 +792,18 @@ def _thm_case_studies() -> bool:
     return bool(rep.ok)
 
 
+def _thm_disclosures() -> bool:
+    # The responsible-disclosure toolkit reproduces every advisory LIVE: for
+    # each record the real pipeline (clang+UBSan, rustc/go) confirms the C UB is
+    # reachable on the witness, the target is defined, the oracle confirms the
+    # divergence and stays silent on the safe input -- and every emitted
+    # self-contained reproduction bundle is valid runnable shell. Consistency-
+    # only when no target toolchain is present.
+    from . import disclosure as dz
+    rep = dz.confirm_disclosures()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1709,6 +1721,29 @@ CLAIMS: List[Claim] = [
         "ub_oracle.case_studies",
         ("confirm_case_studies", "generate_case_studies", "CaseResult"),
         theorem=_thm_case_studies,
+        docs=("README.md",),
+    ),
+    claim(
+        "C55-responsible-disclosure",
+        "A **responsible-disclosure toolkit with a live bug-reproduction "
+        "harness** (`ub_oracle.disclosure`) turns any confirmed divergence into "
+        "a coordinated, reproducible advisory: a structured `DisclosureRecord` "
+        "carries the affected real-world pattern + provenance, the exact C and "
+        "target sources, the witnessing input, a defined safe input, the "
+        "security/correctness impact and the concrete remediation; a "
+        "**coordinated-disclosure template** (`DISCLOSURE_TEMPLATE.md`) "
+        "captures summary/impact/PoC/remediation/timeline. `reproduce_disclosure` "
+        "re-runs the **real** pipeline (clang+UBSan, rustc/go) to confirm the "
+        "divergence live and emits a **self-contained, runnable reproduction "
+        "bundle** (a shell script that compiles both sides and exhibits the bug "
+        "on the witness). The shipped records are real-world *pattern exemplars* "
+        "(JDK midpoint overflow, `total/count` divide-by-zero, packed-bitfield "
+        "shift), explicitly a template to fill rather than third-party CVEs. "
+        "`confirm_disclosures()` requires every record to reproduce live and "
+        "every bundle to be valid shell; consistency-only when no toolchain.",
+        "ub_oracle.disclosure",
+        ("confirm_disclosures", "reproduce_disclosure", "DisclosureRecord"),
+        theorem=_thm_disclosures,
         docs=("README.md",),
     ),
 ]

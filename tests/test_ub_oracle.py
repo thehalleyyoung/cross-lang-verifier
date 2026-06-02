@@ -4994,3 +4994,53 @@ def test_case_studies_markdown_renders_each_walk():
     assert "Case studies" in text and "Cost / benefit summary" in text
     for item_id, _lang in _cs._CASE_PLAN:
         assert f"`{item_id}`" in text
+
+
+from src.ub_oracle import disclosure as _disc  # noqa: E402
+
+
+def test_disclosure_records_are_well_formed():
+    assert len(_disc.DISCLOSURES) >= 3
+    ids = [r.advisory_id for r in _disc.DISCLOSURES]
+    assert len(ids) == len(set(ids))
+    for r in _disc.DISCLOSURES:
+        assert r.witness_input and r.safe_input
+        assert r.c_src.strip() and r.target_src.strip()
+        assert r.impact.strip() and r.remediation.strip()
+        assert r.target_lang in ("rust", "go", "swift")
+
+
+def test_disclosure_template_and_markdown_generate():
+    md, tmpl, _rep = _disc.generate_disclosures()
+    t = tmpl.read_text()
+    assert "Advisory ID" in t and "Remediation" in t and "timeline" in t.lower()
+    body = md.read_text()
+    for r in _disc.DISCLOSURES:
+        assert r.advisory_id in body
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go),
+                    reason="need C/UBSan + rust + go to reproduce disclosures")
+def test_disclosure_reproduces_live_with_valid_bundles():
+    rep = _disc.confirm_disclosures()
+    assert rep.available and rep.ok, rep.detail
+    assert rep.n_reproduced == rep.n_records
+    assert rep.bundles_valid
+    for r in rep.results:
+        assert r.ub_reachable and r.target_defined and r.safe_silent
+        assert r.bundle_path
+
+
+@pytest.mark.skipif(not _full_go,
+                    reason="need C/UBSan + go to run the repro bundle")
+def test_disclosure_bundle_runs_end_to_end():
+    # The divide-by-zero bundle must actually exhibit the divergence when run.
+    rec = next(r for r in _disc.DISCLOSURES
+               if r.divergence_class == "div_by_zero")
+    res = _disc.reproduce_disclosure(rec, write_bundle=True)
+    import subprocess as _sp
+    out = _sp.run(["bash", str(_disc._ROOT / res.bundle_path)],
+                  capture_output=True, text=True, timeout=120)
+    combined = out.stdout + out.stderr
+    assert "division by zero" in combined          # C UBSan trapped
+    assert "divide by zero" in combined            # Go panicked

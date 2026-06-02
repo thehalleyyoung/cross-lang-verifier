@@ -394,6 +394,12 @@ python3 -m src.cli.main discover \
   compilers, then raced against an **equal-budget differential fuzzer on the
   same binaries** — the oracle confirms sparse-UB bugs the fuzzer's whole budget
   never hits
+- a **responsible-disclosure toolkit + live reproduction harness**
+  (`disclosure.py`, `docs/disclosures.md`, `docs/DISCLOSURE_TEMPLATE.md`): turns
+  any confirmed divergence into a coordinated advisory (impact, remediation,
+  timeline) and emits a **self-contained, runnable reproduction bundle** that
+  re-compiles both sides and exhibits the bug; every shipped advisory reproduces
+  live
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

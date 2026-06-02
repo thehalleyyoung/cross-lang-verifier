@@ -21,6 +21,7 @@ nav:
   - Gallery of caught divergences: gallery.md
   - Divergence zoo (indexed): zoo.md
   - Case studies (end-to-end): case_studies.md
+  - Disclosures (reproducible): disclosures.md
   - Paper figures: figures.md
   - Concepts:
       - Problem statement: problem_statement.md
