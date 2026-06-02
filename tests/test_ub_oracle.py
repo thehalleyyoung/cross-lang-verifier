@@ -3522,3 +3522,62 @@ def test_concurrency_mutex_is_clean_on_both_c_and_go():
     assert r.c.race_detected is False
     assert r.go.race_detected is False
     assert r.ok
+
+
+# ---------------------------------------------------------------------------
+# Step 29 — function-pointer / indirect-call resolution (dispatch tables).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import indirect_calls as _ic  # noqa: E402
+
+_clang_for_ic = pytest.mark.skipif(
+    not _os.path.exists(_ic.CC), reason="clang not available")
+
+
+def test_indirect_parser_extracts_functions_typedef_and_table():
+    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
+    assert set(u.functions) == {"add", "sub", "mul", "log_msg", "main"}
+    assert u.functions["add"].sig == _ic.Signature("int", ("int", "int"))
+    assert u.functions["log_msg"].sig == _ic.Signature("void", ("const char*",))
+    assert u.typedefs["op_t"] == _ic.Signature("int", ("int", "int"))
+    assert u.tables["table"].entries == ("add", "sub", "mul")
+
+
+def test_indirect_precise_points_to_is_the_table_entries():
+    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
+    assert _ic.resolve_table_call(u, "table") == {"add", "sub", "mul"}
+
+
+def test_indirect_signature_typing_excludes_incompatible_decoy():
+    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
+    # the conservative signature-typed set still excludes log_msg (wrong sig),
+    # and never main (different sig) — so signature typing is the precision lever.
+    compat = _ic.signature_compatible_targets(u, "op_t")
+    assert compat == {"add", "sub", "mul"}
+    assert "log_msg" not in compat and "main" not in compat
+
+
+def test_indirect_table_is_well_typed_precise_refines_conservative():
+    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
+    assert _ic.table_is_well_typed(u, "table")
+    precise = _ic.resolve_table_call(u, "table")
+    conservative = _ic.signature_compatible_targets(u, "op_t")
+    assert precise.issubset(conservative)
+
+
+@_clang_for_ic
+def test_indirect_resolution_is_exact_against_real_execution():
+    c = _ic.confirm_table_dispatch(_ic.EXAMPLE_DISPATCH, "table")
+    assert c.available and c.ok
+    # the program drives every index, so the observed indirect targets are
+    # exactly the predicted points-to set (precision), and never escape it.
+    assert c.sound
+    assert c.exact
+    assert c.observed == {"add", "sub", "mul"}
+
+
+@_clang_for_ic
+def test_indirect_decoy_function_is_never_an_observed_target():
+    c = _ic.confirm_table_dispatch(_ic.EXAMPLE_DISPATCH, "table")
+    assert "log_msg" not in c.observed
+    assert "main" not in c.observed

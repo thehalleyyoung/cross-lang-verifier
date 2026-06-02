@@ -177,6 +177,14 @@ python3 -m src.cli.main discover \
   and every synchronized variant (mutex, lock-free atomic, read-only sharing) runs
   clean under both detectors. A pattern is only ever called a race when a real
   sanitizer actually fires on a real binary
+- an **indirect-call resolver** (`indirect_calls.py`) so real codebases that
+  dispatch through function-pointer tables (syscall tables, plugin registries,
+  hand-rolled vtables) don't lose their call-graph edges: the precise points-to
+  set of `table[k](...)` is exactly the functions in the table's initializer, and
+  it refines a conservative **signature-typed** set that excludes wrong-signature
+  decoys. The resolution is **proven exact against real execution** — an
+  instrumented build is compiled and run, and the functions actually reached
+  through the table equal the predicted set (never escaping it)
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

@@ -294,6 +294,26 @@ def _thm_concurrency_race_sound() -> bool:
     return bool(race.c.race_detected is True and clean.c.race_detected is False)
 
 
+def _thm_indirect_resolution_sound() -> bool:
+    # The precise points-to set for a dispatch table is exactly its entries and
+    # refines the signature-typed set (which excludes the wrong-signature decoy).
+    # Where clang is present, real execution must confirm observed == predicted
+    # and the decoy is never reached.
+    from . import indirect_calls as ic
+    u = ic.parse_unit(ic.EXAMPLE_DISPATCH)
+    precise = ic.resolve_table_call(u, "table")
+    conservative = ic.signature_compatible_targets(u, "op_t")
+    if precise != {"add", "sub", "mul"}:
+        return False
+    if "log_msg" in conservative or not precise.issubset(conservative):
+        return False
+    import os as _os3
+    if not _os3.path.exists(ic.CC):
+        return True
+    c = ic.confirm_table_dispatch(ic.EXAMPLE_DISPATCH, "table")
+    return bool(c.ok and c.exact and "log_msg" not in c.observed)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -548,6 +568,25 @@ CLAIMS: List[Claim] = [
         ("PATTERNS", "pattern", "confirm_race", "RaceConfirmation",
          "RACE_FRONTIER"),
         theorem=_thm_concurrency_race_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C22-indirect-resolution",
+        "Indirect calls through function-pointer dispatch tables are resolved so "
+        "the call graph keeps the edges that matter on real code. The precise "
+        "points-to set of a call `table[k](...)` is exactly the functions named "
+        "in the table's initializer, and it refines the conservative "
+        "signature-typed set (every defined function whose signature matches the "
+        "table element type) — which itself excludes a wrong-signature decoy and "
+        "`main`. The resolution is proven exact against real execution: an "
+        "instrumented build of the example is compiled and run, and the set of "
+        "functions actually reached through the table equals the predicted set "
+        "(observed == predicted, never escaping it) while the decoy is never "
+        "invoked.",
+        "ub_oracle.indirect_calls",
+        ("parse_unit", "resolve_table_call", "signature_compatible_targets",
+         "confirm_table_dispatch", "table_is_well_typed"),
+        theorem=_thm_indirect_resolution_sound,
         docs=("README.md",),
     ),
 ]
