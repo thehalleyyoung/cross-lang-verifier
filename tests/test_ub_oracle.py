@@ -4283,3 +4283,79 @@ def test_statistical_rigor_content_hash_is_stable():
     # the headline interval is recomputed from the pooled counts, not stored
     m = r1.metrics["recall_definedness"]
     assert (m.ci_lo, m.ci_hi) == _sr.wilson_interval(m.successes, m.trials)
+
+# --------------------------------------------------------------------------- #
+# Step 72 — relational / product-program formalization.
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import product_program as _pp  # noqa: E402
+
+
+def test_product_assertion_is_same_boolean_function_as_semantics():
+    # Exhaustively over the recorded-observable abstraction, product_violated
+    # must equal semantics.is_divergence — the soundness/completeness theorem
+    # at the abstraction level (no toolchain needed).
+    from src.ub_oracle import semantics as _sem
+    rcs = (0, 1)
+    vals = ("1", "2")
+    for mode in _pp.MODES:
+        for o0_rc in rcs:
+            for o0v in vals:
+                for o2_rc in rcs:
+                    for o2v in vals:
+                        for san in (False, True):
+                            for defined in (False, True):
+                                for det in (False, True):
+                                    obs = _pp.ProductObservable(
+                                        target="rust", mode=mode,
+                                        o0_rc=o0_rc, o0_val=o0v,
+                                        o2_rc=o2_rc, o2_val=o2v,
+                                        san_trapped=san, defined=defined,
+                                        deterministic=det)
+                                    assert (_pp.product_violated(obs)
+                                            == _sem.is_divergence(obs.to_observation()))
+                                    # R holds iff not violated (assertion duality)
+                                    assert (_pp.product_assertion_holds(obs)
+                                            != _pp.product_violated(obs))
+
+
+def test_product_clauses_are_named_inference_rules():
+    assert _pp.CLAUSES == ("P_premise_ub_reached", "T_target_defined", "C_consequence")
+    obs = _pp.ProductObservable(
+        target="go", mode=_pp.TRAP_VS_DEFINED, o0_rc=136, o0_val="",
+        o2_rc=136, o2_val="", san_trapped=True, defined=True, deterministic=True)
+    clauses = _pp.evaluate_clauses(obs)
+    assert set(clauses) == set(_pp.CLAUSES)
+    # a trap-vs-defined divergence: all three clauses hold -> R violated
+    assert all(clauses.values()) and _pp.product_violated(obs)
+
+
+def test_product_program_unknown_target_rejected():
+    import pytest as _pt
+    with _pt.raises(ValueError):
+        _pp.tsem.get_pack("cobol")
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="C/UBSan + a target toolchain unavailable")
+def test_product_program_confirms_against_real_code():
+    langs = tuple(l for l in ("rust", "go")
+                  if (_full_rust if l == "rust" else _full_go))
+    conf = _pp.confirm_product_program(langs=langs, per_class=1)
+    assert conf.available and conf.ok, conf.detail
+    assert conf.n_checked > 0 and conf.n_divergent > 0 and conf.n_equivalent > 0
+    # every check agreed: product == semantics == harness on real binaries
+    for c in conf.checks:
+        assert c.agree, (c.item_id, c.product_violated,
+                         c.semantics_divergence, c.harness_confirmed)
+        if c.declared_label == "divergent" and c.harness_confirmed:
+            assert c.product_violated
+        if c.declared_label == "equivalent":
+            assert not c.product_violated
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_product_program_content_hash_stable():
+    c1 = _pp.confirm_product_program(langs=("rust",), per_class=1)
+    c2 = _pp.confirm_product_program(langs=("rust",), per_class=1)
+    assert c1.available and c2.available
+    assert c1.content_hash == c2.content_hash and c1.content_hash

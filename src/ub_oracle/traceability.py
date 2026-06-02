@@ -562,6 +562,36 @@ def _thm_statistical_rigor() -> bool:
     return bool(conf.ok and conf.hash_stable and conf.fpr.successes == 0)
 
 
+def _thm_product_program() -> bool:
+    # The relational product-program assertion R_m decides identically to the
+    # operational divergence semantics over the recorded-observable abstraction
+    # (a finite, exhaustively-checkable Boolean equivalence), and identically to
+    # the real re-execution harness on real compiled code.
+    from . import product_program as pp
+    from . import semantics as sem
+    # Abstraction-level soundness AND completeness: same Boolean function.
+    for mode in pp.MODES:
+        for o0_rc in (0, 1):
+            for o2_rc in (0, 1):
+                for o0v, o2v in (("1", "1"), ("1", "2")):
+                    for san in (False, True):
+                        for defined in (False, True):
+                            for det in (False, True):
+                                obs = pp.ProductObservable(
+                                    target="rust", mode=mode,
+                                    o0_rc=o0_rc, o0_val=o0v,
+                                    o2_rc=o2_rc, o2_val=o2v,
+                                    san_trapped=san, defined=defined,
+                                    deterministic=det)
+                                if pp.product_violated(obs) != sem.is_divergence(
+                                        obs.to_observation()):
+                                    return False
+    conf = pp.confirm_product_program(per_class=1)
+    if not conf.available:
+        return True  # consistency-only when toolchain absent
+    return bool(conf.ok and conf.n_divergent > 0 and conf.n_equivalent > 0)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1106,6 +1136,29 @@ CLAIMS: List[Claim] = [
          "PREREGISTERED_METRICS"),
         theorem=_thm_statistical_rigor,
         docs=("README.md",),
+    ),
+    claim(
+        "C37-product-program",
+        "The oracle is given its **relational / translation-validation** account: "
+        "a product program `P_S x P_T` whose runs pair a source run and a target "
+        "run on the same input, carrying a relational assertion `R_m` whose "
+        "violation is *exactly* a cross-language divergence. The construction is "
+        "written as inference rules (Step-L / Step-R / Join over the synchronous "
+        "product, plus the three-clause assertion `R_m = not(P and T and C_m)`) "
+        "with a **soundness-and-relative-completeness theorem**, all "
+        "**parameterized over the target semantics pack** (`target_semantics`). "
+        "The theorem is discharged two ways: (i) over the recorded-observable "
+        "abstraction `product_violated` is *exhaustively* checked to be the same "
+        "Boolean function as `semantics.is_divergence`; (ii) on real compiled "
+        "code, `confirm_product_program` builds the product observable from real "
+        "clang/UBSan + rustc/go runs and verifies "
+        "`product_violated == is_divergence == harness.confirmed` on divergent "
+        "AND equivalent corpus items across packs, with a stable content hash.",
+        "ub_oracle.product_program",
+        ("confirm_product_program", "product_violated", "evaluate_clauses",
+         "build_product"),
+        theorem=_thm_product_program,
+        docs=("README.md", "docs/PRODUCT_PROGRAM.md"),
     ),
 ]
 

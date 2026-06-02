@@ -280,6 +280,13 @@ python3 -m src.cli.main discover \
   positives on the equivalent population (the sound-for-divergence guarantee,
   measured), honest `out_of_scope` accounting of value divergences, and a
   content-hashed outcome layer that reproduces identically across runs
+- a **relational product-program formalization** (`product_program.py`, spec in
+  `docs/PRODUCT_PROGRAM.md`): the oracle recast as **cross-language translation
+  validation** — a product program `P_S × P_T` carrying a relational assertion
+  `R_m` whose violation is exactly a divergence, given as inference rules with a
+  soundness-and-relative-completeness theorem parameterized over the target
+  semantics pack, discharged both by an exhaustive Boolean-equivalence check
+  against the operational semantics and on real clang/UBSan + rustc/go runs
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
