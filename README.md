@@ -62,7 +62,8 @@ python3 -m src.cli.main discover \
   `memcpy` vs memmove-like slice copy**, **`-ffast-math` reassociation**,
   **`restrict`-aliasing violation**, **implementation-defined
   bit-field packing**, **out-of-range `enum` representation**,
-  **sequence-point / unsequenced read-write UB**, and **`1 << 31`
+  **sequence-point / unsequenced read-write UB**, **`longjmp` to an exited
+  VLA scope**, and **`1 << 31`
   (UB in C, *defined* in C++20)** — the last proving the C/C++ boundary is itself a
   divergence surface (each confirmed against real
   `clang`/`rustc`/`go`/`clang++`/`ocamlopt`:
@@ -350,8 +351,8 @@ python3 -m src.cli.main discover \
   **safe→safe pair, Go→Rust** — *neither side has any UB* — catches the
   **defined-but-different** hazard where `INT_MIN/-1` wraps to a value in Go
   yet panics in Rust, confirmed by re-executing both real binaries
-  (**43 confirmed cells across 6 pairs**, including real C checked-libc
-  `memcpy`-overlap cells).
+  (**46 registered matrix cells across 6 pairs**, including real C checked-
+  contract `memcpy`-overlap and `longjmp`/VLA cells).
   An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.
   Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a
@@ -403,7 +404,7 @@ python3 -m src.cli.main discover \
   `docs/zoo.md`): the canonical machine-readable catalogue indexed by
   `(class, pair)`, exported as `zoo.json`, where every exhibit carries a concrete
   witnessing input and is **re-confirmed live** — the oracle re-run on each
-  witness must still flag the divergence (14 exhibits across rust/go/swift here);
+  witness must still flag the divergence (16 exhibits across rust/go/swift here);
   an unreproducible exhibit is rejected
 - **data-faithful paper figures** (`figures.py`, `docs/figures.md`): the three
   figures a paper is written around — the cross-language divergence catalogue,
@@ -420,7 +421,7 @@ python3 -m src.cli.main discover \
 - a **claims audit** that tightens docs to exactly what's proven
   (`claims_audit.py`): every named `C->target` language must be a registered
   pair with a real oracle, the general framing must clear the **≥2-working-pairs**
-  bar, and every literal count in prose (e.g. "14 exhibits across rust/go/swift")
+  bar, and every literal count in prose (e.g. "16 exhibits across rust/go/swift")
   must equal the live count — so a doc edited to overclaim fails
 - **end-to-end case studies with measured cost/benefit** (`case_studies.py`,
   `docs/case_studies.md`): three real-world-derived migrations (the JDK

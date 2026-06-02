@@ -111,6 +111,9 @@ POSITIVE_CASES: List[LabeledCase] = [
                 {"kind": "unsequenced", "pattern": "postinc_read_add",
                  "probe": "eval_order"},
                 "eval_order"),
+    LabeledCase("longjmp_to_exited_vla",
+                {"kind": "longjmp_vla", "var": "n", "probe": "longjmp_vla"},
+                "longjmp_vla"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus

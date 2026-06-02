@@ -151,6 +151,24 @@
     },
     {
       "confirmation_mode": "libc_contract_trap_vs_defined",
+      "divergence_class": "longjmp_vla",
+      "divergence_witness": "C evaluates `setjmp` while a positive-bound VLA (`int a[n]`, n=4) is in scope, leaves that block, then calls `longjmp` to the saved context. C17 7.13.2.1 makes this undefined because the target context's variably-modified scope has been exited; the checked contract build reports `longjmp-vla`. The safe go port expresses the same nonlocal control transfer through structured unwinding, so cleanup runs and the outcome is deterministic.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "815fc292297a428b",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "0d1e34520b3a38e5",
+      "verdict": "divergent",
+      "witness": {
+        "n": 4
+      }
+    },
+    {
+      "confirmation_mode": "libc_contract_trap_vs_defined",
       "divergence_class": "memcpy_overlap",
       "divergence_witness": "C `memcpy(buf+1, buf+0, 4)` copies overlapping byte ranges [1,5) and [0,4) in the same object, violating C17 7.24.2.1p2. The target go slice operation is memmove-like and therefore deterministic.",
       "source_definedness": "undefined",
@@ -539,6 +557,24 @@
     },
     {
       "confirmation_mode": "libc_contract_trap_vs_defined",
+      "divergence_class": "longjmp_vla",
+      "divergence_witness": "C evaluates `setjmp` while a positive-bound VLA (`int a[n]`, n=4) is in scope, leaves that block, then calls `longjmp` to the saved context. C17 7.13.2.1 makes this undefined because the target context's variably-modified scope has been exited; the checked contract build reports `longjmp-vla`. The safe rust port expresses the same nonlocal control transfer through structured unwinding, so cleanup runs and the outcome is deterministic.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "815fc292297a428b",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "a3bc366f30ab36bf",
+      "verdict": "divergent",
+      "witness": {
+        "n": 4
+      }
+    },
+    {
+      "confirmation_mode": "libc_contract_trap_vs_defined",
       "divergence_class": "memcpy_overlap",
       "divergence_witness": "C `memcpy(buf+1, buf+0, 4)` copies overlapping byte ranges [1,5) and [0,4) in the same object, violating C17 7.24.2.1p2. The target rust slice operation is memmove-like and therefore deterministic.",
       "source_definedness": "undefined",
@@ -832,6 +868,7 @@
         "fast_math_reassoc",
         "float_cast_overflow",
         "intmin_div_neg1",
+        "longjmp_vla",
         "memcpy_overlap",
         "pointer_provenance",
         "restrict_violation",
@@ -841,8 +878,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 15,
-      "n_divergent": 15,
+      "n_classes": 16,
+      "n_divergent": 16,
       "source_lang": "c",
       "target_lang": "go"
     },
@@ -869,6 +906,7 @@
         "float_cast_overflow",
         "fp_contraction",
         "intmin_div_neg1",
+        "longjmp_vla",
         "memcpy_overlap",
         "pointer_provenance",
         "restrict_violation",
@@ -878,8 +916,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 17,
-      "n_divergent": 17,
+      "n_classes": 18,
+      "n_divergent": 18,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -917,6 +955,7 @@
     "float_cast_overflow",
     "fp_contraction",
     "intmin_div_neg1",
+    "longjmp_vla",
     "memcpy_overlap",
     "pointer_provenance",
     "restrict_violation",
@@ -935,5 +974,5 @@
     "c->swift",
     "go->rust"
   ],
-  "n_cells": 44
+  "n_cells": 46
 }

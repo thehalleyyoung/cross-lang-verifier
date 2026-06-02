@@ -1171,7 +1171,7 @@ def test_matrix_pair_coverage_is_honest_about_class_breadth():
             "array_oob", "uninit_read", "strict_aliasing", "vla_bound",
             "float_cast_overflow", "fast_math_reassoc", "restrict_violation",
             "pointer_provenance", "bitfield_layout", "enum_out_of_range",
-            "memcpy_overlap"} == go_covered
+            "memcpy_overlap", "longjmp_vla"} == go_covered
     swift_covered = set(cov[("c", "swift")]["classes_covered"])
     assert {"signed_overflow", "shift_oob", "div_by_zero",
             "intmin_div_neg1", "array_oob", "uninit_read"} == swift_covered
@@ -5405,6 +5405,91 @@ def test_vla_go_confirmed_against_real_compilers():
     assert rr.ub_reachable, "UBSan vla-bound must trap on the negative bound"
     assert rr.rust_defined, "Go must panic deterministically (defined makeslice)"
     assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 111 — longjmp to an exited VLA scope divergence oracle
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import longjmp_vla as _ljmp  # noqa: E402
+
+
+def test_longjmp_vla_oracle_registered_for_rust_and_go_contract_mode():
+    rust = _plugin.get_oracle_for("longjmp_vla", "c", "rust")
+    go = _plugin.get_oracle_for("longjmp_vla", "c", "go")
+    assert rust.confirmation_mode == "libc_contract_trap_vs_defined"
+    assert go.confirmation_mode == "libc_contract_trap_vs_defined"
+    assert "longjmp_vla" in CATALOGUE
+    assert CATALOGUE["longjmp_vla"].is_ub_rooted()
+    assert CATALOGUE["longjmp_vla"].c_standard_ref == "C17 7.13.2.1"
+
+
+def test_longjmp_vla_witness_is_positive_and_honors_range():
+    orc = _plugin.get_oracle_for("longjmp_vla", "c", "rust")
+    res = orc.find_divergence({"kind": "longjmp_vla", "var": "n"})
+    assert res.verdict is _plugin.OracleVerdict.DIVERGENT
+    assert res.counterexample.inputs == {"n": 4}
+    assert "setjmp" in res.counterexample.source_snippet
+    assert "CLV_CHECK_LONGJMP_VLA" in res.counterexample.source_snippet
+    assert "Drop for Guard" in res.counterexample.target_snippet
+    # a declared range is honored; the least positive bound in it is chosen.
+    r2 = orc.find_divergence(
+        {"kind": "longjmp_vla", "var": "n", "bound_range": [5, 9]})
+    assert r2.counterexample.inputs == {"n": 5}
+    # no positive VLA bound means this oracle declines, leaving VLA-bound UB to
+    # the VLA-bound oracle rather than conflating classes.
+    r3 = orc.find_divergence(
+        {"kind": "longjmp_vla", "var": "n", "bound_range": [-9, 0]})
+    assert r3.verdict is _plugin.OracleVerdict.NO_DIVERGENCE_FOUND
+    assert orc.find_divergence(
+        {"kind": "vla", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not (_TC.c_available and _TC.target_available("rust")),
+                    reason="needs C+rustc toolchain")
+def test_longjmp_vla_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("longjmp_vla", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "longjmp_vla"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "libc_contract_trap_vs_defined"
+    assert rr.c_runs["contract"].contract_trapped("longjmp-vla")
+    assert rr.ub_reachable, "checked C contract must trap on stale VLA setjmp target"
+    assert rr.rust_defined, "Rust catch_unwind/Drop path must be deterministic"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not (_TC.c_available and _TC.target_available("go")),
+                    reason="needs C+go toolchain")
+def test_longjmp_vla_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("longjmp_vla", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "longjmp_vla"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "libc_contract_trap_vs_defined"
+    assert rr.c_runs["contract"].contract_trapped("longjmp-vla")
+    assert rr.ub_reachable, "checked C contract must trap on stale VLA setjmp target"
+    assert rr.rust_defined, "Go defer/recover path must be deterministic"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not (_TC.c_available and _TC.target_available("rust")),
+                    reason="needs C+rustc toolchain")
+def test_longjmp_vla_leak_only_negative_control_is_not_confirmed():
+    orc = _plugin.get_oracle_for("longjmp_vla", "c", "rust")
+    target = orc.find_divergence({"kind": "longjmp_vla"}).counterexample.target_snippet
+    rr = ReexecHarness(_TC).confirm_libc_contract_trap_vs_defined(
+        _ljmp.leak_only_c_control_program(),
+        target,
+        ["4"],
+        "longjmp_vla",
+        target_lang="rust",
+        contract_macro="CLV_CHECK_LONGJMP_VLA",
+        contract_token="longjmp-vla",
+        use_asan=False,
+    )
+    assert rr.available
+    assert not rr.c_runs["contract"].contract_trapped("longjmp-vla")
+    assert not rr.ub_reachable
+    assert rr.rust_defined
+    assert not rr.confirmed
 
 
 # ---------------------------------------------------------------------------

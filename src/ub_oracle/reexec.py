@@ -200,7 +200,11 @@ class RunOutcome:
     @property
     def libc_contract_trapped(self) -> bool:
         """A checked-libc-contract run that aborted on a modeled C UB precondition."""
-        return "runtime error:" in self.stderr and "memcpy-param-overlap" in self.stderr
+        return self.contract_trapped("memcpy-param-overlap")
+
+    def contract_trapped(self, token: str = "clv-contract:") -> bool:
+        """A checked-contract run aborted on a modeled source-language precondition."""
+        return "runtime error:" in self.stderr and token in self.stderr
 
     @property
     def rust_outcome_defined(self) -> bool:
@@ -542,6 +546,9 @@ class ReexecHarness:
         argv_inputs: List[str],
         divergence_class: str = "memcpy_overlap",
         target_lang: str = "rust",
+        contract_macro: str = "CLV_CHECK_MEMCPY",
+        contract_token: str = "memcpy-param-overlap",
+        use_asan: bool = True,
     ) -> ReexecResult:
         """Confirm a C library-precondition divergence that UBSan does not cover.
 
@@ -549,9 +556,10 @@ class ReexecHarness:
         does not instrument that precondition and Apple clang's ASan runtime does
         not reliably report ``memcpy-param-overlap``. This mode therefore runs
         two real C binaries on the witness: an ASan build when available, and a
-        contract-sanitized build enabled by ``-DCLV_CHECK_MEMCPY``. The latter is
-        an explicit executable check of the C17 ``memcpy`` non-overlap rule, while
-        the target still runs as an ordinary compiled program.
+        contract-sanitized build enabled by ``contract_macro``. The latter is an
+        explicit executable check of a C standard precondition (the default is the
+        C17 ``memcpy`` non-overlap rule), while the target still runs as an
+        ordinary compiled program.
         """
         res = ReexecResult(available=self.status.full_libc_contract_for(target_lang),
                            divergence_class=divergence_class,
@@ -564,7 +572,7 @@ class ReexecHarness:
 
         with tempfile.TemporaryDirectory() as d:
             asan = None
-            if self.status.asan:
+            if use_asan and self.status.asan:
                 asan = self._compile_c(
                     c_src,
                     ["-O1", "-g", "-fsanitize=address", "-fno-omit-frame-pointer",
@@ -572,7 +580,7 @@ class ReexecHarness:
                     d, "c_asan",
                 )
             contract = self._compile_c(
-                c_src, ["-O1", "-DCLV_CHECK_MEMCPY"], d, "c_contract")
+                c_src, ["-O1", f"-D{contract_macro}"], d, "c_contract")
             o0 = self._compile_c(c_src, ["-O0"], d, "c_o0")
             rs = self._compile_target(rust_src, target_lang, d, "tgt")
             if not all((contract, o0, rs)):
@@ -599,7 +607,7 @@ class ReexecHarness:
         contract_run = res.c_runs["contract"]
         res.ub_reachable = bool(
             (asan_run is not None and asan_run.asan_trapped)
-            or contract_run.libc_contract_trapped
+            or contract_run.contract_trapped(contract_token)
         )
         target_deterministic = (
             target_a.returncode == target_b.returncode

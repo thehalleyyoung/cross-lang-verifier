@@ -156,7 +156,8 @@ def verify_unit(
         def _c_oracle_available(oracle) -> bool:
             if oracle.confirmation_mode in ("asan_trap_vs_defined",
                                             "libc_contract_trap_vs_defined"):
-                return status.full_libc_contract_for(tgt_lang)
+                checker = getattr(status, "full_libc_contract_for", None)
+                return bool(checker(tgt_lang)) if checker is not None else False
             if oracle.confirmation_mode == "static_ub_vs_defined":
                 return status.c_available and status.target_available(tgt_lang)
             return status.full_for(tgt_lang)

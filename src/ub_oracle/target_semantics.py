@@ -123,6 +123,7 @@ _RUST = TargetPack(
         "array_oob": "bounds-checked index; guaranteed panic",
         "memcpy_overlap": "slice::copy_within has defined memmove semantics under overlap",
         "eval_order": "explicit statements evaluate in one deterministic order",
+        "longjmp_vla": "panic/catch_unwind runs Drop cleanup before returning a defined value",
     },
 )
 
@@ -140,6 +141,7 @@ _GO = TargetPack(
         "intmin_div_neg1": "x/-1 == x for the most-negative x (a defined value)",
         "array_oob": "bounds-checked index; runtime panic (defined abort)",
         "memcpy_overlap": "built-in copy on slices is defined for overlapping ranges",
+        "longjmp_vla": "panic/recover runs deferred cleanup before returning a defined value",
     },
 )
 

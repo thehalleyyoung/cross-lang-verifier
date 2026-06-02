@@ -95,6 +95,7 @@ SIGNED_SHIFT_SIGN_BIT = DivergenceClass("signed_shift_sign_bit", "Left-shift of 
 BITFIELD_LAYOUT = DivergenceClass("bitfield_layout", "Implementation-defined bit-field layout / packing")
 ENUM_OUT_OF_RANGE = DivergenceClass("enum_out_of_range", "Out-of-range value stored in / read from an enum")
 MEMCPY_OVERLAP = DivergenceClass("memcpy_overlap", "Overlapping memcpy ranges")
+LONGJMP_VLA = DivergenceClass("longjmp_vla", "longjmp to an exited VLA scope")
 
 
 @dataclass(frozen=True)
@@ -434,6 +435,27 @@ _ENTRIES: List[DivergenceEntry] = [
                        "0 to offset 1 with n >= 4; the checked-libc contract "
                        "build reports `memcpy-param-overlap`, while the target "
                        "slice copy deterministically produces the memmove result.",
+    ),
+    DivergenceEntry(
+        cls=LONGJMP_VLA,
+        source_definedness=Definedness.UNDEFINED,
+        source_rule="A `longjmp` whose target `setjmp` invocation was executed "
+                    "inside the scope of a variably modified object, after that "
+                    "VLA scope has been left, has undefined behavior. The hazard "
+                    "is jumping back into a dead VLA scope, not merely jumping out "
+                    "of a VLA scope.",
+        c_standard_ref="C17 7.13.2.1",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="Structured target unwinding runs destructors/defer handlers "
+                    "and resumes only at a language-defined catch/recover boundary "
+                    "(Rust `Drop` during `catch_unwind`, Go `defer` during "
+                    "`recover`), so the same control transfer is deterministic.",
+        severity=Severity.CRITICAL,
+        witness_recipe="Call `setjmp` while a positive-bound VLA is in scope, "
+                       "leave that block, then `longjmp` to the saved context; "
+                       "the checked-contract build reports `longjmp-vla`, while "
+                       "the target's structured unwinding runs cleanup and returns "
+                       "a deterministic value.",
     ),
 ]
 
