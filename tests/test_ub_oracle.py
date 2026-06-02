@@ -4224,3 +4224,62 @@ def test_replication_kit_makefile_targets_exist():
     # the image pins the real toolchain the oracles need
     for tool in ("clang", "rust", "go", "z3"):
         assert tool in df.lower(), tool
+
+# --------------------------------------------------------------------------- #
+# Step 89 — statistical rigor.
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import statistical_rigor as _sr  # noqa: E402
+
+
+def test_wilson_interval_is_deterministic_and_well_formed():
+    # Wilson interval is a pure function of (k, n): exactly reproducible.
+    assert _sr.wilson_interval(0, 0) == (0.0, 0.0)
+    lo, hi = _sr.wilson_interval(15, 15)
+    assert 0.0 <= lo <= 1.0 <= hi + 1e-9 and lo < 1.0  # upper bound pinned at 1.0
+    assert hi == 1.0
+    # point estimate must lie inside its own interval for an interior proportion
+    lo2, hi2 = _sr.wilson_interval(7, 20)
+    p = 7 / 20
+    assert lo2 - 1e-12 <= p <= hi2 + 1e-12
+    # same inputs -> identical interval (determinism)
+    assert _sr.wilson_interval(7, 20) == (lo2, hi2)
+
+
+def test_metrics_are_preregistered_constants():
+    # The metric names and definitions are fixed before measurement.
+    assert set(_sr.PREREGISTERED_METRICS) == {
+        "recall_definedness", "false_positive_rate"}
+    for defn in _sr.PREREGISTERED_METRICS.values():
+        assert isinstance(defn, str) and len(defn) > 20
+
+
+def test_hardware_profile_records_provenance():
+    hw = _sr.hardware_profile()
+    for key in ("platform", "machine", "cpu_count", "python_version",
+                "clang", "rustc", "go"):
+        assert key in hw
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_statistical_rigor_confirms_against_real_code():
+    conf = _sr.confirm_statistical_rigor(seeds=(1, 2), sample_per_seed=3)
+    assert conf.available and conf.ok, conf.detail
+    # a real definedness-divergence population was measured
+    assert conf.n_in_scope > 0
+    # sound-for-divergence holds empirically: zero false positives
+    assert conf.fpr.successes == 0
+    # recall point estimate lies inside its reported Wilson CI
+    assert conf.recall.ci_lo - 1e-12 <= conf.recall.point <= conf.recall.ci_hi + 1e-12
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_statistical_rigor_content_hash_is_stable():
+    # Two runs with identical seeds reproduce the identical content hash
+    # even though the (non-hashed) hardware/timing layer is incidental.
+    r1 = _sr.run_study(seeds=(5,), sample_per_seed=3)
+    r2 = _sr.run_study(seeds=(5,), sample_per_seed=3)
+    assert r1.available and r2.available
+    assert r1.content_hash == r2.content_hash and r1.content_hash
+    # the headline interval is recomputed from the pooled counts, not stored
+    m = r1.metrics["recall_definedness"]
+    assert (m.ci_lo, m.ci_hi) == _sr.wilson_interval(m.successes, m.trials)

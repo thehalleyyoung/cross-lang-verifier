@@ -273,6 +273,13 @@ python3 -m src.cli.main discover \
   oracle against the real toolchain, ending with a content-hash manifest whose
   `kit_hash` (over corpus stats, the tool-applicability table and kit file hashes)
   reproduces identically across runs — the diffability an artifact evaluator needs
+- a **statistical-rigor study** (`statistical_rigor.py`): the real definedness
+  oracle is run over seeded subsamples across multiple seeds, reporting recall
+  and false-positive-rate with **pre-registered metrics** and **Wilson 95 %
+  confidence intervals** computed deterministically from the counts, zero false
+  positives on the equivalent population (the sound-for-divergence guarantee,
+  measured), honest `out_of_scope` accounting of value divergences, and a
+  content-hashed outcome layer that reproduces identically across runs
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
