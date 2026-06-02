@@ -768,6 +768,17 @@ def _thm_ecosystem() -> bool:
     return bool(rep.ok)
 
 
+def _thm_claims_audit() -> bool:
+    # Every audited public claim is tied to live ground truth: each named C->
+    # target language in the docs is a registered pair with a real oracle, the
+    # general framing is backed by >=2 working pairs, and every literal count
+    # asserted in prose (e.g. "N exhibits across rust/go/swift") equals the live
+    # count from the re-confirmed corpora -- so a doc edited to overclaim fails.
+    from . import claims_audit as ca
+    rep = ca.confirm_claims_audit()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1641,6 +1652,26 @@ CLAIMS: List[Claim] = [
         "ub_oracle.ecosystem",
         ("confirm_ecosystem", "PUBLIC_API_V1", "generate_artifacts"),
         theorem=_thm_ecosystem,
+        docs=("README.md",),
+    ),
+    claim(
+        "C53-claims-audit",
+        "Public claims are **tightened to exactly what's proven** by a "
+        "mechanical guard (`ub_oracle.claims_audit`): it scans the docs "
+        "(`README.md`, `CAPABILITIES.md`, `docs/TRACEABILITY.md`) for auditable "
+        "claims and checks each against a value computed **live** from the code "
+        "— every named `C->target` language in the framing must be a registered "
+        "pair backed by **at least one real oracle** (no aspirational "
+        "languages), the general cross-language framing must clear the "
+        "**>=2-working-pairs** bar, and each literal count asserted in prose "
+        "(e.g. \"N exhibits across rust/go/swift\") must equal the live count "
+        "from the re-confirmed `divergence_zoo` and registry. A doc edited to "
+        "overclaim — a bigger exhibit count, a pair with no oracle, a "
+        "generality boast with only one pair — makes `confirm_claims_audit()` "
+        "fail; an opt-in mode additionally re-runs every traceability theorem.",
+        "ub_oracle.claims_audit",
+        ("confirm_claims_audit", "audit_text"),
+        theorem=_thm_claims_audit,
         docs=("README.md",),
     ),
 ]

@@ -4925,3 +4925,33 @@ def test_ecosystem_cargo_subcommand_matches_library():
     assert rep.api_ok and rep.shim_syntax_ok, rep.checks
     assert rep.shim_ran and rep.shim_matches_library, rep.checks
     assert rep.ok
+
+
+from src.ub_oracle import claims_audit as _ca  # noqa: E402
+
+
+def test_claims_audit_default_passes_against_live_code():
+    rep = _ca.confirm_claims_audit()
+    assert rep.ok, [(c.name, c.actual, c.detail) for c in rep.checks if not c.ok]
+    assert rep.n_checks == 3
+
+
+def test_claims_audit_catches_exhibit_overclaim():
+    # An inflated exhibit count in the prose must be flagged.
+    _named, cnt = _ca.audit_text(
+        "999 exhibits across rust/go/swift rust go swift")
+    assert not cnt.ok
+    # The honest, live count must pass.
+    live = _ca._live_values()["divergent_exhibits"]
+    _n2, cnt2 = _ca.audit_text(
+        f"{live} exhibits across rust/go/swift rust go swift")
+    assert cnt2.ok
+
+
+def test_claims_audit_catches_unbacked_named_pair():
+    # Naming a target language that has no real oracle must be flagged.
+    named, _cnt = _ca.audit_text("we translate C to rust, go, swift and COBOL")
+    assert named.ok  # rust/go/swift are all backed; cobol isn't matched/named
+    # generality bar holds live.
+    v = _ca._live_values()
+    assert _ca._check_generality_two_pairs(v).ok

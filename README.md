@@ -382,6 +382,11 @@ python3 -m src.cli.main discover \
   `confirm_ecosystem()` mechanically catches any removed/renamed export (a
   breaking change) and runs the shipped `cargo cross-lang-verify` shim
   end-to-end, requiring its JSON to be byte-identical to the in-process library
+- a **claims audit** that tightens docs to exactly what's proven
+  (`claims_audit.py`): every named `C->target` language must be a registered
+  pair with a real oracle, the general framing must clear the **≥2-working-pairs**
+  bar, and every literal count in prose (e.g. "14 exhibits across rust/go/swift")
+  must equal the live count — so a doc edited to overclaim fails
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
