@@ -698,6 +698,18 @@ def _thm_docs_site() -> bool:
     return bool(rep.ok)
 
 
+def _thm_vscode_extension() -> bool:
+    # The in-editor surface is a REAL VS Code extension that compiles: its
+    # TypeScript builds cleanly with the real `tsc` against the real
+    # `@types/vscode` typings, producing the JS entry point, and its
+    # package.json contributes the verify command. It is thin (shells out to the
+    # proven CLI), so it cannot drift from the oracle. Consistency-only when
+    # Node/npm is absent.
+    from . import vscode_ext as vx
+    rep = vx.confirm_vscode_extension()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1449,6 +1461,25 @@ CLAIMS: List[Claim] = [
         "ub_oracle.docs_site",
         ("confirm_docs_site", "generate_gallery"),
         theorem=_thm_docs_site,
+        docs=("README.md",),
+    ),
+    claim(
+        "C47-vscode-extension",
+        "An in-editor surface ships as a **real VS Code extension** "
+        "(`vscode-extension/`, checked by `ub_oracle.vscode_ext`) that surfaces "
+        "C→{Rust,Go,Swift} divergences as `vscode.Diagnostic`s. It is "
+        "deliberately **thin** — it shells out to the proven `cross-lang-verify` "
+        "CLI and parses its JSON rather than re-implementing any analysis, so it "
+        "cannot drift from the oracle. The machine-checked claim compiles the "
+        "extension's TypeScript with the **real `tsc`** against the **real "
+        "`@types/vscode`** API typings (`strict`, `noUnusedLocals`), requires a "
+        "clean build producing `out/extension.js`, and validates that "
+        "`package.json` declares the `engines.vscode` constraint and the "
+        "`crossLangVerifier.verify` command. Consistency-only when Node/npm is "
+        "absent (never fabricated).",
+        "ub_oracle.vscode_ext",
+        ("confirm_vscode_extension",),
+        theorem=_thm_vscode_extension,
         docs=("README.md",),
     ),
 ]

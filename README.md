@@ -347,6 +347,11 @@ python3 -m src.cli.main discover \
   divergences** — is machine-generated from the live corpora, so it can never
   drift from the real catalogue; the strict build (any broken nav/missing page
   fails) is itself a machine-checked claim
+- a **thin VS Code extension** (`vscode-extension/`, checked by
+  `vscode_ext.py`): surfaces divergences in-editor as `vscode.Diagnostic`s by
+  shelling out to the proven `cross-lang-verify` CLI (no second implementation
+  to drift). Its TypeScript compiles cleanly with the real `tsc` against the real
+  `@types/vscode` typings — a machine-checked claim
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

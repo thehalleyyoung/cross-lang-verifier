@@ -4752,3 +4752,21 @@ def test_docs_site_strict_build_succeeds():
     rep = _ds.confirm_docs_site()
     assert rep.available and rep.ok, rep.detail
     assert rep.strict_build and rep.pages_built > 0
+
+
+from src.ub_oracle import vscode_ext as _vsx  # noqa: E402
+
+
+def test_vscode_extension_manifest_contributes_command():
+    assert _vsx._PKG.exists()
+    assert _vsx._manifest_contributes_command()
+    m = _vsx._load_manifest()
+    assert m["main"].endswith("extension.js")
+    assert "vscode" in m["engines"]
+
+
+@pytest.mark.skipif(_vsx._node_tools() is None, reason="npm not installed")
+def test_vscode_extension_compiles_with_real_tsc():
+    rep = _vsx.confirm_vscode_extension()
+    assert rep.available and rep.ok, rep.detail
+    assert rep.manifest_ok and rep.compiled and rep.entry_built

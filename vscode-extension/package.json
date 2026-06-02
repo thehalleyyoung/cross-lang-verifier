@@ -1,0 +1,54 @@
+{
+  "name": "cross-lang-verifier",
+  "displayName": "cross-lang-verifier",
+  "description": "Surface C→{Rust,Go,Swift} cross-language semantic divergences in-editor, backed by the real oracle CLI.",
+  "version": "0.1.0",
+  "publisher": "halley-labs",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "crossLangVerifier.verify",
+        "title": "Cross-Lang Verifier: Verify divergences for a units manifest"
+      }
+    ],
+    "configuration": {
+      "title": "cross-lang-verifier",
+      "properties": {
+        "crossLangVerifier.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Python interpreter used to run the cross-lang-verify CLI."
+        },
+        "crossLangVerifier.unitsManifest": {
+          "type": "string",
+          "default": "units.json",
+          "description": "Path (relative to the workspace) of the translation-unit manifest to verify."
+        },
+        "crossLangVerifier.confirm": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run the live re-execution confirmation step (compile & run) when toolchains are available."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.4.0"
+  }
+}
