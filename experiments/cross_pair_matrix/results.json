@@ -444,9 +444,27 @@
       }
     },
     {
+      "confirmation_mode": "static_ub_vs_defined",
+      "divergence_class": "eval_order",
+      "divergence_witness": "C `i++ + i` at i=0 modifies and reads `i` without a sequencing edge (C17 6.5p2), so the source has undefined behavior; clang `-Wunsequenced` diagnoses the real translation unit. The Rust port commits to the left-to-right order and returns 1, while a read-before-increment concretization would return 0.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "49d92d0f8071beee",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "251aec64f1a2e8f4",
+      "verdict": "divergent",
+      "witness": {
+        "i": 0
+      }
+    },
+    {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=-1e+16, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=-9077585262673920.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -458,7 +476,7 @@
       "target_sha16": "51821464be323c10",
       "verdict": "divergent",
       "witness": {
-        "x": -1e+16,
+        "x": -9077585262673920.0,
         "y": 1.0
       }
     },
@@ -483,7 +501,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fp_contraction",
-      "divergence_witness": "C `a*b + c` with a=-1.0835926257001185, b=621.7650512103372, c=673.7400244098699 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "divergence_witness": "C `a*b + c` with a=224.07176919569346, b=1.142491094818914, c=-256.00000090637656 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "994ef280de9c8299",
@@ -495,9 +513,9 @@
       "target_sha16": "7171facf9aec0f3f",
       "verdict": "divergent",
       "witness": {
-        "a": -1.0835926257001185,
-        "b": 621.7650512103372,
-        "c": 673.7400244098699
+        "a": 224.07176919569346,
+        "b": 1.142491094818914,
+        "c": -256.00000090637656
       }
     },
     {
@@ -846,6 +864,7 @@
         "bitfield_layout",
         "div_by_zero",
         "enum_out_of_range",
+        "eval_order",
         "fast_math_reassoc",
         "float_cast_overflow",
         "fp_contraction",
@@ -859,8 +878,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 16,
-      "n_divergent": 16,
+      "n_classes": 17,
+      "n_divergent": 17,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -893,6 +912,7 @@
     "bitfield_layout",
     "div_by_zero",
     "enum_out_of_range",
+    "eval_order",
     "fast_math_reassoc",
     "float_cast_overflow",
     "fp_contraction",
@@ -915,5 +935,5 @@
     "c->swift",
     "go->rust"
   ],
-  "n_cells": 43
+  "n_cells": 44
 }

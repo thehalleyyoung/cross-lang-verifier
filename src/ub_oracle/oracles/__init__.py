@@ -19,8 +19,10 @@ from . import go_to_rust  # noqa: F401  (registers Go->Rust defined-but-differen
 from . import bitfield_layout  # noqa: F401  (registers bit-field layout C->Rust and C->Go, step 112)
 from . import enum_repr  # noqa: F401  (registers out-of-range enum C->Rust and C->Go, step 108)
 from . import memcpy_overlap  # noqa: F401  (registers memcpy-overlap C->Rust and C->Go, step 103)
+from . import sequence_point  # noqa: F401  (registers unsequenced-modification C->Rust, step 105)
 from . import c_to_go  # noqa: F401  (back-compat shim exposing the Go oracles)
 
 __all__ = ["signed_overflow", "integer_ub", "memory_shape", "uninit_read",
            "floating_point", "vla_bound", "target_pairs", "c_to_go", "c_to_cpp",
-           "go_to_rust", "bitfield_layout", "enum_repr", "memcpy_overlap"]
+           "go_to_rust", "bitfield_layout", "enum_repr", "memcpy_overlap",
+           "sequence_point"]

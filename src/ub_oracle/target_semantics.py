@@ -122,6 +122,7 @@ _RUST = TargetPack(
         "intmin_div_neg1": "guaranteed panic on the overflowing division",
         "array_oob": "bounds-checked index; guaranteed panic",
         "memcpy_overlap": "slice::copy_within has defined memmove semantics under overlap",
+        "eval_order": "explicit statements evaluate in one deterministic order",
     },
 )
 

@@ -61,13 +61,15 @@ python3 -m src.cli.main discover \
   **pointer-provenance / address-space-overflow arithmetic**, **overlapping
   `memcpy` vs memmove-like slice copy**, **`-ffast-math` reassociation**,
   **`restrict`-aliasing violation**, **implementation-defined
-  bit-field packing**, **out-of-range `enum` representation**, and **`1 << 31`
+  bit-field packing**, **out-of-range `enum` representation**,
+  **sequence-point / unsequenced read-write UB**, and **`1 << 31`
   (UB in C, *defined* in C++20)** — the last proving the C/C++ boundary is itself a
   divergence surface (each confirmed against real
   `clang`/`rustc`/`go`/`clang++`/`ocamlopt`:
   the same input is C UB — UBSan-trapping, or a value that flips across two
   conforming compilations no sanitizer can trap, or executable libc-contract
-  UB checks, with a sweep pinning the exact `-O` level the UB first surfaces —
+  UB checks, or a real `clang -Wunsequenced` diagnostic, with a sweep pinning the
+  exact `-O` level the UB first surfaces —
   while the safe Rust *and* Go *and* C++ *and* OCaml ports
   are defined and deterministic), plus an
   **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on

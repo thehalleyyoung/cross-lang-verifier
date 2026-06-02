@@ -75,15 +75,15 @@ a sanitizer traps), while the safe-language port computes one deterministic,
 defined value. A single dynamic run cannot expose this gap. We present
 \textsc{SemRec}, a repository-backed divergence oracle that encodes C and target
 semantics separately through a \emph{$\sigma$-bridge product program}, finds a
-witnessing input with Z3, and---crucially---\emph{re-executes every witness
-against real compilers} (\texttt{clang} under UndefinedBehaviorSanitizer,
-\texttt{rustc}, and \texttt{go}) so that no verdict ships unless an independent
-ground-truth harness confirms it. The oracle framework is a uniform plugin
+witnessing input with Z3, and---crucially---\emph{confirms every witness
+against real compilers} (\texttt{clang} under UndefinedBehaviorSanitizer or
+\texttt{-Wunsequenced}, \texttt{rustc}, and \texttt{go}) so that no verdict ships
+unless an independent ground-truth harness confirms it. The oracle framework is a uniform plugin
 interface: each divergence class is an additive plugin, and a class
 automatically transfers across language pairs. The checked-in artifact
 implements a catalogue of 21 divergence classes---signed overflow,
 shift/division UB, \texttt{INT\_MIN/-1}, out-of-bounds access, strict-aliasing
-(type-punning), floating-point contraction and \texttt{-ffast-math}
+(type-punning), sequence-point/unsequenced read-write UB, floating-point contraction and \texttt{-ffast-math}
 reassociation, VLA-bound, float$\to$int overflow, pointer-provenance /
 address-space-overflow arithmetic, \texttt{restrict}-aliasing, overlapping
 \texttt{memcpy} vs.\ memmove-like slice copy, an
@@ -101,7 +101,7 @@ build for preconditions UBSan does not cover. The framework is not limited to
 Go$\to$Rust---in which \emph{neither} side has any undefined behaviour---catches
 the \emph{defined-but-different} hazard where \texttt{INT\_MIN/-1} is a defined
 modular value in Go yet a guaranteed panic in Rust, raising the matrix to
-\textbf{43 cells over 6 pairs}, every one re-executed on real binaries.
+\textbf{44 cells over 6 pairs}, every one confirmed on real binaries.
 Beyond pairwise checks, an
 \emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
 targets at once and flags the minority target whose live output disagrees, and a
@@ -113,10 +113,10 @@ witnesses (e.g.\ \texttt{INT\_MIN/-1}, one input in $2^{64}$) in milliseconds
 where ordered enumeration exhausts its budget. An optimization-level sweep
 additionally pins the exact
 \texttt{-O} level at which each no-sanitizer-traps UB class first changes the
-program's observable output. On a labelled UB-divergence study (24 cases over 16
-anchor classes) the oracle attains perfect precision and recall ($\mathrm{tp}=20,\
+program's observable output. On a labelled UB-divergence study (26 cases over 17
+anchor classes) the oracle attains perfect precision and recall ($\mathrm{tp}=21,\
 \mathrm{fp}=0,\ \mathrm{fn}=0,\
-\mathrm{tn}=364$) where a 200{,}000-trial differential fuzzer finds nothing on
+\mathrm{tn}=421$) where a 200{,}000-trial differential fuzzer finds nothing on
 the UB-invisible classes. A Tier-1 c2rust-output corpus separately runs the real
 \texttt{c2rust 0.22.1} translator on 12 real-library extraction units and checks
 the generated Rust artifacts against the verifier. The same artifact also keeps
@@ -391,7 +391,9 @@ ground-truth confirmation discipline: \textsc{trap} = \texttt{clang -fsanitize}
 traps on a defined input while the target is defined; \textsc{opt} = the same C
 source produces different output under two conforming compilations (no sanitizer
 can trap it) while the target is deterministic; \textsc{contract} = a real C
-build with an executable checked-libc precondition traps; \textsc{def} = both
+build with an executable checked-libc precondition traps; \textsc{static} =
+real \texttt{clang -Wunsequenced} proves source UB while the target is defined;
+\textsc{def} = both
 the C and target programs are language-defined and deterministic, yet their
 observable output differs (an implementation-defined choice the port silently
 changes).}
@@ -405,6 +407,7 @@ Shift $\geq$ width          & UB & defined shift       & \textsc{trap} \\
 Division by zero           & UB & panic               & \textsc{trap} \\
 \texttt{INT\_MIN / -1}     & UB & panic               & \textsc{trap} \\
 Array out-of-bounds        & UB & bounds-check panic  & \textsc{trap} \\
+Unsequenced read/write     & UB & fixed eval order    & \textsc{static} \\
 Float$\to$int overflow     & UB & saturating / panic  & \textsc{trap} \\
 VLA bound $\leq 0$         & UB & checked-len panic   & \textsc{trap} \\
 Pointer provenance / ovf.  & UB & checked index       & \textsc{trap} \\
@@ -426,9 +429,9 @@ Out-of-range \texttt{enum} & impl.-def. & default variant & \textsc{def} \\
 the class against \emph{every} target that implements it. The deterministic
 cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{6 language pairs}
 (C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++, and the
-\emph{safe$\to$safe} Go$\to$Rust) with 16, 15, 6, 4, 1, and 1 classes
-respectively---\textbf{43 cells in total}---and is byte-reproducible per fresh
-process. When the host toolchain is present, \emph{all 43 cells confirm against
+\emph{safe$\to$safe} Go$\to$Rust) with 17, 15, 6, 4, 1, and 1 classes
+respectively---\textbf{44 cells in total}---and is byte-reproducible per fresh
+process. When the host toolchain is present, \emph{all 44 cells confirm against
 real \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}}
 or the checked-libc C contract build for overlap preconditions.
 The Go$\to$Rust pair is qualitatively new: \emph{neither} source nor target has
@@ -1053,13 +1056,13 @@ regression matrix (\texttt{src/ub\_oracle/regression\_matrix.py}):
 \end{enumerate}
 
 Table~\ref{tab:matrix} reports the matrix. Its C-rooted core spans \textbf{5
-target languages} and \textbf{42 cells} (C$\to$Rust: 16 classes; C$\to$Go: 15;
+target languages} and \textbf{43 cells} (C$\to$Rust: 17 classes; C$\to$Go: 15;
 C$\to$Swift: 6, the argv-driven integer/memory core; C$\to$OCaml: 4, a GC'd
 exception-based target; C$\to$C++: 1, the C/C++-boundary shift class). A
 \textbf{6th pair, the safe$\to$safe Go$\to$Rust} cell described below, raises the
-total to \textbf{43 cells over 6 pairs}. On a host with the full
+total to \textbf{44 cells over 6 pairs}. On a host with the full
 toolchain,
-\textbf{all 43 cells confirm against real compilers or checked C contract
+\textbf{all 44 cells confirm against real compilers or checked C contract
 builds}---no verdict is taken on
 faith. Crucially, the matrix file contains \emph{no per-language branches}: it
 discovers pairs and oracles from the plugin registry, so adding a target
@@ -1116,10 +1119,10 @@ sanitizers and UB checkers cannot see.
 \small
 \caption{Cross-pair regression matrix coverage. ``D'' = a symbolic divergence
 witness is found and (with toolchain) confirmed against real compilers; ``--'' =
-class not implemented for that pair. All 42 C-rooted cells confirm; a
-\textbf{43rd cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
+class not implemented for that pair. All 43 C-rooted cells confirm; a
+\textbf{44th cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
 \texttt{INT\_MIN/-1}: a value in Go, a panic in Rust)---is described in the text
-and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{43 cells over 6
+and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{44 cells over 6
 pairs}. The
 C$\to$C++ column carries the single C/C++-boundary class whose witness
 (\texttt{1 << 31}) is UB in C but defined in C++20; the C$\to$OCaml column
@@ -1136,6 +1139,7 @@ Shift $\geq$ width          & D & D & D & -- & -- \\
 Division by zero           & D & D & D & D & -- \\
 \texttt{INT\_MIN / -1}     & D & D & D & D & -- \\
 Array out-of-bounds        & D & D & D & D & -- \\
+Unsequenced read/write     & D & -- & -- & -- & -- \\
 Uninitialized read         & D & D & D & -- & -- \\
 Strict aliasing            & D & D & -- & -- & -- \\
 VLA bound                  & D & D & -- & -- & -- \\
@@ -1149,16 +1153,16 @@ Out-of-range \texttt{enum} & D & D & -- & -- & -- \\
 FP contraction             & D & -- & -- & -- & -- \\
 \texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D \\
 \midrule
-\textbf{Confirmed cells}   & \textbf{16} & \textbf{15} & \textbf{6} & \textbf{4} & \textbf{1} \\
+\textbf{Confirmed cells}   & \textbf{17} & \textbf{15} & \textbf{6} & \textbf{4} & \textbf{1} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{Labelled precision/recall.} Independently of the matrix, a labelled
 UB-divergence study (\texttt{experiments/ub\_divergence}) scores the oracle on
-24 cases spanning 16 anchor classes (20 positive, 4 negative-control families). The
+26 cases spanning 17 anchor classes (21 positive, 5 negative-control families). The
 oracle attains \textbf{precision and recall of $1.0$}
-($\mathrm{tp}=20,\ \mathrm{fp}=0,\ \mathrm{fn}=0,\ \mathrm{tn}=364$ over the
+($\mathrm{tp}=21,\ \mathrm{fp}=0,\ \mathrm{fn}=0,\ \mathrm{tn}=421$ over the
 expanded negative population). On the same UB-invisible classes a differential
 fuzzer run for \textbf{200{,}000 trials per case} finds \emph{nothing}: the gap
 is total, exactly because the C undefined behavior is ``benign'' on the

@@ -66,6 +66,10 @@ class DivergenceOracle(abc.ABC):
     #:                         UBSan does not cover, while the target is defined.
     #: "defined_divergence"  — two *safe* languages (e.g. Go and Rust) are each
     #:                         fully defined on the input yet observably differ.
+    #: "static_ub_vs_defined"
+    #:                       — a real C compiler diagnostic proves source-side UB
+    #:                         that sanitizers do not trap, while the target is
+    #:                         deterministic and defined.
     confirmation_mode: str = "exploited"
     #: for "optimizer_exploited" oracles, the pair of C flag-sets whose
     #: disagreement evidences the divergence (e.g. FP contraction off vs fast).
@@ -115,6 +119,10 @@ class DivergenceOracle(abc.ABC):
                 ce.source_snippet, self.source_lang,
                 ce.target_snippet, self.target_lang, argv,
                 ce.divergence_class)
+        elif self.confirmation_mode == "static_ub_vs_defined":
+            rr = harness.confirm_static_ub_vs_defined(
+                ce.source_snippet, ce.target_snippet, argv,
+                ce.divergence_class, target_lang=self.target_lang)
         else:
             rr = harness.confirm_ub_divergence(
                 ce.source_snippet, ce.target_snippet, argv, ce.divergence_class,

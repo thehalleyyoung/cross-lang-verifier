@@ -153,12 +153,15 @@ def verify_unit(
     # full C+UBSan+target toolchain. A non-C source pair (e.g. Go->Rust) confirms
     # by re-executing two defined programs, so it needs only the two compilers.
     if src_lang == "c":
-        needs_libc_contract = any(
-            o.confirmation_mode in ("asan_trap_vs_defined",
-                                    "libc_contract_trap_vs_defined")
-            for o in applicable)
-        tool_ok = status.full_for(tgt_lang) or (
-            needs_libc_contract and status.full_libc_contract_for(tgt_lang))
+        def _c_oracle_available(oracle) -> bool:
+            if oracle.confirmation_mode in ("asan_trap_vs_defined",
+                                            "libc_contract_trap_vs_defined"):
+                return status.full_libc_contract_for(tgt_lang)
+            if oracle.confirmation_mode == "static_ub_vs_defined":
+                return status.c_available and status.target_available(tgt_lang)
+            return status.full_for(tgt_lang)
+
+        tool_ok = any(_c_oracle_available(o) for o in applicable)
     else:
         tool_ok = status.can_compile(src_lang) and status.can_compile(tgt_lang)
     if confirm and tool_ok and harness is None:

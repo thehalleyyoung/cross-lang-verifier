@@ -107,6 +107,10 @@ POSITIVE_CASES: List[LabeledCase] = [
                 {"kind": "memcpy_overlap", "buffer_len": 16,
                  "probe": "memcpy_overlap"},
                 "memcpy_overlap"),
+    LabeledCase("unsequenced_postinc_read",
+                {"kind": "unsequenced", "pattern": "postinc_read_add",
+                 "probe": "eval_order"},
+                "eval_order"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus
@@ -129,6 +133,9 @@ NEGATIVE_CASES: List[LabeledCase] = [
                  "storage": {"kind": "array", "length": 2},
                  "writes": [{"slot": 0}, {"slot": 1}], "read": 1,
                  "probe": "uninit_read"}, None),
+    LabeledCase("sequenced_not_eval_order",
+                {"kind": "unsequenced", "pattern": "sequenced_clean",
+                 "probe": "eval_order"}, None),
 ]
 
 ALL_CASES: List[LabeledCase] = POSITIVE_CASES + NEGATIVE_CASES

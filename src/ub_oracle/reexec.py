@@ -13,9 +13,9 @@ For the C->Rust UB anchor it:
     - ``O2``  : ``clang -O2``                          (optimizer may exploit UB)
     - ``san`` : ``clang -O1 -fsanitize=undefined -fno-sanitize-recover=all``
                 (traps -> proves the UB is actually *reachable* on this input)
-    Libc-contract classes (e.g. overlapping ``memcpy``) use a separate
-    confirmation mode because UBSan does not instrument those preconditions
-    and some host ASan runtimes do not report ``memcpy-param-overlap``.
+    Libc-contract classes (e.g. overlapping ``memcpy``) and static-diagnostic
+    classes (e.g. unsequenced side effects) use separate confirmation modes
+    because UBSan does not instrument those preconditions.
 * compiles the Rust source with ``rustc -O`` and runs it on the same input.
 
 A signed-overflow divergence is *confirmed* when, on a fully-defined input:
@@ -811,6 +811,85 @@ class ReexecHarness:
                 f"not confirmed: {lang_a}_defined={a_defined} "
                 f"{lang_b}_defined={b_defined} differs={differs} "
                 f"(a_det={a_det}, b_det={b_det})"
+            )
+        return res
+
+    # ── static source-UB diagnostic vs defined target ─────────────────────
+    def confirm_static_ub_vs_defined(
+        self,
+        c_src: str,
+        target_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "eval_order",
+        target_lang: str = "rust",
+    ) -> ReexecResult:
+        """Confirm a C UB class whose proof is a real compiler diagnostic.
+
+        Some C undefined behaviours are compile-time sequencing facts rather than
+        runtime sanitizer traps.  In particular, clang diagnoses unsequenced
+        modification/access with ``-Wunsequenced`` but UBSan does not emit a
+        runtime check.  This mode therefore proves source-side UB by running the
+        real C compiler in syntax-check mode and requiring a concrete
+        ``-Wunsequenced`` diagnostic, then compiles and runs the target twice to
+        prove the translation has one deterministic, language-defined outcome.
+        """
+        avail = self.status.c_available and self.status.target_available(target_lang)
+        res = ReexecResult(available=avail, divergence_class=divergence_class,
+                           mode="static_ub_vs_defined",
+                           inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
+        if not avail:
+            pack = PACKS.get(target_lang)
+            res.reason = ("toolchain unavailable: needs a C compiler and "
+                          + (pack.compiler_candidates[0] if pack else target_lang))
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            cpath = os.path.join(d, "source.c")
+            with open(cpath, "w", encoding="utf-8") as f:
+                f.write(c_src)
+            static = self._run(
+                [self.status.cc, "-fsyntax-only", "-Wunsequenced", cpath])
+            tgt = self._compile_target(target_src, target_lang, d, "tgt")
+            if tgt is None:
+                res.available = False
+                res.reason = "compilation failed (target=False)"
+                return res
+            target_a = self._run([tgt, *argv_inputs])
+            target_b = self._run([tgt, *argv_inputs])
+            res.c_runs["static"] = static
+            res.rust_run = target_a
+
+        diag_lines = [
+            line for line in static.stderr.splitlines()
+            if "warning:" in line.lower()
+            and "unsequenced" in line.lower()
+            and ("modification" in line.lower() or "access" in line.lower())
+        ]
+        target_deterministic = (
+            target_a.returncode == target_b.returncode
+            and target_a.stdout == target_b.stdout
+        )
+        res.ub_reachable = bool(diag_lines)
+        res.rust_defined = (
+            target_a.target_outcome_defined(target_lang)
+            and target_b.target_outcome_defined(target_lang)
+            and target_deterministic
+        )
+        res.ub_consequential = res.ub_reachable and res.rust_defined
+        res.confirmed = res.ub_reachable and res.rust_defined
+        if res.confirmed:
+            first = diag_lines[0].strip()
+            kind = "value" if target_a.returncode == 0 else "panic"
+            res.reason = (
+                f"C static UB diagnostic observed ({first!r}); "
+                f"{target_lang} defined & deterministic "
+                f"({kind}, rc={target_a.returncode}, out={target_a.stdout!r})"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: static_unsequenced={res.ub_reachable}, "
+                f"target_defined={res.rust_defined} "
+                f"(deterministic={target_deterministic})"
             )
         return res
 

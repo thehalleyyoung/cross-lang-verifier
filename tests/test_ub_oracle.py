@@ -4098,6 +4098,57 @@ def test_seq_comment_string_stripper_is_safe():
 
 
 # ---------------------------------------------------------------------------
+# Step 105 — sequence-point / unsequenced-modification divergence oracle.
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle.oracles import sequence_point as _seqpoint  # noqa: E402,F401
+
+
+def test_sequence_point_oracle_registered_for_rust_static_mode():
+    orc = _plugin.get_oracle_for("eval_order", "c", "rust")
+    assert orc.confirmation_mode == "static_ub_vs_defined"
+    assert "eval_order" in CATALOGUE
+    assert CATALOGUE["eval_order"].source_definedness is Definedness.UNSPECIFIED
+
+
+def test_sequence_point_witness_honors_range_and_is_static_diagnosable():
+    orc = _plugin.get_oracle_for("eval_order", "c", "rust")
+    r = orc.find_divergence({"kind": "unsequenced", "pattern": "postinc_read_add"})
+    assert r.verdict is _plugin.OracleVerdict.DIVERGENT
+    assert r.counterexample.inputs["i"] == 0
+    assert "i++ + i" in r.counterexample.source_snippet
+
+    ranged = orc.find_divergence(
+        {"kind": "unsequenced", "pattern": "postinc_read_add", "i_range": [5, 9]})
+    assert ranged.counterexample.inputs["i"] == 5
+
+    clean = orc.find_divergence(
+        {"kind": "unsequenced", "pattern": "sequenced_clean", "probe": "eval_order"})
+    assert clean.verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+    if _os.path.exists(_eo.CLANG):
+        dec = _eo.decide(r.counterexample.source_snippet)
+        assert dec.is_abstain
+        assert dec.diagnostics
+
+
+@pytest.mark.skipif(
+    not (_TC.c_available and _TC.target_available("rust")),
+    reason="needs C compiler and rustc")
+def test_sequence_point_confirmed_by_real_static_diagnostic_and_rust():
+    orc = _plugin.get_oracle_for("eval_order", "c", "rust")
+    res = orc.confirm(
+        orc.find_divergence({"kind": "unsequenced", "pattern": "postinc_read_add"}),
+        ReexecHarness(_TC),
+    )
+    rr = res.reexec
+    assert rr.available and rr.mode == "static_ub_vs_defined"
+    assert rr.ub_reachable, "clang -Wunsequenced must diagnose the C source UB"
+    assert rr.rust_defined, "Rust target must be deterministic and defined"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
 # Step 44 — known-bug / CVE corpus (real UB-rooted bug classes, proven).
 # ---------------------------------------------------------------------------
 
