@@ -5156,3 +5156,59 @@ def test_large_scale_live_sample_confirms_labels_and_is_deterministic():
     # the verdict-layer content hash is reproducible for a fixed seed.
     rep2 = _ls.confirm_large_scale_study(sample_size=10, seed=0xC0FFEE)
     assert rep2.content_hash == rep1.content_hash
+
+
+# ---------------------------------------------------------------------------
+# Step 110 — variable-length-array (VLA) bound divergence oracle
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import vla_bound as _vla  # noqa: E402
+
+
+def test_vla_oracle_registered_for_rust_and_go_trap_mode():
+    rust = _plugin.get_oracle_for("vla_bound", "c", "rust")
+    go = _plugin.get_oracle_for("vla_bound", "c", "go")
+    assert rust.confirmation_mode == "trap_vs_defined"
+    assert go.confirmation_mode == "trap_vs_defined"
+    assert "vla_bound" in CATALOGUE
+    assert CATALOGUE["vla_bound"].is_ub_rooted()
+
+
+def test_vla_witness_is_a_negative_bound_and_honors_range():
+    orc = _plugin.get_oracle_for("vla_bound", "c", "rust")
+    res = orc.find_divergence({"kind": "vla", "width": 32})
+    assert res.verdict is _plugin.OracleVerdict.DIVERGENT
+    # least-extreme negative bound is -1.
+    assert list(res.counterexample.inputs.values())[0] == -1
+    # a declared range is honored by the Z3 search.
+    res2 = orc.find_divergence(
+        {"kind": "vla", "width": 32, "bound_range": [-9, -5]})
+    assert list(res2.counterexample.inputs.values())[0] == -5
+    # not applicable to a non-VLA unit.
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not _TC.full_for("rust"),
+                    reason="needs C+UBSan+rustc toolchain")
+def test_vla_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("vla_bound", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "vla", "width": 32}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan vla-bound must trap on the negative bound"
+    assert rr.rust_defined, "Rust must panic deterministically (defined)"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+UBSan+go toolchain")
+def test_vla_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("vla_bound", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "vla", "width": 64}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan vla-bound must trap on the negative bound"
+    assert rr.rust_defined, "Go must panic deterministically (defined makeslice)"
+    assert rr.confirmed and res.counterexample.confirmed

@@ -31,6 +31,7 @@ nav:
       - Shared IR contract: IR.md
       - Product-program oracle: PRODUCT_PROGRAM.md
       - Translation validation: TRANSLATION_VALIDATION.md
+      - VLA-bound divergence class: vla_bound.md
   - Soundness & completeness:
       - Per-pair soundness statements: COMPLETENESS.md
       - Mechanized soundness (Lean): MECHANIZED_SOUNDNESS.md

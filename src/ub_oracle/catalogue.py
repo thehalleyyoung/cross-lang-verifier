@@ -86,6 +86,7 @@ USE_AFTER_FREE = DivergenceClass("use_after_free", "Use of freed / dangling stor
 EVAL_ORDER = DivergenceClass("eval_order", "Unspecified evaluation order / sequencing")
 INT_CONVERSION = DivergenceClass("int_conversion", "Out-of-range integer conversion")
 FP_CONTRACTION = DivergenceClass("fp_contraction", "Floating-point contraction (FMA fusion)")
+VLA_BOUND = DivergenceClass("vla_bound", "Variable-length-array bound is non-positive")
 
 
 @dataclass(frozen=True)
@@ -246,6 +247,24 @@ _ENTRIES: List[DivergenceEntry] = [
         severity=Severity.MODERATE,
         witness_recipe="Pick a,b,c with heavy cancellation so the rounding of "
                        "`a*b` is observable: fma(a,b,c) != round(round(a*b)+c).",
+    ),
+    DivergenceEntry(
+        cls=VLA_BOUND,
+        source_definedness=Definedness.UNDEFINED,
+        source_rule="If the size expression of a variable-length array is not a "
+                    "positive value at evaluation, the behavior is undefined; the "
+                    "implementation may allocate garbage, smash the stack, or "
+                    "(under UBSan) trap.",
+        c_standard_ref="C17 6.7.6.2p5",
+        rust_outcome=RustOutcomeKind.PANIC,
+        target_rule="The idiomatic safe translation sizes a heap vector from a "
+                    "checked length conversion (`Vec`/`make`): a negative bound "
+                    "is rejected with a deterministic, defined panic instead of "
+                    "undefined behavior.",
+        severity=Severity.CRITICAL,
+        witness_recipe="Read the VLA bound n from input and pick any n < 0; the "
+                       "UBSan build traps (`vla-bound`) while the target panics "
+                       "deterministically on the checked length.",
     ),
 ]
 

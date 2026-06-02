@@ -856,6 +856,37 @@ def _thm_large_scale_study() -> bool:
     return True
 
 
+def _thm_vla_bound_oracle() -> bool:
+    # The VLA-bound oracle is sound on the anchor and the Go pair. For each
+    # target, the oracle (a) finds a non-positive VLA bound as its witness, and
+    # (b) when the toolchain is present, the real UBSan build *traps* on that
+    # bound (C is UB: vla-bound) while the safe target port is *defined and
+    # deterministic* (a panic). The structural witness check is unconditional;
+    # the real-compiler confirmation runs only when the toolchain exists, so the
+    # theorem is total.
+    from . import oracles as _oracles  # noqa: F401, WPS433  (register plugins)
+    from .plugin import get_oracle_for, OracleVerdict
+    from .reexec import ReexecHarness, toolchain_available
+
+    status = toolchain_available()
+    h = ReexecHarness(status)
+    for target in ("rust", "go"):
+        orc = get_oracle_for("vla_bound", "c", target)
+        if orc.confirmation_mode != "trap_vs_defined":
+            return False
+        res = orc.find_divergence({"kind": "vla", "width": 32})
+        if res.verdict is not OracleVerdict.DIVERGENT:
+            return False
+        if list(res.counterexample.inputs.values())[0] >= 0:
+            return False
+        if not status.full_for(target):
+            continue
+        rr = orc.confirm(res, h).reexec
+        if not (rr.available and rr.ub_reachable and rr.rust_defined and rr.confirmed):
+            return False
+    return True
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1836,6 +1867,24 @@ CLAIMS: List[Claim] = [
         "ub_oracle.large_scale_study",
         ("generate_corpus", "corpus_census", "confirm_large_scale_study"),
         theorem=_thm_large_scale_study,
+        docs=("README.md",),
+    ),
+    claim(
+        "C58-vla-bound-divergence",
+        "A **variable-length-array (VLA) bound** divergence oracle "
+        "(`ub_oracle.oracles.vla_bound`) for both C->Rust and C->Go: a C VLA "
+        "`T a[n]` with a non-positive `n` is **undefined** (C17 6.7.6.2p5 -- the "
+        "`-O0` build segfaults and the `-fsanitize=undefined` build traps via "
+        "`vla-bound`), while the idiomatic *safe* port sizes a heap buffer from a "
+        "**checked** length conversion and therefore turns the same input into a "
+        "deterministic, defined **panic** (Rust `Vec` after a sign check, rc 101; "
+        "Go `make([]T, n)` `makeslice`, rc 2). The witnessing bound is found with "
+        "Z3 (the least-extreme negative value consistent with any declared range) "
+        "rather than hard-coded, and the divergence is confirmed end-to-end "
+        "against real clang/UBSan + rustc/go in `trap_vs_defined` mode.",
+        "ub_oracle.oracles.vla_bound",
+        ("VlaBoundOracle", "GoVlaBoundOracle"),
+        theorem=_thm_vla_bound_oracle,
         docs=("README.md",),
     ),
 ]

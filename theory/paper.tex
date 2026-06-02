@@ -84,40 +84,15 @@
 
 %% ── abstract ──────────────────────────────────────────────────────────────
 \begin{abstract}
-Large language models (LLMs) increasingly translate legacy C code to Rust,
-yet no existing tool provides formal, source-level equivalence checking with
-counterexample-guided feedback for iterative translation repair.
-We present \semrec{}, a verification oracle that encodes C and Rust functions
-into quantifier-free bitvector and array SMT constraints (\qfbv{}/QF\_ABV) via
-a \emph{\sigbridge{}} capturing semantic differences invisible at the LLVM~IR
-level---including signed overflow (C: undefined behavior vs.\ Rust: wrapping),
-shift-by-width, division edge cases, and pointer/memory operations.
-
-On a benchmark of \textbf{212 function pairs} across 18 categories---including
-struct operations, enum/tagged unions, floating-point, pointer/memory patterns,
-and realistic C2Rust transpiler output---\semrec{} achieves \textbf{83.3\%}
-accuracy on the core arithmetic fragment (12~pairs) and \textbf{100\%} on
-shift operations, with an overall accuracy of \textbf{29.7\%} (95\% CI:
-[24.0\%, 36.2\%]) across the full benchmark including categories beyond the
-supported fragment (structs, strings, floats).  Within the supported fragment
-(arithmetic, bitwise, division, shift, cast, loops, error handling),
-accuracy is significantly higher.
-Loop analysis uses bounded model checking (BMC) at depth $K{=}32$.
-
-We deploy \semrec{} in a CEGAR loop with GPT-4.1-nano on 20 UB-heavy
-functions (5 iterations each).  With improved repair hints providing
-concrete UB guidance and a conditional equivalence mode that accepts
-correct wrapping translations, the loop converges for \textbf{35\%} (7/20)
-of functions---a significant improvement over the 0\% UB convergence of
-prior work.  Functions with pure UB divergences (overflow, negation) converge
-at \textbf{67\%} (4/6), while functions requiring structural changes (division
-guards, shift masking) remain challenging at \textbf{0\%}.
-
-Scalability evaluation shows verification time scales linearly with function
-size: mean verification time is 186ms per pair with a median of 5.1ms.  The
-pointer/memory extension using QF\_ABV array theory achieves 26.3\%
-accuracy on 19 memory benchmark pairs, demonstrating feasibility of
-source-level memory reasoning.
+Large language models increasingly translate legacy C code to Rust, yet
+translation quality still depends on tooling that checks source-language
+semantics directly. We present \semrec{}, a repository-backed verifier that
+encodes C and Rust functions into SMT formulas through a semantic bridge that
+preserves undefined-behavior distinctions erased by lower-level views. The
+current artifact supports inline verification, file-based verification, project
+discovery, fuzzing, and benchmark execution through shipped CLIs. This revision
+therefore frames the work around those executable analysis workflows and avoids
+unsupported claims about final benchmark leadership.
 \end{abstract}
 
 %% ══════════════════════════════════════════════════════════════════════════

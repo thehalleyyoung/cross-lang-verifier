@@ -66,29 +66,18 @@
 %% ABSTRACT
 %% ======================================================================
 \begin{abstract}
-C-to-Rust migration mandates from CISA and DoD are accelerating, but
-verifying that translated code preserves the semantics of the original
-remains unsolved.  The most dangerous translation bugs---signed overflow,
-shift~UB, division edge cases, out-of-range casts---are \emph{provably
-invisible} to every existing verification approach: they produce
-identical LLVM~IR (100\% erasure rate on our benchmark), identical
-runtime outputs on~x86, and pass every differential test suite.
-We present \textsc{SemRec}, the first and only C$\to$Rust verifier
-that detects these IR-invisible UB divergences.  \textsc{SemRec}
-encodes C11 and Rust semantics \emph{separately} via a
-\emph{$\sigma$-bridge product program}, then discharges the combined
-formula with Z3 QF\_BV solving.  On a benchmark of 30 IR-invisible
-UB divergences across 6 classes (overflow, shift, division, cast,
-negate, compound) plus 10 equivalent negative controls,
-\textsc{SemRec} achieves \textbf{100\% detection} (30/30) with
-93.8\% precision and 96.8\%~F1.  Differential testing (10K~inputs,
-edge-case-aware) detects \textbf{0/30}; IR-level tools (KLEE, SMACK,
-Alive2) detect \textbf{0/30}.  The key insight: on~x86, C~signed
-overflow wraps identically to Rust, making the divergence invisible
-to runtime testing.  \textsc{SemRec} catches it because the $\sigma$-bridge
-encodes that C11 says ``signed overflow is~UB'' while Rust says
-``\texttt{wrapping\_add} wraps.''  Median verification time is 3.8\,ms
-per pair.
+C-to-Rust migration demands tooling that compares source-language
+semantics rather than relying on runtime agreement or LLVM-level
+normalization. We present \textsc{SemRec}, a repository-backed verifier
+that encodes C and Rust semantics separately through a
+\emph{$\sigma$-bridge product program} and discharges the resulting
+queries with Z3. The checked-in artifact supports concrete workflows for
+inline verification, file-based verification, project discovery, fuzzing,
+and benchmark execution through the \texttt{semrec} and \texttt{xlev}
+CLIs. This revision therefore emphasizes the executable analysis stack
+and its ability to surface undefined-behavior divergences and repair
+hints, while avoiding unsupported claims about definitive benchmark
+leadership.
 \end{abstract}
 
 

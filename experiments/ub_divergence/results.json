@@ -98,17 +98,17 @@
   "fuzz_trials": 200000,
   "language_pair": "c->rust",
   "precision_recall_symbolic": {
-    "num_cases": 16,
+    "num_cases": 17,
     "num_negative": 4,
-    "num_positive": 12,
+    "num_positive": 13,
     "overall": {
       "divergence_class": "__overall__",
       "fn": 0,
       "fp": 0,
       "precision": 1.0,
       "recall": 1.0,
-      "tn": 116,
-      "tp": 12
+      "tn": 140,
+      "tp": 13
     },
     "per_class": {
       "array_oob": {
@@ -117,7 +117,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 15,
+        "tn": 16,
         "tp": 1
       },
       "div_by_zero": {
@@ -126,7 +126,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 14,
+        "tn": 15,
         "tp": 2
       },
       "fp_contraction": {
@@ -135,7 +135,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 15,
+        "tn": 16,
         "tp": 1
       },
       "intmin_div_neg1": {
@@ -144,7 +144,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 15,
+        "tn": 16,
         "tp": 1
       },
       "shift_oob": {
@@ -153,7 +153,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 14,
+        "tn": 15,
         "tp": 2
       },
       "signed_overflow": {
@@ -162,7 +162,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 13,
+        "tn": 14,
         "tp": 3
       },
       "strict_aliasing": {
@@ -171,7 +171,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 15,
+        "tn": 16,
         "tp": 1
       },
       "uninit_read": {
@@ -180,7 +180,16 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 15,
+        "tn": 16,
+        "tp": 1
+      },
+      "vla_bound": {
+        "divergence_class": "vla_bound",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 16,
         "tp": 1
       }
     }

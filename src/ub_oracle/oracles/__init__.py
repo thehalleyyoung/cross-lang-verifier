@@ -8,8 +8,9 @@ from . import integer_ub  # noqa: F401  (registers shift / div-by-zero / INT_MIN
 from . import memory_shape  # noqa: F401  (registers array-OOB / strict-aliasing)
 from . import uninit_read  # noqa: F401  (registers uninitialized-read / definedness)
 from . import floating_point  # noqa: F401  (registers FP-contraction)
+from . import vla_bound  # noqa: F401  (registers VLA-bound C->Rust and C->Go)
 from . import target_pairs  # noqa: F401  (registers C->Go and C->Swift pairs)
 from . import c_to_go  # noqa: F401  (back-compat shim exposing the Go oracles)
 
 __all__ = ["signed_overflow", "integer_ub", "memory_shape", "uninit_read",
-           "floating_point", "target_pairs", "c_to_go"]
+           "floating_point", "vla_bound", "target_pairs", "c_to_go"]

@@ -80,6 +80,9 @@ POSITIVE_CASES: List[LabeledCase] = [
                  "writes": [{"slot": "a"}], "read": "b",
                  "probe": "uninit_read"},
                 "uninit_read"),
+    LabeledCase("vla_neg_w32",
+                {"kind": "vla", "width": 32, "var": "n", "probe": "vla_bound"},
+                "vla_bound"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus
