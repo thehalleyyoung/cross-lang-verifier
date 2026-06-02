@@ -190,10 +190,10 @@ python3 -m src.cli.main discover \
 - a **concurrency / data-race oracle** (`concurrency.py`) that turns the migration
   story into a *checked* fact: the same unsynchronized shared-counter idiom is
   confirmed to be a **data race on both the C source (ThreadSanitizer) and the Go
-  target (`go run -race`)** — while Rust rejects it at compile time (Send/Sync) —
-  and every synchronized variant (mutex, lock-free atomic, read-only sharing) runs
-  clean under both detectors. A pattern is only ever called a race when a real
-  sanitizer actually fires on a real binary
+  target (`go run -race`)** — while real `rustc` rejects the racy safe translation
+  and accepts the `Mutex`/`Atomic`/read-only repairs — and every synchronized
+  variant runs clean under both detectors. A pattern is only ever called a race
+  when a real sanitizer actually fires on a real binary
 - an **indirect-call resolver** (`indirect_calls.py`) so real codebases that
   dispatch through function-pointer tables (syscall tables, plugin registries,
   hand-rolled vtables) don't lose their call-graph edges: the precise points-to

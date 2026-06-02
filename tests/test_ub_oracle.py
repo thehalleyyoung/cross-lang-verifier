@@ -3589,15 +3589,17 @@ def test_frontier_all_confirmations_pass():
 
 
 # ---------------------------------------------------------------------------
-# Step 34 — concurrency / data-race awareness (TSan + Go race detector).
+# Steps 34/104 — concurrency / data-race awareness (TSan + Go + rustc).
 # ---------------------------------------------------------------------------
 
 from src.ub_oracle import concurrency as _co  # noqa: E402
 
 _tsan_present = pytest.mark.skipif(
-    not _os.path.exists(_co.CC), reason="clang/tsan not available")
+    not _co.c_race_detector_available(), reason="clang/tsan not available")
 _go_present = pytest.mark.skipif(
-    not _os.path.exists(_co.GO), reason="go not available")
+    not _co.go_race_detector_available(), reason="go -race not available")
+_rust_present = pytest.mark.skipif(
+    not _os.path.exists(_co.RUSTC), reason="rustc not available")
 
 
 def test_concurrency_pattern_catalogue_is_consistent():
@@ -3605,7 +3607,8 @@ def test_concurrency_pattern_catalogue_is_consistent():
     racy = [p for p in _co.PATTERNS.values() if p.races]
     assert [p.name for p in racy] == ["unsynchronized_counter"]
     for p in _co.PATTERNS.values():
-        assert p.c_source and p.go_source and p.rust_story
+        assert p.c_source and p.go_source and p.rust_source and p.rust_story
+        assert p.rust_accepts is (not p.races)
 
 
 @_tsan_present
@@ -3637,10 +3640,29 @@ def test_concurrency_c_and_go_detectors_agree_on_the_race():
 
 @_tsan_present
 @_go_present
-def test_concurrency_mutex_is_clean_on_both_c_and_go():
-    r = _co.confirm_race("mutex_counter", check_go=True)
+@pytest.mark.parametrize("name", ["mutex_counter", "atomic_counter",
+                                  "readonly_shared"])
+def test_concurrency_synchronized_patterns_are_clean_on_both_c_and_go(name):
+    r = _co.confirm_race(name, check_go=True, check_rust=False)
     assert r.c.race_detected is False
     assert r.go.race_detected is False
+    assert r.ok
+
+
+@_rust_present
+def test_concurrency_racy_idiom_is_rejected_by_real_rustc():
+    r = _co.confirm_race("unsynchronized_counter", check_go=False, check_rust=True)
+    assert r.rust.available and r.rust.accepted is False
+    assert r.rust.error_code in {"E0499", "E0597", "E0521", "E0373"}
+    assert r.ok
+
+
+@_rust_present
+@pytest.mark.parametrize("name", ["mutex_counter", "atomic_counter",
+                                  "readonly_shared"])
+def test_concurrency_synchronized_rust_translations_compile_and_run(name):
+    r = _co.confirm_race(name, check_go=False, check_rust=True)
+    assert r.rust.available and r.rust.accepted is True
     assert r.ok
 
 

@@ -119,7 +119,13 @@ anchor classes) the oracle attains perfect precision and recall ($\mathrm{tp}=20
 \mathrm{tn}=364$) where a 200{,}000-trial differential fuzzer finds nothing on
 the UB-invisible classes. A Tier-1 c2rust-output corpus separately runs the real
 \texttt{c2rust 0.22.1} translator on 12 real-library extraction units and checks
-the generated Rust artifacts against the verifier. We give a mechanized-friendly soundness development
+the generated Rust artifacts against the verifier. The same artifact also keeps
+the tool honest at semantic frontiers: volatile/inline-assembly/FFI/atomic units
+cause loud abstention justified by real \texttt{clang} IR, and a
+ThreadSanitizer/\texttt{go run -race}/\texttt{rustc} concurrency oracle proves
+that the same unsynchronized counter is C data-race UB, Go racy-but-defined, and
+rejected by Rust's safe \texttt{Send}/\texttt{Sync} discipline while synchronized
+repairs compile and run clean. We give a mechanized-friendly soundness development
 ($\sigma$-bridge coercion correctness, product-program isolation, and a
 bounded-completeness boundary) and an artifact in which every headline number is
 regenerated from content-hashed real-compiler runs.
@@ -438,6 +444,23 @@ classes whose soundness frontier is \emph{honest abstention} rather than a value
 witness (unspecified evaluation order with side effects, use-after-free and
 null-dereference as memory-shape hazards), documented as the boundary of the
 value-level oracle rather than silently asserted equivalent.
+
+\paragraph{Frontiers and concurrency.}
+Not every semantic mismatch should produce a value witness. The implementation
+therefore contains two evidence-backed ``do not guess'' mechanisms. First, a
+foreign-effect detector rejects units containing \texttt{volatile}, inline
+\texttt{asm}, unknown \texttt{extern} calls, atomics, signals, or non-local jumps;
+each abstention is checked against real \texttt{clang} IR (for example, four
+\texttt{load volatile} operations survive where the pure loop collapses to one).
+Second, the concurrency oracle compiles and runs a small pattern catalogue under
+ThreadSanitizer and Go's race detector, and compiles the corresponding Rust safe
+translation. The unsynchronized counter is called a race only because TSan and
+\texttt{go run -race} fire on real binaries; the Rust version is rejected by real
+\texttt{rustc}, while the \texttt{Mutex}, atomic, and read-only repairs compile,
+run, and stay clean under the available detectors. These paths are deliberately
+separate from the value-level SMT oracles: they prevent false equivalence claims
+at language features whose semantics include external effects or thread
+interleavings.
 
 \subsection{Soundness}\label{sec:soundness}
 

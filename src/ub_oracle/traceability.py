@@ -289,19 +289,40 @@ def _thm_foreign_frontier_sound() -> bool:
 
 def _thm_concurrency_race_sound() -> bool:
     # The pattern catalogue must be internally consistent (exactly the
-    # unsynchronized counter races) and, where ThreadSanitizer is available, the
-    # racy/race-free verdict must be confirmed on a real binary: the
-    # unsynchronized counter races, the mutex-guarded one does not.
+    # unsynchronized counter races), Rust must reject exactly that racy idiom, and
+    # where ThreadSanitizer / Go's race detector are available, the racy/race-free
+    # verdict must be confirmed on real binaries.
     from . import concurrency as co
     racy = [p.name for p in co.PATTERNS.values() if p.races]
     if racy != ["unsynchronized_counter"]:
         return False
+    if any(p.rust_accepts is not (not p.races) for p in co.PATTERNS.values()):
+        return False
     import os as _os2
-    if not _os2.path.exists(co.CC):
-        return True  # detector-free consistency already established
-    race = co.confirm_race("unsynchronized_counter", check_go=False)
-    clean = co.confirm_race("mutex_counter", check_go=False)
-    return bool(race.c.race_detected is True and clean.c.race_detected is False)
+    if _os2.path.exists(co.RUSTC):
+        rust_race = co.confirm_race("unsynchronized_counter", check_go=False,
+                                    check_rust=True)
+        if rust_race.rust.accepted is not False:
+            return False
+        rust_clean = co.confirm_race("mutex_counter", check_go=False,
+                                     check_rust=True)
+        if rust_clean.rust.accepted is not True:
+            return False
+    if co.c_race_detector_available():
+        race = co.confirm_race("unsynchronized_counter", check_go=False,
+                               check_rust=False)
+        clean = co.confirm_race("mutex_counter", check_go=False,
+                                check_rust=False)
+        if not (race.c.race_detected is True and clean.c.race_detected is False):
+            return False
+    if co.go_race_detector_available():
+        race = co.confirm_race("unsynchronized_counter", check_go=True,
+                               check_rust=False)
+        clean = co.confirm_race("mutex_counter", check_go=True,
+                                check_rust=False)
+        if not (race.go.race_detected is True and clean.go.race_detected is False):
+            return False
+    return True
 
 
 def _thm_indirect_resolution_sound() -> bool:
@@ -1276,11 +1297,13 @@ CLAIMS: List[Claim] = [
         "fires. The headline cross-language fact is that the *same* "
         "unsynchronized-counter idiom is flagged as a data race on **both** the C "
         "source (TSan) and the Go target (`-race`) — while Rust rejects it at "
-        "compile time — and every synchronized variant (mutex/atomic/read-only) "
-        "runs clean on both. The per-target migration story is documented.",
+        "compile time under real `rustc` — and every synchronized variant "
+        "(mutex/atomic/read-only) runs clean on both detectors and compiles/runs "
+        "on Rust. The per-target migration story is documented.",
         "ub_oracle.concurrency",
         ("PATTERNS", "pattern", "confirm_race", "RaceConfirmation",
-         "RACE_FRONTIER"),
+         "RustConfirmation", "c_race_detector_available",
+         "go_race_detector_available", "RACE_FRONTIER"),
         theorem=_thm_concurrency_race_sound,
         docs=("README.md",),
     ),

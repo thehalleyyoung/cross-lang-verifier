@@ -15,22 +15,30 @@ kind of cross-language divergence this project exists to surface:
     of C, Rust and Go and translate faithfully.
 
 This module models a small, precise catalogue of concurrency patterns and
-**proves the racy/race-free verdict against real sanitizers on real binaries**:
-the C side under **ThreadSanitizer**, the Go side under the **race detector**.  A
-pattern is only ever called "race" if *both* real detectors agree (or, for the
-race-free patterns, neither fires).
+**proves the racy/race-free verdict against real tools**: the C side under
+**ThreadSanitizer**, the Go side under the **race detector**, and the Rust side
+under the real borrow checker.  A pattern is only ever called "race" if every
+available detector/compiler agrees with the prediction.
 """
 
 from __future__ import annotations
 
 import os
+import re
+import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
-CC = "/usr/bin/clang"
-GO = "/opt/homebrew/bin/go"
+
+def _tool(name: str, fallback: str) -> str:
+    return shutil.which(name) or (fallback if os.path.exists(fallback) else "")
+
+
+CC = _tool("clang", "/usr/bin/clang")
+GO = _tool("go", "/opt/homebrew/bin/go")
+RUSTC = _tool("rustc", os.path.expanduser("~/.cargo/bin/rustc"))
 
 
 @dataclass(frozen=True)
@@ -40,6 +48,8 @@ class RacePattern:
     description: str
     c_source: str
     go_source: str
+    rust_source: str
+    rust_accepts: bool
     rust_story: str
 
 
@@ -120,31 +130,83 @@ def _go_readonly() -> str:
         "out[k]=g+1 }(i) }\n wg.Wait(); _=out }\n")
 
 
+def _rust_unsync_rejected() -> str:
+    return (
+        "use std::thread;\n"
+        "fn main(){\n"
+        "  let mut g = 0i32;\n"
+        "  let r1 = &mut g;\n"
+        "  let r2 = &mut g;\n"
+        "  let t1 = thread::spawn(move || { *r1 += 1; });\n"
+        "  let t2 = thread::spawn(move || { *r2 += 1; });\n"
+        "  t1.join().unwrap(); t2.join().unwrap();\n"
+        "}\n")
+
+
+def _rust_mutex() -> str:
+    return (
+        "use std::{sync::{Arc, Mutex}, thread};\n"
+        "fn main(){\n"
+        "  let g = Arc::new(Mutex::new(0i32));\n"
+        "  let mut hs = Vec::new();\n"
+        "  for _ in 0..2 { let g = Arc::clone(&g); hs.push(thread::spawn(move || {\n"
+        "    for _ in 0..1000 { *g.lock().unwrap() += 1; }\n"
+        "  })); }\n"
+        "  for h in hs { h.join().unwrap(); }\n"
+        "  let _ = *g.lock().unwrap();\n"
+        "}\n")
+
+
+def _rust_atomic() -> str:
+    return (
+        "use std::{sync::{Arc, atomic::{AtomicI32, Ordering}}, thread};\n"
+        "fn main(){\n"
+        "  let g = Arc::new(AtomicI32::new(0));\n"
+        "  let mut hs = Vec::new();\n"
+        "  for _ in 0..2 { let g = Arc::clone(&g); hs.push(thread::spawn(move || {\n"
+        "    for _ in 0..1000 { g.fetch_add(1, Ordering::Relaxed); }\n"
+        "  })); }\n"
+        "  for h in hs { h.join().unwrap(); }\n"
+        "  let _ = g.load(Ordering::Relaxed);\n"
+        "}\n")
+
+
+def _rust_readonly() -> str:
+    return (
+        "use std::thread;\n"
+        "static G: i32 = 7;\n"
+        "fn main(){\n"
+        "  let t1 = thread::spawn(|| G + 1);\n"
+        "  let t2 = thread::spawn(|| G + 1);\n"
+        "  let _ = t1.join().unwrap() + t2.join().unwrap();\n"
+        "}\n")
+
+
 PATTERNS: Dict[str, RacePattern] = {
     "unsynchronized_counter": RacePattern(
         "unsynchronized_counter", True,
         "Two threads increment a shared non-atomic counter with no lock — a data "
         "race (UB in C).",
-        _c_unsync(), _go_unsync(),
+        _c_unsync(), _go_unsync(), _rust_unsync_rejected(), False,
         "Rust: rejected at compile time — a shared `&mut i32` cannot cross a "
         "thread boundary (needs `Sync`, i.e. `Mutex`/`Atomic`)."),
     "mutex_counter": RacePattern(
         "mutex_counter", False,
         "The counter is guarded by a mutex on every access — race-free and "
         "faithful across C/Rust/Go.",
-        _c_mutex(), _go_mutex(),
+        _c_mutex(), _go_mutex(), _rust_mutex(), True,
         "Rust: `Arc<Mutex<i32>>` — accepted and race-free."),
     "atomic_counter": RacePattern(
         "atomic_counter", False,
         "The counter is a lock-free atomic with fetch-add — race-free in all "
         "three languages.",
-        _c_atomic(), _go_atomic(),
+        _c_atomic(), _go_atomic(), _rust_atomic(), True,
         "Rust: `Arc<AtomicI32>` with `fetch_add` — accepted and race-free."),
     "readonly_shared": RacePattern(
         "readonly_shared", False,
         "Both threads only *read* the shared constant and write to private "
         "locations — no race.",
-        _c_readonly(), _go_readonly(),
+        _c_readonly(), _go_readonly(), _rust_readonly(), True,
         "Rust: a shared `&i32` is `Sync` and freely shareable — accepted."),
 }
 
@@ -162,26 +224,74 @@ class SideConfirmation:
 
 
 @dataclass
+class RustConfirmation:
+    available: bool
+    accepted: Optional[bool]
+    error_code: Optional[str]
+    detail: str
+
+    @property
+    def rejected(self) -> Optional[bool]:
+        return None if self.accepted is None else not self.accepted
+
+
+@dataclass
 class RaceConfirmation:
     name: str
     predicted_race: bool
     c: SideConfirmation
     go: SideConfirmation
+    rust: RustConfirmation
 
     @property
     def ok(self) -> bool:
-        # every available detector must agree with the prediction.
+        # Every available race detector must agree with the prediction.
         for side in (self.c, self.go):
             if side.available and side.race_detected is not None:
                 if side.race_detected != self.predicted_race:
                     return False
-        # require at least one real detector to have actually run.
-        return any(s.available and s.race_detected is not None
-                   for s in (self.c, self.go))
+        # Rust's safe surface must reject the racy idiom and accept synchronized
+        # variants; this is compile-time evidence, not a race detector.
+        if self.rust.available and self.rust.accepted is not None:
+            if self.rust.accepted != (not self.predicted_race):
+                return False
+        # Require at least one real detector or compiler to have actually run.
+        return (any(s.available and s.race_detected is not None
+                    for s in (self.c, self.go))
+                or (self.rust.available and self.rust.accepted is not None))
+
+
+def c_race_detector_available() -> bool:
+    if not CC or not os.path.exists(CC):
+        return False
+    with tempfile.TemporaryDirectory() as d:
+        cpath = os.path.join(d, "probe.c")
+        with open(cpath, "w") as f:
+            f.write("#include <pthread.h>\nint main(){return 0;}\n")
+        bpath = os.path.join(d, "probe")
+        comp = subprocess.run(
+            [CC, "-fsanitize=thread", "-O1", "-g", "-o", bpath, cpath],
+            capture_output=True, text=True)
+        return comp.returncode == 0
+
+
+def go_race_detector_available() -> bool:
+    if not GO or not os.path.exists(GO):
+        return False
+    with tempfile.TemporaryDirectory() as d:
+        env = dict(os.environ)
+        env["GOCACHE"] = os.path.join(d, "gocache")
+        env["GOPATH"] = os.path.join(d, "gopath")
+        gpath = os.path.join(d, "probe.go")
+        with open(gpath, "w") as f:
+            f.write("package main\nfunc main(){}\n")
+        run = subprocess.run([GO, "run", "-race", gpath],
+                             capture_output=True, text=True, env=env)
+        return run.returncode == 0
 
 
 def _confirm_c(p: RacePattern) -> SideConfirmation:
-    if not os.path.exists(CC):
+    if not CC or not os.path.exists(CC):
         return SideConfirmation("c", False, None, "clang unavailable")
     with tempfile.TemporaryDirectory() as d:
         cpath = os.path.join(d, "a.c")
@@ -192,7 +302,7 @@ def _confirm_c(p: RacePattern) -> SideConfirmation:
             [CC, "-fsanitize=thread", "-O1", "-g", "-o", bpath, cpath],
             capture_output=True, text=True)
         if comp.returncode != 0:
-            return SideConfirmation("c", True, None,
+            return SideConfirmation("c", False, None,
                                     "tsan compile failed: " + comp.stderr[:200])
         env = dict(os.environ)
         env["TSAN_OPTIONS"] = "exitcode=66"
@@ -204,7 +314,7 @@ def _confirm_c(p: RacePattern) -> SideConfirmation:
 
 
 def _confirm_go(p: RacePattern) -> SideConfirmation:
-    if not os.path.exists(GO):
+    if not GO or not os.path.exists(GO):
         return SideConfirmation("go", False, None, "go unavailable")
     with tempfile.TemporaryDirectory() as d:
         env = dict(os.environ)
@@ -220,17 +330,53 @@ def _confirm_go(p: RacePattern) -> SideConfirmation:
                                 "go -race " + ("RACE" if raced else "clean"))
 
 
-def confirm_race(name: str, check_go: bool = True) -> RaceConfirmation:
+def _confirm_rust(p: RacePattern) -> RustConfirmation:
+    if not RUSTC or not os.path.exists(RUSTC):
+        return RustConfirmation(False, None, None, "rustc unavailable")
+    with tempfile.TemporaryDirectory() as d:
+        rpath = os.path.join(d, "main.rs")
+        with open(rpath, "w") as f:
+            f.write(p.rust_source)
+        bpath = os.path.join(d, "main")
+        comp = subprocess.run([RUSTC, "-O", "-o", bpath, rpath],
+                              capture_output=True, text=True)
+        accepted = comp.returncode == 0
+        if accepted and p.rust_accepts:
+            run = subprocess.run([bpath], capture_output=True, text=True)
+            if run.returncode != 0:
+                return RustConfirmation(
+                    True, True, None,
+                    "rust accepted but execution failed: " + run.stderr[:200])
+        err = None
+        if not accepted:
+            m = re.search(r"\berror\[([A-Z]\d{4})\]", comp.stderr)
+            err = m.group(1) if m else None
+        expected = p.rust_accepts
+        verdict = "accepted" if accepted else "rejected"
+        detail = f"rustc {verdict}"
+        if err:
+            detail += f" ({err})"
+        if accepted != expected:
+            detail += "; expected " + ("accept" if expected else "reject")
+        return RustConfirmation(True, accepted, err, detail)
+
+
+def confirm_race(name: str, check_go: bool = True,
+                 check_rust: bool = True) -> RaceConfirmation:
     """Compile + run the pattern under real race detectors and check the verdict.
 
     The C side runs under ThreadSanitizer; the Go side (optional, slower) under
-    ``go run -race``.  Both must agree with ``pattern.races``.
+    ``go run -race``.  The Rust side compiles the idiomatic safe translation: the
+    racy pattern must be rejected by ``rustc``, while synchronized variants must
+    compile and run.  All available evidence must agree with ``pattern.races``.
     """
     p = pattern(name)
     c = _confirm_c(p)
     go = (_confirm_go(p) if check_go
           else SideConfirmation("go", False, None, "skipped"))
-    return RaceConfirmation(name, p.races, c, go)
+    rust = (_confirm_rust(p) if check_rust
+            else RustConfirmation(False, None, None, "skipped"))
+    return RaceConfirmation(name, p.races, c, go, rust)
 
 
 # Per-target documentation of how each language treats the racy C idiom — the
