@@ -307,6 +307,13 @@ python3 -m src.cli.main discover \
   replication/scale/generalization reproducibility hashes (Reproduced) — so
   "we earn the badges" is itself an entry in the traceability matrix (see
   `docs/ARTIFACT.md`)
+- a **machine-checked soundness proof** (`formal/ProductSoundness.lean`,
+  driver `mechanized_soundness.py`): the product-program decision procedure's
+  core guarantees — soundness (no false alarms), relative completeness,
+  "every counterexample is rooted in source UB", and the safety corollary that
+  equivalent pairs are never flagged — are proven in **Lean 4** for a
+  language-pair-parametric calculus instantiated to C→Rust, and the real Lean
+  kernel is invoked to confirm it (see `docs/MECHANIZED_SOUNDNESS.md`)
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

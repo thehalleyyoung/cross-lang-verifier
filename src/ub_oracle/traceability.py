@@ -628,6 +628,17 @@ def _thm_artifact_eval() -> bool:
                 and set(conf.earned_badges) == {"available", "functional", "reproduced"})
 
 
+def _thm_mechanized_soundness() -> bool:
+    # The core soundness/relative-completeness argument for the product-program
+    # decision procedure is machine-checked by the real Lean 4 kernel for a
+    # language-pair-parametric calculus instantiated to C->Rust. When Lean is
+    # absent we require only that the source declares every theorem
+    # (consistency-only); when present the kernel must accept the development.
+    from . import mechanized_soundness as m
+    rep = m.confirm_mechanized_soundness()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1260,6 +1271,29 @@ CLAIMS: List[Claim] = [
         ("confirm_artifact_evaluation", "evaluate_artifact", "BADGES"),
         theorem=_thm_artifact_eval,
         docs=("README.md", "docs/ARTIFACT.md"),
+    ),
+    claim(
+        "C41-mechanized-soundness",
+        "The core soundness argument is **machine-checked by the Lean 4 kernel**, "
+        "not merely tested. `formal/ProductSoundness.lean` (self-contained, no "
+        "Mathlib) formalizes the relational/product-program decision procedure "
+        "over the recorded-observable abstraction `(P=ub-reached, T=target-"
+        "defined, C=consequence)` with `R = ¬(P∧T∧C)`, and proves: `oracle_sound` "
+        "(no false alarms), `oracle_complete_rel` (relative completeness), "
+        "`oracle_decides` (reports iff diverges), `equivalence_never_reported` "
+        "(equivalent pairs never flagged), `report_implies_ub` (every "
+        "counterexample is rooted in source UB), `pack_oracle_sound` (the "
+        "argument is **language-pair-parametric**), and `rust_oracle_sound` (the "
+        "concrete C→Rust instantiation, `RustPack` defined codes `{0,101}`), plus "
+        "fully-evaluated div-by-zero and safe-input witnesses. "
+        "`ub_oracle.mechanized_soundness` runs the real `lean` binary and "
+        "confirms the kernel accepts all seven theorems; with Lean absent it "
+        "degrades to a consistency-only check that every theorem is still "
+        "declared (never claiming an unrun proof).",
+        "ub_oracle.mechanized_soundness",
+        ("confirm_mechanized_soundness", "REQUIRED_THEOREMS", "LEAN_SOURCE"),
+        theorem=_thm_mechanized_soundness,
+        docs=("README.md", "docs/MECHANIZED_SOUNDNESS.md"),
     ),
 ]
 

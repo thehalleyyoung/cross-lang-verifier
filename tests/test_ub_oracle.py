@@ -4524,3 +4524,34 @@ def test_artifact_reproduced_badge_real_byte_identity_and_stable_hashes():
     assert by["replication_kit_hash_stable"].passed
     assert by["scale_hash_reproducible"].passed
     assert by["generalization_hash_reproducible"].passed
+
+
+from src.ub_oracle import mechanized_soundness as _ms  # noqa: E402
+
+_lean_present = _ms._lean_binary() is not None
+
+
+def test_mechanized_soundness_source_declares_every_required_theorem():
+    rep = _ms.confirm_mechanized_soundness()
+    assert rep.source_present
+    assert not rep.theorems_missing, rep.theorems_missing
+    assert set(rep.theorems_present) == set(_ms.REQUIRED_THEOREMS)
+    assert rep.source_hash and len(rep.source_hash) == 64
+
+
+@pytest.mark.skipif(not _lean_present, reason="Lean 4 kernel not installed")
+def test_mechanized_soundness_lean_kernel_accepts_the_proof():
+    rep = _ms.confirm_mechanized_soundness()
+    assert rep.available
+    assert rep.kernel_accepted is True, rep.stderr_tail
+    assert rep.ok and rep.fully_checked
+
+
+def test_mechanized_soundness_consistency_only_when_lean_absent_still_safe():
+    # Regardless of toolchain, ok must never be True with a missing theorem.
+    rep = _ms.confirm_mechanized_soundness()
+    if rep.theorems_missing:
+        assert not rep.ok
+    # fully_checked implies the kernel actually ran and accepted.
+    if rep.fully_checked:
+        assert rep.available and rep.kernel_accepted is True
