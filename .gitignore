@@ -35,6 +35,8 @@ experiments/ub_divergence/confirmations.json
 experiments/cross_pair_matrix/confirmations.json
 # Environment-dependent minimized-witness artifact (real-compiler minimization)
 experiments/cex_quality/minimized.json
+# Environment-dependent perf timings (wall-clock; only the grid is committed)
+experiments/perf_curves/timings.json
 
 # Python build artifacts
 build/

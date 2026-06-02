@@ -1,0 +1,195 @@
+{
+  "class_pair_profile": [
+    {
+      "divergence_class": "array_oob",
+      "label": "c->go:array_oob",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "label": "c->go:div_by_zero",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->go:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "shift_oob",
+      "label": "c->go:shift_oob",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "label": "c->go:signed_overflow",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "array_oob",
+      "label": "c->rust:array_oob",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "label": "c->rust:div_by_zero",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "fp_contraction",
+      "label": "c->rust:fp_contraction",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->rust:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "shift_oob",
+      "label": "c->rust:shift_oob",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "label": "c->rust:signed_overflow",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "strict_aliasing",
+      "label": "c->rust:strict_aliasing",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "array_oob",
+      "label": "c->swift:array_oob",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "label": "c->swift:div_by_zero",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->swift:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "shift_oob",
+      "label": "c->swift:shift_oob",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "label": "c->swift:signed_overflow",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "divergent"
+    }
+  ],
+  "smt_scaling": [
+    {
+      "result": "sat",
+      "width": 8
+    },
+    {
+      "result": "sat",
+      "width": 16
+    },
+    {
+      "result": "sat",
+      "width": 32
+    },
+    {
+      "result": "sat",
+      "width": 64
+    },
+    {
+      "result": "sat",
+      "width": 128
+    },
+    {
+      "result": "sat",
+      "width": 256
+    },
+    {
+      "result": "sat",
+      "width": 512
+    }
+  ],
+  "width_scaling": [
+    {
+      "divergence_class": "signed_overflow",
+      "verdict": "divergent",
+      "width": 32
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "verdict": "divergent",
+      "width": 64
+    },
+    {
+      "divergence_class": "shift_oob",
+      "verdict": "divergent",
+      "width": 32
+    },
+    {
+      "divergence_class": "shift_oob",
+      "verdict": "divergent",
+      "width": 64
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "verdict": "divergent",
+      "width": 32
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "verdict": "divergent",
+      "width": 64
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "verdict": "divergent",
+      "width": 32
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "verdict": "divergent",
+      "width": 64
+    }
+  ]
+}

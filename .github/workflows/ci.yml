@@ -38,6 +38,9 @@ jobs:
       - name: Counterexample-quality baseline reproduces byte-identically
         run: make cex-quality-check PYTHON=python
 
+      - name: Performance/scalability grid reproduces byte-identically
+        run: make perf-check PYTHON=python
+
       - name: Packaging — build wheel, install in a fresh venv, run the CLI
         run: make package-check PYTHON=python
 

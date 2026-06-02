@@ -1737,3 +1737,136 @@ def test_dashboard_escapes_unit_names():
     # the malicious unit name is HTML-escaped, never injected raw.
     assert "<img src=x" not in html_doc
     assert "&lt;img" in html_doc
+
+
+# ── performance / scalability curves (step 50) ───────────────────────────────
+
+from src.ub_oracle import perf as _perf
+from src.ub_oracle.plugin import ALL_ORACLES as _ALL_ORACLES, REGISTRY as _REGISTRY
+
+
+def test_perf_deterministic_grid_is_reproducible():
+    # The grid (classes x pairs x widths x SMT sizes + verdicts) carries NO
+    # timings and must regenerate identically within a process.
+    g1 = _perf.deterministic_grid()
+    g2 = _perf.deterministic_grid()
+    assert g1 == g2
+    assert json.dumps(g1, sort_keys=True) == json.dumps(g2, sort_keys=True)
+
+
+def test_perf_grid_covers_all_pairs_and_widths():
+    g = _perf.deterministic_grid()
+    pairs = {(r["source_lang"], r["target_lang"]) for r in g["class_pair_profile"]}
+    assert ("c", "rust") in pairs and ("c", "go") in pairs and ("c", "swift") in pairs
+    # every profiled search actually found a divergence (sanity of the grid).
+    assert all(r["verdict"] == "divergent" for r in g["class_pair_profile"])
+    # width sweep spans both supported integer widths for each scalable class.
+    widths = {(r["divergence_class"], r["width"]) for r in g["width_scaling"]}
+    for cls in ("signed_overflow", "shift_oob", "div_by_zero", "intmin_div_neg1"):
+        assert (cls, 32) in widths and (cls, 64) in widths
+    # SMT scaling stays satisfiable all the way up to 512-bit widths.
+    assert [r["width"] for r in g["smt_scaling"]] == [8, 16, 32, 64, 128, 256, 512]
+    assert all(r["result"] == "sat" for r in g["smt_scaling"])
+
+
+def test_perf_smt_scaling_curve_is_not_pathological():
+    # The bitvector overflow search must scale gracefully with bit width: the
+    # geometric-mean per-doubling growth stays well under the pathology bar.
+    curve = _perf.smt_scaling_curve(repeats=2)
+    assert len(curve.seconds) == len(curve.sizes)
+    assert all(s >= 0.0 for s in curve.seconds)
+    assert all(v == "sat" for v in curve.verdicts)
+    assert not curve.pathological
+    assert curve.growth_ratio < curve.threshold
+    d = curve.to_dict()
+    assert d["sizes"][0] == 8 and d["sizes"][-1] == 512
+
+
+def test_perf_class_pair_profile_times_real_searches():
+    rows = _perf.class_pair_profile(repeats=1)
+    assert rows, "expected at least one timed oracle"
+    by_label = {r.label for r in rows}
+    assert "c->rust:signed_overflow" in by_label
+    for r in rows:
+        assert r.seconds >= 0.0
+        assert r.verdict == "divergent"
+
+
+# ── plugin SDK: a third-party oracle registers without forking (step 70) ─────
+
+@pytest.fixture
+def _isolated_registry():
+    """Ensure the external SDK oracle is registered for the test, then remove it.
+
+    The module registers on first import; Python caches the module, so re-import
+    is a no-op. This fixture therefore registers idempotently and tears down by
+    class, leaving the global registry free of this non-core class so the rest of
+    the suite (matrix/metrics over the core oracles) is unaffected.
+    """
+    from src.ub_oracle.plugin import register, oracles_for
+    from examples.plugins import float_cast_overflow_oracle as ext
+
+    cls = ext.FLOAT_CAST_OVERFLOW
+    if not oracles_for("c", "rust", cls):
+        register(ext.FloatCastOverflowOracle())
+    try:
+        yield
+    finally:
+        _ALL_ORACLES[:] = [o for o in _ALL_ORACLES if o.divergence_class != cls]
+        _REGISTRY.pop(cls, None)
+
+
+def test_external_plugin_registers_and_is_discoverable(_isolated_registry):
+    from src.ub_oracle.plugin import oracles_for, get_oracle_for
+    from examples.plugins import float_cast_overflow_oracle as ext
+
+    # importing the external module is the ONLY integration step.
+    matches = oracles_for("c", "rust", ext.FLOAT_CAST_OVERFLOW)
+    assert len(matches) == 1
+    assert isinstance(matches[0], ext.FloatCastOverflowOracle)
+    # the engine can resolve it by class through the public helper.
+    assert get_oracle_for(ext.FLOAT_CAST_OVERFLOW).divergence_class == \
+        ext.FLOAT_CAST_OVERFLOW
+
+
+def test_external_plugin_finds_divergence_symbolically(_isolated_registry):
+    from examples.plugins import float_cast_overflow_oracle as ext
+
+    oracle = ext.FloatCastOverflowOracle()
+    assert oracle.applies_to(ext.EXAMPLE_UNIT)
+    res = oracle.find_divergence(ext.EXAMPLE_UNIT)
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert ce is not None and ce.divergence_class == ext.FLOAT_CAST_OVERFLOW
+    # the witness is a genuine out-of-int-range finite double, Z3-found.
+    x = ce.inputs["x"]
+    assert x > (1 << 31) - 1
+    assert "(int)x" in ce.source_snippet and "x as i32" in ce.target_snippet
+
+
+def test_external_plugin_integrates_with_verify_unit(_isolated_registry):
+    from examples.plugins import float_cast_overflow_oracle as ext
+    from src.ub_oracle.verify import verify_unit, VerifyVerdict
+
+    report = verify_unit(ext.EXAMPLE_UNIT, confirm=False)
+    # without confirmation the witness is a CANDIDATE, never silently DIVERGENT.
+    assert report.verdict in (VerifyVerdict.CANDIDATE, VerifyVerdict.DIVERGENT)
+    assert report.oracle_results
+    assert any(r.divergence_class == ext.FLOAT_CAST_OVERFLOW
+               for r in report.oracle_results)
+
+
+@_requires_toolchain
+def test_external_plugin_confirms_against_real_compilers(_isolated_registry):
+    from examples.plugins import float_cast_overflow_oracle as ext
+    from src.ub_oracle.verify import verify_unit, VerifyVerdict
+
+    report = verify_unit(ext.EXAMPLE_UNIT, harness=ReexecHarness(_TC))
+    # C (int)x overflow traps under UBSan; Rust `x as i32` saturates (defined).
+    assert report.verdict is VerifyVerdict.DIVERGENT
+    assert report.divergence is not None
+    rr = report.divergence.reexec
+    assert rr is not None and rr.confirmed
+    assert rr.ub_reachable and rr.rust_defined
+    # the defined Rust outcome is the saturated i32::MAX.
+    assert rr.rust_run.stdout.strip() == "2147483647"

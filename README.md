@@ -67,6 +67,15 @@ python3 -m src.cli.main discover \
   unit content **and** the real toolchain version, so a compiler upgrade
   invalidates stale verdicts (~25× speedup at full reuse on the sample manifest)
 - a self-contained, offline migration-risk HTML dashboard (`--dashboard`)
+- a performance/scalability study (`make perf`) that times the *real* symbolic
+  searches across every class and language pair and characterises the SMT
+  backbone's growth out to 512-bit widths — the deterministic grid
+  (`experiments/perf_curves/grid.json`) is checked for byte-identical
+  regeneration in CI (`make perf-check`)
+- a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
+  *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
+  proving a third party can add a brand-new divergence class — confirmed against
+  real `clang`+`rustc` — without forking the engine
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout
