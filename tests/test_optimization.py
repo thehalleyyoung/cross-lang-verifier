@@ -23,6 +23,16 @@ from src.ir.optimization.pass_manager import PassManager, PassResult
 # Passes use .left/.right/.value but IR has .lhs/.rhs/.return_value
 _ATTR_BUG = "Pass uses .left/.right/.value but IR has .lhs/.rhs/.return_value"
 
+# NOTE: the optimization passes are genuinely broken on any instruction that
+# carries operands (the _ATTR_BUG above), so the cases that actually exercise a
+# transform are xfail(raises=AttributeError). A handful of cases, however, only
+# assert *no-op* behaviour (UNCHANGED on a function with nothing to optimise, an
+# empty stats report, fix-point termination) and therefore pass deterministically
+# without ever touching the broken attribute paths. Those are intentionally NOT
+# marked xfail — marking them produced misleading XPASS noise and let a real
+# future regression hide. The true-green ratchet (scripts/test_ratchet.py) forbids
+# XPASS for exactly this reason.
+
 
 def _make_func(name="test_fn", ret=I32, params=(I32, I32)):
     mod = Module(name + "_mod")
@@ -140,7 +150,6 @@ class TestDeadBlockElimination:
         assert DeadBlockElimination().run_on_function(f, {}) == PassResult.CHANGED
         assert "dead" not in [bl.name for bl in f.blocks]
 
-    @pytest.mark.xfail(reason=_ATTR_BUG, raises=AttributeError)
     def test_keep_reachable(self):
         _, f, b = _make_func(params=(I32,))
         entry, t, el = (f.create_block(n) for n in ("entry","then","else"))
@@ -345,7 +354,6 @@ class TestMem2Reg:
         assert Mem2Reg().run_on_function(f, {}) == PassResult.CHANGED
         assert "alloca" not in _ops(f)
 
-    @pytest.mark.xfail(reason=_ATTR_BUG, raises=AttributeError)
     def test_no_allocas(self):
         _, f, b = _make_func(params=(I32,))
         e = f.create_block("entry"); b.position_at_end(e); b.ret(f.get_argument(0))
@@ -554,7 +562,6 @@ class TestLICM:
         body_ops = [inst.opcode_name() for inst in body.instructions]
         assert body_ops.count("mul") == 0 and body_ops.count("add") == 0
 
-    @pytest.mark.xfail(reason=_ATTR_BUG, raises=AttributeError)
     def test_no_loops(self):
         _, f, b = _make_func(params=(I32,))
         e = f.create_block("entry"); b.position_at_end(e)
@@ -595,7 +602,6 @@ class TestPassManager:
         pm.add_pass(ConstantPropagation()); pm.add_pass(DeadCodeElimination())
         assert pm.run_on_function(f) == PassResult.CHANGED
 
-    @pytest.mark.xfail(reason=_ATTR_BUG)
     def test_ordering_matters(self):
         def build():
             _, f, b = _make_func(params=())
@@ -635,7 +641,6 @@ class TestPassManager:
     def test_get_nonexistent(self):
         assert PassManager().get_pass("x") is None
 
-    @pytest.mark.xfail(reason=_ATTR_BUG)
     def test_fixpoint(self):
         _, f, b = _make_func(params=())
         e = f.create_block("entry"); b.position_at_end(e)
@@ -664,7 +669,6 @@ class TestPassManager:
         names = pm.pass_names()
         assert names.index("dce") < names.index("constant_prop")
 
-    @pytest.mark.xfail(reason=_ATTR_BUG)
     def test_statistics_report(self):
         _, f, b = _make_func()
         e = f.create_block("entry"); b.position_at_end(e)

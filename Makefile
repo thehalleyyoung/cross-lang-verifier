@@ -91,5 +91,8 @@ guard:
 test-ub:
 	$(PYTHON) -m pytest tests/test_ub_oracle.py -q
 
-ci: guard reproduce-check matrix-check cex-quality-check perf-check redteam-check test-ub
+green-check:
+	$(PYTHON) scripts/test_ratchet.py --fast
+
+ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check redteam-check test-ub
 	@echo "ci: PASSED"

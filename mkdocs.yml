@@ -35,6 +35,7 @@ nav:
       - Per-pair soundness statements: COMPLETENESS.md
       - Mechanized soundness (Lean): MECHANIZED_SOUNDNESS.md
       - Claim → proof traceability: TRACEABILITY.md
+      - True-green test ratchet: test_ratchet.md
   - Integrations:
       - Transpiler recipes: TRANSPILER_RECIPES.md
       - Web playground: PLAYGROUND.md

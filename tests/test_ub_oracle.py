@@ -5044,3 +5044,57 @@ def test_disclosure_bundle_runs_end_to_end():
     combined = out.stdout + out.stderr
     assert "division by zero" in combined          # C UBSan trapped
     assert "divide by zero" in combined            # Go panicked
+
+
+from src.ub_oracle import test_ratchet_core as _trc  # noqa: E402
+
+
+def _green_counts(**over):
+    base = {"passed": 100, "skipped": 5, "xfailed": 7,
+            "failed": 0, "error": 0, "xpassed": 0}
+    base.update(over)
+    return base
+
+
+def test_ratchet_accepts_green_and_improved():
+    floor = {"passed": 100, "skipped": 5, "xfailed": 7}
+    assert _trc.enforce_counts("fast", _green_counts(), floor) == 0
+    # More passes, fewer skips: still accepted.
+    assert _trc.enforce_counts(
+        "fast", _green_counts(passed=120, skipped=4), floor) == 0
+    assert _trc.violations("fast", _green_counts(), floor) == []
+
+
+def test_ratchet_rejects_red_and_lies():
+    floor = {"passed": 100, "skipped": 5, "xfailed": 7}
+    # A failure, an error, or a stale xpass are all hard rejections.
+    for bad in ("failed", "error", "xpassed"):
+        assert _trc.enforce_counts("fast", _green_counts(**{bad: 1}), floor) == 1
+    # Missing baseline is also a violation (forces an explicit --update).
+    assert _trc.enforce_counts("fast", _green_counts(), {}) == 1
+
+
+def test_ratchet_rejects_regressions():
+    floor = {"passed": 100, "skipped": 5, "xfailed": 7}
+    # Losing a pass, or silently skipping a new test, must fail the gate.
+    assert _trc.enforce_counts("fast", _green_counts(passed=99), floor) == 1
+    assert _trc.enforce_counts("fast", _green_counts(skipped=6), floor) == 1
+    assert any("regressed" in v
+               for v in _trc.violations("fast", _green_counts(passed=99), floor))
+    assert any("skipped grew" in v
+               for v in _trc.violations("fast", _green_counts(skipped=6), floor))
+
+
+def test_ratchet_baseline_file_is_well_formed():
+    import json
+    import pathlib
+    root = pathlib.Path(_disc._ROOT)
+    data = json.loads((root / "tests" / "green_baseline.json").read_text())
+    assert "fast" in data
+    fast = data["fast"]
+    assert {"passed", "skipped", "xfailed"} <= set(fast)
+    assert fast["passed"] > 800            # the real, recorded floor
+    ok, _ = _trc.is_baselineable(_green_counts(passed=fast["passed"]))
+    assert ok
+    bad_ok, _ = _trc.is_baselineable(_green_counts(xpassed=1))
+    assert not bad_ok

@@ -29,6 +29,9 @@ jobs:
       - name: Credibility guard (no simulated results)
         run: bash scripts/check_no_simulated_results.sh
 
+      - name: True-green test ratchet (toolchain-independent suite)
+        run: make green-check PYTHON=python
+
       - name: Reproduce trusted results byte-identically
         run: make reproduce-check PYTHON=python
 

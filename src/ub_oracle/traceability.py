@@ -804,6 +804,35 @@ def _thm_disclosures() -> bool:
     return bool(rep.ok)
 
 
+def _thm_true_green_ratchet() -> bool:
+    # The suite-honesty gate is itself sound: its enforcement core flags any red
+    # outcome (a failure, an error, or an xpassed "lie") and any *regression*
+    # against the committed floor (a lost pass, or a newly-skipped test), while
+    # accepting a genuinely green, non-regressed run. We prove this on the gate's
+    # own decision function with synthetic count vectors -- no toolchain needed,
+    # so the theorem is total.
+    from . import test_ratchet_core as trc  # noqa: WPS433
+
+    floor = {"passed": 100, "skipped": 5, "xfailed": 7}
+    green = {"passed": 100, "skipped": 5, "xfailed": 7,
+             "failed": 0, "error": 0, "xpassed": 0}
+    if trc.enforce_counts("fast", green, floor) != 0:
+        return False
+    better = dict(green, passed=120, skipped=4)
+    if trc.enforce_counts("fast", better, floor) != 0:
+        return False
+    for bad in (
+        dict(green, failed=1),
+        dict(green, error=1),
+        dict(green, xpassed=1),
+        dict(green, passed=99),
+        dict(green, skipped=6),
+    ):
+        if trc.enforce_counts("fast", bad, floor) == 0:
+            return False
+    return True
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1744,6 +1773,25 @@ CLAIMS: List[Claim] = [
         "ub_oracle.disclosure",
         ("confirm_disclosures", "reproduce_disclosure", "DisclosureRecord"),
         theorem=_thm_disclosures,
+        docs=("README.md",),
+    ),
+    claim(
+        "C56-true-green-ratchet",
+        "The test suite's **own honesty is gated and ratcheted** "
+        "(`scripts/test_ratchet.py` + `ub_oracle.test_ratchet_core`, floor in "
+        "`tests/green_baseline.json`): a run is rejected unless it is "
+        "**true-green** (zero failures, zero errors, and zero `xpassed` -- an "
+        "`xfail` that unexpectedly passes is a stale lie) and **non-regressed** "
+        "against the committed floor (the passing count may never drop and the "
+        "skipped count may never rise, forbidding silently deleting or "
+        "`@skip`-ing a test to make red disappear). The toolchain-independent "
+        "`--fast` profile (every test file but the heavyweight real-compiler "
+        "driver) is deterministic and runs in seconds. The decision core is "
+        "proven sound on synthetic count vectors -- it accepts a green, "
+        "non-regressed run and rejects every red or regressed one.",
+        "ub_oracle.test_ratchet_core",
+        ("violations", "enforce_counts", "is_baselineable"),
+        theorem=_thm_true_green_ratchet,
         docs=("README.md",),
     ),
 ]

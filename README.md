@@ -400,6 +400,12 @@ python3 -m src.cli.main discover \
   timeline) and emits a **self-contained, runnable reproduction bundle** that
   re-compiles both sides and exhibits the bug; every shipped advisory reproduces
   live
+- a **true-green test ratchet** (`scripts/test_ratchet.py`,
+  `src/ub_oracle/test_ratchet_core.py`, floor in `tests/green_baseline.json`):
+  CI rejects the suite unless it is honest-green (zero failures, zero errors, and
+  zero `xpassed` — a stale `xfail` that now passes is a lie) **and** non-regressed
+  (the passing count may never drop and the skipped count may never rise), so a
+  test can't be quietly deleted or `@skip`-ped to make red disappear
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
