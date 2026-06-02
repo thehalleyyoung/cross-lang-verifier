@@ -232,6 +232,22 @@ def _thm_ownership_facts_sound() -> bool:
     return bool(consistent and headline)
 
 
+def _thm_unit_alignment_sound() -> bool:
+    # The structural aligner must (a) recover the ground-truth pairing on a
+    # renamed module whose names are adversarial to name matching, and (b) do so
+    # strictly better than the name-only baseline. Signature arity mismatch must
+    # be a hard zero so that arity always vetoes an incompatible pair.
+    from . import unit_alignment as ua
+    c, t, truth = (ua.example_c_unit(), ua.example_target_unit(),
+                   ua.example_ground_truth())
+    structural = ua.alignment_accuracy(ua.align(c, t).mapping, truth)
+    baseline = ua.alignment_accuracy(ua.name_only_align(c, t), truth)
+    arity_veto = ua.signature_score(
+        ua.FunctionSig("f", ("int", "int"), "int"),
+        ua.FunctionSig("g", ("i32",), "i32")) == 0.0
+    return bool(structural == 1.0 and baseline < structural and arity_veto)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -431,6 +447,23 @@ CLAIMS: List[Claim] = [
         "ub_oracle.ownership",
         ("PATTERNS", "pattern", "confirm_ownership", "OWNERSHIP_INTERFACE"),
         theorem=_thm_ownership_facts_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C19-unit-alignment",
+        "Cross-unit function alignment is decided by structure, not names: each "
+        "C function is matched to its translated counterpart using signature "
+        "compatibility (arity + C->target type families, with arity mismatch a hard "
+        "veto) and self-reinforcing call-graph agreement, with name similarity only "
+        "as a tiebreak. On a renamed module whose names are adversarial to a "
+        "name-matcher (a 2-arg `add` is name-closest to a 1-arg `add_one`), the "
+        "structural aligner recovers the ground-truth pairing exactly while the "
+        "name-only baseline does not; user pins are honoured and low-confidence "
+        "functions are reported unmatched rather than forced.",
+        "ub_oracle.unit_alignment",
+        ("align", "signature_score", "types_compatible", "name_only_align",
+         "alignment_accuracy"),
+        theorem=_thm_unit_alignment_sound,
         docs=("README.md",),
     ),
 ]

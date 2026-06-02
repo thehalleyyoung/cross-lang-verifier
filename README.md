@@ -152,6 +152,14 @@ python3 -m src.cli.main discover \
   re-expression compiles — exactly the translator's dilemma. Each accept/reject
   verdict (and error code) is *observed* by compiling, not assumed, and the
   interface is documented to retarget to other safety models
+- a **structural function aligner** (`unit_alignment.py`) that matches each C
+  function to its translated counterpart by **signature compatibility** (arity +
+  C→target type families, with an arity mismatch acting as a hard veto) and
+  **self-reinforcing call-graph agreement**, using name similarity only as a
+  tiebreak. On a renamed module engineered to be *adversarial* to name matching
+  (a 2-arg `add` whose name is closest to a 1-arg `add_one`), it recovers the
+  ground-truth pairing exactly while a name-only baseline does not — so divergence
+  oracles compare the *right* function pairs even across heavy renaming
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

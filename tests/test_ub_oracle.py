@@ -3312,3 +3312,74 @@ def test_ownership_mutable_aliasing_is_rejected_but_unsafe_compiles():
     assert rejected.error_code == "E0499"
     unsafe = _ow.confirm_ownership("raw_ptr_aliasing", rustc=rustc)
     assert unsafe.accepted is True
+
+
+# ---------------------------------------------------------------------------
+# Step 30 — robust cross-unit function alignment (signature + call-graph).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import unit_alignment as _ua  # noqa: E402
+
+
+def test_alignment_type_compatibility_uses_c_to_target_map():
+    assert _ua.types_compatible("int", "i32")
+    assert _ua.types_compatible("char*", "*const u8")
+    assert _ua.types_compatible("double", "f64")
+    assert _ua.types_compatible("void", "()")
+    assert not _ua.types_compatible("int", "i64")
+    assert not _ua.types_compatible("int", "*const u8")
+
+
+def test_alignment_signature_score_rewards_exact_match():
+    a = _ua.FunctionSig("f", ("int", "int"), "int")
+    b = _ua.FunctionSig("g", ("i32", "i32"), "i32")
+    assert _ua.signature_score(a, b) == 1.0
+    # arity mismatch is a hard zero.
+    c = _ua.FunctionSig("h", ("i32",), "i32")
+    assert _ua.signature_score(a, c) == 0.0
+
+
+def test_alignment_recovers_true_pairs_on_renamed_module():
+    c, t = _ua.example_c_unit(), _ua.example_target_unit()
+    truth = _ua.example_ground_truth()
+    res = _ua.align(c, t)
+    assert res.mapping == truth
+    assert _ua.alignment_accuracy(res.mapping, truth) == 1.0
+    assert not res.unmatched_c and not res.unmatched_target
+
+
+def test_alignment_beats_name_only_baseline_on_adversarial_names():
+    c, t = _ua.example_c_unit(), _ua.example_target_unit()
+    truth = _ua.example_ground_truth()
+    structural = _ua.alignment_accuracy(_ua.align(c, t).mapping, truth)
+    baseline = _ua.alignment_accuracy(_ua.name_only_align(c, t), truth)
+    # the structural matcher is perfect; name-only is misled by colliding names.
+    assert structural == 1.0
+    assert baseline < structural
+    # specifically, name-only mis-pairs the 2-arg `add` with 1-arg `add_one`.
+    assert _ua.name_only_align(c, t)["add"] == "add_one"
+
+
+def test_alignment_honours_user_pins():
+    c, t = _ua.example_c_unit(), _ua.example_target_unit()
+    # pin a deliberately wrong pair; the solver must respect it.
+    res = _ua.align(c, t, pins={"add": "add_one"})
+    assert res.mapping["add"] == "add_one"
+    assert res.scores["add"] == 1.0
+    # the rest are still aligned around the pin without reusing the pinned target.
+    assert "add_one" not in [v for k, v in res.mapping.items() if k != "add"]
+
+
+def test_alignment_reports_unmatched_when_confidence_too_low():
+    c = _ua.Unit((_ua.FunctionSig("lonely", ("int", "int", "int"), "int"),))
+    t = _ua.Unit((_ua.FunctionSig("totally_different", ("f64",), "f64"),))
+    res = _ua.align(c, t)
+    # arity/type-incompatible and name-distant -> below the confidence floor.
+    assert "lonely" in res.unmatched_c
+    assert "totally_different" in res.unmatched_target
+    assert "lonely" not in res.mapping
+
+
+def test_alignment_is_deterministic():
+    c, t = _ua.example_c_unit(), _ua.example_target_unit()
+    assert _ua.align(c, t).mapping == _ua.align(c, t).mapping
