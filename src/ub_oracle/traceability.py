@@ -887,10 +887,41 @@ def _thm_vla_bound_oracle() -> bool:
     return True
 
 
+def _thm_float_cast_overflow_oracle() -> bool:
+    # The float->int out-of-range conversion oracle is sound on the anchor and
+    # the Go pair. For each target the oracle (a) finds an out-of-range value
+    # (just past the destination integer maximum) as its witness, and (b) when
+    # the toolchain is present, the real UBSan build *traps*
+    # (`float-cast-overflow`) while the safe target port (Rust saturating `as`,
+    # Go defined conversion) is *defined and deterministic*. The structural
+    # witness check is unconditional; the real-compiler confirmation runs only
+    # when the toolchain exists, so the theorem is total.
+    from . import oracles as _oracles  # noqa: F401, WPS433  (register plugins)
+    from .plugin import get_oracle_for, OracleVerdict
+    from .reexec import ReexecHarness, toolchain_available
+
+    status = toolchain_available()
+    h = ReexecHarness(status)
+    for target, width in (("rust", 32), ("go", 64)):
+        orc = get_oracle_for("float_cast_overflow", "c", target)
+        if orc.confirmation_mode != "trap_vs_defined":
+            return False
+        res = orc.find_divergence({"kind": "float_cast", "width": width})
+        if res.verdict is not OracleVerdict.DIVERGENT:
+            return False
+        # the witness must be strictly past the signed maximum of the dest type.
+        if list(res.counterexample.inputs.values())[0] <= (1 << (width - 1)) - 1:
+            return False
+        if not status.full_for(target):
+            continue
+        rr = orc.confirm(res, h).reexec
+        if not (rr.available and rr.ub_reachable and rr.rust_defined and rr.confirmed):
+            return False
+    return True
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
-
-
 CLAIMS: List[Claim] = [
     claim(
         "C1-soundness",
@@ -1885,6 +1916,29 @@ CLAIMS: List[Claim] = [
         "ub_oracle.oracles.vla_bound",
         ("VlaBoundOracle", "GoVlaBoundOracle"),
         theorem=_thm_vla_bound_oracle,
+        docs=("README.md",),
+    ),
+    claim(
+        "C59-float-cast-overflow-divergence",
+        "A **float-to-integer out-of-range conversion** divergence oracle "
+        "(`ub_oracle.oracles.float_cast`) for both C->Rust and C->Go -- the one "
+        "genuinely-divergent corner of the C *conversion lattice*. Converting a "
+        "finite `double` to an integer type whose range cannot hold the rounded "
+        "value is **undefined** (C17 6.3.1.4p1 -- `-O0` yields a target-specific "
+        "garbage value and `-fsanitize=undefined` traps via `float-cast-overflow`), "
+        "whereas the idiomatic *safe* port keeps the cast and stays **defined**: "
+        "Rust `x as iN` **saturates** to the destination bound and Go `iN(x)` "
+        "yields a deterministic (implementation-specified) value, neither of which "
+        "is UB. The witnessing value is found with Z3 (the least-extreme integer "
+        "just past the destination maximum, e.g. `INT_MAX+1`, honouring any "
+        "declared range) rather than hard-coded, and the divergence is confirmed "
+        "end-to-end against real clang/UBSan + rustc/go in `trap_vs_defined` mode. "
+        "The remaining conversion-lattice corners (signed<->unsigned, "
+        "implementation-defined right shift) provably agree on every "
+        "two's-complement target and are documented as non-divergent.",
+        "ub_oracle.oracles.float_cast",
+        ("FloatCastOverflowOracle", "GoFloatCastOverflowOracle"),
+        theorem=_thm_float_cast_overflow_oracle,
         docs=("README.md",),
     ),
 ]

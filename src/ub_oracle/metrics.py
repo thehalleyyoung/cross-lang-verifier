@@ -83,6 +83,10 @@ POSITIVE_CASES: List[LabeledCase] = [
     LabeledCase("vla_neg_w32",
                 {"kind": "vla", "width": 32, "var": "n", "probe": "vla_bound"},
                 "vla_bound"),
+    LabeledCase("fcast_oob_w32",
+                {"kind": "float_cast", "width": 32, "var": "x",
+                 "probe": "float_cast_overflow"},
+                "float_cast_overflow"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus

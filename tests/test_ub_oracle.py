@@ -5212,3 +5212,61 @@ def test_vla_go_confirmed_against_real_compilers():
     assert rr.ub_reachable, "UBSan vla-bound must trap on the negative bound"
     assert rr.rust_defined, "Go must panic deterministically (defined makeslice)"
     assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 106 — float-to-integer out-of-range conversion divergence oracle
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import float_cast as _fcast  # noqa: E402,F401
+
+
+def test_float_cast_oracle_registered_for_rust_and_go_trap_mode():
+    rust = _plugin.get_oracle_for("float_cast_overflow", "c", "rust")
+    go = _plugin.get_oracle_for("float_cast_overflow", "c", "go")
+    assert rust.confirmation_mode == "trap_vs_defined"
+    assert go.confirmation_mode == "trap_vs_defined"
+    assert "float_cast_overflow" in CATALOGUE
+    assert CATALOGUE["float_cast_overflow"].is_ub_rooted()
+
+
+def test_float_cast_witness_is_just_past_range_and_honors_range():
+    orc = _plugin.get_oracle_for("float_cast_overflow", "c", "rust")
+    r32 = orc.find_divergence({"kind": "float_cast", "width": 32})
+    assert r32.verdict is _plugin.OracleVerdict.DIVERGENT
+    # least-extreme out-of-range value is INT_MAX + 1.
+    assert list(r32.counterexample.inputs.values())[0] == (1 << 31)
+    r64 = orc.find_divergence({"kind": "float_cast", "width": 64})
+    assert list(r64.counterexample.inputs.values())[0] == (1 << 63)
+    # a declared range is honored by the Z3 search.
+    r = orc.find_divergence(
+        {"kind": "float_cast", "width": 32, "value_range": [(1 << 31) + 5, (1 << 31) + 9]})
+    assert list(r.counterexample.inputs.values())[0] == (1 << 31) + 5
+    # not applicable to a non-cast unit.
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not _TC.full_for("rust"),
+                    reason="needs C+UBSan+rustc toolchain")
+def test_float_cast_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("float_cast_overflow", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "float_cast", "width": 32}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan float-cast-overflow must trap on the OOB value"
+    assert rr.rust_defined, "Rust `as` must saturate deterministically (defined)"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+UBSan+go toolchain")
+def test_float_cast_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("float_cast_overflow", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "float_cast", "width": 64}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan float-cast-overflow must trap on the OOB value"
+    assert rr.rust_defined, "Go conversion must be defined & deterministic"
+    assert rr.confirmed and res.counterexample.confirmed

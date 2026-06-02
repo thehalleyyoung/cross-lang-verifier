@@ -87,6 +87,7 @@ EVAL_ORDER = DivergenceClass("eval_order", "Unspecified evaluation order / seque
 INT_CONVERSION = DivergenceClass("int_conversion", "Out-of-range integer conversion")
 FP_CONTRACTION = DivergenceClass("fp_contraction", "Floating-point contraction (FMA fusion)")
 VLA_BOUND = DivergenceClass("vla_bound", "Variable-length-array bound is non-positive")
+FLOAT_CAST_OVERFLOW = DivergenceClass("float_cast_overflow", "Float-to-integer conversion out of range")
 
 
 @dataclass(frozen=True)
@@ -265,6 +266,25 @@ _ENTRIES: List[DivergenceEntry] = [
         witness_recipe="Read the VLA bound n from input and pick any n < 0; the "
                        "UBSan build traps (`vla-bound`) while the target panics "
                        "deterministically on the checked length.",
+    ),
+    DivergenceEntry(
+        cls=FLOAT_CAST_OVERFLOW,
+        source_definedness=Definedness.UNDEFINED,
+        source_rule="When a finite floating value is converted to an integer type "
+                    "and the rounded result cannot be represented, the behavior "
+                    "is undefined; under UBSan the `float-cast-overflow` check "
+                    "traps, while `-O0` yields a target-specific garbage value.",
+        c_standard_ref="C17 6.3.1.4p1",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="The idiomatic safe translation keeps the `as`/conversion "
+                    "cast, which is defined: Rust `x as iN` saturates to the "
+                    "destination bound and Go `iN(x)` yields a deterministic "
+                    "(implementation-specified) value — never undefined behavior.",
+        severity=Severity.CRITICAL,
+        witness_recipe="Read a double from input and pick the least-extreme value "
+                       "just past the destination integer range (e.g. INT_MAX+1); "
+                       "the UBSan build traps while the target is defined.",
+        int_widths=(32, 64),
     ),
 ]
 
