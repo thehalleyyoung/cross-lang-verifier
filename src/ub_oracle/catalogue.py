@@ -91,6 +91,7 @@ FLOAT_CAST_OVERFLOW = DivergenceClass("float_cast_overflow", "Float-to-integer c
 FAST_MATH_REASSOC = DivergenceClass("fast_math_reassoc", "Floating-point reassociation under -ffast-math")
 RESTRICT_VIOLATION = DivergenceClass("restrict_violation", "Aliasing through restrict-qualified pointers")
 POINTER_PROVENANCE = DivergenceClass("pointer_provenance", "Pointer arithmetic out of object provenance / address overflow")
+SIGNED_SHIFT_SIGN_BIT = DivergenceClass("signed_shift_sign_bit", "Left-shift of a 1 into the sign bit (UB in C, defined in C++20)")
 
 
 @dataclass(frozen=True)
@@ -351,6 +352,26 @@ _ENTRIES: List[DivergenceEntry] = [
                        "displacement n*sizeof(T) overflows a 64-bit address space "
                        "(n*sizeof(T) >= 2**64); the UBSan `pointer-overflow` check "
                        "traps while the target's checked index is defined.",
+        int_widths=(32, 64),
+    ),
+    DivergenceEntry(
+        cls=SIGNED_SHIFT_SIGN_BIT,
+        source_definedness=Definedness.UNDEFINED,
+        source_rule="In C, `1 << 31` (more generally, a left shift whose "
+                    "mathematical result E1*2**E2 is not representable in the "
+                    "signed result type) is undefined; the optimizer may assume "
+                    "it never happens.",
+        c_standard_ref="C17 6.5.7p4",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="C++20 mandates two's-complement and *defines* the same "
+                    "`1 << 31` to yield INT_MIN by modular wraparound "
+                    "(C++20 [expr.shift]/2), so the byte-identical source token "
+                    "is a single deterministic, defined value when compiled as "
+                    "C++ — the divergence is across the C/C++ language boundary.",
+        severity=Severity.CRITICAL,
+        witness_recipe="Pick the least shift amount n<width whose `1<<n` sets the "
+                       "sign bit (n = width-1); the C UBSan build traps while the "
+                       "C++20 build returns INT_MIN deterministically.",
         int_widths=(32, 64),
     ),
 ]

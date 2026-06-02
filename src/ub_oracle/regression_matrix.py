@@ -49,6 +49,7 @@ CANONICAL_UNITS: Dict[str, Dict[str, Any]] = {
     "fast_math_reassoc": {"kind": "fp_reassoc"},
     "restrict_violation": {"kind": "restrict_pair"},
     "pointer_provenance": {"kind": "pointer_offset", "width": 32, "var": "n"},
+    "signed_shift_sign_bit": {"kind": "sign_bit_shift", "width": 32, "var": "n"},
 }
 
 

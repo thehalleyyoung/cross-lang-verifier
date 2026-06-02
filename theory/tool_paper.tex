@@ -55,7 +55,7 @@
 }
 \lstset{style=codestyle}
 
-\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift) via $\sigma$-Bridge Product Programs}}
+\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++) via $\sigma$-Bridge Product Programs}}
 \date{}
 
 \author{halley-labs}
@@ -81,16 +81,21 @@ against real compilers} (\texttt{clang} under UndefinedBehaviorSanitizer,
 ground-truth harness confirms it. The oracle framework is a uniform plugin
 interface: each divergence class is an additive plugin, and a class
 automatically transfers across language pairs. The checked-in artifact
-implements a catalogue of 17 UB-rooted divergence classes---signed overflow,
+implements a catalogue of 18 UB-rooted divergence classes---signed overflow,
 shift/division UB, \texttt{INT\_MIN/-1}, out-of-bounds access, strict-aliasing
 (type-punning), floating-point contraction and \texttt{-ffast-math}
 reassociation, VLA-bound, float$\to$int overflow, pointer-provenance /
-address-space-overflow arithmetic, \texttt{restrict}-aliasing, and an
-uninitialized-read/definedness analysis---driven across three target languages
-by a deterministic, byte-reproducible cross-pair regression matrix whose 31
-toolchain-backed cells are \emph{all} confirmed against real compilers. On a
-labelled UB-divergence study (21 cases over 13 classes) the oracle attains
-perfect precision and recall ($\mathrm{tp}=17,\ \mathrm{fp}=0,\ \mathrm{fn}=0,\
+address-space-overflow arithmetic, \texttt{restrict}-aliasing, an
+uninitialized-read/definedness analysis, and a C/C++-boundary class
+(\texttt{1 << 31}, undefined in C yet defined in C++20)---driven across four
+target languages (Rust, Go, Swift, C++) by a deterministic, byte-reproducible
+cross-pair regression matrix whose 32 toolchain-backed cells are \emph{all}
+confirmed against real compilers (\texttt{clang}, \texttt{rustc}, \texttt{go},
+\texttt{clang++}). An optimization-level sweep additionally pins the exact
+\texttt{-O} level at which each no-sanitizer-traps UB class first changes the
+program's observable output. On a labelled UB-divergence study (21 cases over 13
+classes) the oracle attains perfect precision and recall ($\mathrm{tp}=17,\
+\mathrm{fp}=0,\ \mathrm{fn}=0,\
 \mathrm{tn}=256$) where a 200{,}000-trial differential fuzzer finds nothing on
 the UB-invisible classes. We give a mechanized-friendly soundness development
 ($\sigma$-bridge coercion correctness, product-program isolation, and a
@@ -336,12 +341,12 @@ divergence query $\mathit{ret}_C \neq \mathit{ret}_R$.
 
 \subsection{Divergence Class Taxonomy}\label{sec:divergence-taxonomy}
 
-\textsc{SemRec} ships an executable catalogue of \textbf{17 UB-rooted
+\textsc{SemRec} ships an executable catalogue of \textbf{18 UB-rooted
 divergence classes} (Table~\ref{tab:divergences}), each implemented as an
 independent oracle behind a single plugin contract
 (\S\ref{sec:implementation}). The classification emerges from a systematic
-comparison of C17~\cite{iso9899} and target-language (Rust/Go/Swift) semantics
-and is validated, class by class, against the divergence catalogue in
+comparison of C17~\cite{iso9899} and target-language (Rust/Go/Swift/C++)
+semantics and is validated, class by class, against the divergence catalogue in
 \texttt{src/ub\_oracle/catalogue.py}. Every class is \emph{anchored to a real
 witness}: the oracle's verdict is not believed until the ground-truth harness
 re-runs the witness against actual compilers (\S\ref{sec:soundness},
@@ -374,6 +379,7 @@ Strict aliasing (pun)      & UB & defined value       & \textsc{opt} \\
 \texttt{restrict} violation & UB & unique-borrow / GC  & \textsc{opt} \\
 FP contraction (FMA)       & unspec. & IEEE-strict     & \textsc{opt} \\
 \texttt{-ffast-math} reassoc.& unspec. & IEEE-strict   & \textsc{opt} \\
+\texttt{1 << 31} (C$\to$C++) & UB & C++20-defined       & \textsc{trap} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -381,11 +387,16 @@ FP contraction (FMA)       & unspec. & IEEE-strict     & \textsc{opt} \\
 \paragraph{Cross-pair generality.} Because each class shares one
 \texttt{divergence\_class} key across language pairs, a single Z3 witness drives
 the class against \emph{every} target that implements it. The deterministic
-cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{3 language pairs}
-(C$\to$Rust, C$\to$Go, C$\to$Swift) with 13, 12, and 6 classes respectively---
-\textbf{31 cells in total}---and is byte-reproducible per fresh process. When the
-host toolchain is present, \emph{all 31 cells confirm against real
-\texttt{clang}/\texttt{rustc}/\texttt{go}}. The catalogue additionally records
+cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{4 language pairs}
+(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$C++) with 13, 12, 6, and 1 classes
+respectively---\textbf{32 cells in total}---and is byte-reproducible per fresh
+process. When the host toolchain is present, \emph{all 32 cells confirm against
+real \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}}. The C$\to$C++
+pair is qualitatively distinct: its witness, the byte-identical token
+\texttt{1 << 31}, is \emph{undefined} in C (C17~6.5.7p4) yet \emph{defined} in
+C++20 (which mandates two's-complement and a modular shift,
+[expr.shift]/2)---so the divergence surface is the C/C++ language boundary
+itself, not a re-translation. The catalogue additionally records
 classes whose soundness frontier is \emph{honest abstention} rather than a value
 witness (unspecified evaluation order with side effects, use-after-free and
 null-dereference as memory-shape hazards), documented as the boundary of the
@@ -918,16 +929,18 @@ regression matrix (\texttt{src/ub\_oracle/regression\_matrix.py}):
     in CI (\texttt{make matrix-check}).
   \item \textbf{Ground-truth layer.} Each cell's Z3 witness is compiled and run
     against real \texttt{clang} (under \texttt{-fsanitize=undefined}), real
-    \texttt{rustc}, and real \texttt{go}; a cell is \emph{confirmed} only when
+    \texttt{rustc}, real \texttt{go}, and real \texttt{clang++}; a cell is
+    \emph{confirmed} only when
     the C side is observably under-determined (a sanitizer trap, or two
     conforming compilations that disagree) \emph{and} the safe target is
     deterministic and defined.
 \end{enumerate}
 
-Table~\ref{tab:matrix} reports the matrix. It spans \textbf{3 target languages}
-and \textbf{31 cells} (C$\to$Rust: 13 classes; C$\to$Go: 12; C$\to$Swift: 6,
-the argv-driven integer/memory core). On a host with the full toolchain,
-\textbf{all 31 cells confirm against real compilers}---no verdict is taken on
+Table~\ref{tab:matrix} reports the matrix. It spans \textbf{4 target languages}
+and \textbf{32 cells} (C$\to$Rust: 13 classes; C$\to$Go: 12; C$\to$Swift: 6,
+the argv-driven integer/memory core; C$\to$C++: 1, the C/C++-boundary shift
+class). On a host with the full toolchain,
+\textbf{all 32 cells confirm against real compilers}---no verdict is taken on
 faith. Crucially, the matrix file contains \emph{no per-language branches}: it
 discovers pairs and oracles from the plugin registry, so adding a target
 language or a divergence class makes the corresponding cells appear
@@ -938,27 +951,30 @@ automatically, and the soundness obligation is discharged uniformly.
 \small
 \caption{Cross-pair regression matrix coverage. ``D'' = a symbolic divergence
 witness is found and (with toolchain) confirmed against real compilers; ``--'' =
-class not yet implemented for that pair. All 31 implemented cells confirm.}
+class not implemented for that pair. All 32 implemented cells confirm. The
+C$\to$C++ column carries the single C/C++-boundary class whose witness
+(\texttt{1 << 31}) is UB in C but defined in C++20.}
 \label{tab:matrix}
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-Divergence class & C$\to$Rust & C$\to$Go & C$\to$Swift \\
+Divergence class & C$\to$Rust & C$\to$Go & C$\to$Swift & C$\to$C++ \\
 \midrule
-Signed overflow            & D & D & D \\
-Shift $\geq$ width          & D & D & D \\
-Division by zero           & D & D & D \\
-\texttt{INT\_MIN / -1}     & D & D & D \\
-Array out-of-bounds        & D & D & D \\
-Uninitialized read         & D & D & D \\
-Strict aliasing            & D & D & -- \\
-VLA bound                  & D & D & -- \\
-Float$\to$int overflow     & D & D & -- \\
-\texttt{-ffast-math} reassoc.& D & D & -- \\
-\texttt{restrict} violation & D & D & -- \\
-Pointer provenance         & D & D & -- \\
-FP contraction             & D & -- & -- \\
+Signed overflow            & D & D & D & -- \\
+Shift $\geq$ width          & D & D & D & -- \\
+Division by zero           & D & D & D & -- \\
+\texttt{INT\_MIN / -1}     & D & D & D & -- \\
+Array out-of-bounds        & D & D & D & -- \\
+Uninitialized read         & D & D & D & -- \\
+Strict aliasing            & D & D & -- & -- \\
+VLA bound                  & D & D & -- & -- \\
+Float$\to$int overflow     & D & D & -- & -- \\
+\texttt{-ffast-math} reassoc.& D & D & -- & -- \\
+\texttt{restrict} violation & D & D & -- & -- \\
+Pointer provenance         & D & D & -- & -- \\
+FP contraction             & D & -- & -- & -- \\
+\texttt{1 << 31} (C/C++)   & -- & -- & -- & D \\
 \midrule
-\textbf{Confirmed cells}   & \textbf{13} & \textbf{12} & \textbf{6} \\
+\textbf{Confirmed cells}   & \textbf{13} & \textbf{12} & \textbf{6} & \textbf{1} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -974,6 +990,45 @@ is total, exactly because the C undefined behavior is ``benign'' on the
 deployment platform and only the source-semantics oracle can see it. Every
 number in this subsection is regenerated from content-hashed real-compiler runs
 by the checked-in experiment scripts.
+
+\subsection{Optimization-Level Onset of Latent UB
+(RQ9)}\label{sec:eval-optsweep}
+
+The three \textsc{opt}-mode classes that \emph{no sanitizer can trap}---strict
+aliasing, \texttt{restrict} violation, and \texttt{-ffast-math}
+reassociation---share a subtle property: at \texttt{-O0} the program behaves
+exactly as a naive reader expects, and the hazard only materializes once the
+optimizer begins to \emph{rely} on the undefined or under-specified behaviour.
+The optimization-level sweep (\texttt{src/ub\_oracle/opt\_sweep.py}) makes this
+precise. For each such class it takes the oracle's own Z3-found witness,
+compiles the witnessing C source at \texttt{-O0,-O1,-O2,-O3} (keeping any
+class-specific licence flag, e.g.\ \texttt{-ffast-math}, fixed at every level),
+runs each build on the witness input, and reports the \emph{onset level}: the
+first level whose observable output diverges from the \texttt{-O0} baseline.
+Table~\ref{tab:optsweep} reports the result on real \texttt{clang}\,17: for all
+three classes the UB is latent at \texttt{-O0} and surfaces at \texttt{-O1},
+flipping the program's printed value. This is a reviewer-legible, reproducible
+demonstration that the divergence is a genuine consequence of standard,
+conforming optimization---not an artefact of any single build.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Optimization-level sweep on real \texttt{clang}\,17. Each cell is the
+program's observed stdout at that \texttt{-O} level; ``onset'' is the first level
+that diverges from the \texttt{-O0} baseline. All three no-sanitizer-traps
+classes are latent at \texttt{-O0} and surface at \texttt{-O1}.}
+\label{tab:optsweep}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Class & \texttt{-O0} & \texttt{-O1} & \texttt{-O2} & \texttt{-O3} & Onset \\
+\midrule
+Strict aliasing            & 0 & 1 & 1 & 1 & \texttt{-O1} \\
+\texttt{restrict} violation & 4 & 3 & 3 & 3 & \texttt{-O1} \\
+\texttt{-ffast-math} reassoc.& 0 & 1 & 1 & 1 & \texttt{-O1} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 %% ======================================================================
 \section{Related Work}\label{sec:related}

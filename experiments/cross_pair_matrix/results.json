@@ -3,6 +3,23 @@
   "cells": [
     {
       "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "signed_shift_sign_bit",
+      "divergence_witness": "`1 << 31` on a 32-bit signed int is undefined in C (C17 6.5.7p4: the value is not representable) and UBSan traps; the byte-identical token is *defined* in C++20 ([expr.shift]/2 mandates two's-complement modular shift) and deterministically yields -2147483648 on clang++ and g++. Compiling one source as C vs C++ diverges across the language boundary.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "258e467959f33679",
+      "target_defined_returncodes": [
+        0
+      ],
+      "target_lang": "cpp",
+      "target_sha16": "20e0f07104bba08f",
+      "verdict": "divergent",
+      "witness": {
+        "n": 31
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
       "divergence_class": "array_oob",
       "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Go bounds-checks and panics deterministically (a defined outcome).",
       "source_definedness": "undefined",
@@ -41,7 +58,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=-9980019905295580.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=9295311343239328.0, y=-1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=-1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -53,8 +70,8 @@
       "target_sha16": "7a91a217459e8a02",
       "verdict": "divergent",
       "witness": {
-        "x": -9980019905295580.0,
-        "y": 1.0
+        "x": 9295311343239328.0,
+        "y": -1.0
       }
     },
     {
@@ -259,7 +276,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=-9434306675244316.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=9042383627091964.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -271,7 +288,7 @@
       "target_sha16": "51821464be323c10",
       "verdict": "divergent",
       "witness": {
-        "x": -9434306675244316.0,
+        "x": 9042383627091964.0,
         "y": 1.0
       }
     },
@@ -296,7 +313,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fp_contraction",
-      "divergence_witness": "C `a*b + c` with a=-2.441571637338042, b=1.6382890126579919, c=3.9999999870683016 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "divergence_witness": "C `a*b + c` with a=36.856344103938405, b=14.024598037907108, c=-516.895411204993 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "994ef280de9c8299",
@@ -308,9 +325,9 @@
       "target_sha16": "7171facf9aec0f3f",
       "verdict": "divergent",
       "witness": {
-        "a": -2.441571637338042,
-        "b": 1.6382890126579919,
-        "c": 3.9999999870683016
+        "a": 36.856344103938405,
+        "b": 14.024598037907108,
+        "c": -516.895411204993
       }
     },
     {
@@ -572,6 +589,15 @@
   "coverage": [
     {
       "classes_covered": [
+        "signed_shift_sign_bit"
+      ],
+      "n_classes": 1,
+      "n_divergent": 1,
+      "source_lang": "c",
+      "target_lang": "cpp"
+    },
+    {
+      "classes_covered": [
         "array_oob",
         "div_by_zero",
         "fast_math_reassoc",
@@ -637,14 +663,16 @@
     "restrict_violation",
     "shift_oob",
     "signed_overflow",
+    "signed_shift_sign_bit",
     "strict_aliasing",
     "uninit_read",
     "vla_bound"
   ],
   "language_pairs": [
+    "c->cpp",
     "c->go",
     "c->rust",
     "c->swift"
   ],
-  "n_cells": 31
+  "n_cells": 32
 }

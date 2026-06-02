@@ -5461,3 +5461,116 @@ def test_strict_aliasing_go_confirmed_against_real_compilers():
     assert rr.c_runs["A"].stdout != rr.c_runs["B"].stdout, "-O0 vs -O2 must disagree"
     assert rr.rust_defined, "Go must be deterministic & defined"
     assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 117 — C -> C++ (defined-subset) language pair
+#   The byte-identical token `1 << 31` is UB in C but defined in C++20.
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import c_to_cpp as _cpp  # noqa: E402,F401
+from src.ub_oracle.target_semantics import PACKS as _PACKS  # noqa: E402
+
+
+def test_cpp_pack_is_a_fourth_registered_language_pair():
+    pairs = _plugin.language_pairs()
+    assert ("c", "cpp") in pairs
+    # the pack is data-driven: clang++/g++ candidates, .cpp suffix, value-only
+    # defined outcome (the witnessing construct does not abort).
+    pack = _PACKS["cpp"]
+    assert pack.compiler_candidates[0] in ("clang++", "g++", "c++")
+    assert pack.source_suffix == ".cpp"
+    assert pack.defined_returncodes == (0,)
+    assert "-std=c++20" in pack.compile_argv("clang++", "a.cpp", "a.out")
+
+
+def test_cpp_signed_shift_oracle_registered_trap_vs_defined():
+    orc = _plugin.get_oracle_for("signed_shift_sign_bit", "c", "cpp")
+    assert orc.source_lang == "c" and orc.target_lang == "cpp"
+    assert orc.confirmation_mode == "trap_vs_defined"
+    assert "signed_shift_sign_bit" in CATALOGUE
+    assert CATALOGUE["signed_shift_sign_bit"].is_ub_rooted()
+    assert CATALOGUE["signed_shift_sign_bit"].c_standard_ref == "C17 6.5.7p4"
+
+
+def test_cpp_witness_is_the_sign_bit_shift_and_honors_range():
+    orc = _plugin.get_oracle_for("signed_shift_sign_bit", "c", "cpp")
+    r32 = orc.find_divergence({"kind": "sign_bit_shift", "width": 32})
+    assert r32.verdict is _plugin.OracleVerdict.DIVERGENT
+    # least-extreme sign-bit shift for a 32-bit int is n = 31.
+    assert r32.counterexample.inputs["n"] == 31
+    assert "1 << 31" in r32.counterexample.divergence_witness
+    r64 = orc.find_divergence({"kind": "sign_bit_shift", "width": 64})
+    assert r64.counterexample.inputs["n"] == 63
+    # a declared range is honored by the Z3 search.
+    rr = orc.find_divergence(
+        {"kind": "sign_bit_shift", "width": 32, "shift_range": [31, 31]})
+    assert rr.counterexample.inputs["n"] == 31
+    # not applicable to a non-shift unit.
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+def test_cpp_source_and_target_are_byte_identical_tokens():
+    # The whole point of the C/C++ pair: the *same* shift expression text.
+    orc = _plugin.get_oracle_for("signed_shift_sign_bit", "c", "cpp")
+    ce = orc.find_divergence({"kind": "sign_bit_shift", "width": 32}).counterexample
+    assert "one << n" in ce.source_snippet
+    assert "one << n" in ce.target_snippet
+    assert ce.source_lang == "c" and ce.target_lang == "cpp"
+
+
+@pytest.mark.skipif(not _TC.full_for("cpp"),
+                    reason="needs C+UBSan+clang++/g++ toolchain")
+@pytest.mark.parametrize("width", [32, 64])
+def test_cpp_divergence_confirmed_against_real_clang_and_cpp(width):
+    orc = _plugin.get_oracle_for("signed_shift_sign_bit", "c", "cpp")
+    res = orc.confirm(
+        orc.find_divergence({"kind": "sign_bit_shift", "width": width}),
+        ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "trap_vs_defined"
+    assert rr.ub_reachable, "UBSan must trap `1 << (width-1)` in C"
+    assert rr.rust_defined, "C++20 must be defined & deterministic"
+    assert rr.confirmed and res.counterexample.confirmed
+    # the C++ defined value is the most-negative integer of that width.
+    assert rr.rust_run.stdout == str(-(1 << (width - 1)))
+
+
+# ---------------------------------------------------------------------------
+# Step 152 — optimization-level sweep: at which -O level does C UB surface?
+# ---------------------------------------------------------------------------
+from src.ub_oracle import opt_sweep as _sweep  # noqa: E402
+
+
+def test_opt_sweep_grid_is_deterministic_and_toolchain_free():
+    g = _sweep.sweep_grid()
+    assert g["levels"] == ["-O0", "-O1", "-O2", "-O3"]
+    # the opt-level-latent classes are exactly the optimizer-exploited ones.
+    assert set(g["classes"]) == {"strict_aliasing", "restrict_violation",
+                                 "fast_math_reassoc"}
+    assert g["n_cells"] == len(g["classes"]) * 4
+    # stable across calls (pure data).
+    assert _sweep.sweep_grid() == g
+
+
+def test_opt_sweep_base_flags_keep_the_licence_but_drop_levels():
+    orc = _plugin.get_oracle_for("fast_math_reassoc", "c", "rust")
+    base = _sweep._base_flags(orc)
+    # the fast-math licence flag is preserved; the -O level is not.
+    assert "-ffast-math" in base
+    assert not any(f.startswith("-O") for f in base)
+
+
+@pytest.mark.skipif(not _TC.c_available or not _TC.ubsan,
+                    reason="needs a real C compiler")
+def test_opt_sweep_surfaces_each_latent_ub_at_a_real_O_level():
+    rep = _sweep.sweep(ReexecHarness(_TC))
+    rows = {r["divergence_class"]: r for r in rep["rows"]}
+    # every opt-level-latent class flips its observable output once optimized:
+    # the -O0 build is "benign" and a higher level diverges from it.
+    for cls in ("strict_aliasing", "restrict_violation", "fast_math_reassoc"):
+        r = rows[cls]
+        assert r["available"], r["reason"]
+        assert r["onset_level"] in ("-O1", "-O2", "-O3"), r
+        assert r["outputs"]["-O0"] != r["outputs"][r["onset_level"]]
+    assert rep["n_with_onset"] == 3

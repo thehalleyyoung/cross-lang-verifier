@@ -59,10 +59,13 @@ python3 -m src.cli.main discover \
   out-of-bounds, strict aliasing (type-punning), floating-point contraction,
   **variable-length-array (VLA) bound**, **float→int out-of-range conversion**,
   **pointer-provenance / address-space-overflow arithmetic**, **`-ffast-math`
-  reassociation**, and **`restrict`-aliasing violation** (each confirmed against
-  real `clang`/`rustc`/`go`: the same input is C UB — UBSan-trapping, or a value
-  that flips across two conforming compilations no sanitizer can trap — while the
-  safe Rust *and* Go ports are defined and deterministic), plus an
+  reassociation**, **`restrict`-aliasing violation**, and **`1 << 31` (UB in C,
+  *defined* in C++20)** — the last proving the C/C++ boundary is itself a
+  divergence surface (each confirmed against real `clang`/`rustc`/`go`/`clang++`:
+  the same input is C UB — UBSan-trapping, or a value that flips across two
+  conforming compilations no sanitizer can trap, with a sweep pinning the exact
+  `-O` level the UB first surfaces — while the safe Rust *and* Go *and* C++ ports
+  are defined and deterministic), plus an
   **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on
   a real three-point definedness-lattice dataflow analysis that flags reads of
   slots never written on all paths and confirms them across C→Rust/Go/Swift

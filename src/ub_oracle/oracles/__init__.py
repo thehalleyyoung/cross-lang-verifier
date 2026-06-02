@@ -14,7 +14,8 @@ from . import fast_math  # noqa: F401  (registers -ffast-math reassociation C->R
 from . import restrict_alias  # noqa: F401  (registers restrict-violation C->Rust and C->Go)
 from . import pointer_provenance  # noqa: F401  (registers pointer-provenance C->Rust and C->Go)
 from . import target_pairs  # noqa: F401  (registers C->Go and C->Swift pairs)
+from . import c_to_cpp  # noqa: F401  (registers C->C++ defined-subset pair, step 117)
 from . import c_to_go  # noqa: F401  (back-compat shim exposing the Go oracles)
 
 __all__ = ["signed_overflow", "integer_ub", "memory_shape", "uninit_read",
-           "floating_point", "vla_bound", "target_pairs", "c_to_go"]
+           "floating_point", "vla_bound", "target_pairs", "c_to_go", "c_to_cpp"]

@@ -80,6 +80,12 @@ def _swift_argv(cc: str, src: str, out: str) -> List[str]:
     return [cc, "-O", "-o", out, src]
 
 
+def _cpp_argv(cc: str, src: str, out: str) -> List[str]:
+    # -O2 exercises the optimizer on the *target* too; -std=c++20 is what makes
+    # the otherwise-C-UB constructs (e.g. shifting a 1 into the sign bit) defined.
+    return [cc, "-std=c++20", "-O2", "-o", out, src]
+
+
 def _go_env(workdir: str) -> Dict[str, str]:
     # A single ``package main`` file builds standalone, but we still pin a
     # workdir-local cache + module mode so the build is hermetic and never
@@ -135,7 +141,23 @@ _SWIFT = TargetPack(
     },
 )
 
-PACKS: Dict[str, TargetPack] = {p.name: p for p in (_RUST, _GO, _SWIFT)}
+# C++ is the *defined-subset* target (100_STEPS step 117): the byte-identical
+# source token that is undefined in C can be well-defined under C++ rules. Only
+# a value is a defined outcome here (the witnessing construct does not abort).
+_CPP = TargetPack(
+    name="cpp",
+    compiler_candidates=("clang++", "g++", "c++"),
+    source_suffix=".cpp",
+    defined_returncodes=(0,),
+    compile_argv=_cpp_argv,
+    class_resolution={
+        "signed_shift_sign_bit": "C++20 mandates two's-complement and defines "
+                                 "`1 << 31` as INT_MIN by modular wraparound "
+                                 "([expr.shift]/2) — a defined value",
+    },
+)
+
+PACKS: Dict[str, TargetPack] = {p.name: p for p in (_RUST, _GO, _SWIFT, _CPP)}
 
 
 def get_pack(name: str) -> TargetPack:
