@@ -712,6 +712,7 @@ def test_default_units_are_well_formed():
 # ── GitHub Action: Translation Equivalence Guard (step 56) ───────────────────
 
 import os as _os  # noqa: E402
+import sys as _sys  # noqa: E402
 
 _REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 _ACTION_YML = _os.path.join(
@@ -1026,3 +1027,94 @@ def test_swift_value_vs_trap_resolutions_are_both_confirmed():
     dv = _plugin.get_oracle_for("div_by_zero", "c", "swift")
     rr2 = dv.confirm(dv.find_divergence(_swift_unit("div_by_zero")), harness).reexec
     assert rr2.confirmed and rr2.rust_run.returncode == -5
+
+
+# ── Step 40: cross-pair regression matrix (living evidence of generality) ────
+
+from src.ub_oracle import regression_matrix as _matrix
+
+
+def test_matrix_covers_every_registered_pair_and_class():
+    m = _matrix.build_matrix()
+    # one cell per registered oracle.
+    assert m["n_cells"] == len(_plugin.ALL_ORACLES)
+    pairs = {(c["source_lang"], c["target_lang"]) for c in m["cells"]}
+    assert pairs == set(_plugin.language_pairs())
+    assert {"c->rust", "c->go", "c->swift"} <= set(m["language_pairs"])
+
+
+def test_matrix_every_cell_is_divergent_symbolically():
+    m = _matrix.build_matrix()
+    for c in m["cells"]:
+        assert c["verdict"] == str(OracleVerdict.DIVERGENT), c
+    # coverage totals: every covered class in every pair is divergent.
+    for cov in m["coverage"]:
+        assert cov["n_divergent"] == cov["n_classes"] == len(cov["classes_covered"])
+
+
+def test_matrix_pair_coverage_is_honest_about_class_breadth():
+    m = _matrix.build_matrix()
+    cov = {(c["source_lang"], c["target_lang"]): c for c in m["coverage"]}
+    # the anchor implements the full catalogue of executable oracles; the
+    # generated pairs implement the five argv-driven integer/memory classes.
+    assert {"strict_aliasing", "fp_contraction"} <= set(cov[("c", "rust")]["classes_covered"])
+    for tgt in ("go", "swift"):
+        covered = set(cov[("c", tgt)]["classes_covered"])
+        assert {"signed_overflow", "shift_oob", "div_by_zero",
+                "intmin_div_neg1", "array_oob"} == covered
+
+
+def test_matrix_is_byte_reproducible_in_a_fresh_process():
+    # The matrix is byte-reproducible per *fresh* process (that is exactly the
+    # contract `make matrix-check` enforces in CI). We therefore verify it the
+    # same way: spawn a clean interpreter and assert the artifact regenerates
+    # identically. (Doing it in-process would be confounded by the SMT solver's
+    # per-process RNG, which other tests in this module have already advanced.)
+    import subprocess
+    from experiments.cross_pair_matrix.run import RESULTS_PATH
+    assert _os.path.exists(RESULTS_PATH), "run `make matrix` to materialise the artifact"
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    proc = subprocess.run(
+        [_sys.executable, "-m", "experiments.cross_pair_matrix.run", "--check"],
+        cwd=root, capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_matrix_records_pack_defined_returncodes_per_cell():
+    m = _matrix.build_matrix()
+    by_tgt = {}
+    for c in m["cells"]:
+        by_tgt.setdefault(c["target_lang"], set()).add(tuple(c["target_defined_returncodes"]))
+    assert by_tgt["rust"] == {(0, 101)}
+    assert by_tgt["go"] == {(0, 2)}
+    assert by_tgt["swift"] == {(0, -5)}
+
+
+def test_matrix_render_table_is_a_grid_over_pairs_and_classes():
+    table = _matrix.render_table()
+    assert "c->rust" in table and "c->go" in table and "c->swift" in table
+    assert "signed_overflow" in table and "fp_contraction" in table
+    # a class not implemented for a pair is shown as '-', not a false 'D'.
+    assert "-" in table and "D" in table
+
+
+def test_matrix_confirm_marks_unavailable_pairs_skipped_not_dropped():
+    # a host with no compilers must still account for *every* cell, as skipped.
+    class _Dead:
+        def full_for(self, _t):
+            return False
+    class _Harness:
+        status = _Dead()
+    conf = _matrix.confirm_matrix(_Harness())
+    assert conf["n_cells"] == len(_plugin.ALL_ORACLES)
+    assert conf["n_attempted"] == 0
+    assert all(c["skipped"] for c in conf["cells"])
+
+
+@_requires_swift
+def test_matrix_confirm_runs_every_cell_against_real_compilers():
+    # the full matrix, end-to-end, against real clang+UBSan + rustc + go + swiftc.
+    conf = _matrix.confirm_matrix(ReexecHarness(_TC))
+    assert conf["n_attempted"] == len(_plugin.ALL_ORACLES)
+    assert conf["all_attempted_confirmed"], \
+        [c for c in conf["cells"] if not c.get("confirmed")]

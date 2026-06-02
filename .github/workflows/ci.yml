@@ -32,5 +32,8 @@ jobs:
       - name: Reproduce trusted results byte-identically
         run: make reproduce-check PYTHON=python
 
+      - name: Cross-pair regression matrix reproduces byte-identically
+        run: make matrix-check PYTHON=python
+
       - name: ub_oracle test suite (incl. real-compiler confirmation)
         run: python -m pytest tests/test_ub_oracle.py -q

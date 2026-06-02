@@ -1,0 +1,378 @@
+{
+  "artifact": "cross_pair_regression_matrix",
+  "cells": [
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "array_oob",
+      "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Go bounds-checks and panics deterministically (a defined outcome).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "37d6391e15b84210",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "b06335733e043004",
+      "verdict": "divergent",
+      "witness": {
+        "i": 4
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "div_by_zero",
+      "divergence_witness": "C `a / b` with b=0 is UB; Go panics deterministically at runtime (a defined, observable outcome).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "7e4ad80626258247",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 0
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "C `a / b` with a=-2147483648, b=-1 overflows signed division (UB); Go defines x/-1 == x for the most-negative x.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "7e4ad80626258247",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "shift_oob",
+      "divergence_witness": "C `x << s` with s=32 >= width 32 is UB; Go masks/widens the count and yields a defined value (0).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "684eb86382df63ff",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "de779068628cdc4c",
+      "verdict": "divergent",
+      "witness": {
+        "s": 32,
+        "x": 1
+      }
+    },
+    {
+      "confirmation_mode": "exploited",
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=1073741824 (UB; optimiser may assume `x + 2147483647 > x` always holds), whereas Go's `x + 2147483647` wraps deterministically to a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "731ca036bd1ff713",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "d090042a56057063",
+      "verdict": "divergent",
+      "witness": {
+        "x": 1073741824
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "array_oob",
+      "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Rust bounds-checks and panics deterministically (defined).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "37d6391e15b84210",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "5ed83978a8575119",
+      "verdict": "divergent",
+      "witness": {
+        "i": 4
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "div_by_zero",
+      "divergence_witness": "C `a / b` with b=0 is UB; Rust panics deterministically (a defined, observable outcome).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "4050cf3fa9d6dead",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 0
+      }
+    },
+    {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "fp_contraction",
+      "divergence_witness": "C `a*b + c` with a=-497.63157636995805, b=1.8695501249788824, c=930.3471757964197 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "source_definedness": "unspecified",
+      "source_lang": "c",
+      "source_sha16": "994ef280de9c8299",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "7171facf9aec0f3f",
+      "verdict": "divergent",
+      "witness": {
+        "a": -497.63157636995805,
+        "b": 1.8695501249788824,
+        "c": 930.3471757964197
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "C `a / b` with a=-2147483648, b=-1 overflows signed division (UB); Rust panics deterministically (defined).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "4050cf3fa9d6dead",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "shift_oob",
+      "divergence_witness": "C `x << s` with s=32 >= width 32 is UB; Rust `wrapping_shl` masks the amount and returns a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "684eb86382df63ff",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "ac6f7ff5baba5cc0",
+      "verdict": "divergent",
+      "witness": {
+        "s": 32,
+        "x": 1
+      }
+    },
+    {
+      "confirmation_mode": "exploited",
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=1073741824 (UB); the optimizer may assume `x + 2147483647 > x` is always true, whereas the wrapping Rust translation evaluates it on the real wrapped value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "731ca036bd1ff713",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "f506d8f9ddf80179",
+      "verdict": "divergent",
+      "witness": {
+        "x": 1073741824
+      }
+    },
+    {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "strict_aliasing",
+      "divergence_witness": "C punning int*/long* over the same storage (A=1, B=0) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 1. Rust's translation is a single defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "a55c7125eef1c041",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "be28aae0acd28951",
+      "verdict": "divergent",
+      "witness": {}
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "array_oob",
+      "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Swift bounds-checks and traps deterministically (a defined outcome).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "37d6391e15b84210",
+      "target_defined_returncodes": [
+        0,
+        -5
+      ],
+      "target_lang": "swift",
+      "target_sha16": "ca1d769738cec3f5",
+      "verdict": "divergent",
+      "witness": {
+        "i": 4
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "div_by_zero",
+      "divergence_witness": "C `a / b` with b=0 is UB; Swift traps deterministically at runtime (a defined, observable abort).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        -5
+      ],
+      "target_lang": "swift",
+      "target_sha16": "b83f55715f3b0d0d",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 0
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "C `a / b` with a=-2147483648, b=-1 overflows signed division (UB); Swift traps deterministically on the overflow.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        -5
+      ],
+      "target_lang": "swift",
+      "target_sha16": "b83f55715f3b0d0d",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "shift_oob",
+      "divergence_witness": "C `x << s` with s=32 >= width 32 is UB; Swift's smart shift `<<` is defined for any amount and yields 0.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "684eb86382df63ff",
+      "target_defined_returncodes": [
+        0,
+        -5
+      ],
+      "target_lang": "swift",
+      "target_sha16": "cd9efd80962dcec7",
+      "verdict": "divergent",
+      "witness": {
+        "s": 32,
+        "x": 1
+      }
+    },
+    {
+      "confirmation_mode": "exploited",
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=1073741824 (UB; optimiser may assume `x + 2147483647 > x` always holds), whereas Swift's `&+` wrapping operator gives a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "731ca036bd1ff713",
+      "target_defined_returncodes": [
+        0,
+        -5
+      ],
+      "target_lang": "swift",
+      "target_sha16": "464195d2d0708462",
+      "verdict": "divergent",
+      "witness": {
+        "x": 1073741824
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "classes_covered": [
+        "array_oob",
+        "div_by_zero",
+        "intmin_div_neg1",
+        "shift_oob",
+        "signed_overflow"
+      ],
+      "n_classes": 5,
+      "n_divergent": 5,
+      "source_lang": "c",
+      "target_lang": "go"
+    },
+    {
+      "classes_covered": [
+        "array_oob",
+        "div_by_zero",
+        "fp_contraction",
+        "intmin_div_neg1",
+        "shift_oob",
+        "signed_overflow",
+        "strict_aliasing"
+      ],
+      "n_classes": 7,
+      "n_divergent": 7,
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "classes_covered": [
+        "array_oob",
+        "div_by_zero",
+        "intmin_div_neg1",
+        "shift_oob",
+        "signed_overflow"
+      ],
+      "n_classes": 5,
+      "n_divergent": 5,
+      "source_lang": "c",
+      "target_lang": "swift"
+    }
+  ],
+  "divergence_classes": [
+    "array_oob",
+    "div_by_zero",
+    "fp_contraction",
+    "intmin_div_neg1",
+    "shift_oob",
+    "signed_overflow",
+    "strict_aliasing"
+  ],
+  "language_pairs": [
+    "c->go",
+    "c->rust",
+    "c->swift"
+  ],
+  "n_cells": 17
+}

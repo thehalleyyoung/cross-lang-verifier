@@ -32,3 +32,4 @@ __pycache__/
 
 # Environment-dependent confirmation artifact (real-compiler runs)
 experiments/ub_divergence/confirmations.json
+experiments/cross_pair_matrix/confirmations.json

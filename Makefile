@@ -5,16 +5,19 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check guard test-ub ci
+.PHONY: help reproduce reproduce-confirm reproduce-check guard test-ub ci matrix matrix-confirm matrix-check
 
 help:
 	@echo "Targets:"
 	@echo "  reproduce         regenerate trusted results (deterministic, no toolchain)"
 	@echo "  reproduce-confirm regenerate + confirm against real C/Rust compilers"
 	@echo "  reproduce-check   assert results regenerate byte-identically"
+	@echo "  matrix            regenerate the cross-pair regression matrix (deterministic)"
+	@echo "  matrix-confirm    regenerate matrix + confirm every cell against real compilers"
+	@echo "  matrix-check      assert the cross-pair matrix regenerates byte-identically"
 	@echo "  guard             run the credibility guard (no simulated results)"
 	@echo "  test-ub           run the ub_oracle test suite only"
-	@echo "  ci                guard + reproduce-check + test-ub"
+	@echo "  ci                guard + reproduce-check + matrix-check + test-ub"
 
 reproduce:
 	$(PYTHON) -m experiments.ub_divergence.run
@@ -25,11 +28,20 @@ reproduce-confirm:
 reproduce-check:
 	$(PYTHON) -m experiments.ub_divergence.run --check
 
+matrix:
+	$(PYTHON) -m experiments.cross_pair_matrix.run --table
+
+matrix-confirm:
+	$(PYTHON) -m experiments.cross_pair_matrix.run --confirm
+
+matrix-check:
+	$(PYTHON) -m experiments.cross_pair_matrix.run --check
+
 guard:
 	bash scripts/check_no_simulated_results.sh
 
 test-ub:
 	$(PYTHON) -m pytest tests/test_ub_oracle.py -q
 
-ci: guard reproduce-check test-ub
+ci: guard reproduce-check matrix-check test-ub
 	@echo "ci: PASSED"
