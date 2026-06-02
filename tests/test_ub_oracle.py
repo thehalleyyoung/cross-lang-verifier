@@ -4423,3 +4423,56 @@ def test_translation_validation_witness_replays_against_fresh_compilation():
     # determinism: a second replay reproduces the identical observable
     again = vr.witness.replay()
     assert again is not None and again.__dict__ == fresh.__dict__
+
+# --------------------------------------------------------------------------- #
+# Step 88 — generalization study (across pairs AND producer styles).
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import generalization as _gen  # noqa: E402
+
+_full_swift = _TC.full_for("swift") if hasattr(_TC, "full_for") else False
+
+
+def test_generalization_grid_constants_and_source_generation():
+    assert set(_gen.TARGETS) == {"rust", "go", "swift"}
+    assert set(_gen.STYLES) == {"direct", "helper", "verbose"}
+    assert "div_by_zero" in _gen.CLASSES and "oversized_shift" in _gen.CLASSES
+    # every (target, class, style) generates a non-trivial, distinct source
+    seen = set()
+    for t in _gen.TARGETS:
+        for k in _gen.CLASSES:
+            srcs = {_gen.target_source(t, k, st) for st in _gen.STYLES}
+            assert len(srcs) == len(_gen.STYLES)  # styles are genuinely distinct
+            seen |= srcs
+    import pytest as _pt
+    with _pt.raises(ValueError):
+        _gen.target_source("kotlin", "div_by_zero", "direct")
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go or _full_swift),
+                    reason="no full C+target toolchain available")
+def test_generalization_result_is_invariant_across_pairs_and_producers():
+    avail = tuple(t for t, ok in (("rust", _full_rust), ("go", _full_go),
+                                  ("swift", _full_swift)) if ok)
+    conf = _gen.confirm_generalization(targets=avail)
+    assert conf.available and conf.ok, conf.detail
+    assert conf.invariant_across_pairs and conf.invariant_across_styles
+    # every grid cell: all UB inputs detected, zero false positives on safe inputs
+    for c in conf.report.cells:
+        assert c.uniform_ok, (c.target, c.style, c.klass,
+                              c.n_ub_detected, c.n_ub, c.n_safe_flagged)
+        assert c.detection_rate == 1.0 and c.fp_rate == 0.0
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go),
+                    reason="need >=2 pairs to demonstrate breadth")
+def test_generalization_demonstrates_multi_pair_breadth_and_stable_hash():
+    avail = tuple(t for t, ok in (("rust", _full_rust), ("go", _full_go),
+                                  ("swift", _full_swift)) if ok)
+    r1 = _gen.run_generalization(targets=avail)
+    r2 = _gen.run_generalization(targets=avail)
+    assert len(r1.available_targets) >= 2
+    # the per-cell verdict layer is content-hashed -> reproducible across runs
+    assert r1.content_hash == r2.content_hash and r1.content_hash
+    # aggregates confirm each pair independently catches every UB input
+    for pair, (d, u, f, s) in r1.by_pair().items():
+        assert d == u and f == 0, (pair, d, u, f, s)

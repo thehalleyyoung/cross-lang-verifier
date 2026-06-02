@@ -293,6 +293,12 @@ python3 -m src.cli.main discover \
   a **re-executable counterexample witness** (carrying both source texts + the
   input) whose `replay()` recompiles both sides from scratch — proven on real
   code to replay to the same divergence (witness soundness) and deterministically
+- a **generalization study** (`generalization.py`): the real oracle run over a
+  grid of (language pair `rust`/`go`/`swift`) × (producer style `direct`/`helper`/
+  `verbose`) × (divergence class) × (input), proving the divergence result is
+  **invariant across every cell** — detection rate 1.0 on UB inputs and zero
+  false positives on safe inputs for every pair and style — so the result is not
+  an artefact of one pair, one transpiler, or one input distribution
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
