@@ -4684,3 +4684,42 @@ def test_transpiler_recipes_confirmation_all_reference_pairs():
     assert conf.available and conf.ok, conf.detail
     assert conf.n_reference_pairs == 3
     assert set(conf.external_recipes) == {"c2rust", "llm-transpiler"}
+
+
+from src.ub_oracle import playground as _pg  # noqa: E402
+
+
+def test_playground_page_renders_and_lists_every_pair():
+    page = _pg.render_page()
+    assert "<form" not in page or "playground" in page  # sanity
+    for n in _pg.target_names():
+        assert f">{n}<" in page, n
+    assert "/api/verify" in page
+
+
+def test_playground_rejects_unknown_target_without_fabrication():
+    v = _pg.evaluate("int main(){return 0;}", "fn main(){}", ["1"],
+                     "division_by_zero", "klingon")
+    assert not v.available and not v.diverged
+    assert "klingon" in v.reason
+
+
+@pytest.mark.skipif(not _full_rust, reason="need C+UBSan+rustc for the oracle")
+def test_playground_evaluate_flags_real_divergence():
+    c = ("#include <stdio.h>\n#include <stdlib.h>\n"
+         "int main(int argc,char**argv){int a=atoi(argv[1]);int b=atoi(argv[2]);"
+         'printf("%d\\n",a/b);return 0;}\n')
+    t = ("use std::env;\nfn main(){let a:i32=env::args().nth(1).unwrap()"
+         ".parse().unwrap();let b:i32=env::args().nth(2).unwrap().parse()"
+         '.unwrap();println!("{}",a/b);}\n')
+    ub = _pg.evaluate(c, t, ["10", "0"], "division_by_zero", "rust")
+    safe = _pg.evaluate(c, t, ["10", "2"], "division_by_zero", "rust")
+    assert ub.available and ub.diverged, ub.summary
+    assert safe.available and not safe.diverged, safe.summary
+    assert ub.to_json()["diverged"] is True
+
+
+@pytest.mark.skipif(not _full_rust, reason="need rust to drive the HTTP endpoint")
+def test_playground_http_endpoint_end_to_end():
+    conf = _pg.confirm_playground()
+    assert conf.available and conf.ok, conf.detail

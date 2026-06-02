@@ -677,6 +677,17 @@ def _thm_transpiler_recipes() -> bool:
     return bool(conf.ok)
 
 
+def _thm_playground() -> bool:
+    # The interactive web playground is backed by the LIVE oracle, not a mock:
+    # a real HTTP server, driven over a real socket, flags a div-by-zero
+    # translation on the UB input and stays silent on a safe input, and the
+    # rendered page advertises every supported language pair. Consistency-only
+    # when no Rust toolchain is present.
+    from . import playground as pg
+    conf = pg.confirm_playground()
+    return bool(conf.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1392,6 +1403,26 @@ CLAIMS: List[Claim] = [
         ("confirm_transpiler_recipes", "verify_transpiled", "RECIPES"),
         theorem=_thm_transpiler_recipes,
         docs=("README.md", "docs/TRANSPILER_RECIPES.md"),
+    ),
+    claim(
+        "C45-web-playground",
+        "An **interactive web playground** (`ub_oracle.playground`) is the public "
+        "*try-it* surface — *paste C + its translation, get a divergence verdict "
+        "and the witness in the browser* — and it is backed by the **live "
+        "oracle**, not a mock. A dependency-free `http.server` exposes "
+        "`GET /` (a form whose language-pair dropdown advertises every supported "
+        "target) and `POST /api/verify`, whose handler `evaluate(...)` actually "
+        "compiles and runs both programs via `confirm_trap_vs_defined`; when the "
+        "chosen target's toolchain is absent it answers an honest "
+        "`available=false` (never fabricated). The machine-checked claim drives "
+        "the **real server over a real socket**: a div-by-zero translation is "
+        "flagged on the UB input `[\"10\",\"0\"]` and stays silent on the safe "
+        "input `[\"10\",\"2\"]`, and the rendered page advertises rust/go/swift — "
+        "end to end through the network stack (clang/UBSan + rustc).",
+        "ub_oracle.playground",
+        ("confirm_playground", "evaluate", "make_server"),
+        theorem=_thm_playground,
+        docs=("README.md", "docs/PLAYGROUND.md"),
     ),
 ]
 

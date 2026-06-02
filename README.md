@@ -335,6 +335,13 @@ python3 -m src.cli.main discover \
   pair the translate→verify step flags a div-by-zero divergence on the UB input
   and stays silent on a safe one, proving the recipe preserves the oracle's
   guarantees end to end
+- an **interactive web playground** (`playground.py`, `docs/PLAYGROUND.md`):
+  *paste C + its translation → get a divergence verdict and the witness in the
+  browser*. A dependency-free `http.server` serves a form (whose language-pair
+  dropdown advertises every supported target) and a `/api/verify` endpoint that
+  runs the **live oracle** on the paste — no mock; an absent toolchain answers an
+  honest `available=false`. Proven end to end through a real socket: a div-by-zero
+  translation is flagged on the UB input and silent on a safe one
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
