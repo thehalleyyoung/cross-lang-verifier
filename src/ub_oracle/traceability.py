@@ -431,6 +431,24 @@ def _thm_frontend_fuzz_hardened() -> bool:
     return rep.ok and rep.compiled >= 15
 
 
+def _thm_conformance_green() -> bool:
+    # The curated per-language conformance corpus must lower every applicable
+    # construct to its exact expected facts (clang AST signatures/storage; rustc
+    # MIR ownership). Absent both compilers there is nothing applicable to check,
+    # so the corpus must at least be non-empty and well-formed.
+    from . import conformance as cf
+    if len(cf.ALL_CASES) < 12:
+        return False
+    for c in cf.ALL_CASES:
+        if c.lang not in ("c", "rust") or not c.expected or not c.source:
+            return False
+    conf = cf.confirm_conformance()
+    import os as _os9
+    if not (_os9.path.exists(cf.CLANG) or _os9.path.exists(cf.RUSTC)):
+        return True
+    return conf.ok and conf.passed == conf.applicable
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -814,6 +832,24 @@ CLAIMS: List[Claim] = [
         ("fuzz_clang_frontend", "confirm_fuzz", "generate_program",
          "GARBAGE_INPUTS", "FuzzReport"),
         theorem=_thm_frontend_fuzz_hardened,
+        docs=("README.md",),
+    ),
+    claim(
+        "C29-conformance",
+        "A curated per-language conformance corpus gates the frontends: each case "
+        "pairs a real construct with its exact expected lowering and is checked "
+        "against the real compiler. The C cases pin clang-AST facts — a `typedef`'d "
+        "return type is preserved, an array parameter `int a[10]` decays to "
+        "`int *`, a function-pointer parameter reconstructs to `int (*)(int)`, a "
+        "`const int *` keeps its qualifier, `unsigned` canonicalises to "
+        "`unsigned int`, and `static` linkage is read from the AST. The Rust cases "
+        "pin rustc-MIR ownership — a by-value `Vec`/`Box`/`String` is moved while a "
+        "reference or `Copy` scalar is not. The whole applicable suite is green, so "
+        "any regression in how a construct lowers turns a case red.",
+        "ub_oracle.conformance",
+        ("run_conformance", "confirm_conformance", "ALL_CASES",
+         "ConformanceCase", "CaseResult"),
+        theorem=_thm_conformance_green,
         docs=("README.md",),
     ),
 ]

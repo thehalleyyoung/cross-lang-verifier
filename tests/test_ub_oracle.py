@@ -3873,3 +3873,45 @@ def test_fuzz_confirm_survives_a_sizeable_run():
     c = _ff.confirm_fuzz(iterations=40, seed=0x1234)
     assert c.available and c.ok
     assert c.report.compiled >= 20
+
+
+# ---------------------------------------------------------------------------
+# Step 38 — per-language frontend conformance suite (merge gate).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import conformance as _conf  # noqa: E402
+
+_clang_for_conf = pytest.mark.skipif(
+    not _os.path.exists(_conf.CLANG), reason="clang not available")
+_rustc_for_conf = pytest.mark.skipif(
+    not _os.path.exists(_conf.RUSTC), reason="rustc not available")
+
+
+def test_conf_corpus_is_nonempty_and_well_formed():
+    assert len(_conf.ALL_CASES) >= 12
+    for c in _conf.ALL_CASES:
+        assert c.lang in ("c", "rust") and c.expected and c.source
+
+
+@_clang_for_conf
+def test_conf_c_constructs_lower_as_expected():
+    res = {r.case_id: r for r in _conf.run_conformance(_conf.C_CASES)}
+    for cid in ("c-array-decay-param", "c-function-pointer-param",
+                "c-static-storage", "c-typedef-ret"):
+        r = res[cid]
+        assert r.applicable and r.passed, r.mismatches
+
+
+@_rustc_for_conf
+def test_conf_rust_ownership_constructs_lower_as_expected():
+    res = {r.case_id: r for r in _conf.run_conformance(_conf.RUST_CASES)}
+    assert res["rust-vec-byval-moved"].passed
+    assert res["rust-vec-ref-not-moved"].passed
+    assert res["rust-copy-scalar-not-moved"].passed
+
+
+def test_conf_full_applicable_suite_is_green():
+    c = _conf.confirm_conformance()
+    assert c.applicable >= 1
+    assert c.ok
+    assert c.passed == c.applicable

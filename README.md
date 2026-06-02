@@ -226,6 +226,12 @@ python3 -m src.cli.main discover \
   class must match exactly. Dozens of programs survive each fixed-seed run with
   zero parse-divergences and zero crashes, and malformed input returns `None`
   rather than raising
+- a **per-language conformance suite** (`conformance.py`): a curated regression
+  corpus pairing real C/Rust constructs with their exact expected lowerings —
+  array-decay, function-pointer params, typedef/enum/struct-tag preservation and
+  `static` linkage on the C side; by-value `Vec`/`Box`/`String` *moves* vs
+  reference/`Copy` non-moves on the Rust side — checked against the real
+  compilers so any drift in how a construct lowers turns a case red
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
