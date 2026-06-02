@@ -4594,3 +4594,43 @@ def test_idiomatic_corpus_hash_is_reproducible():
     # the midpoint-overflow item is the headline real-world divergence.
     mids = [v for v in r1.verdicts if v.item_id == "midpoint-overflow"]
     assert mids and all(v.ub_confirmed and not v.safe_confirmed for v in mids)
+
+
+from src.ub_oracle import multipair_corpus as _mpc  # noqa: E402
+
+
+def test_multipair_corpus_translates_every_function_to_three_targets():
+    for fn in _mpc.CORPUS:
+        assert set(fn.targets.keys()) == {"rust", "go", "swift"}, fn.func_id
+        assert fn.provenance and len(fn.provenance) > 15
+    labels = {fn.declared_label for fn in _mpc.CORPUS}
+    assert labels == {"divergent", "equivalent"}
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go and _full_swift),
+                    reason="need rust+go+swift for the multi-pair corpus")
+def test_multipair_corpus_cross_pair_invariant_holds_on_real_code():
+    conf = _mpc.confirm_multipair_corpus()
+    assert conf.available and conf.ok, conf.detail
+    assert conf.n_pairs == 3
+    assert conf.cross_pair_invariant
+    # a divergent function must be flagged on EVERY pair; equivalent on none.
+    for func_id, vs in conf.report.by_function().items():
+        label = vs[0].declared_label
+        if label == "divergent":
+            assert all(v.ub_flagged and not v.safe_flagged for v in vs), func_id
+        else:
+            assert all(not v.ub_flagged and not v.safe_flagged for v in vs), func_id
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go and _full_swift),
+                    reason="need 3 pairs for hash stability + breadth")
+def test_multipair_corpus_hash_reproducible_and_three_pairs():
+    r1 = _mpc.run_corpus()
+    r2 = _mpc.run_corpus()
+    assert r1.content_hash == r2.content_hash and r1.content_hash
+    assert len(r1.langs) == 3
+    # midpoint signed-overflow divergence reproduces across all three targets
+    mids = r1.by_function()["midpoint"]
+    assert {v.lang for v in mids} == {"rust", "go", "swift"}
+    assert all(v.ub_flagged for v in mids)

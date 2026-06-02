@@ -320,6 +320,11 @@ python3 -m src.cli.main discover \
   and their equivalent idiomatic fixes (64-bit-widened average, byte clamp,
   additive checksum) — on which the oracle is exactly right across rust and go:
   every divergent port flagged, every equivalent port left silent
+- a **Tier-3 multi-pair corpus** (`multipair_corpus.py`): each real C function
+  translated to **all three** targets (Rust/Go/Swift) in transpiler/LLM style,
+  proving **cross-pair invariance** — a UB-rooted divergence is flagged on every
+  pair (it's a property of the source UB, not one target's quirks) and an
+  equivalent function on none (15 function×pair verdicts, all correct)
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

@@ -652,6 +652,19 @@ def _thm_idiomatic_corpus() -> bool:
                 and conf.n_langs >= 2 and conf.hash_stable)
 
 
+def _thm_multipair_corpus() -> bool:
+    # Multi-pair generality: every real function's UB-rooted divergence is
+    # flagged on EVERY target pair and every equivalent function on none, with a
+    # content-hash-stable verdict layer and >=2 pairs. Consistency-only when no
+    # toolchain is present.
+    from . import multipair_corpus as mpc
+    conf = mpc.confirm_multipair_corpus()
+    if not conf.available:
+        return True
+    return bool(conf.ok and conf.cross_pair_invariant and conf.hash_stable
+                and conf.n_pairs >= 2)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1326,6 +1339,25 @@ CLAIMS: List[Claim] = [
         "ub_oracle.idiomatic_corpus",
         ("confirm_idiomatic_corpus", "run_corpus", "CORPUS"),
         theorem=_thm_idiomatic_corpus,
+        docs=("README.md",),
+    ),
+    claim(
+        "C43-multipair-corpus",
+        "A **Tier-3 multi-pair corpus** stresses generality across **every** "
+        "supported language pair at once: each real C function is translated to "
+        "**all three** targets (`rust`, `go`, `swift`) in the varied style a "
+        "transpiler / LLM emits, and the oracle is run on every available pair. "
+        "The machine-checked claim is **cross-pair invariance of the verdict** — "
+        "a divergent function (midpoint signed-overflow, rate div-by-zero, "
+        "bit-field oversized shift) is flagged on **every** pair (the divergence "
+        "is a property of the source UB, not of one target's quirks), while an "
+        "equivalent function (clamp, additive checksum) is flagged on **none**. "
+        "Verified live against clang/UBSan + rustc/go/swiftc: 15 (function × "
+        "pair) verdicts, cross-pair invariant holds, every verdict correct, and "
+        "the verdict layer is content-hash-stable across runs.",
+        "ub_oracle.multipair_corpus",
+        ("confirm_multipair_corpus", "run_corpus", "CORPUS"),
+        theorem=_thm_multipair_corpus,
         docs=("README.md",),
     ),
 ]
