@@ -3581,3 +3581,54 @@ def test_indirect_decoy_function_is_never_an_observed_target():
     c = _ic.confirm_table_dispatch(_ic.EXAMPLE_DISPATCH, "table")
     assert "log_msg" not in c.observed
     assert "main" not in c.observed
+
+
+# ---------------------------------------------------------------------------
+# Step 26 — real C preprocessing (clang -E): macros, conditionals, includes.
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import preprocess as _pp  # noqa: E402
+
+_clang_for_pp = pytest.mark.skipif(
+    not _os.path.exists(_pp.CC), reason="clang not available")
+
+
+def test_preprocess_detects_unparenthesized_macro_hazard():
+    haz = _pp.detect_unparenthesized_macros("#define MUL(a,b) a*b\n")
+    assert [h.name for h in haz] == ["MUL"]
+    # the fully-parenthesized form is NOT a hazard.
+    assert _pp.detect_unparenthesized_macros("#define MUL(a,b) ((a)*(b))\n") == []
+    # object-like macros and single-token wrappers are not flagged.
+    assert _pp.detect_unparenthesized_macros("#define N 10\n") == []
+    assert _pp.detect_unparenthesized_macros("#define ID(x) (x)\n") == []
+
+
+@_clang_for_pp
+def test_preprocess_expands_with_real_clang():
+    out = _pp.preprocess("#define MUL(a,b) a*b\nint v(){return MUL(1+1,2);}\n")
+    assert out is not None
+    assert "1+1*2" in out.replace(" ", "") or "1+1*2" in out
+
+
+@_clang_for_pp
+def test_preprocess_macro_is_semantically_load_bearing():
+    c = _pp.confirm_macro_precedence_hazard()
+    assert c.available and c.ok
+    # the precedence pitfall: unparenthesized macro yields 3, parenthesized 4.
+    assert c.hazard_value == 3
+    assert c.safe_value == 4
+    assert c.detected_hazard
+
+
+@_clang_for_pp
+def test_preprocess_conditional_selects_the_program():
+    c = _pp.confirm_conditional_compilation()
+    assert c.available and c.ok
+    assert c.without == 0 and c.with_feature == 1
+
+
+@_clang_for_pp
+def test_preprocess_include_resolution_works():
+    c = _pp.confirm_include_resolution()
+    assert c.available and c.ok
+    assert c.symbol_present and c.value == 42

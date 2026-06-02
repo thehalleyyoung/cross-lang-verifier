@@ -185,6 +185,12 @@ python3 -m src.cli.main discover \
   decoys. The resolution is **proven exact against real execution** — an
   instrumented build is compiled and run, and the functions actually reached
   through the table equal the predicted set (never escaping it)
+- a **real-preprocessing front door** (`preprocess.py`) — analysis runs only after
+  `clang -E`, because a C program's meaning is fixed only post-preprocessing. It
+  proves three load-bearing facts on real binaries: an unparenthesized
+  function-like macro is **semantically load-bearing** (`MUL(1+1,2)` → `1+1*2` → 3
+  vs the parenthesized 4, and the hazardous macro is detected up front), `#ifdef`
+  conditionals **select the program**, and `#include` symbols **resolve**
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

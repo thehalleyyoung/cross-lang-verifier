@@ -314,6 +314,25 @@ def _thm_indirect_resolution_sound() -> bool:
     return bool(c.ok and c.exact and "log_msg" not in c.observed)
 
 
+def _thm_preprocess_real() -> bool:
+    # The hazardous-macro detector must flag an unparenthesized function-like
+    # macro and not a safe one; where clang is present, real preprocessing +
+    # execution must show the macro is load-bearing (3 vs 4), conditionals select
+    # the program, and includes resolve.
+    from . import preprocess as pp
+    if [h.name for h in pp.detect_unparenthesized_macros(
+            "#define MUL(a,b) a*b\n")] != ["MUL"]:
+        return False
+    if pp.detect_unparenthesized_macros("#define MUL(a,b) ((a)*(b))\n") != []:
+        return False
+    import os as _os4
+    if not _os4.path.exists(pp.CC):
+        return True
+    return bool(pp.confirm_macro_precedence_hazard().ok
+                and pp.confirm_conditional_compilation().ok
+                and pp.confirm_include_resolution().ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -587,6 +606,25 @@ CLAIMS: List[Claim] = [
         ("parse_unit", "resolve_table_call", "signature_compatible_targets",
          "confirm_table_dispatch", "table_is_well_typed"),
         theorem=_thm_indirect_resolution_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C23-real-preprocessing",
+        "Source is analysed only after the **real** C preprocessor runs, because "
+        "a C program's meaning is fixed only post-preprocessing. Using `clang -E`, "
+        "three load-bearing facts are proven against compiled, executed code: (1) "
+        "macros are semantically load-bearing — `#define MUL(a,b) a*b` invoked as "
+        "`MUL(1+1,2)` expands to `1+1*2` and a real binary evaluates it to 3, "
+        "whereas the parenthesized macro gives 4, and the hazardous form is "
+        "detected up front while the safe form is not; (2) `#ifdef` conditionals "
+        "select the program (the same source runs to 0 without `-DFEATURE` and 1 "
+        "with it); (3) `#include` resolution makes a header-only symbol present "
+        "after preprocessing and the built program runs.",
+        "ub_oracle.preprocess",
+        ("preprocess", "detect_unparenthesized_macros",
+         "confirm_macro_precedence_hazard", "confirm_conditional_compilation",
+         "confirm_include_resolution"),
+        theorem=_thm_preprocess_real,
         docs=("README.md",),
     ),
 ]
