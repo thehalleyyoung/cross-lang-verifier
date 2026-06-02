@@ -159,8 +159,9 @@ def _thm_kinduction_safe_and_witness() -> bool:
 
 def _thm_abi_layout_sound() -> bool:
     # The ABI oracle must (a) flag the classic suboptimal-order struct as an
-    # interop hazard whose optimized layout reorders it, and (b) abstain on a
-    # struct already in padding-optimal order — never inventing a hazard.
+    # interop hazard whose optimized layout reorders it, (b) abstain on a struct
+    # already in padding-optimal order, and (c) flag the C-vs-default-Rust enum
+    # width divergence while modelling union/nested-struct layouts faithfully.
     from . import abi_layout as a
     hz = a.abi_divergence(a.hazard_struct())
     sound_hazard = (hz.is_hazard
@@ -170,7 +171,13 @@ def _thm_abi_layout_sound() -> bool:
     uni = a.abi_divergence(a.uniform_struct())
     sound_safe = (not sf.is_hazard and not uni.is_hazard
                   and sf.moved_fields == [])
-    return bool(sound_hazard and sound_safe)
+    en = a.enum_abi_divergence(3)
+    nested = a.c_layout(a.nested_struct())
+    union = a.union_layout(a.mixed_union())
+    sound_fidelity = (en.is_hazard and en.c_size == 4 and en.rust_default_size == 1
+                      and nested.size == 16 and nested.offsets["y"] == 12
+                      and union.size == 8 and set(union.offsets.values()) == {0})
+    return bool(sound_hazard and sound_safe and sound_fidelity)
 
 
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
@@ -311,15 +318,18 @@ CLAIMS: List[Claim] = [
     ),
     claim(
         "C15-abi-layout",
-        "Divergence at FFI boundaries is decided structurally: the oracle "
-        "computes the exact C-ABI layout of a shared struct (confirmed field-by-"
-        "field against real clang offsetof) and flags an interop hazard iff a "
-        "padding-optimizing representation would reorder it. Real rustc confirms "
-        "#[repr(C)] mirrors the C layout exactly while the default repr diverges "
+        "Divergence at FFI boundaries is decided structurally for structs, "
+        "unions, enums and nested aggregates: the oracle computes the exact "
+        "C-ABI layout (confirmed field-by-field against real clang offsetof) and "
+        "flags an interop hazard iff a padding-optimizing representation would "
+        "reorder a struct, or iff a C enum and a default-repr Rust fieldless enum "
+        "of the same arity have different widths. Real rustc confirms #[repr(C)] "
+        "mirrors the C layout/width exactly while the default repr diverges "
         "precisely when predicted, and Go's declaration-order layout matches C — "
         "so the oracle never fabricates a hazard the compiler does not exhibit.",
         "ub_oracle.abi_layout",
-        ("c_layout", "optimized_layout", "abi_divergence", "confirm_abi"),
+        ("c_layout", "optimized_layout", "abi_divergence", "union_layout",
+         "enum_abi_divergence", "confirm_abi"),
         theorem=_thm_abi_layout_sound,
         docs=("README.md",),
     ),

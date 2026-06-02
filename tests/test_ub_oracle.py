@@ -2991,3 +2991,94 @@ def test_abi_go_struct_is_layout_stable_like_c():
         conf = _abi.confirm_abi(fields, cc=_TC.cc, go=go)
         assert conf.available, conf.reason
         assert conf.go_matches_c is True, fields
+
+
+# ---------------------------------------------------------------------------
+# Step 28 — ABI fidelity: union / enum / nested-struct layouts.
+# ---------------------------------------------------------------------------
+
+
+def test_abi_nested_struct_layout_matches_hand_computed():
+    lay = _abi.c_layout(_abi.nested_struct())
+    # inner {int p; char q} has size 8, align 4 -> outer: x@0, in@4, y@12, size 16
+    assert lay.size == 16
+    assert lay.offsets == {"x": 0, "in": 4, "y": 12}
+    assert lay.align == 4
+
+
+def test_abi_union_layout_follows_widest_member():
+    lay = _abi.union_layout(_abi.mixed_union())
+    assert lay.size == 8 and lay.align == 8
+    assert lay.offsets == {"a": 0, "b": 0, "c": 0}
+
+
+def test_abi_enum_default_repr_width_table():
+    assert _abi.rust_default_enum_size(3) == 1
+    assert _abi.rust_default_enum_size(256) == 1
+    assert _abi.rust_default_enum_size(257) == 2
+    assert _abi.rust_default_enum_size(65536) == 2
+    assert _abi.rust_default_enum_size(65537) == 4
+
+
+def test_abi_enum_divergence_flagged_for_small_enums():
+    res = _abi.enum_abi_divergence(3)
+    assert res.is_hazard
+    assert res.c_size == 4 and res.rust_default_size == 1
+    assert "repr(C)" in res.reason
+
+
+def test_abi_enum_divergence_safe_when_widths_coincide():
+    # a >2**16-variant enum needs 4 bytes in Rust too -> matches C int.
+    res = _abi.enum_abi_divergence(70000)
+    assert not res.is_hazard
+    assert res.c_size == res.rust_default_size == 4
+
+
+@_requires_toolchain
+def test_abi_nested_struct_matches_real_clang():
+    fields = _abi.nested_struct()
+    conf = _abi.confirm_abi(fields, cc=_TC.cc)
+    assert conf.available, conf.reason
+    model = _abi.c_layout(fields)
+    assert conf.c_size == model.size
+    assert conf.c_offsets == model.offsets
+
+
+@_requires_toolchain
+def test_abi_union_matches_real_clang():
+    conf = _abi.confirm_union(_abi.mixed_union(), cc=_TC.cc)
+    assert conf.available, conf.reason
+    model = _abi.union_layout(_abi.mixed_union())
+    assert conf.c_size == model.size
+    assert conf.c_align == model.align
+
+
+@_requires_toolchain
+def test_abi_enum_divergence_confirmed_by_real_rustc():
+    """The enum width divergence is real: C enum is 4 bytes, the default-repr
+    Rust fieldless enum is narrower, and #[repr(C)] restores the C width."""
+    rustc = _TC.target_path("rust")
+    if rustc is None:
+        pytest.skip("rustc unavailable")
+    conf = _abi.confirm_enum(3, cc=_TC.cc, rustc=rustc)
+    assert conf.available, conf.reason
+    assert conf.c_size == 4
+    assert conf.rust_default_size == 1
+    assert conf.rust_reprc_size == 4
+    assert conf.rust_default_diverges is True
+    # the model predicted exactly this.
+    model = _abi.enum_abi_divergence(3)
+    assert model.is_hazard
+    assert model.c_size == conf.c_size
+    assert model.rust_default_size == conf.rust_default_size
+
+
+@_requires_toolchain
+def test_abi_enum_model_tracks_rustc_across_variant_counts():
+    rustc = _TC.target_path("rust")
+    if rustc is None:
+        pytest.skip("rustc unavailable")
+    for n in (3, 300):
+        conf = _abi.confirm_enum(n, cc=_TC.cc, rustc=rustc)
+        assert conf.rust_default_size == _abi.rust_default_enum_size(n), n
+        assert conf.rust_reprc_size == _abi.C_ENUM_SIZE

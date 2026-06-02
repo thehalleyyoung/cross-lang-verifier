@@ -118,12 +118,15 @@ python3 -m src.cli.main discover \
   loop traps under UBSan at precisely that trip count, and the SAFE verdict
   transfers across C→Rust/Go/Swift)
 - an **ABI / interop-divergence checker** (`abi_layout.py`) for the FFI boundary
-  itself: it computes the *exact* C-ABI layout of a shared `struct` (size, align,
-  per-field offsets — confirmed field-by-field against real `clang` `offsetof`)
-  and flags an interop hazard **iff** a padding-optimizing representation would
-  reorder it. Real `rustc` confirms `#[repr(C)]` mirrors the C layout exactly
+  itself, covering **structs, unions, enums and nested aggregates**: it computes
+  the *exact* C-ABI layout of a shared type (size, align, per-field offsets —
+  confirmed field-by-field against real `clang` `offsetof`/`_Alignof`) and flags
+  an interop hazard **iff** a padding-optimizing representation would reorder a
+  struct, **or iff** a C `enum` and a default-repr Rust *fieldless* enum of the
+  same arity have different widths (C = `int`/4 bytes vs Rust's auto-sized 1–4
+  bytes). Real `rustc` confirms `#[repr(C)]` mirrors the C layout/width exactly
   while the default `repr(Rust)` genuinely diverges **precisely when** predicted,
-  and Go's declaration-order layout matches C — so a layout hazard (a silent
+  and Go's declaration-order layout matches C — so a layout/width hazard (a silent
   memory-safety bug no value-level oracle can see) is never fabricated
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and

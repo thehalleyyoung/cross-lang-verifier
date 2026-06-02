@@ -92,11 +92,22 @@ def scalar(name: str) -> Scalar:
 @dataclass(frozen=True)
 class Field:
     name: str
-    type: str  # a key into _SCALARS
+    type: str = ""  # a key into _SCALARS (empty when this is a nested aggregate)
+    #: when set, this field is a nested struct laid out from these sub-fields.
+    nested: Optional[Tuple["Field", ...]] = None
 
     @property
     def scalar(self) -> Scalar:
         return scalar(self.type)
+
+    @property
+    def info(self) -> Tuple[int, int]:
+        """(size, align) of this field, recursing into nested structs."""
+        if self.nested is not None:
+            lay = c_layout(list(self.nested))
+            return lay.size, lay.align
+        s = self.scalar
+        return s.size, s.align
 
 
 @dataclass(frozen=True)
@@ -127,13 +138,28 @@ def _lay_out(fields: List[Field]) -> Layout:
     align = 1
     offsets: Dict[str, int] = {}
     for f in fields:
-        s = f.scalar
-        offset = _round_up(offset, s.align)
+        fsize, falign = f.info
+        offset = _round_up(offset, falign)
         offsets[f.name] = offset
-        offset += s.size
-        align = max(align, s.align)
+        offset += fsize
+        align = max(align, falign)
     size = _round_up(offset, align) if fields else 0
     return Layout(tuple(f.name for f in fields), offsets, size, max(align, 1))
+
+
+def union_layout(members: List[Field]) -> Layout:
+    """A C ``union`` layout: every member overlaps at offset 0; size is the
+    largest member rounded up to the strictest alignment."""
+    align = 1
+    biggest = 0
+    offsets: Dict[str, int] = {}
+    for m in members:
+        msize, malign = m.info
+        offsets[m.name] = 0
+        biggest = max(biggest, msize)
+        align = max(align, malign)
+    size = _round_up(biggest, align) if members else 0
+    return Layout(tuple(m.name for m in members), offsets, size, max(align, 1))
 
 
 def c_layout(fields: List[Field]) -> Layout:
@@ -149,8 +175,61 @@ def optimized_layout(fields: List[Field]) -> Layout:
     stable so fields of equal alignment keep their declared relative order, which
     matches the simple-struct behaviour of real ``rustc`` default layout.
     """
-    ordered = sorted(fields, key=lambda f: -f.scalar.align)
+    ordered = sorted(fields, key=lambda f: -f.info[1])
     return _lay_out(ordered)
+
+
+# --- enum ABI model ----------------------------------------------------------
+#
+# A C enum has the ABI of `int` (4 bytes / align 4) on LP64 targets unless its
+# enumerators force a wider type — which our modelled value ranges never do. A
+# Rust *fieldless* enum, by contrast, defaults to the smallest integer that can
+# index its variants (1 byte for <=256 variants), so the same enumeration is a
+# different width on each side: a genuine, confirmable ABI divergence that
+# `#[repr(C)]` repairs.
+
+C_ENUM_SIZE = 4
+C_ENUM_ALIGN = 4
+
+
+def rust_default_enum_size(num_variants: int) -> int:
+    """Width of a fieldless Rust enum under the default repr: the smallest of
+    1/2/4/8 bytes whose unsigned range indexes every variant."""
+    if num_variants <= 0:
+        raise ValueError("an enum needs at least one variant")
+    for width in (1, 2, 4, 8):
+        if num_variants <= (1 << (8 * width)):
+            return width
+    return 8  # pragma: no cover - unreachable for sane variant counts
+
+
+@dataclass
+class EnumAbiResult:
+    verdict: AbiVerdict
+    num_variants: int
+    c_size: int
+    rust_default_size: int
+    reason: str = ""
+
+    @property
+    def is_hazard(self) -> bool:
+        return self.verdict is AbiVerdict.INTEROP_HAZARD
+
+
+def enum_abi_divergence(num_variants: int) -> "EnumAbiResult":
+    """Flag a hazard iff a C enum and a default-repr Rust fieldless enum of the
+    same arity have different widths (they do for every <2**32-variant enum)."""
+    rd = rust_default_enum_size(num_variants)
+    if rd != C_ENUM_SIZE:
+        return EnumAbiResult(
+            AbiVerdict.INTEROP_HAZARD, num_variants, C_ENUM_SIZE, rd,
+            reason=(f"C enum is {C_ENUM_SIZE} bytes but a default-repr Rust "
+                    f"fieldless enum with {num_variants} variants is {rd} byte(s)"
+                    f" — passing it across the FFI boundary misreads adjacent "
+                    f"bytes; #[repr(C)] (or an explicit repr) repairs this"))
+    return EnumAbiResult(
+        AbiVerdict.INTEROP_SAFE, num_variants, C_ENUM_SIZE, rd,
+        reason="C enum and default-repr Rust enum widths coincide")
 
 
 # --- the divergence decision -------------------------------------------------
@@ -200,8 +279,17 @@ def abi_divergence(fields: List[Field]) -> AbiResult:
 # --- real-compiler source generators -----------------------------------------
 
 
+def _field_decl_c(f: Field) -> str:
+    """Render one C field declaration, emitting an anonymous nested struct when
+    the field is itself an aggregate."""
+    if f.nested is not None:
+        inner = " ".join(_field_decl_c(sf) for sf in f.nested)
+        return f"struct {{ {inner} }} {f.name};"
+    return f"{f.scalar.c_type} {f.name};"
+
+
 def _struct_fields_decl_c(fields: List[Field]) -> str:
-    return " ".join(f"{f.scalar.c_type} {f.name};" for f in fields)
+    return " ".join(_field_decl_c(f) for f in fields)
 
 
 def c_source(fields: List[Field]) -> str:
@@ -249,6 +337,45 @@ def go_source(fields: List[Field]) -> str:
         "func main(){\n"
         "    var s S\n"
         f"    fmt.Printf(\"{verbs}\\n\", unsafe.Sizeof(s), {offs})\n"
+        "}\n"
+    )
+
+
+def union_c_source(members: List[Field]) -> str:
+    """A C program printing ``size align`` for a ``union`` of ``members``."""
+    decl = _struct_fields_decl_c(members)
+    return (
+        "#include <stdio.h>\n#include <stddef.h>\n"
+        f"union U {{ {decl} }};\n"
+        "int main(void){\n"
+        "    printf(\"%zu %zu\\n\", sizeof(union U), _Alignof(union U));\n"
+        "    return 0;\n"
+        "}\n"
+    )
+
+
+def enum_c_source(num_variants: int) -> str:
+    """A C program printing ``sizeof`` of an enum with ``num_variants`` variants."""
+    variants = ", ".join(f"E{i}" for i in range(num_variants))
+    return (
+        "#include <stdio.h>\n"
+        f"enum E {{ {variants} }};\n"
+        "int main(void){ printf(\"%zu\\n\", sizeof(enum E)); return 0; }\n"
+    )
+
+
+def enum_rust_source(num_variants: int) -> str:
+    """A Rust program printing the default-repr *and* ``#[repr(C)]`` enum sizes."""
+    variants = ", ".join(f"E{i}" for i in range(num_variants))
+    cvariants = ", ".join(f"F{i}" for i in range(num_variants))
+    return (
+        "#[allow(dead_code)]\n"
+        f"enum Natural {{ {variants} }}\n"
+        "#[allow(dead_code)]\n"
+        f"#[repr(C)] enum ReprC {{ {cvariants} }}\n"
+        "fn main(){\n"
+        "    println!(\"{} {}\", std::mem::size_of::<Natural>(), "
+        "std::mem::size_of::<ReprC>());\n"
         "}\n"
     )
 
@@ -330,7 +457,81 @@ def confirm_abi(fields: List[Field], cc: str, rustc: Optional[str] = None,
     return out
 
 
+@dataclass
+class UnionConfirmation:
+    available: bool
+    reason: str = ""
+    c_size: Optional[int] = None
+    c_align: Optional[int] = None
+
+
+def confirm_union(members: List[Field], cc: str) -> UnionConfirmation:
+    """Compile & run the C union probe and read back its real size/alignment."""
+    with tempfile.TemporaryDirectory() as d:
+        cp = os.path.join(d, "u.c")
+        co = os.path.join(d, "u.out")
+        with open(cp, "w") as fh:
+            fh.write(union_c_source(members))
+        r = _run([cc, "-O0", "-o", co, cp])
+        if r.returncode != 0:
+            return UnionConfirmation(False, reason=f"C compile failed: {r.stderr[:200]}")
+        size, align = (int(x) for x in _run([co]).stdout.split())
+        return UnionConfirmation(True, c_size=size, c_align=align)
+
+
+@dataclass
+class EnumConfirmation:
+    available: bool
+    reason: str = ""
+    c_size: Optional[int] = None
+    rust_default_size: Optional[int] = None
+    rust_reprc_size: Optional[int] = None
+    rust_default_diverges: Optional[bool] = None
+
+
+def confirm_enum(num_variants: int, cc: str,
+                 rustc: Optional[str] = None) -> EnumConfirmation:
+    """Compile & run the C/Rust enum probes and read back the real sizes."""
+    with tempfile.TemporaryDirectory() as d:
+        cp = os.path.join(d, "e.c")
+        co = os.path.join(d, "e.out")
+        with open(cp, "w") as fh:
+            fh.write(enum_c_source(num_variants))
+        r = _run([cc, "-O0", "-o", co, cp])
+        if r.returncode != 0:
+            return EnumConfirmation(False, reason=f"C compile failed: {r.stderr[:200]}")
+        c_size = int(_run([co]).stdout.strip())
+        out = EnumConfirmation(True, c_size=c_size)
+        if rustc is not None:
+            rp = os.path.join(d, "e.rs")
+            ro = os.path.join(d, "er.out")
+            with open(rp, "w") as fh:
+                fh.write(enum_rust_source(num_variants))
+            r = _run([rustc, "-O", "-o", ro, rp])
+            if r.returncode == 0:
+                nat, rc = (int(x) for x in _run([ro]).stdout.split())
+                out.rust_default_size = nat
+                out.rust_reprc_size = rc
+                out.rust_default_diverges = (nat != c_size)
+            else:  # pragma: no cover - environment dependent
+                out.reason += f" rust compile failed: {r.stderr[:160]}"
+        return out
+
+
 # --- ready-made fragments ----------------------------------------------------
+
+
+def nested_struct() -> List[Field]:
+    """``{char x; struct {int p; char q} in; char y}`` — exercises nested
+    aggregate alignment (the inner struct forces 4-byte alignment)."""
+    return [Field("x", "char"),
+            Field("in", nested=(Field("p", "int"), Field("q", "char"))),
+            Field("y", "char")]
+
+
+def mixed_union() -> List[Field]:
+    """``union {char a; int b; double c}`` — size follows the widest member."""
+    return [Field("a", "char"), Field("b", "int"), Field("c", "double")]
 
 
 def hazard_struct() -> List[Field]:
