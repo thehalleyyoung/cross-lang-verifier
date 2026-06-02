@@ -1181,3 +1181,125 @@ def test_cli_main_entry_point_is_importable_and_callable():
     finally:
         _os.unlink(path)
     assert rc == 0
+
+
+# --------------------------------------------------------------------------- #
+# Step 52: counterexample quality / minimizer.
+# --------------------------------------------------------------------------- #
+from src.ub_oracle.minimizer import (  # noqa: E402
+    simplicity_cost,
+    _reduction_ladder,
+    MinimizationResult,
+    minimize_counterexample,
+)
+from src.ub_oracle.regression_matrix import canonical_unit_for  # noqa: E402
+
+
+def test_simplicity_cost_orders_small_nonnegative_first():
+    # 0 is the simplest; smaller magnitude beats larger; ties broken so the
+    # non-negative representative is simpler than its negative counterpart.
+    assert simplicity_cost(0) < simplicity_cost(1)
+    assert simplicity_cost(1) < simplicity_cost(2)
+    assert simplicity_cost(1) < simplicity_cost(-1)
+    assert simplicity_cost(2) < simplicity_cost(-3)
+    assert simplicity_cost(5) < simplicity_cost(-5)
+
+
+def test_reduction_ladder_is_strictly_simpler_and_sorted():
+    v = 1073741824
+    ladder = _reduction_ladder(v)
+    # every candidate is strictly simpler than v ...
+    assert all(simplicity_cost(c) < simplicity_cost(v) for c in ladder)
+    # ... presented simplest-first ...
+    costs = [simplicity_cost(c) for c in ladder]
+    assert costs == sorted(costs)
+    # ... and the canonical anchors 0 and 1 are reachable.
+    assert 0 in ladder and 1 in ladder
+    # a value already at the floor has an empty ladder.
+    assert _reduction_ladder(0) == []
+
+
+def test_ub_category_distinguishes_ubsan_diagnostics():
+    from src.ub_oracle.reexec import RunOutcome
+    def cat(msg):
+        return RunOutcome(1, "", f"x.c:3:5: runtime error: {msg}").ub_category
+    overflow = cat("signed integer overflow: 2147483647 + 1 cannot be "
+                   "represented in type 'int'")
+    shift_big = cat("shift exponent 32 is too large for 32-bit type 'int'")
+    shift_neg = cat("shift exponent -1 is negative")
+    divzero = cat("division by zero")
+    intmin = cat("division of -2147483648 by -1 cannot be represented in "
+                 "type 'int'")
+    oob = cat("index 4 out of bounds for type 'int[4]'")
+    # numbers and quoted types are stripped, so witnesses of the same KIND
+    # share a category regardless of the specific operands ...
+    assert cat("index 99 out of bounds for type 'int[8]'") == oob
+    # ... but genuinely different undefined behaviors stay distinct.
+    cats = {overflow, shift_big, shift_neg, divzero, intmin, oob}
+    assert len(cats) == 6
+    # crucially the two pairs the minimizer must never conflate:
+    assert shift_big != shift_neg
+    assert divzero != intmin
+    # a clean (non-UBSan) run has no category.
+    assert RunOutcome(0, "ok", "").ub_category == ""
+
+
+def test_minimization_result_to_dict_roundtrips_and_reports_reduction():
+    r = MinimizationResult(
+        divergence_class="signed_overflow", source_lang="c", target_lang="rust",
+        original_inputs={"x": 1073741824}, minimized_inputs={"x": 1},
+        fields_reduced=["x"], probes=5, confirmed=True,
+        certified_locally_minimal=True, already_minimal=False)
+    assert r.reduced is True
+    d = r.to_dict()
+    assert d["divergence_class"] == "signed_overflow"
+    assert d["original_inputs"] == {"x": 1073741824}
+    assert d["minimized_inputs"] == {"x": 1}
+    assert d["fields_reduced"] == ["x"]
+    assert d["confirmed"] is True and d["certified_locally_minimal"] is True
+
+
+def _anchor_oracle(class_key):
+    return next(o for o in _plugin.ALL_ORACLES
+               if o.divergence_class == class_key
+               and o.source_lang == "c" and o.target_lang == "rust")
+
+
+@_requires_toolchain
+def test_signed_overflow_witness_minimizes_to_one_against_real_compilers():
+    orc = _anchor_oracle("signed_overflow")
+    res = orc.find_divergence(canonical_unit_for(orc))
+    assert res.counterexample is not None
+    m = minimize_counterexample(orc, res, ReexecHarness(), max_probes=400)
+    assert m.confirmed
+    assert m.minimized_inputs == {"x": 1}
+    assert m.fields_reduced == ["x"]
+    assert m.certified_locally_minimal
+
+
+@_requires_toolchain
+def test_intmin_div_neg1_does_not_drift_into_division_by_zero():
+    # The faithfulness guarantee: magnitude minimization must NOT collapse the
+    # INT_MIN/-1 witness to {0,0} (a *different* UB: division by zero).  UBSan
+    # category preservation keeps it pinned at the canonical pair.
+    orc = _anchor_oracle("intmin_div_neg1")
+    res = orc.find_divergence(canonical_unit_for(orc))
+    assert res.counterexample is not None
+    m = minimize_counterexample(orc, res, ReexecHarness(), max_probes=400)
+    assert m.confirmed
+    assert m.minimized_inputs == {"a": -2147483648, "b": -1}
+    assert m.minimized_inputs != {"a": 0, "b": 0}
+    assert m.certified_locally_minimal
+
+
+@_requires_toolchain
+def test_shift_oob_keeps_too_large_exponent_category():
+    # s=32 ("too large") must NOT be minimized into s=-1 ("negative"), which is
+    # a different UBSan category, even though -1 has smaller magnitude.
+    orc = _anchor_oracle("shift_oob")
+    res = orc.find_divergence(canonical_unit_for(orc))
+    assert res.counterexample is not None
+    m = minimize_counterexample(orc, res, ReexecHarness(), max_probes=400)
+    assert m.confirmed
+    assert m.minimized_inputs.get("s") == 32
+    assert m.certified_locally_minimal

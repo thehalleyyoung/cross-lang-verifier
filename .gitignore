@@ -33,6 +33,8 @@ __pycache__/
 # Environment-dependent confirmation artifact (real-compiler runs)
 experiments/ub_divergence/confirmations.json
 experiments/cross_pair_matrix/confirmations.json
+# Environment-dependent minimized-witness artifact (real-compiler minimization)
+experiments/cex_quality/minimized.json
 
 # Python build artifacts
 build/

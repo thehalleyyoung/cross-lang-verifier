@@ -27,6 +27,7 @@ reports ``available=False`` so callers/tests can skip gracefully.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -149,6 +150,33 @@ class RunOutcome:
     def rust_outcome_defined(self) -> bool:
         """Back-compat shorthand for the Rust anchor's definedness predicate."""
         return self.target_outcome_defined("rust")
+
+    @property
+    def ub_category(self) -> str:
+        """A normalized UndefinedBehaviorSanitizer diagnostic category.
+
+        UBSan prints ``... runtime error: <message>`` where ``<message>``
+        identifies *which* undefined behavior fired (signed overflow, shift too
+        large, shift negative, division by zero, ``INT_MIN/-1``, index out of
+        bounds, ...).  We strip the operand-specific numbers and quoted types so
+        the residual phrase is a stable identity for the UB *kind* — letting the
+        counterexample minimizer guarantee that a simplified witness triggers the
+        SAME undefined behavior, not merely some other confirmed divergence.
+
+        Returns ``""`` when no UBSan diagnostic is present.
+        """
+        if "runtime error:" not in self.stderr:
+            return ""
+        for line in self.stderr.splitlines():
+            m = re.search(r"runtime error:\s*(.+)", line)
+            if not m:
+                continue
+            msg = m.group(1)
+            msg = re.sub(r"'[^']*'", "", msg)   # drop quoted 'type' names
+            msg = re.sub(r"-?\d+", "", msg)      # drop operand-specific numbers
+            msg = re.sub(r"\s+", " ", msg).strip()
+            return msg
+        return ""
 
     def target_outcome_defined(self, target_lang: str = "rust") -> bool:
         """Whether this run is a *defined* outcome for the given target

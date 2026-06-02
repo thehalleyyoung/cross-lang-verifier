@@ -35,6 +35,9 @@ jobs:
       - name: Cross-pair regression matrix reproduces byte-identically
         run: make matrix-check PYTHON=python
 
+      - name: Counterexample-quality baseline reproduces byte-identically
+        run: make cex-quality-check PYTHON=python
+
       - name: Packaging — build wheel, install in a fresh venv, run the CLI
         run: make package-check PYTHON=python
 

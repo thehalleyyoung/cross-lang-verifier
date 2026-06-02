@@ -1,0 +1,71 @@
+{
+  "n_oracles": 7,
+  "rows": [
+    {
+      "divergence_class": "array_oob",
+      "raw_cost": 4,
+      "raw_inputs": {
+        "i": 4
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "raw_cost": 7,
+      "raw_inputs": {
+        "a": 7,
+        "b": 0
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "fp_contraction",
+      "raw_cost": 0,
+      "raw_inputs": {
+        "a": -5.252709328295452,
+        "b": 4.43882062403236,
+        "c": 23.315834498484953
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "raw_cost": 2147483649,
+      "raw_inputs": {
+        "a": -2147483648,
+        "b": -1
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "shift_oob",
+      "raw_cost": 33,
+      "raw_inputs": {
+        "s": 32,
+        "x": 1
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "raw_cost": 1073741824,
+      "raw_inputs": {
+        "x": 1073741824
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "strict_aliasing",
+      "raw_cost": 0,
+      "raw_inputs": {},
+      "source_lang": "c",
+      "target_lang": "rust"
+    }
+  ]
+}
