@@ -35,6 +35,12 @@ from typing import Dict, List, Optional, Sequence
 
 from .report import aggregate_reports, pair_of, to_sarif
 from .reexec import toolchain_available
+from .suppress import (
+    apply_suppressions,
+    build_baseline,
+    load_suppressions,
+)
+from .triage import render_triage, triage_reports
 from .verify import VerifyReport, VerifyVerdict, verify_unit
 
 _VERDICT_STYLE = {
@@ -109,8 +115,11 @@ def create_parser() -> argparse.ArgumentParser:
         epilog=(
             "Examples:\n"
             "  cross-lang-verify --units units.json\n"
+            "  cross-lang-verify --units units.json --triage\n"
             "  cross-lang-verify --units units.json --sarif out.sarif\n"
             "  cross-lang-verify --units units.json --format json --no-confirm\n"
+            "  cross-lang-verify --units units.json --write-baseline baseline.json\n"
+            "  cross-lang-verify --units units.json --suppress baseline.json\n"
             "  cross-lang-verify --units units.json --fail-on divergent "
             "--fail-on candidate\n"),
     )
@@ -129,6 +138,16 @@ def create_parser() -> argparse.ArgumentParser:
                    choices=sorted(_FAIL_ON),
                    help="exit nonzero if any unit gets this verdict (repeatable; "
                         "default: divergent)")
+    p.add_argument("--triage", action="store_true",
+                   help="print a severity-ranked triage view (most urgent first)")
+    p.add_argument("--triage-top", type=int, default=0, metavar="N",
+                   help="cap the triage view to N items per tier (0 = all)")
+    p.add_argument("--suppress", metavar="BASELINE.json",
+                   help="apply a suppression/baseline file; matched findings are "
+                        "kept visible but do NOT trip the fail gate")
+    p.add_argument("--write-baseline", metavar="OUT.json",
+                   help="write a suppression file baselining every current "
+                        "finding (by fingerprint), then exit 0")
     return p
 
 
@@ -188,6 +207,44 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     ]
     summary = aggregate_reports(reports)
 
+    # --write-baseline: capture every current finding and exit (adoption path).
+    if args.write_baseline:
+        baseline = build_baseline(reports)
+        try:
+            with open(args.write_baseline, "w", encoding="utf-8") as fh:
+                json.dump(baseline, fh, indent=2, sort_keys=True)
+                fh.write("\n")
+        except OSError as exc:
+            sys.stderr.write(f"error: cannot write baseline: {exc}\n")
+            return 2
+        n = len(baseline["suppressions"])
+        sys.stderr.write(
+            f"wrote {args.write_baseline}: baselined {n} finding(s)\n")
+        return 0
+
+    # --suppress: apply a baseline so known-accepted findings stop blocking CI.
+    supp = None
+    if args.suppress:
+        try:
+            rules = load_suppressions(args.suppress)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            sys.stderr.write(f"error: bad suppression file: {exc}\n")
+            return 2
+        supp = apply_suppressions(reports, rules)
+        suppressed = {id(o.report) for o in supp.outcomes if o.suppressed}
+        for rule in supp.expired_rules:
+            sys.stderr.write(
+                f"warning: suppression expired ({rule.expires}): {rule.reason}\n")
+        for rule in supp.empty_rules:
+            sys.stderr.write(
+                f"warning: suppression matches EVERY finding (no constraints): "
+                f"{rule.reason}\n")
+        for rule in supp.unused_rules:
+            sys.stderr.write(
+                f"warning: suppression never matched: {rule.reason}\n")
+    else:
+        suppressed = set()
+
     if args.sarif:
         try:
             with open(args.sarif, "w", encoding="utf-8") as fh:
@@ -200,17 +257,29 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     if args.format == "json":
         json.dump({
             "summary": summary,
+            "suppressed": len(suppressed),
             "units": [
                 {"label": _unit_label(u, i), "verdict": r.verdict.value,
-                 "pair": pair_of(r), "detail": r.detail}
+                 "pair": pair_of(r), "detail": r.detail,
+                 "suppressed": id(r) in suppressed}
                 for i, (u, r) in enumerate(zip(units, reports))
             ],
         }, sys.stdout, indent=2, sort_keys=True)
         sys.stdout.write("\n")
     else:
         _print_text(reports, units, summary, color, status.full)
+        if suppressed:
+            sys.stdout.write(
+                "\n  " + color("2", f"{len(suppressed)} finding(s) suppressed by "
+                                    "baseline (not blocking)") + "\n")
+        if args.triage:
+            sys.stdout.write("\n" + render_triage(
+                triage_reports(reports), color=color,
+                max_per_tier=args.triage_top) + "\n")
 
-    return 1 if any(r.verdict in fail_verdicts for r in reports) else 0
+    # Baseline-aware fail gate: a suppressed finding never blocks.
+    return 1 if any(r.verdict in fail_verdicts and id(r) not in suppressed
+                    for r in reports) else 0
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:  # console-script entry

@@ -1303,3 +1303,239 @@ def test_shift_oob_keeps_too_large_exponent_category():
     assert m.confirmed
     assert m.minimized_inputs.get("s") == 32
     assert m.certified_locally_minimal
+
+
+# --------------------------------------------------------------------------- #
+# Step 65: divergence triage UX.
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import triage as _triage  # noqa: E402
+from src.ub_oracle.triage import (  # noqa: E402
+    Tier, TriageItem, severity_of_class, triage_reports, render_triage,
+)
+from src.ub_oracle.verify import VerifyReport, VerifyVerdict  # noqa: E402
+from src.ub_oracle.plugin import OracleResult, OracleVerdict  # noqa: E402
+
+
+def _divergent_report(name, cls):
+    r = VerifyReport(VerifyVerdict.DIVERGENT,
+                     {"name": name, "source_lang": "c", "target_lang": "rust"})
+    r.divergence = OracleResult(OracleVerdict.DIVERGENT, cls)
+    return r
+
+
+def _report(verdict, name, probe=None, pair=("c", "rust")):
+    u = {"name": name, "source_lang": pair[0], "target_lang": pair[1]}
+    if probe:
+        u["probe"] = probe
+    return VerifyReport(verdict, u)
+
+
+def test_severity_of_class_reads_the_catalogue():
+    assert severity_of_class("signed_overflow").value == "critical"
+    assert severity_of_class("fp_contraction").value == "moderate"
+    assert severity_of_class("nonexistent_class") is None
+
+
+def test_triage_ranks_confirmed_above_candidate_above_abstention():
+    reports = [
+        _report(VerifyVerdict.NOT_COVERED, "z", pair=("go", "rust")),
+        _report(VerifyVerdict.CANDIDATE, "cand", probe="array_oob"),
+        _divergent_report("crit", "signed_overflow"),     # CRITICAL
+        _divergent_report("mod", "fp_contraction"),        # MODERATE
+        _report(VerifyVerdict.NO_DIVERGENCE_FOUND, "clean", probe="signed_overflow"),
+        _report(VerifyVerdict.UNKNOWN, "huh", probe="div_by_zero"),
+    ]
+    s = triage_reports(reports)
+    order = [it.unit_label for it in s.items]
+    # confirmed-critical first, then confirmed-moderate, then candidate, then
+    # unknown, then not-covered, then no-divergence (informational) last.
+    assert order == ["crit", "mod", "cand", "huh", "z", "clean"]
+    assert s.top_tier is Tier.CONFIRMED_CRITICAL
+    # everything but the clean no-divergence row needs a human's attention.
+    assert s.actionable == 5
+
+
+def test_triage_is_deterministic_within_a_tier():
+    # two critical confirmations ordered by class then unit name, stably.
+    reports = [
+        _divergent_report("u_b", "signed_overflow"),
+        _divergent_report("u_a", "signed_overflow"),
+        _divergent_report("arr", "array_oob"),
+    ]
+    s1 = triage_reports(reports)
+    s2 = triage_reports(list(reversed(reports)))
+    assert [it.unit_label for it in s1.items] == [it.unit_label for it in s2.items]
+    # array_oob sorts before signed_overflow; within signed_overflow, u_a < u_b.
+    assert [it.unit_label for it in s1.items] == ["arr", "u_a", "u_b"]
+
+
+def test_triage_summary_to_dict_counts_each_tier():
+    reports = [
+        _divergent_report("c1", "signed_overflow"),
+        _divergent_report("c2", "array_oob"),
+        _report(VerifyVerdict.CANDIDATE, "cand", probe="shift_oob"),
+    ]
+    d = triage_reports(reports).to_dict()
+    assert d["total"] == 3
+    assert d["actionable"] == 3
+    assert d["top_tier"] == int(Tier.CONFIRMED_CRITICAL)
+    assert d["by_tier"][int(Tier.CONFIRMED_CRITICAL)] == 2
+    assert d["by_tier"][int(Tier.CANDIDATE)] == 1
+
+
+def test_render_triage_groups_and_flags_critical():
+    reports = [_divergent_report("boom", "signed_overflow")]
+    txt = render_triage(triage_reports(reports))
+    assert "Triage" in txt
+    assert "confirmed-divergence (critical)" in txt
+    assert "boom" in txt and "signed_overflow" in txt
+    # the urgent marker appears on the critical group.
+    assert "\u203c" in txt
+
+
+def test_tier_actionability_excludes_only_clean():
+    assert Tier.CONFIRMED_CRITICAL.actionable
+    assert Tier.CANDIDATE.actionable
+    assert Tier.NOT_COVERED.actionable
+    assert not Tier.NO_DIVERGENCE.actionable
+
+
+# --------------------------------------------------------------------------- #
+# Step 67: config + suppression / baseline files.
+# --------------------------------------------------------------------------- #
+import datetime as _datetime  # noqa: E402
+from src.ub_oracle import suppress as _suppress  # noqa: E402
+from src.ub_oracle.suppress import (  # noqa: E402
+    Suppression, load_suppressions, apply_suppressions, build_baseline,
+    fingerprint_of,
+)
+
+
+def test_suppression_matches_by_class_pair_and_unit_glob():
+    r = _divergent_report("checksum_v2", "signed_overflow")
+    assert Suppression("ok", divergence_class="signed_overflow").matches(r)
+    assert not Suppression("ok", divergence_class="array_oob").matches(r)
+    assert Suppression("ok", pair="c->rust").matches(r)
+    assert not Suppression("ok", pair="c->go").matches(r)
+    assert Suppression("ok", unit="checksum_*").matches(r)
+    assert not Suppression("ok", unit="other_*").matches(r)
+    # all-of: every specified field must match.
+    assert Suppression("ok", divergence_class="signed_overflow",
+                       unit="checksum_*").matches(r)
+    assert not Suppression("ok", divergence_class="signed_overflow",
+                           unit="nope_*").matches(r)
+
+
+def test_suppression_matches_by_fingerprint_exactly():
+    r = _divergent_report("u", "signed_overflow")
+    fp = fingerprint_of(r)
+    assert Suppression("ok", fingerprint=fp).matches(r)
+    assert not Suppression("ok", fingerprint="deadbeefdeadbeef").matches(r)
+
+
+def test_suppression_only_targets_findings_not_abstentions():
+    clean = _report(VerifyVerdict.NO_DIVERGENCE_FOUND, "ok", probe="signed_overflow")
+    notcov = _report(VerifyVerdict.NOT_COVERED, "x", pair=("go", "rust"))
+    # an empty rule matches every *finding* but never a clean/abstained report.
+    empty = Suppression("blanket")
+    assert empty.is_empty_match()
+    assert not empty.matches(clean)
+    assert not empty.matches(notcov)
+    assert empty.matches(_divergent_report("d", "signed_overflow"))
+
+
+def test_suppression_expiry_is_enforced():
+    r = _divergent_report("u", "signed_overflow")
+    past = Suppression("ok", divergence_class="signed_overflow", expires="2000-01-01")
+    future = Suppression("ok", divergence_class="signed_overflow", expires="2999-01-01")
+    assert past.expired()
+    assert not future.expired()
+    assert not past.matches(r)              # expired never suppresses
+    assert future.matches(r)
+    # a malformed expiry fails safe (treated as expired, never silently hides).
+    assert Suppression("ok", expires="not-a-date").expired()
+
+
+def test_load_suppressions_requires_a_reason(tmp_path):
+    good = tmp_path / "good.json"
+    good.write_text(_json_dumps({"suppressions": [
+        {"divergence_class": "signed_overflow", "reason": "intended wrap"}]}))
+    rules = load_suppressions(str(good))
+    assert len(rules) == 1 and rules[0].reason == "intended wrap"
+
+    bad = tmp_path / "bad.json"
+    bad.write_text(_json_dumps({"suppressions": [{"divergence_class": "x"}]}))
+    with pytest.raises(ValueError):
+        load_suppressions(str(bad))
+
+
+def test_apply_suppressions_reports_unused_expired_and_empty():
+    reports = [
+        _divergent_report("a", "signed_overflow"),
+        _divergent_report("b", "array_oob"),
+    ]
+    rules = [
+        Suppression("match-a", divergence_class="signed_overflow"),
+        Suppression("never", divergence_class="div_by_zero"),         # unused
+        Suppression("stale", divergence_class="array_oob",
+                    expires="2000-01-01"),                            # expired
+    ]
+    res = apply_suppressions(reports, rules)
+    assert res.suppressed_count == 1                  # only 'a' suppressed
+    assert [o.suppressed for o in res.outcomes] == [True, False]
+    assert any(u.reason == "never" for u in res.unused_rules)
+    assert any(e.reason == "stale" for e in res.expired_rules)
+    # the expired rule did NOT suppress b.
+    assert res.outcomes[1].effective_finding
+
+
+def test_build_baseline_is_deterministic_and_pins_fingerprints():
+    reports = [
+        _divergent_report("b", "array_oob"),
+        _divergent_report("a", "signed_overflow"),
+        _report(VerifyVerdict.NO_DIVERGENCE_FOUND, "clean", probe="signed_overflow"),
+    ]
+    base = build_baseline(reports)
+    assert base["version"] == 1
+    # only the two findings are baselined (clean report excluded), sorted by class.
+    classes = [s["divergence_class"] for s in base["suppressions"]]
+    assert classes == ["array_oob", "signed_overflow"]
+    assert all("fingerprint" in s and s["reason"] for s in base["suppressions"])
+    # regenerating yields byte-identical content.
+    assert build_baseline(reports) == base
+    # the emitted baseline, fed back in, suppresses exactly those findings.
+    rules = [Suppression.from_dict(s) for s in base["suppressions"]]
+    res = apply_suppressions(reports, rules)
+    assert res.suppressed_count == 2
+
+
+def _json_dumps(obj):
+    import json as _j
+    return _j.dumps(obj)
+
+
+@_requires_toolchain
+def test_cli_baseline_flips_the_fail_gate_against_real_compilers(tmp_path):
+    # A real, confirmed signed-overflow divergence makes the CLI exit 1 ...
+    from src.ub_oracle.cli import run
+    manifest = tmp_path / "units.json"
+    manifest.write_text(_json_dumps({"units": [
+        {"name": "add1_w32", "kind": "binop_const", "op": "add", "const": 1,
+         "width": 32, "var": "x", "signed": True, "probe": "signed_overflow",
+         "source_lang": "c", "target_lang": "rust"}]}))
+    rc = run(["--units", str(manifest), "--color", "never"])
+    assert rc == 1
+
+    # ... writing a baseline captures that one finding ...
+    baseline = tmp_path / "baseline.json"
+    rc = run(["--units", str(manifest), "--write-baseline", str(baseline)])
+    assert rc == 0
+    payload = json.loads(baseline.read_text())
+    assert len(payload["suppressions"]) == 1
+    assert payload["suppressions"][0]["divergence_class"] == "signed_overflow"
+
+    # ... and re-running under that baseline flips the gate green (exit 0),
+    # because the known-accepted divergence is suppressed.
+    rc = run(["--units", str(manifest), "--suppress", str(baseline),
+              "--color", "never"])
+    assert rc == 0

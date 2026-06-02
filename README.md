@@ -59,6 +59,10 @@ python3 -m src.cli.main discover \
 - a faithful counterexample minimizer (`src/ub_oracle/minimizer.py`) that shrinks
   each confirmed witness to a locally-minimal canonical form while preserving the
   exact UBSan diagnostic category — see the `make cex-quality` study
+- a severity-ranked triage view and linter-style baseline/suppression files
+  (`cross-lang-verify --triage` / `--write-baseline` / `--suppress`) so teams can
+  adopt the checker on a large existing migration and fail CI only on *new*
+  divergences
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout
