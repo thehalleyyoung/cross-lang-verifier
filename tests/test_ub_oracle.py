@@ -4137,3 +4137,49 @@ def test_scale_measure_confirmation_green():
     assert c.hash_stable
     assert c.n_decided > 0
     assert c.n_decided + c.n_abstained == c.n_items
+
+
+# --------------------------------------------------------------------------- #
+# Step 49 — head-to-head vs existing tools (where they apply; the gap where none)
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import external_baselines as _xb  # noqa: E402
+
+
+def test_external_baselines_applicability_table_is_categorical():
+    tbl = _xb.applicability_table()
+    assert len(tbl) >= 4
+    # No existing-tool category ingests a cross-language (C, target) pair — that
+    # is the structural gap this project occupies.
+    assert all(not row["ingests_cross_language_pair"] for row in tbl)
+    for row in tbl:
+        assert row["note"]  # every category carries a stated applicability reason
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="no full toolchain for any target")
+def test_external_baselines_head_to_head_gap():
+    conf = _xb.confirm_head_to_head(per_class=1)
+    assert conf.available and conf.ok
+    # oracle catches every divergent item it is run on
+    assert conf.oracle_found == conf.n_items
+    # on the provably-blind classes the same-language baseline finds nothing,
+    # while the oracle catches them all → a total false-negative gap there
+    assert conf.n_blind >= 1
+    assert conf.blind_baseline_found == 0
+    assert conf.blind_oracle_found == conf.n_blind
+    # and no installed tool category can ingest a cross-language pair
+    assert not conf.report.any_cross_language_tool_installed
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_external_baselines_div0_is_invisible_to_same_language():
+    # Concretely: a same-language O0-vs-O2 differential cannot see the div-by-zero
+    # divergence (both C builds trap identically), but our oracle does.
+    from src.ub_oracle.reexec import ReexecHarness
+    item = next(it for it in _xb.gt.enumerate_corpus(("rust",))
+                if it.klass == "div_by_zero")
+    h = ReexecHarness(_TC)
+    base_found, _ = _xb._c_self_diff(h, item)
+    assert base_found is False
+    ev = _xb.gt.label_item(h, item)
+    assert ev.observed_label == "divergent"

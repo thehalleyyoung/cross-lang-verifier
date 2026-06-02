@@ -517,6 +517,21 @@ def _thm_scale_measure_reproducible() -> bool:
     return conf.ok and conf.hash_stable
 
 
+def _thm_headtohead_external_gap() -> bool:
+    # No existing-tool category ingests a cross-language pair, and on the
+    # provably-blind UB classes the realizable single-language baseline finds
+    # nothing while the oracle catches all. Absent a full toolchain only the
+    # categorical applicability table is checkable.
+    from . import external_baselines as xb
+    tbl = xb.applicability_table()
+    if not tbl or any(row["ingests_cross_language_pair"] for row in tbl):
+        return False
+    conf = xb.confirm_head_to_head(per_class=1)
+    if not conf.available:
+        return True
+    return conf.ok
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -994,6 +1009,28 @@ CLAIMS: List[Claim] = [
         ("run_scale", "results_document", "emit_results_json", "content_hash",
          "confirm_scale"),
         theorem=_thm_scale_measure_reproducible,
+        docs=("README.md",),
+    ),
+    claim(
+        "C34-external-head-to-head",
+        "Against existing tools the cross-language UB-divergence problem occupies a "
+        "structural gap, made concrete and executed rather than rhetorical. The "
+        "machine is probed live for every relevant tool category (bounded model "
+        "checking / single-language equivalence, symbolic execution, translation "
+        "validation, static analysis, verified transpilers); none ingests a "
+        "cross-language (C, target) pair, so none can even be posed the question. "
+        "The realizable proxy for the single-language / translation-validation "
+        "category — a same-language O0-vs-O2 differential of the C program — is run "
+        "on real divergent items: on the provably-blind classes (div-by-zero, "
+        "INT_MIN/-1, where the unsanitised C traps identically at all optimisation "
+        "levels) it finds nothing while the oracle catches every one, a total "
+        "false-negative gap. Value-producing UB that a same-language differential "
+        "can sometimes observe is reported honestly in the per-class breakdown, not "
+        "hidden.",
+        "ub_oracle.external_baselines",
+        ("run_head_to_head", "confirm_head_to_head", "applicability_table",
+         "CATEGORIES"),
+        theorem=_thm_headtohead_external_gap,
         docs=("README.md",),
     ),
 ]

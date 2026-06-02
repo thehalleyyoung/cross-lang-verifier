@@ -257,6 +257,16 @@ python3 -m src.cli.main discover \
   content-hashed (sorted keys, stable separators) while timing/memory are kept in
   a separate, explicitly non-hashed section — so two runs on the same toolchain
   reproduce the identical `content_hash` even though wall-clock and RSS vary
+- a **head-to-head vs existing tools** (`external_baselines.py`): probes the
+  machine for every relevant tool category (bounded model checking /
+  single-language equivalence, symbolic execution, translation validation, static
+  analysis, verified transpilers) and shows — concretely and executed — that none
+  ingests a cross-language `(C, target)` pair. The realizable single-language /
+  translation-validation proxy (a same-language O0-vs-O2 differential) is run on
+  real divergent items: on the provably-blind classes (div-by-zero, INT_MIN/-1) it
+  finds **nothing** while the oracle catches **every** one — a total
+  false-negative gap, with value-exploited UB reported honestly in the per-class
+  breakdown
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
