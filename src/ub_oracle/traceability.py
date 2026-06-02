@@ -277,6 +277,23 @@ def _thm_foreign_frontier_sound() -> bool:
     return all(c.ok for c in confs)
 
 
+def _thm_concurrency_race_sound() -> bool:
+    # The pattern catalogue must be internally consistent (exactly the
+    # unsynchronized counter races) and, where ThreadSanitizer is available, the
+    # racy/race-free verdict must be confirmed on a real binary: the
+    # unsynchronized counter races, the mutex-guarded one does not.
+    from . import concurrency as co
+    racy = [p.name for p in co.PATTERNS.values() if p.races]
+    if racy != ["unsynchronized_counter"]:
+        return False
+    import os as _os2
+    if not _os2.path.exists(co.CC):
+        return True  # detector-free consistency already established
+    race = co.confirm_race("unsynchronized_counter", check_go=False)
+    clean = co.confirm_race("mutex_counter", check_go=False)
+    return bool(race.c.race_detected is True and clean.c.race_detected is False)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -513,6 +530,24 @@ CLAIMS: List[Claim] = [
         ("scan_c_source", "decide", "FrontierVerdict", "confirm_all",
          "FOREIGN_FRONTIER"),
         theorem=_thm_foreign_frontier_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C21-concurrency-race",
+        "Data-race verdicts are taken from real sanitizers on real binaries, not "
+        "assumed: a small catalogue of concurrency patterns (unsynchronized "
+        "counter; mutex-guarded; lock-free atomic; read-only sharing) is compiled "
+        "and run under **ThreadSanitizer** (C side) and **`go run -race`** (Go "
+        "side), and a pattern is only called a race when the detector actually "
+        "fires. The headline cross-language fact is that the *same* "
+        "unsynchronized-counter idiom is flagged as a data race on **both** the C "
+        "source (TSan) and the Go target (`-race`) — while Rust rejects it at "
+        "compile time — and every synchronized variant (mutex/atomic/read-only) "
+        "runs clean on both. The per-target migration story is documented.",
+        "ub_oracle.concurrency",
+        ("PATTERNS", "pattern", "confirm_race", "RaceConfirmation",
+         "RACE_FRONTIER"),
+        theorem=_thm_concurrency_race_sound,
         docs=("README.md",),
     ),
 ]

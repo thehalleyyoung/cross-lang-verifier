@@ -170,6 +170,13 @@ python3 -m src.cli.main discover \
   `load volatile` where the pure version coalesces to one (so a value-folding
   model is provably unsound), inline asm is an opaque `call ... asm`, an `extern`
   callee is an undefined `declare`, and an atomic lowers to `load atomic`
+- a **concurrency / data-race oracle** (`concurrency.py`) that turns the migration
+  story into a *checked* fact: the same unsynchronized shared-counter idiom is
+  confirmed to be a **data race on both the C source (ThreadSanitizer) and the Go
+  target (`go run -race`)** — while Rust rejects it at compile time (Send/Sync) —
+  and every synchronized variant (mutex, lock-free atomic, read-only sharing) runs
+  clean under both detectors. A pattern is only ever called a race when a real
+  sanitizer actually fires on a real binary
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

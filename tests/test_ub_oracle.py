@@ -3466,3 +3466,59 @@ def test_frontier_atomic_opacity_confirmed_by_clang_ir():
 def test_frontier_all_confirmations_pass():
     cs = _fe.confirm_all()
     assert len(cs) == 4 and all(c.ok for c in cs)
+
+
+# ---------------------------------------------------------------------------
+# Step 34 — concurrency / data-race awareness (TSan + Go race detector).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import concurrency as _co  # noqa: E402
+
+_tsan_present = pytest.mark.skipif(
+    not _os.path.exists(_co.CC), reason="clang/tsan not available")
+_go_present = pytest.mark.skipif(
+    not _os.path.exists(_co.GO), reason="go not available")
+
+
+def test_concurrency_pattern_catalogue_is_consistent():
+    # exactly one racy pattern; every pattern carries a Rust migration story.
+    racy = [p for p in _co.PATTERNS.values() if p.races]
+    assert [p.name for p in racy] == ["unsynchronized_counter"]
+    for p in _co.PATTERNS.values():
+        assert p.c_source and p.go_source and p.rust_story
+
+
+@_tsan_present
+def test_concurrency_unsynchronized_counter_is_a_real_tsan_race():
+    r = _co.confirm_race("unsynchronized_counter", check_go=False)
+    assert r.c.available and r.c.race_detected is True
+    assert r.ok
+
+
+@_tsan_present
+@pytest.mark.parametrize("name", ["mutex_counter", "atomic_counter",
+                                  "readonly_shared"])
+def test_concurrency_synchronized_patterns_are_race_free_under_tsan(name):
+    r = _co.confirm_race(name, check_go=False)
+    assert r.c.available and r.c.race_detected is False
+    assert r.ok
+
+
+@_tsan_present
+@_go_present
+def test_concurrency_c_and_go_detectors_agree_on_the_race():
+    # the SAME unsynchronized-counter idiom is a race on both the C source
+    # (ThreadSanitizer) and the Go target (go run -race) — the cross-language story.
+    r = _co.confirm_race("unsynchronized_counter", check_go=True)
+    assert r.c.race_detected is True
+    assert r.go.available and r.go.race_detected is True
+    assert r.ok
+
+
+@_tsan_present
+@_go_present
+def test_concurrency_mutex_is_clean_on_both_c_and_go():
+    r = _co.confirm_race("mutex_counter", check_go=True)
+    assert r.c.race_detected is False
+    assert r.go.race_detected is False
+    assert r.ok
