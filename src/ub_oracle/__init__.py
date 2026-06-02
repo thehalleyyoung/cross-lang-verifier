@@ -99,6 +99,13 @@ from .semantics import (
     observation_from_reexec,
     coincides_with_harness,
 )
+from .traceability import (
+    Claim,
+    TraceProblem,
+    CLAIMS,
+    verify_traceability,
+    claim_ids,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -165,4 +172,9 @@ __all__ = [
     "judge",
     "observation_from_reexec",
     "coincides_with_harness",
+    "Claim",
+    "TraceProblem",
+    "CLAIMS",
+    "verify_traceability",
+    "claim_ids",
 ]

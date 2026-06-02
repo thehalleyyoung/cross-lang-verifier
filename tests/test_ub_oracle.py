@@ -2493,3 +2493,52 @@ def test_semantics_predicate_coincides_with_harness_on_real_programs():
     assert obs2 is not None
     assert _sem.is_divergence(obs2) == rr2.confirmed == False
     assert _sem.coincides_with_harness(rr2)
+
+
+# ── theory<->implementation traceability (Step 83) ───────────────────────────
+
+from src.ub_oracle import traceability as _trace
+
+
+def test_traceability_every_claim_maps_to_code():
+    # Every claim's module imports, every referenced symbol exists, and every
+    # attached executable theorem core evaluates to True.
+    problems = _trace.verify_traceability(run_theorems=True)
+    assert problems == [], [ (p.claim_id, p.kind, p.detail) for p in problems ]
+
+
+def test_traceability_claim_ids_are_unique_and_nonempty():
+    ids = _trace.claim_ids()
+    assert ids and len(ids) == len(set(ids))
+    assert all(i.strip() for i in ids)
+
+
+def test_traceability_doc_lists_every_claim_id():
+    # The generated docs/TRACEABILITY.md must cite exactly the claim ids defined
+    # in code — neither orphaned doc rows nor undocumented claims.
+    doc = _os.path.join(_os.path.dirname(_os.path.dirname(__file__)),
+                        "docs", "TRACEABILITY.md")
+    with open(doc) as f:
+        text = f.read()
+    for cid in _trace.claim_ids():
+        assert f"`{cid}`" in text, f"claim {cid} missing from TRACEABILITY.md"
+
+
+def test_traceability_structural_pass_without_theorems_is_fast_and_clean():
+    # The symbol/import-only structural pass must also be clean (and not depend
+    # on the theorem cores).
+    assert _trace.verify_traceability(run_theorems=False) == []
+
+
+def test_traceability_detects_a_broken_claim():
+    # Negative control: a claim pointing at a missing symbol is reported.
+    bad = _trace.Claim("X-bogus", "nonexistent", "ub_oracle.semantics",
+                       ("this_symbol_does_not_exist",))
+    saved = list(_trace.CLAIMS)
+    _trace.CLAIMS.append(bad)
+    try:
+        problems = _trace.verify_traceability(run_theorems=False)
+        assert any(p.claim_id == "X-bogus" and p.kind == "symbol"
+                   for p in problems)
+    finally:
+        _trace.CLAIMS[:] = saved

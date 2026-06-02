@@ -99,6 +99,12 @@ python3 -m src.cli.main discover \
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
   at the manifest boundary (the CLI exits non-zero on a malformed unit) while
   still accepting well-formed-but-uncovered units as `NOT_COVERED`
+- a **machine-checked theory↔implementation traceability map**
+  (`traceability.py`, generated table in `docs/TRACEABILITY.md`): every claim the
+  project makes is bound to a named module + symbols, and — where the claim is a
+  checkable theorem — to a fast runnable core, so `verify_traceability()` returns
+  `[]` only when every module imports, every cited symbol exists, and every
+  attached theorem passes (artifact evaluators can re-run it in one line)
 - a **formal divergence semantics** (`semantics.py`, spec in `docs/SEMANTICS.md`):
   the property the tool witnesses — *divergence modulo source-undefinedness* — is
   given as an executable predicate (premise: source UB is reached; consequence:
