@@ -1929,3 +1929,68 @@ def test_redteam_confirms_all_adversarial_cases_against_real_compilers():
     assert not report.breaches, [b.label for b in report.breaches]
     assert report.n_confirmed_divergent == report.n_cases
     assert report.sound
+
+
+# --- Step 8: coverage ratchet gate (pure-function policy tests) -------------
+import importlib.util as _ilu
+_cov_gate_path = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+    "scripts", "coverage_gate.py",
+)
+_cg_spec = _ilu.spec_from_file_location("coverage_gate", _cov_gate_path)
+_cov_gate = _ilu.module_from_spec(_cg_spec)
+_cg_spec.loader.exec_module(_cov_gate)
+
+
+def test_coverage_gate_total_is_mean_of_modules():
+    assert _cov_gate._total({"a": 90.0, "b": 80.0}) == 85.0
+    assert _cov_gate._total({}) == 0.0
+
+
+def test_coverage_gate_passes_when_at_or_above_floor():
+    floor = {"mean_floor": 85.0, "modules": {"a": 80.0, "b": 90.0}}
+    current = {"a": 80.0, "b": 90.0}
+    ok, failures, head = _cov_gate.evaluate(current, floor)
+    assert ok
+    assert failures == []
+    assert head == 0.0
+
+
+def test_coverage_gate_fails_when_a_module_drops():
+    floor = {"mean_floor": 85.0, "modules": {"a": 80.0, "b": 90.0}}
+    current = {"a": 70.0, "b": 95.0}  # mean still 82.5 < 85 too
+    ok, failures, _ = _cov_gate.evaluate(current, floor)
+    assert not ok
+    assert any("a:" in f for f in failures)
+    assert any("MEAN" in f for f in failures)
+
+
+def test_coverage_gate_fails_on_mean_even_if_modules_ok():
+    floor = {"mean_floor": 90.0, "modules": {"a": 80.0}}
+    current = {"a": 85.0}  # module above its 80 floor, but mean 85 < 90
+    ok, failures, head = _cov_gate.evaluate(current, floor)
+    assert not ok
+    assert any("MEAN" in f for f in failures)
+    assert head == -5.0
+
+
+def test_coverage_gate_headroom_is_mean_minus_floor():
+    floor = {"mean_floor": 80.0, "modules": {}}
+    ok, _, head = _cov_gate.evaluate({"a": 90.0, "b": 92.0}, floor)
+    assert ok
+    assert head == 11.0
+
+
+def test_coverage_gate_tolerates_subepsilon_jitter():
+    floor = {"mean_floor": 85.0, "modules": {"a": 85.0}}
+    ok, failures, _ = _cov_gate.evaluate({"a": 85.0 - 1e-10}, floor)
+    assert ok and not failures
+
+
+def test_committed_floor_is_well_formed_and_covers_core_modules():
+    with open(_cov_gate.FLOOR_PATH) as f:
+        floor = json.load(f)
+    assert "mean_floor" in floor and floor["mean_floor"] >= 85.0
+    for rel in _cov_gate.CORE_MODULES:
+        assert rel in floor["modules"], rel
+        assert 0.0 <= floor["modules"][rel] <= 100.0

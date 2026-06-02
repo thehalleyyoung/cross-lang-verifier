@@ -130,7 +130,8 @@ def differential_fuzz(harness: ReexecHarness, fu: FuzzUnit, *,
     rng = random.Random(seed)
     with tempfile.TemporaryDirectory() as d:
         c_bin = harness._compile_c(ce.source_snippet, _C_UBSAN_FLAGS, d, "c_fuzz")
-        rust_bin = harness._compile_rust(ce.target_snippet, d, "rs_fuzz")
+        rust_bin = harness._compile_target(ce.target_snippet, ce.target_lang,
+                                           d, "rs_fuzz")
         if not (c_bin and rust_bin):
             return (0, None)
         hits = 0

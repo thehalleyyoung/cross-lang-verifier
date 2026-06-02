@@ -82,6 +82,11 @@ python3 -m src.cli.main discover \
   falsely returns "no divergence" — 63/63 cases confirmed divergent against real
   compilers, **zero soundness breaches** (the byte-reproducible adversarial grid
   is CI-checked via `make redteam-check`)
+- a **branch-coverage ratchet** over the toolchain-independent brain of the tool
+  (`make coverage` / `make coverage-check`): 20 curated core modules — the IR,
+  oracle SPI, decision layer, symbolic searches, and finding pipeline — held at
+  **91 %+ mean branch coverage** with a committed floor in `coverage_floor.json`
+  that CI never lets regress
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout

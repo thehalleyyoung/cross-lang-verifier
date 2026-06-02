@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check package-check
+.PHONY: help reproduce reproduce-confirm reproduce-check guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check package-check coverage coverage-check
 
 help:
 	@echo "Targets:"
@@ -24,6 +24,8 @@ help:
 	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
 	@echo "  guard             run the credibility guard (no simulated results)"
 	@echo "  test-ub           run the ub_oracle test suite only"
+	@echo "  coverage          print the core-module branch-coverage table"
+	@echo "  coverage-check    enforce the coverage ratchet floor (slow, ~4 min)"
 	@echo "  ci                guard + reproduce-check + matrix-check + cex-quality-check + perf-check + redteam-check + test-ub"
 
 reproduce:
@@ -64,6 +66,12 @@ redteam-check:
 
 package-check:
 	bash scripts/verify_packaging.sh
+
+coverage:
+	$(PYTHON) scripts/coverage_gate.py --report
+
+coverage-check:
+	$(PYTHON) scripts/coverage_gate.py
 
 guard:
 	bash scripts/check_no_simulated_results.sh

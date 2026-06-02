@@ -49,3 +49,6 @@ jobs:
 
       - name: ub_oracle test suite (incl. real-compiler confirmation)
         run: python -m pytest tests/test_ub_oracle.py -q
+
+      - name: Core-module coverage ratchet (toolchain-independent, ~4 min)
+        run: make coverage-check PYTHON=python

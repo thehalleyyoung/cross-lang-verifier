@@ -1,0 +1,25 @@
+{
+  "mean_floor": 88.0,
+  "modules": {
+    "src/ub_oracle/ablation.py": 92.0,
+    "src/ub_oracle/cache.py": 89.0,
+    "src/ub_oracle/catalogue.py": 96.0,
+    "src/ub_oracle/dashboard.py": 94.0,
+    "src/ub_oracle/metrics.py": 77.0,
+    "src/ub_oracle/minimizer.py": 82.0,
+    "src/ub_oracle/oracles/c_to_go.py": 100.0,
+    "src/ub_oracle/oracles/floating_point.py": 90.0,
+    "src/ub_oracle/oracles/integer_ub.py": 90.0,
+    "src/ub_oracle/oracles/memory_shape.py": 92.0,
+    "src/ub_oracle/oracles/signed_overflow.py": 94.0,
+    "src/ub_oracle/oracles/target_pairs.py": 96.0,
+    "src/ub_oracle/plugin.py": 88.0,
+    "src/ub_oracle/regression_matrix.py": 89.0,
+    "src/ub_oracle/replay.py": 79.0,
+    "src/ub_oracle/report.py": 84.0,
+    "src/ub_oracle/suppress.py": 84.0,
+    "src/ub_oracle/target_semantics.py": 81.0,
+    "src/ub_oracle/triage.py": 91.0,
+    "src/ub_oracle/verify.py": 86.0
+  }
+}
