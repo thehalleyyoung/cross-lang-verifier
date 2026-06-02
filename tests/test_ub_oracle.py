@@ -4864,3 +4864,34 @@ def test_zoo_every_witness_reconfirms_live():
     assert rep.available and rep.ok, rep.detail
     assert rep.n_confirmed == rep.n_divergent
     assert all(c.confirmed for c in rep.checks)
+
+
+from src.ub_oracle import figures as _fig  # noqa: E402
+
+
+def test_figures_collect_from_real_data():
+    d = _fig.collect()
+    assert d.pairs and d.classes
+    # catalogue column sums equal per-class totals (cross-source consistency).
+    for klass, row in d.catalogue.items():
+        assert sum(row.values()) == d.per_class_totals[klass]
+    # the fuzzing gap is real in the source data.
+    assert d.method_recall["semrec"] >= 0.99
+    baselines = [r for m, r in d.method_recall.items() if m != "semrec"]
+    assert baselines and all(r == 0.0 for r in baselines)
+
+
+def test_figures_generate_valid_svgs():
+    import xml.dom.minidom as _md
+    f1, f2, f3, fmd = _fig.generate_figures()
+    for p in (f1, f2, f3):
+        _md.parseString(p.read_text())  # raises on malformed XML
+        assert p.read_text().startswith("<svg")
+    assert "Figure 1" in fmd.read_text()
+
+
+def test_figures_are_data_faithful():
+    rep = _fig.confirm_figures()
+    assert rep.ok, rep.checks
+    assert rep.n_pairs >= 2 and rep.n_classes >= 2
+    assert rep.catalogue_total == sum(_fig.collect().per_class_totals.values())

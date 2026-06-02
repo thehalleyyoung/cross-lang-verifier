@@ -743,6 +743,19 @@ def _thm_divergence_zoo() -> bool:
     return bool(rep.ok)
 
 
+def _thm_paper_figures() -> bool:
+    # The three paper figures are DATA-FAITHFUL, not hand-drawn: every number
+    # rendered into the SVGs (catalogue cell counts, per-pair confirmed-
+    # divergence counts, per-class totals, the semrec-vs-fuzzing recall gap) is
+    # independently recomputed from the real in-repo data sources (the
+    # re-confirmed divergence_zoo, the cross-pair regression matrix, and the
+    # ub-invisible benchmark) and must match, with Fig1 column sums equal to
+    # Fig3 totals. Pure stdlib, always reproducible.
+    from . import figures as fg
+    rep = fg.confirm_figures()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1573,6 +1586,28 @@ CLAIMS: List[Claim] = [
         "ub_oracle.divergence_zoo",
         ("confirm_zoo", "index_by_class_and_pair", "EXHIBITS"),
         theorem=_thm_divergence_zoo,
+        docs=("README.md",),
+    ),
+    claim(
+        "C51-paper-figures",
+        "The three figures a paper is written around are **generated from the "
+        "real data and proven data-faithful** (`ub_oracle.figures`): (1) the "
+        "cross-language **divergence catalogue** as a `divergence_class x "
+        "language_pair` matrix, (2) the **divergences-missed-by-fuzzing gap** "
+        "per pair (our oracle confirms UB-rooted, value-invisible divergences "
+        "at 100% recall while every differential-fuzzing / IR-equality baseline "
+        "scores 0% by construction — there is no defined source value to "
+        "compare), and (3) the **confirmed-divergences-by-class** headline "
+        "table. There is no plotting dependency: the SVGs are pure-stdlib and "
+        "every embedded number is a deterministic function of the live sources "
+        "(the re-confirmed `divergence_zoo`, `cross_pair_matrix/results.json`, "
+        "and `ub_invisible_results.json`). `confirm_figures()` recomputes every "
+        "datum independently and requires it to match the rendered figure, and "
+        "checks cross-figure consistency (Fig1 column sums equal Fig3 totals), "
+        "so the figures cannot drift from the evidence.",
+        "ub_oracle.figures",
+        ("confirm_figures", "collect", "generate_figures"),
+        theorem=_thm_paper_figures,
         docs=("README.md",),
     ),
 ]

@@ -370,6 +370,13 @@ python3 -m src.cli.main discover \
   witnessing input and is **re-confirmed live** — the oracle re-run on each
   witness must still flag the divergence (14 exhibits across rust/go/swift here);
   an unreproducible exhibit is rejected
+- **data-faithful paper figures** (`figures.py`, `docs/figures.md`): the three
+  figures a paper is written around — the cross-language divergence catalogue,
+  the per-pair divergences-missed-by-fuzzing gap (100% oracle recall vs 0% for
+  differential fuzzing / IR-equality, by construction), and the
+  confirmed-divergences-by-class table — rendered as pure-stdlib SVGs whose every
+  number is recomputed from the live data and checked by `confirm_figures()`, so
+  the figures cannot drift from the evidence
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
