@@ -82,6 +82,12 @@ class SignedOverflowOracle(DivergenceOracle):
 
         solver = z3.Solver()
         solver.add(overflows)
+        # Honor a declared operating range so the witness is real *under the
+        # unit's precondition* (and stays consistent with the AI pre-pass).
+        xr = unit.get("x_range")
+        if xr is not None:
+            lo, hi = int(xr[0]), int(xr[1])
+            solver.add(x >= z3.BitVecVal(lo, width), x <= z3.BitVecVal(hi, width))
         if solver.check() != z3.sat:
             return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class,
                                 detail=f"no overflowing input for x {op} {c} at width {width}")

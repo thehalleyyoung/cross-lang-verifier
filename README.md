@@ -87,6 +87,13 @@ python3 -m src.cli.main discover \
   oracle SPI, decision layer, symbolic searches, and finding pipeline — held at
   **91 %+ mean branch coverage** with a committed floor in `coverage_floor.json`
   that CI never lets regress
+- an **interval-domain abstract-interpretation pre-pass** (`abstract_interp.py`)
+  that, before any SMT call, *proves* a divergence class's undefined-behavior
+  region unreachable under a unit's declared operating range and discharges it
+  without invoking the solver — a sound accelerator (it only ever discharges
+  no-divergence, never asserts one) that also lets a unit declare a safe range
+  so it isn't flagged for a divergence that range forbids; the same range is
+  honored by the oracles' searches so the fast path and the SMT path always agree
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout

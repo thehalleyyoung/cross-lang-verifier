@@ -62,6 +62,13 @@ from .verify import (
 from .report import aggregate_reports, to_sarif, pair_of
 from .ablation import ablate_each_class
 from .headtohead import head_to_head, differential_fuzz, FuzzUnit
+from .abstract_interp import (
+    Interval,
+    PrePassVerdict,
+    PrePassResult,
+    analyze_unit,
+    prunable_classes,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -99,4 +106,9 @@ __all__ = [
     "head_to_head",
     "differential_fuzz",
     "FuzzUnit",
+    "Interval",
+    "PrePassVerdict",
+    "PrePassResult",
+    "analyze_unit",
+    "prunable_classes",
 ]

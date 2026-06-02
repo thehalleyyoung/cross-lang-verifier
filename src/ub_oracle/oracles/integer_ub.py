@@ -107,6 +107,11 @@ class ShiftOutOfRangeOracle(DivergenceOracle):
         opt = z3.Optimize()
         opt.add(z3.UGE(s, width))
         opt.add(z3.ULT(s, 1 << 16))  # keep it a sane, printable amount
+        # Honor a declared shift-amount range (keeps AI pre-pass consistent).
+        sr = unit.get("shift_range")
+        if sr is not None:
+            opt.add(s >= z3.BitVecVal(int(sr[0]), 32),
+                    s <= z3.BitVecVal(int(sr[1]), 32))
         opt.minimize(s)
         if opt.check() != z3.sat:
             return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class,
@@ -170,8 +175,13 @@ class DivisionByZeroOracle(DivergenceOracle):
         b = z3.BitVec(bvar, width)
         solver = z3.Solver()
         solver.add(b == 0)
-        if solver.check() != z3.sat:  # pragma: no cover - always sat
-            return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class)
+        br = unit.get("b_range")
+        if br is not None:
+            solver.add(b >= z3.BitVecVal(int(br[0]), width),
+                       b <= z3.BitVecVal(int(br[1]), width))
+        if solver.check() != z3.sat:
+            return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class,
+                                detail="zero divisor excluded by declared range")
         b_val = _as_signed(solver.model()[b].as_long(), width)
 
         ce = self._build(width, op, avar, bvar, a_val, b_val)
@@ -236,6 +246,13 @@ class IntMinDivNeg1Oracle(DivergenceOracle):
         solver.add(b != 0)
         # The signed-division-overflow input: where a/b is not representable.
         solver.add(z3.Not(z3.BVSDivNoOverflow(a, b)))
+        ar, br = unit.get("a_range"), unit.get("b_range")
+        if ar is not None:
+            solver.add(a >= z3.BitVecVal(int(ar[0]), width),
+                       a <= z3.BitVecVal(int(ar[1]), width))
+        if br is not None:
+            solver.add(b >= z3.BitVecVal(int(br[0]), width),
+                       b <= z3.BitVecVal(int(br[1]), width))
         if solver.check() != z3.sat:
             return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class,
                                 detail="no signed-division overflow input")

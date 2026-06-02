@@ -1994,3 +1994,175 @@ def test_committed_floor_is_well_formed_and_covers_core_modules():
     for rel in _cov_gate.CORE_MODULES:
         assert rel in floor["modules"], rel
         assert 0.0 <= floor["modules"][rel] <= 100.0
+
+
+# --- Step 78: abstract-interpretation pre-pass ------------------------------
+from src.ub_oracle import abstract_interp as _ai  # noqa: E402
+from src.ub_oracle.abstract_interp import Interval as _Interval  # noqa: E402
+from src.ub_oracle.plugin import ALL_ORACLES as _ALL_ORACLES_AI  # noqa: E402
+
+
+def _oracle_for_class(cls):
+    return [o for o in _ALL_ORACLES_AI if o.divergence_class == cls][0]
+
+
+def test_interval_transfer_functions_are_exact():
+    iv = _Interval(0, 10)
+    assert iv.add_const(5) == _Interval(5, 15)
+    assert iv.sub_const(3) == _Interval(-3, 7)
+    assert iv.contains(10) and not iv.contains(11)
+    assert _Interval(0, 10).intersects(_Interval(10, 20))
+    assert not _Interval(0, 10).intersects(_Interval(11, 20))
+    assert _Interval(2, 5).subset_of(_Interval(0, 10))
+    assert not _Interval(2, 15).subset_of(_Interval(0, 10))
+    bottom = _Interval(1, 0)
+    assert bottom.is_bottom and bottom.subset_of(_Interval(0, 10))
+    assert not bottom.intersects(_Interval(0, 10))
+
+
+def test_repr_interval_matches_signed_width():
+    assert _ai.repr_interval(32) == _Interval(-2147483648, 2147483647)
+    assert _ai.repr_interval(8) == _Interval(-128, 127)
+
+
+def test_parse_range_clamps_to_type_and_rejects_garbage():
+    # a declared range is intersected with the representable interval.
+    iv = _ai.parse_range({"x_range": [-10 ** 12, 10 ** 12]}, "x_range", 32)
+    assert iv == _ai.repr_interval(32)
+    assert _ai.parse_range({}, "x_range", 32) is None
+    with pytest.raises(ValueError):
+        _ai.parse_range({"x_range": [5, 1]}, "x_range", 32)
+    with pytest.raises(ValueError):
+        _ai.parse_range({"x_range": [1, 2, 3]}, "x_range", 32)
+
+
+def test_prepass_prunes_structurally_safe_add_zero():
+    u = {"kind": "binop_const", "op": "add", "const": 0, "width": 32,
+         "signed": True}
+    pruned = _ai.prunable_classes(u)
+    assert "signed_overflow" in pruned
+
+
+def test_prepass_prunes_when_declared_range_forbids_overflow():
+    u = {"kind": "binop_const", "op": "add", "const": 5, "width": 32,
+         "signed": True, "x_range": [0, 10]}
+    res = _ai.analyze_unit(u)["signed_overflow"]
+    assert res.verdict is _ai.PrePassVerdict.NO_UB_REACHABLE
+
+
+def test_prepass_defers_when_range_still_allows_overflow():
+    u = {"kind": "binop_const", "op": "add", "const": 5, "width": 32,
+         "signed": True, "x_range": [2147483640, 2147483647]}
+    assert "signed_overflow" not in _ai.prunable_classes(u)
+
+
+def test_prepass_prunes_div_by_zero_when_divisor_excludes_zero():
+    u = {"kind": "div", "width": 32, "signed": True, "b_range": [1, 9]}
+    pruned = _ai.prunable_classes(u)
+    # both division-by-zero and INT_MIN/-1 become unreachable (b != 0, b != -1).
+    assert "div_by_zero" in pruned and "intmin_div_neg1" in pruned
+
+
+def test_prepass_defers_div_by_zero_when_range_includes_zero():
+    u = {"kind": "div", "width": 32, "signed": True, "b_range": [-3, 3]}
+    assert "div_by_zero" not in _ai.prunable_classes(u)
+
+
+def test_prepass_prunes_intmin_when_dividend_excludes_int_min():
+    u = {"kind": "div", "width": 32, "signed": True,
+         "a_range": [-100, 100], "b_range": [-5, -1]}
+    pruned = _ai.prunable_classes(u)
+    # b can be -1 and 0 excluded, but a can never be INT_MIN -> intmin pruned,
+    # div_by_zero pruned too (0 not in [-5,-1]).
+    assert "intmin_div_neg1" in pruned and "div_by_zero" in pruned
+
+
+def test_prepass_prunes_shift_within_width():
+    u = {"kind": "shift", "width": 32, "shift_range": [0, 31]}
+    assert "shift_oob" in _ai.prunable_classes(u)
+    u2 = {"kind": "shift", "width": 32, "shift_range": [0, 64]}
+    assert "shift_oob" not in _ai.prunable_classes(u2)
+    u3 = {"kind": "shift", "width": 32, "shift_range": [-1, 10]}  # negative is UB
+    assert "shift_oob" not in _ai.prunable_classes(u3)
+
+
+def test_prepass_is_consistent_with_the_smt_search():
+    # SOUNDNESS-CRITICAL: whenever the pre-pass prunes a class, the (now
+    # range-aware) oracle's own SMT search must agree that there is no
+    # divergence — so pruning is a pure accelerator, never a behavior change.
+    safe_units = [
+        {"kind": "binop_const", "op": "add", "const": 5, "width": 32,
+         "signed": True, "x_range": [0, 10]},
+        {"kind": "binop_const", "op": "sub", "const": 3, "width": 32,
+         "signed": True, "x_range": [0, 10]},
+        {"kind": "div", "width": 32, "signed": True, "b_range": [1, 9]},
+        {"kind": "shift", "width": 32, "shift_range": [0, 31]},
+    ]
+    for u in safe_units:
+        pruned = _ai.prunable_classes(u)
+        assert pruned, u
+        for cls in pruned:
+            orc = _oracle_for_class(cls)
+            res = orc.find_divergence(u)
+            assert res.verdict is OracleVerdict.NO_DIVERGENCE_FOUND, (cls, u)
+
+
+def test_verify_unit_prepass_skips_the_solver_entirely(monkeypatch):
+    # When a class is pruned, the oracle's find_divergence must never be called.
+    u = {"kind": "binop_const", "op": "add", "const": 5, "width": 32,
+         "signed": True, "x_range": [0, 10]}
+    orc = _oracle_for_class("signed_overflow")
+
+    def _boom(_unit):  # pragma: no cover - must not run
+        raise AssertionError("solver was invoked despite a sound prune")
+
+    monkeypatch.setattr(orc, "find_divergence", _boom)
+    r = verify_unit(u, confirm=False, status=_NO_TC)
+    assert r.verdict is VerifyVerdict.NO_DIVERGENCE_FOUND
+    assert "signed_overflow" in r.prepass_pruned
+
+
+def test_verify_unit_prepass_does_not_change_the_verdict():
+    # prepass=True and prepass=False must reach the SAME verdict (the pre-pass
+    # only ever discharges no-divergence, never invents or hides one).
+    units = [
+        {"kind": "binop_const", "op": "add", "const": 5, "width": 32,
+         "signed": True, "x_range": [0, 10]},                 # pruned -> NDF
+        {"kind": "binop_const", "op": "add", "const": 1073741824,
+         "width": 32, "signed": True},                        # not pruned -> CAND
+        {"kind": "div", "width": 32, "signed": True, "b_range": [1, 9]},  # NDF
+        {"kind": "div", "width": 32, "signed": True},          # CAND
+    ]
+    for u in units:
+        a = verify_unit(u, confirm=False, status=_NO_TC, prepass=True)
+        b = verify_unit(u, confirm=False, status=_NO_TC, prepass=False)
+        assert a.verdict is b.verdict, u
+
+
+def test_verify_unit_malformed_range_falls_back_to_full_search():
+    # a malformed range must not crash verify_unit; it falls back to SMT.
+    u = {"kind": "binop_const", "op": "add", "const": 1073741824,
+         "width": 32, "signed": True, "x_range": [10, 0]}
+    r = verify_unit(u, confirm=False, status=_NO_TC)
+    assert r.verdict in (VerifyVerdict.CANDIDATE, VerifyVerdict.NO_DIVERGENCE_FOUND)
+    assert r.prepass_pruned == []
+
+
+@_requires_toolchain
+def test_prepass_never_prunes_a_real_confirmable_divergence():
+    # SOUNDNESS against real compilers: a unit whose declared range STILL admits
+    # overflow must NOT be pruned, and verify_unit must confirm DIVERGENT by
+    # real re-execution — while the same shape with a safe range is discharged
+    # without SMT and is NOT divergent.
+    risky = {"kind": "binop_const", "op": "add", "const": 5, "width": 32,
+             "signed": True, "x_range": [2147483640, 2147483647]}
+    assert "signed_overflow" not in _ai.prunable_classes(risky)
+    r = verify_unit(risky, ReexecHarness(_TC), status=_TC)
+    assert r.verdict is VerifyVerdict.DIVERGENT
+    assert -2147483648 <= r.divergence.counterexample.inputs["x"] <= 2147483647
+
+    safe = {"kind": "binop_const", "op": "add", "const": 5, "width": 32,
+            "signed": True, "x_range": [0, 10]}
+    r2 = verify_unit(safe, ReexecHarness(_TC), status=_TC)
+    assert r2.verdict is VerifyVerdict.NO_DIVERGENCE_FOUND
+    assert "signed_overflow" in r2.prepass_pruned

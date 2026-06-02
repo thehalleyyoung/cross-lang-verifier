@@ -34,6 +34,7 @@ from .plugin import (
     OracleVerdict,
 )
 from .reexec import ReexecHarness, ToolchainStatus, toolchain_available
+from . import abstract_interp as _ai
 
 # import the oracles package so the registry is populated on use.
 from . import oracles as _oracles  # noqa: F401
@@ -77,6 +78,9 @@ class VerifyReport:
     divergence: Optional[OracleResult] = None
     toolchain_available: bool = False
     detail: str = ""
+    #: classes the abstract-interpretation pre-pass soundly discharged (proved
+    #: their UB unreachable under the unit's declared range) before any SMT call.
+    prepass_pruned: List[str] = field(default_factory=list)
 
     @property
     def is_sound_claim(self) -> bool:
@@ -124,6 +128,7 @@ def verify_unit(
     *,
     confirm: bool = True,
     status: Optional[ToolchainStatus] = None,
+    prepass: bool = True,
 ) -> VerifyReport:
     """
     Run all applicable oracles and combine under the sound-for-divergence policy.
@@ -131,6 +136,14 @@ def verify_unit(
     When ``confirm`` is true and the toolchain is available, every symbolic
     divergence witness is re-executed; only confirmed witnesses yield a
     ``DIVERGENT`` verdict. Otherwise such a witness is reported as ``CANDIDATE``.
+
+    When ``prepass`` is true (default) an interval-domain abstract-interpretation
+    pre-pass runs first: for any class it can *prove* has no reachable UB under
+    the unit's declared operating range, the corresponding oracle's SMT search is
+    skipped entirely (the class is recorded in ``prepass_pruned``). This is a
+    sound accelerator — it only ever discharges a class as no-divergence, never
+    asserts one — so the verdict is identical to ``prepass=False`` while avoiding
+    solver calls on obviously-equivalent fragments.
     """
     status = status or toolchain_available()
     tgt_lang = unit.get("target_lang") or "rust"
@@ -144,11 +157,25 @@ def verify_unit(
                             toolchain_available=tool_ok,
                             detail="no registered oracle applies")
 
+    pruned: Dict[str, str] = {}
+    if prepass:
+        try:
+            for cls, res in _ai.prunable_classes(unit).items():
+                pruned[cls] = res.reason
+        except (ValueError, KeyError):
+            pruned = {}  # malformed range etc.: fall back to the full search.
+
     results: List[OracleResult] = []
     candidates: List[OracleResult] = []
     saw_unknown = False
 
     for oracle in applicable:
+        if oracle.divergence_class in pruned:
+            results.append(OracleResult(
+                OracleVerdict.NO_DIVERGENCE_FOUND, oracle.divergence_class,
+                detail=f"pruned by abstract-interpretation pre-pass: "
+                       f"{pruned[oracle.divergence_class]}"))
+            continue
         res = oracle.find_divergence(unit)
         if res.verdict is OracleVerdict.DIVERGENT:
             if confirm and tool_ok:
@@ -161,6 +188,7 @@ def verify_unit(
                         divergence=res,
                         toolchain_available=tool_ok,
                         detail=res.reexec.reason,
+                        prepass_pruned=list(pruned),
                     )
                 # symbolic witness that did not confirm: keep as candidate, but
                 # do NOT assert divergence (soundness).
@@ -181,6 +209,7 @@ def verify_unit(
             toolchain_available=tool_ok,
             detail=(f"symbolic witness(es) for [{cls}] not re-executed "
                     f"(toolchain_available={tool_ok}, confirm={confirm})"),
+            prepass_pruned=list(pruned),
         )
 
     if saw_unknown:
@@ -188,11 +217,17 @@ def verify_unit(
             VerifyVerdict.UNKNOWN, unit, oracle_results=results,
             toolchain_available=tool_ok,
             detail="at least one oracle returned UNKNOWN",
+            prepass_pruned=list(pruned),
         )
 
     covered = ", ".join(sorted({o.divergence_class for o in applicable}))
+    detail = f"checked classes: [{covered}]"
+    if pruned:
+        detail += (f"; {len(pruned)} class(es) discharged by abstract-"
+                   f"interpretation pre-pass without SMT")
     return VerifyReport(
         VerifyVerdict.NO_DIVERGENCE_FOUND, unit, oracle_results=results,
         toolchain_available=tool_ok,
-        detail=f"checked classes: [{covered}]",
+        detail=detail,
+        prepass_pruned=list(pruned),
     )
