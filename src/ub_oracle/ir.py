@@ -48,6 +48,7 @@ KNOWN_KINDS = frozenset({
     "array_index",   # f(i) = arr[i]                  (array_oob)
     "type_pun",      # reinterpret bytes              (strict_aliasing)
     "fp_fma",        # a*b + c contraction            (fp_contraction)
+    "uninit_read",   # read of uninitialized storage  (uninit_read)
 })
 
 #: integer kinds carry a machine width and must use a supported one.
@@ -182,6 +183,52 @@ def validate_unit(unit: Dict, *, require_known_kind: bool = False) -> List[IRErr
             _check_int(unit, "length", errors)
             if not any(e.field == "length" for e in errors) and unit["length"] <= 0:
                 errors.append(IRError("length", "array length must be positive"))
+    elif kind == "uninit_read":
+        storage = unit.get("storage")
+        if not isinstance(storage, dict):
+            errors.append(IRError("storage", "required dict field is missing"))
+        else:
+            skind = storage.get("kind")
+            if skind not in ("scalar", "array", "struct"):
+                errors.append(IRError("storage.kind",
+                                      f"unknown storage kind {skind!r}; expected "
+                                      "scalar/array/struct"))
+            valid_slots = None
+            if skind == "array":
+                if isinstance(storage.get("length"), bool) or \
+                        not isinstance(storage.get("length"), int) or \
+                        storage.get("length", 0) <= 0:
+                    errors.append(IRError("storage.length",
+                                          "array storage needs a positive length"))
+                else:
+                    valid_slots = set(range(storage["length"]))
+            elif skind == "struct":
+                fields = storage.get("fields")
+                if not isinstance(fields, list) or not fields or \
+                        not all(isinstance(f, str) for f in fields):
+                    errors.append(IRError("storage.fields",
+                                          "struct storage needs a non-empty list "
+                                          "of field-name strings"))
+                else:
+                    valid_slots = set(fields)
+            elif skind == "scalar":
+                valid_slots = {None}
+            writes = unit.get("writes", [])
+            if not isinstance(writes, list):
+                errors.append(IRError("writes", "must be a list of write specs"))
+            elif valid_slots is not None:
+                for i, w in enumerate(writes):
+                    if not isinstance(w, dict) or "slot" not in w:
+                        errors.append(IRError(f"writes[{i}]",
+                                              "each write needs a 'slot'"))
+                    elif w["slot"] not in valid_slots:
+                        errors.append(IRError(f"writes[{i}].slot",
+                                              f"slot {w['slot']!r} not in storage"))
+            if "read" not in unit:
+                errors.append(IRError("read", "required field is missing"))
+            elif valid_slots is not None and unit["read"] not in valid_slots:
+                errors.append(IRError("read",
+                                      f"read slot {unit['read']!r} not in storage"))
 
     # operating ranges are always optional but must be well-formed if present.
     for rk in _RANGE_KEYS:

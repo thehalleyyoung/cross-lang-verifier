@@ -24,6 +24,7 @@ Each row whose **Executable check** is ✓ has a fast, toolchain-free theorem co
 | `C9-replay-format` | Confirmed counterexamples are captured in a versioned, replayable format. | `src/ub_oracle/replay.py` | `Counterexample`, `REPLAY_SCHEMA_VERSION` | — | `README.md` |
 | `C10-ub-catalogue` | The supported undefined-behavior divergence classes are enumerated in a single catalogue. | `src/ub_oracle/catalogue.py` | `CATALOGUE`, `DivergenceClass`, `c_ub_classes` | ✓ | `README.md`, `CAPABILITIES.md` |
 | `C11-redteam` | An internal red-team actively tries to make the oracle call a truly divergent pair equivalent, on every supported pair. | `src/ub_oracle/redteam.py` | `build_cases`, `run_redteam`, `RedTeamReport` | — | `README.md` |
+| `C12-uninit-definedness` | The uninitialized-read class is decided by a real three-point definedness-lattice dataflow analysis that flags reads of slots not written on all paths and never flags a fully-initialized read. | `src/ub_oracle/oracles/uninit_read.py` | `analyze_definedness`, `uninitialized_read`, `UninitializedReadOracle` | ✓ | `README.md`, `CAPABILITIES.md` |
 
 ## How to extend
 

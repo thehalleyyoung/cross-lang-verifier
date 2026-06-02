@@ -1,5 +1,5 @@
 {
-  "n_oracles": 7,
+  "n_oracles": 8,
   "rows": [
     {
       "divergence_class": "array_oob",
@@ -64,6 +64,15 @@
       "divergence_class": "strict_aliasing",
       "raw_cost": 0,
       "raw_inputs": {},
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "uninit_read",
+      "raw_cost": 7,
+      "raw_inputs": {
+        "s": 7
+      },
       "source_lang": "c",
       "target_lang": "rust"
     }

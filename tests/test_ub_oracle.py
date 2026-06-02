@@ -1056,12 +1056,15 @@ def test_matrix_pair_coverage_is_honest_about_class_breadth():
     m = _matrix.build_matrix()
     cov = {(c["source_lang"], c["target_lang"]): c for c in m["coverage"]}
     # the anchor implements the full catalogue of executable oracles; the
-    # generated pairs implement the five argv-driven integer/memory classes.
+    # generated pairs implement the five argv-driven integer/memory classes
+    # plus the optimizer-exploited uninitialized-read class (which is confirmed
+    # by two conforming C builds disagreeing while the target stays defined, so
+    # it transfers to every target pair, not just the anchor).
     assert {"strict_aliasing", "fp_contraction"} <= set(cov[("c", "rust")]["classes_covered"])
     for tgt in ("go", "swift"):
         covered = set(cov[("c", tgt)]["classes_covered"])
         assert {"signed_overflow", "shift_oob", "div_by_zero",
-                "intmin_div_neg1", "array_oob"} == covered
+                "intmin_div_neg1", "array_oob", "uninit_read"} == covered
 
 
 def test_matrix_is_byte_reproducible_in_a_fresh_process():
@@ -2557,3 +2560,98 @@ def test_positioning_doc_covers_each_adjacent_tool_family():
         assert needle in text, f"POSITIONING.md does not address {needle!r}"
     # And it must state the gap as the design goal (the summary row).
     assert "design goal" in text
+
+
+# ── uninitialized-read / definedness oracle (Step 17) ────────────────────────
+
+from src.ub_oracle.oracles import uninit_read as _uninit
+from src.ub_oracle.plugin import get_oracle_for as _get_oracle_for
+
+
+def test_definedness_lattice_tracks_writes():
+    # never written -> uninit; unconditional write -> defined; guarded -> maybe.
+    scalar = {"kind": "uninit_read", "storage": {"kind": "scalar"},
+              "writes": [], "read": None}
+    assert _uninit.analyze_definedness(scalar) == {None: _uninit.UNINIT}
+
+    arr = {"kind": "uninit_read", "storage": {"kind": "array", "length": 4},
+           "writes": [{"slot": 0}], "read": 3}
+    st = _uninit.analyze_definedness(arr)
+    assert st[0] == _uninit.DEFINED and st[3] == _uninit.UNINIT
+
+    cond = {"kind": "uninit_read", "storage": {"kind": "scalar"},
+            "writes": [{"slot": None, "guarded": True}], "read": None}
+    assert _uninit.analyze_definedness(cond) == {None: _uninit.MAYBE}
+
+
+def test_uninitialized_read_detects_undefined_and_clears_defined():
+    # A read of a defined slot is NOT flagged (no fabricated divergence).
+    defined = {"kind": "uninit_read", "storage": {"kind": "scalar"},
+               "writes": [{"slot": None}], "read": None}
+    assert _uninit.uninitialized_read(defined) is None
+
+    # A maybe-defined (guarded-only) read IS flagged.
+    cond = {"kind": "uninit_read", "storage": {"kind": "scalar"},
+            "writes": [{"slot": None, "guarded": True}], "read": None}
+    assert _uninit.uninitialized_read(cond) == (None, _uninit.MAYBE)
+
+
+def test_uninit_oracle_returns_no_divergence_for_initialized_read():
+    orc = _get_oracle_for("uninit_read", "c", "rust")
+    defined = {"kind": "uninit_read", "storage": {"kind": "array", "length": 3},
+               "writes": [{"slot": 0}, {"slot": 1}, {"slot": 2}], "read": 1}
+    res = orc.find_divergence(defined)
+    assert res.verdict is OracleVerdict.NO_DIVERGENCE_FOUND
+
+
+def test_uninit_oracle_registered_for_all_three_pairs():
+    for tl in ("rust", "go", "swift"):
+        orc = _get_oracle_for("uninit_read", "c", tl)
+        assert orc.target_lang == tl
+        assert orc.confirmation_mode == "optimizer_exploited"
+
+
+def test_uninit_ir_validation_rejects_illformed_units():
+    from src.ub_oracle.ir import validate_unit
+    bad = {"kind": "uninit_read", "storage": {"kind": "array", "length": 0},
+           "writes": [{"slot": 5}], "read": 9}
+    errs = validate_unit(bad)
+    fields = {e.field for e in errs}
+    assert "storage.length" in fields
+    good = {"kind": "uninit_read", "storage": {"kind": "struct", "fields": ["a", "b"]},
+            "writes": [{"slot": "a"}], "read": "b"}
+    assert validate_unit(good) == []
+
+
+@_requires_toolchain
+@pytest.mark.parametrize("target", ["rust", "go", "swift"])
+@pytest.mark.parametrize("unit_name", ["scalar", "array", "struct", "cond"])
+def test_uninit_divergence_confirmed_against_real_compilers(target, unit_name):
+    units = {
+        "scalar": {"kind": "uninit_read", "storage": {"kind": "scalar"},
+                   "writes": [], "read": None},
+        "array": {"kind": "uninit_read", "storage": {"kind": "array", "length": 4},
+                  "writes": [{"slot": 0}], "read": 3},
+        "struct": {"kind": "uninit_read",
+                   "storage": {"kind": "struct", "fields": ["a", "b"]},
+                   "writes": [{"slot": "a"}], "read": "b"},
+        "cond": {"kind": "uninit_read", "storage": {"kind": "scalar"},
+                 "writes": [{"slot": None, "guarded": True}], "read": None},
+    }
+    if not _TC.full_for(target):
+        pytest.skip(f"toolchain missing for {target}")
+    orc = _get_oracle_for("uninit_read", "c", target)
+    res = orc.find_divergence(units[unit_name])
+    assert res.verdict is OracleVerdict.DIVERGENT
+    out = orc.confirm(res, ReexecHarness(_TC))
+    rr = out.reexec
+    assert rr.available, rr.reason
+    # same C source under two conforming builds disagrees (UB under-determined)...
+    assert rr.ub_consequential, rr.reason
+    # ...while the target is defined and deterministic.
+    assert rr.rust_defined, rr.reason
+    assert rr.confirmed, rr.reason
+    assert out.counterexample.confirmed
+    # the two C builds really printed different values:
+    obs = out.counterexample.source_observed
+    assert obs["A"] != obs["B"], obs

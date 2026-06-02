@@ -41,6 +41,9 @@ CANONICAL_UNITS: Dict[str, Dict[str, Any]] = {
     "array_oob": {"kind": "array_index", "length": 4},
     "strict_aliasing": {"kind": "type_pun"},
     "fp_contraction": {"kind": "fp_fma", "probe": "fp_contraction"},
+    "uninit_read": {"kind": "uninit_read",
+                    "storage": {"kind": "struct", "fields": ["a", "b"]},
+                    "writes": [{"slot": "a"}], "read": "b"},
 }
 
 

@@ -36,6 +36,13 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "uninit_read",
+      "label": "c->go:uninit_read",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "array_oob",
       "label": "c->rust:array_oob",
       "source_lang": "c",
@@ -85,6 +92,13 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "uninit_read",
+      "label": "c->rust:uninit_read",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "array_oob",
       "label": "c->swift:array_oob",
       "source_lang": "c",
@@ -115,6 +129,13 @@
     {
       "divergence_class": "signed_overflow",
       "label": "c->swift:signed_overflow",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "uninit_read",
+      "label": "c->swift:uninit_read",
       "source_lang": "c",
       "target_lang": "swift",
       "verdict": "divergent"

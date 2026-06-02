@@ -54,6 +54,14 @@ python3 -m src.cli.main discover \
 ## What the repository demonstrably contains
 
 - SMT-backed equivalence checking in `src/`
+- a growing catalogue of **undefined-behavior divergence oracles** — signed
+  overflow, shift-out-of-range, division-by-zero, `INT_MIN/-1`, array
+  out-of-bounds, strict aliasing, floating-point contraction, and an
+  **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on
+  a real three-point definedness-lattice dataflow analysis that flags reads of
+  slots never written on all paths and confirms them across C→Rust/Go/Swift
+  (same C source diverging at `-O0` vs `-O2` while the zero/default-initialized
+  translation is defined and deterministic)
 - source-string and source-file verification flows
 - project discovery and benchmark runners in `src/cli/`
 - a faithful counterexample minimizer (`src/ub_oracle/minimizer.py`) that shrinks

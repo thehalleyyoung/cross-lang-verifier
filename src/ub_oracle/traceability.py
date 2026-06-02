@@ -110,6 +110,16 @@ def _thm_three_pairs_registered() -> bool:
     pairs = set(language_pairs())
     return {("c", "rust"), ("c", "go"), ("c", "swift")}.issubset(pairs)
 
+def _thm_uninit_definedness() -> bool:
+    # The lattice must flag an unwritten read and clear an initialized one.
+    from .oracles import uninit_read as u
+    unwritten = {"kind": "uninit_read", "storage": {"kind": "scalar"},
+                 "writes": [], "read": None}
+    initialized = {"kind": "uninit_read", "storage": {"kind": "scalar"},
+                   "writes": [{"slot": None}], "read": None}
+    return (u.uninitialized_read(unwritten) is not None
+            and u.uninitialized_read(initialized) is None)
+
 
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
@@ -212,6 +222,16 @@ CLAIMS: List[Claim] = [
         "ub_oracle.redteam",
         ("build_cases", "run_redteam", "RedTeamReport"),
         docs=("README.md",),
+    ),
+    claim(
+        "C12-uninit-definedness",
+        "The uninitialized-read class is decided by a real three-point "
+        "definedness-lattice dataflow analysis that flags reads of slots not "
+        "written on all paths and never flags a fully-initialized read.",
+        "ub_oracle.oracles.uninit_read",
+        ("analyze_definedness", "uninitialized_read", "UninitializedReadOracle"),
+        theorem=_thm_uninit_definedness,
+        docs=("README.md", "CAPABILITIES.md"),
     ),
 ]
 

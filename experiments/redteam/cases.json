@@ -162,6 +162,22 @@
     },
     {
       "breach": false,
+      "divergence_class": "uninit_read",
+      "label": "c->go:uninit_read#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "uninit_read",
+      "label": "c->go:uninit_read#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "array_oob",
       "label": "c->rust:array_oob#0",
       "source_lang": "c",
@@ -346,6 +362,22 @@
     },
     {
       "breach": false,
+      "divergence_class": "uninit_read",
+      "label": "c->rust:uninit_read#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "uninit_read",
+      "label": "c->rust:uninit_read#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "array_oob",
       "label": "c->swift:array_oob#0",
       "source_lang": "c",
@@ -503,10 +535,26 @@
       "source_lang": "c",
       "target_lang": "swift",
       "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "uninit_read",
+      "label": "c->swift:uninit_read#0",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "uninit_read",
+      "label": "c->swift:uninit_read#1",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
     }
   ],
   "n_breaches": 0,
-  "n_cases": 63,
+  "n_cases": 69,
   "n_confirmed_divergent": 0,
   "sound": true,
   "toolchain_full": false

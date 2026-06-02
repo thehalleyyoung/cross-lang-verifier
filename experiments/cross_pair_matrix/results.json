@@ -95,6 +95,24 @@
       }
     },
     {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "uninit_read",
+      "divergence_witness": "C reads slot 'b' of struct storage while its definedness is 'uninit' (uninitialized): UB. Its value is indeterminate, and the -O0 and -O2 builds of the *same* C source disagree on the printed value. Go zero-initializes all storage, so the read is defined and deterministic.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "8af1f9c8522936ef",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "6d9c55025d3f15de",
+      "verdict": "divergent",
+      "witness": {
+        "s": 7
+      }
+    },
+    {
       "confirmation_mode": "trap_vs_defined",
       "divergence_class": "array_oob",
       "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Rust bounds-checks and panics deterministically (defined).",
@@ -224,6 +242,24 @@
       "witness": {}
     },
     {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "uninit_read",
+      "divergence_witness": "C reads slot 'b' of struct storage while its definedness is 'uninit' (uninitialized): UB. Its value is indeterminate, and the -O0 and -O2 builds of the *same* C source disagree on the printed value. Rust's type system forbids reading a possibly-uninitialized binding; the idiomatic translation zero-initializes, giving a single defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "8af1f9c8522936ef",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "d83fb28e7e918252",
+      "verdict": "divergent",
+      "witness": {
+        "s": 7
+      }
+    },
+    {
       "confirmation_mode": "trap_vs_defined",
       "divergence_class": "array_oob",
       "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Swift bounds-checks and traps deterministically (a defined outcome).",
@@ -315,6 +351,24 @@
       "witness": {
         "x": 1073741824
       }
+    },
+    {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "uninit_read",
+      "divergence_witness": "C reads slot 'b' of struct storage while its definedness is 'uninit' (uninitialized): UB. Its value is indeterminate, and the -O0 and -O2 builds of the *same* C source disagree on the printed value. Swift requires explicit initialization; the translation default-initializes to zero, giving a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "8af1f9c8522936ef",
+      "target_defined_returncodes": [
+        0,
+        -5
+      ],
+      "target_lang": "swift",
+      "target_sha16": "2893ab5dca7003cb",
+      "verdict": "divergent",
+      "witness": {
+        "s": 7
+      }
     }
   ],
   "coverage": [
@@ -324,10 +378,11 @@
         "div_by_zero",
         "intmin_div_neg1",
         "shift_oob",
-        "signed_overflow"
+        "signed_overflow",
+        "uninit_read"
       ],
-      "n_classes": 5,
-      "n_divergent": 5,
+      "n_classes": 6,
+      "n_divergent": 6,
       "source_lang": "c",
       "target_lang": "go"
     },
@@ -339,10 +394,11 @@
         "intmin_div_neg1",
         "shift_oob",
         "signed_overflow",
-        "strict_aliasing"
+        "strict_aliasing",
+        "uninit_read"
       ],
-      "n_classes": 7,
-      "n_divergent": 7,
+      "n_classes": 8,
+      "n_divergent": 8,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -352,10 +408,11 @@
         "div_by_zero",
         "intmin_div_neg1",
         "shift_oob",
-        "signed_overflow"
+        "signed_overflow",
+        "uninit_read"
       ],
-      "n_classes": 5,
-      "n_divergent": 5,
+      "n_classes": 6,
+      "n_divergent": 6,
       "source_lang": "c",
       "target_lang": "swift"
     }
@@ -367,12 +424,13 @@
     "intmin_div_neg1",
     "shift_oob",
     "signed_overflow",
-    "strict_aliasing"
+    "strict_aliasing",
+    "uninit_read"
   ],
   "language_pairs": [
     "c->go",
     "c->rust",
     "c->swift"
   ],
-  "n_cells": 17
+  "n_cells": 20
 }

@@ -74,6 +74,12 @@ POSITIVE_CASES: List[LabeledCase] = [
     LabeledCase("fp_fma",
                 {"kind": "fp_fma", "probe": "fp_contraction"},
                 "fp_contraction"),
+    LabeledCase("uninit_struct_b",
+                {"kind": "uninit_read",
+                 "storage": {"kind": "struct", "fields": ["a", "b"]},
+                 "writes": [{"slot": "a"}], "read": "b",
+                 "probe": "uninit_read"},
+                "uninit_read"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus
@@ -90,6 +96,12 @@ NEGATIVE_CASES: List[LabeledCase] = [
                  "var": "x", "signed": False}, None),
     # an opaque unit no integer oracle understands.
     LabeledCase("opaque_unit", {"kind": "string_concat", "width": 32}, None),
+    # a fully-initialized read: the uninit_read oracle must decline it.
+    LabeledCase("uninit_all_written",
+                {"kind": "uninit_read",
+                 "storage": {"kind": "array", "length": 2},
+                 "writes": [{"slot": 0}, {"slot": 1}], "read": 1,
+                 "probe": "uninit_read"}, None),
 ]
 
 ALL_CASES: List[LabeledCase] = POSITIVE_CASES + NEGATIVE_CASES
