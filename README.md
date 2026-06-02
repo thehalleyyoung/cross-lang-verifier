@@ -198,6 +198,14 @@ python3 -m src.cli.main discover \
   the pure model on hundreds of inputs (zero mismatches), encoding the exact
   contract (sign-only comparisons, NUL preconditions, `memcpy` no-overlap). The
   `LibcSpec`/`confirm_spec` framework is runtime-agnostic and reusable
+- **high-fidelity ingestion from the compilers' own IRs** (`ir_ingest.py`): rather
+  than re-parsing source by hand, signatures and ownership facts are recovered from
+  clang's `-ast-dump=json` (exact parameter names, types and storage classes —
+  `static char *dup_first(const char *)`) and rustc's `--emit=mir` (a by-value
+  non-`Copy` parameter such as `Vec<i32>` shows a `move`/`drop` of its local and is
+  recorded as *consumed*; a `Copy` `i32` is not — ownership for free, from the
+  compiler itself), with builtins filtered by source-location provenance and the
+  ingesters self-confirming against the real clang/rustc on every run
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

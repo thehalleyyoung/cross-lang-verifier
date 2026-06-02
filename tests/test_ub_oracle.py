@@ -3680,3 +3680,60 @@ def test_libc_all_specs_confirmed_together():
     results = _lc.confirm_all(trials=80)
     assert len(results) == len(_lc.SPECS)
     assert all(r.ok for r in results)
+
+
+# ---------------------------------------------------------------------------
+# Step 27 — high-fidelity ingestion via compiler IRs (clang AST + rustc MIR).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import ir_ingest as _iri  # noqa: E402
+
+_clang_for_ir = pytest.mark.skipif(
+    not _os.path.exists(_iri.CLANG), reason="clang not available")
+_rustc_for_ir = pytest.mark.skipif(
+    not _os.path.exists(_iri.RUSTC), reason="rustc not available")
+
+
+@_clang_for_ir
+def test_ir_clang_ingest_extracts_faithful_signatures():
+    c = _iri.confirm_clang_ingest()
+    assert c.available and c.ok
+    fns = c.module.functions
+    add = fns["add"]
+    assert add.ret_type == "int" and add.arity == 2
+    assert tuple(p.type for p in add.params) == ("int", "int")
+    assert tuple(p.name for p in add.params) == ("a", "b")
+    # storage class is read from the AST, not guessed.
+    assert fns["dup_first"].storage == "static"
+    assert fns["dup_first"].params[0].type == "const char *"
+
+
+@_rustc_for_ir
+def test_ir_mir_ingest_yields_ownership_facts_for_free():
+    m = _iri.confirm_mir_ingest()
+    assert m.available and m.ok
+    fns = m.module.functions
+    # a by-value Vec parameter is consumed (moved/dropped) per the compiler's MIR.
+    assert "v" in fns["consume"].moved_params
+    # a Copy i32 parameter is never moved.
+    assert fns["double"].moved_params == ()
+
+
+@_rustc_for_ir
+def test_ir_mir_move_vs_copy_is_the_compilers_own_fact():
+    # passing the Vec onward by value (into another fn) is a `move` in MIR;
+    # a Copy type passed the same way is not consumed.
+    src = ("pub fn take(v: Vec<i32>) -> Vec<i32> { v }\n"
+           "pub fn keep(x: i32) -> i32 { x }\n")
+    mod = _iri.ingest_rustc_mir(src)
+    assert mod is not None
+    assert mod.functions["take"].moved_params == ("v",)
+    assert mod.functions["keep"].moved_params == ()
+
+
+@_clang_for_ir
+def test_ir_clang_function_qualtype_param_split():
+    # the function-type parser handles pointer return types and qualified params.
+    assert _iri._split_fn_qualtype("char *(const char *)") == ("const char *",)
+    assert _iri._split_fn_qualtype("int (int, int)") == ("int", "int")
+    assert _iri._split_fn_qualtype("void (void)") == ()

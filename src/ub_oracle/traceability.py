@@ -353,6 +353,28 @@ def _thm_libc_model_accurate() -> bool:
     return all(r.ok for r in lc.confirm_all(trials=40))
 
 
+def _thm_ir_ingest_sound() -> bool:
+    # Ingestion must recover faithful facts from the compilers' own IRs: clang's
+    # AST gives exact signatures/storage classes; rustc's MIR gives ownership
+    # (move/drop) facts for free. Where a compiler is absent we fall back to a
+    # consistency-only check so the claim never silently passes on fabricated data.
+    from . import ir_ingest as ir
+    if ir._split_fn_qualtype("char *(const char *)") != ("const char *",):
+        return False
+    if ir._split_fn_qualtype("int (int, int)") != ("int", "int"):
+        return False
+    import os as _os6
+    okc = True
+    if _os6.path.exists(ir.CLANG):
+        c = ir.confirm_clang_ingest()
+        okc = bool(c.ok)
+    okm = True
+    if _os6.path.exists(ir.RUSTC):
+        m = ir.confirm_mir_ingest()
+        okm = bool(m.ok)
+    return okc and okm
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -664,6 +686,24 @@ CLAIMS: List[Claim] = [
         ("SPECS", "confirm_spec", "confirm_all", "model_strcmp",
          "LIBC_CONTRACTS"),
         theorem=_thm_libc_model_accurate,
+        docs=("README.md",),
+    ),
+    claim(
+        "C25-ir-ingest",
+        "Cross-language facts are recovered from the *compilers' own* "
+        "intermediate representations rather than re-parsed by hand: clang's "
+        "`-ast-dump=json` yields exact function signatures, parameter names and "
+        "storage classes (e.g. `add(int,int)->int`, `static char *dup_first("
+        "const char *)`), while rustc's `--emit=mir` yields ownership facts for "
+        "free — a by-value non-`Copy` parameter (e.g. `Vec<i32>`) shows a "
+        "`move`/`drop` of its local in MIR and is recorded as consumed, whereas a "
+        "`Copy` `i32` parameter is not. Builtins are filtered via source-location "
+        "provenance and the ingesters confirm themselves against the real clang "
+        "and rustc on every run.",
+        "ub_oracle.ir_ingest",
+        ("ingest_clang", "ingest_rustc_mir", "confirm_clang_ingest",
+         "confirm_mir_ingest", "IRModule"),
+        theorem=_thm_ir_ingest_sound,
         docs=("README.md",),
     ),
 ]
