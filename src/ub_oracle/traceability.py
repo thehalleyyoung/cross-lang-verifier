@@ -721,6 +721,17 @@ def _thm_real_frontends() -> bool:
     return bool(rep.ok)
 
 
+def _thm_single_binary() -> bool:
+    # A single-file executable distribution exists for non-Python users: a
+    # zipapp .pyz bundling ub_oracle builds, runs as a subprocess against a real
+    # manifest, and produces JSON byte-identical to the in-process CLI -- the
+    # shipped single file is behaviourally identical to the library. Pure stdlib,
+    # always available.
+    from . import single_binary as sb
+    rep = sb.confirm_single_binary()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1512,6 +1523,25 @@ CLAIMS: List[Claim] = [
         ("confirm_real_frontends", "ingest_treesitter", "FRONTENDS"),
         theorem=_thm_real_frontends,
         docs=("README.md", "docs/FRONTENDS.md"),
+    ),
+    claim(
+        "C49-single-binary",
+        "A **single-file executable distribution** lets non-Python users adopt "
+        "the tool without managing an environment (`ub_oracle.single_binary`): "
+        "`build_pyz` produces a stdlib **zipapp** `.pyz` that bundles the whole "
+        "`ub_oracle` package behind a `__main__` shim and an interpreter "
+        "shebang, so it runs directly (`./cross-lang-verify.pyz --units …`) given "
+        "any Python 3 — no `pip install`, no virtualenv, no source tree (it "
+        "complements the existing `docker run` image). The machine-checked claim "
+        "builds the `.pyz`, **runs it as a subprocess** against a real units "
+        "manifest, and proves its JSON output is **byte-identical** (canonical "
+        "re-encoding) to the in-process CLI — the shipped single file is "
+        "behaviourally identical to the library. Pure stdlib, so it is always "
+        "available and reproducible anywhere.",
+        "ub_oracle.single_binary",
+        ("confirm_single_binary", "build_pyz"),
+        theorem=_thm_single_binary,
+        docs=("README.md",),
     ),
 ]
 

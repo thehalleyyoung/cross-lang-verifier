@@ -4807,3 +4807,25 @@ def test_treesitter_frontend_agrees_with_clang_ast():
     assert rep.available and rep.ok, rep.detail
     assert len(rep.agreements) == len(_fe._SAMPLES)
     assert all(a.ok for a in rep.agreements)
+
+
+from src.ub_oracle import single_binary as _sb  # noqa: E402
+
+
+def test_single_binary_builds_runnable_pyz(tmp_path):
+    pyz = _sb.build_pyz(tmp_path / "clv.pyz")
+    assert pyz.exists() and pyz.stat().st_size > 0
+    import zipfile
+    with zipfile.ZipFile(pyz) as zf:
+        names = zf.namelist()
+    assert "__main__.py" in names
+    assert any(n.startswith("ub_oracle/") for n in names)
+    # the shebang makes it directly executable.
+    assert pyz.read_bytes()[:2] == b"#!"
+
+
+def test_single_binary_matches_library_end_to_end():
+    rep = _sb.confirm_single_binary()
+    assert rep.available and rep.ok, rep.detail
+    assert rep.built and rep.runs and rep.matches_library
+    assert rep.size_bytes > 0

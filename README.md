@@ -359,6 +359,11 @@ python3 -m src.cli.main discover \
   tree-sitter frontend is **cross-validated against the clang AST** (the
   compiler's own ground truth): on real C the extracted function tables agree on
   names, arities, parameter names and storage class — a machine-checked claim
+- a **single-file executable** for non-Python users (`single_binary.py`): a
+  stdlib `zipapp` `.pyz` bundling the whole package, runnable as
+  `./cross-lang-verify.pyz --units …` with just a Python interpreter (no pip, no
+  venv) — complementing the `docker run` image. Proven byte-identical to the
+  in-process CLI by running the built `.pyz` as a subprocess on a real manifest
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
