@@ -157,6 +157,22 @@ def _thm_kinduction_safe_and_witness() -> bool:
     return bool(sound_safe and sound_div)
 
 
+def _thm_abi_layout_sound() -> bool:
+    # The ABI oracle must (a) flag the classic suboptimal-order struct as an
+    # interop hazard whose optimized layout reorders it, and (b) abstain on a
+    # struct already in padding-optimal order — never inventing a hazard.
+    from . import abi_layout as a
+    hz = a.abi_divergence(a.hazard_struct())
+    sound_hazard = (hz.is_hazard
+                    and hz.c.size == 12 and hz.optimized.size == 8
+                    and set(hz.moved_fields) == {"a", "b", "c"})
+    sf = a.abi_divergence(a.safe_struct())
+    uni = a.abi_divergence(a.uniform_struct())
+    sound_safe = (not sf.is_hazard and not uni.is_hazard
+                  and sf.moved_fields == [])
+    return bool(sound_hazard and sound_safe)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -291,6 +307,20 @@ CLAIMS: List[Claim] = [
         ("prove", "simulate", "TransitionSystem", "saturating_counter",
          "accumulator_overflow"),
         theorem=_thm_kinduction_safe_and_witness,
+        docs=("README.md",),
+    ),
+    claim(
+        "C15-abi-layout",
+        "Divergence at FFI boundaries is decided structurally: the oracle "
+        "computes the exact C-ABI layout of a shared struct (confirmed field-by-"
+        "field against real clang offsetof) and flags an interop hazard iff a "
+        "padding-optimizing representation would reorder it. Real rustc confirms "
+        "#[repr(C)] mirrors the C layout exactly while the default repr diverges "
+        "precisely when predicted, and Go's declaration-order layout matches C — "
+        "so the oracle never fabricates a hazard the compiler does not exhibit.",
+        "ub_oracle.abi_layout",
+        ("c_layout", "optimized_layout", "abi_divergence", "confirm_abi"),
+        theorem=_thm_abi_layout_sound,
         docs=("README.md",),
     ),
 ]

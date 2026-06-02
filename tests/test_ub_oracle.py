@@ -2874,3 +2874,120 @@ def test_kinduction_safe_loop_no_divergence_across_pairs(target):
     assert res.rust_defined
     # C and the target agree on the defined result (5_000_000 mod 1000 == 0).
     assert res.c_runs["O0"].stdout == res.rust_run.stdout == "0"
+
+
+# ---------------------------------------------------------------------------
+# Step 79 — ABI / interop-divergence checks at FFI boundaries.
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import abi_layout as _abi  # noqa: E402
+
+
+def test_abi_c_layout_matches_hand_computed_padding():
+    lay = _abi.c_layout(_abi.hazard_struct())
+    assert lay.size == 12
+    assert lay.offsets == {"a": 0, "b": 4, "c": 8}
+    assert lay.align == 4
+
+
+def test_abi_optimized_layout_reorders_by_descending_alignment():
+    opt = _abi.optimized_layout(_abi.hazard_struct())
+    # int (align 4) floats to the front; the two chars pack into the tail.
+    assert opt.size == 8
+    assert opt.offsets == {"b": 0, "a": 4, "c": 5}
+
+
+def test_abi_hazard_detected_for_suboptimal_declaration_order():
+    res = _abi.abi_divergence(_abi.hazard_struct())
+    assert res.is_hazard
+    assert res.verdict is _abi.AbiVerdict.INTEROP_HAZARD
+    assert set(res.moved_fields) == {"a", "b", "c"}
+    assert "misread" in res.reason
+
+
+def test_abi_safe_when_declaration_order_already_optimal():
+    res = _abi.abi_divergence(_abi.safe_struct())
+    assert not res.is_hazard
+    assert res.verdict is _abi.AbiVerdict.INTEROP_SAFE
+    assert res.moved_fields == []
+
+
+def test_abi_uniform_alignment_never_diverges():
+    res = _abi.abi_divergence(_abi.uniform_struct())
+    assert not res.is_hazard
+    assert res.c.size == 12 and res.optimized.size == 12
+
+
+def test_abi_divergence_is_deterministic():
+    a = _abi.abi_divergence(_abi.hazard_struct())
+    b = _abi.abi_divergence(_abi.hazard_struct())
+    assert (a.verdict, a.c.size, a.optimized.size, a.moved_fields) == \
+           (b.verdict, b.c.size, b.optimized.size, b.moved_fields)
+
+
+def test_abi_layout_differs_from_is_offset_sensitive():
+    c = _abi.c_layout(_abi.hazard_struct())
+    opt = _abi.optimized_layout(_abi.hazard_struct())
+    assert c.differs_from(opt)
+    assert not c.differs_from(c)
+
+
+@_requires_toolchain
+def test_abi_model_matches_real_clang_offsetof():
+    """The C-ABI model must reproduce real ``clang`` ``sizeof``/``offsetof``
+    field-by-field for every struct we reason about."""
+    for fields in (_abi.hazard_struct(), _abi.safe_struct(), _abi.uniform_struct()):
+        conf = _abi.confirm_abi(fields, cc=_TC.cc)
+        assert conf.available, conf.reason
+        model = _abi.c_layout(fields)
+        assert conf.c_size == model.size, fields
+        assert conf.c_offsets == model.offsets, fields
+
+
+@_requires_toolchain
+def test_abi_hazard_confirmed_by_real_rustc_default_repr():
+    """Close the loop on real ``rustc``: ``#[repr(C)]`` reproduces the C layout
+    exactly (interop-safe), while the default repr genuinely diverges — and the
+    observed divergent layout matches our optimized model byte-for-byte."""
+    rustc = _TC.target_path("rust")
+    if rustc is None:
+        pytest.skip("rustc unavailable")
+    fields = _abi.hazard_struct()
+    conf = _abi.confirm_abi(fields, cc=_TC.cc, rustc=rustc)
+    assert conf.available, conf.reason
+    # repr(C) is an exact mirror of the C layout (safe FFI representation).
+    assert conf.rust_reprc_matches_c is True
+    # the default repr really diverges, exactly as the oracle predicted.
+    assert _abi.abi_divergence(fields).is_hazard
+    assert conf.rust_natural_diverges is True
+    # and the real divergent layout equals our optimized model.
+    opt = _abi.optimized_layout(fields)
+    assert conf.rust_natural_size == opt.size
+    assert conf.rust_natural_offsets == opt.offsets
+
+
+@_requires_toolchain
+def test_abi_safe_struct_does_not_diverge_under_real_rustc():
+    """Soundness: when the oracle abstains, real ``rustc`` default repr does NOT
+    diverge — we never flag an interop hazard the compiler doesn't exhibit."""
+    rustc = _TC.target_path("rust")
+    if rustc is None:
+        pytest.skip("rustc unavailable")
+    for fields in (_abi.safe_struct(), _abi.uniform_struct()):
+        assert not _abi.abi_divergence(fields).is_hazard
+        conf = _abi.confirm_abi(fields, cc=_TC.cc, rustc=rustc)
+        assert conf.rust_reprc_matches_c is True
+        assert conf.rust_natural_diverges is False, fields
+
+
+@_requires_toolchain
+def test_abi_go_struct_is_layout_stable_like_c():
+    """Go lays structs out in declaration order, so a Go struct reproduces the C
+    layout exactly — the hazard is specific to reordering representations."""
+    go = _TC.target_path("go")
+    if go is None:
+        pytest.skip("go unavailable")
+    for fields in (_abi.hazard_struct(), _abi.safe_struct(), _abi.uniform_struct()):
+        conf = _abi.confirm_abi(fields, cc=_TC.cc, go=go)
+        assert conf.available, conf.reason
+        assert conf.go_matches_c is True, fields
