@@ -99,6 +99,12 @@ python3 -m src.cli.main discover \
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
   at the manifest boundary (the CLI exits non-zero on a malformed unit) while
   still accepting well-formed-but-uncovered units as `NOT_COVERED`
+- a **formal divergence semantics** (`semantics.py`, spec in `docs/SEMANTICS.md`):
+  the property the tool witnesses — *divergence modulo source-undefinedness* — is
+  given as an executable predicate (premise: source UB is reached; consequence:
+  optimizer-exploited value flip, or a trap-vs-defined gap; target defined), and
+  a checked theorem proves it **coincides exactly** with the re-execution
+  harness's `confirmed` decision on real compiled programs
 - a **per-class completeness characterization** (`completeness.py`, spec in
   `docs/COMPLETENESS.md`): for the integer classes the symbolic search is proven
   not just sound but **complete on a precisely-stated bounded fragment** — an

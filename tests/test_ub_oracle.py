@@ -2372,3 +2372,124 @@ def test_completeness_witnesses_confirm_against_real_compilers():
         assert rep.verdict is _VV.DIVERGENT, (cls, rep.detail)
         confirmed += 1
     assert confirmed == len(_comp.FRAGMENTS)
+
+
+# ── formal divergence semantics (Step 80) ────────────────────────────────────
+
+from src.ub_oracle import semantics as _sem
+
+
+def _src(o0_rc, o0_v, o2_rc, o2_v, san):
+    return _sem.SourceObservation(
+        o0=_sem.Outcome(o0_rc, o0_v), o2=_sem.Outcome(o2_rc, o2_v), san_trapped=san)
+
+
+def test_semantics_exploited_requires_all_three_clauses():
+    # Canonical positive: UB reached, optimizer flips the value, target defined.
+    pos = _sem.Observation(
+        source=_src(0, "0", 0, "1", san=True),
+        target=_sem.TargetObservation(defined=True), mode=_sem.EXPLOITED)
+    j = _sem.judge(pos)
+    assert j.diverges and j.premise_ub_reached and j.consequence_met
+    assert _sem.is_divergence(pos)
+
+    # (P) fails: sanitizer did not trap -> not rooted in UB -> NOT a divergence,
+    # even though O0 and O2 disagree.
+    no_ub = _sem.Observation(
+        source=_src(0, "0", 0, "1", san=False),
+        target=_sem.TargetObservation(defined=True), mode=_sem.EXPLOITED)
+    assert not _sem.is_divergence(no_ub)
+    assert "clause (P)" in _sem.judge(no_ub).reason
+
+    # (C) fails: UB reached but O0/O2 agree (benign) -> no observed consequence.
+    benign = _sem.Observation(
+        source=_src(0, "5", 0, "5", san=True),
+        target=_sem.TargetObservation(defined=True), mode=_sem.EXPLOITED)
+    assert not _sem.is_divergence(benign)
+    assert "clause (C)" in _sem.judge(benign).reason
+
+    # (T) fails: target itself undefined -> we do not claim a divergence.
+    tgt_ub = _sem.Observation(
+        source=_src(0, "0", 0, "1", san=True),
+        target=_sem.TargetObservation(defined=False), mode=_sem.EXPLOITED)
+    assert not _sem.is_divergence(tgt_ub)
+    assert "clause (T)" in _sem.judge(tgt_ub).reason
+
+
+def test_semantics_trap_vs_defined_reduces_to_premise_and_target():
+    # In trap_vs_defined mode the consequence IS the definedness gap: O0/O2 need
+    # not differ (the program traps rather than returning a different value).
+    pos = _sem.Observation(
+        source=_src(-6, "", -6, "", san=True),  # crashes, no stdout
+        target=_sem.TargetObservation(defined=True, deterministic=True),
+        mode=_sem.TRAP_VS_DEFINED)
+    assert _sem.is_divergence(pos)
+
+    # Non-deterministic target outcome must NOT be accepted as defined.
+    flaky = _sem.Observation(
+        source=_src(-6, "", -6, "", san=True),
+        target=_sem.TargetObservation(defined=True, deterministic=False),
+        mode=_sem.TRAP_VS_DEFINED)
+    assert not _sem.is_divergence(flaky)
+
+    # No UB reached -> not a divergence.
+    no_ub = _sem.Observation(
+        source=_src(0, "1", 0, "1", san=False),
+        target=_sem.TargetObservation(defined=True, deterministic=True),
+        mode=_sem.TRAP_VS_DEFINED)
+    assert not _sem.is_divergence(no_ub)
+
+
+def test_semantics_rejects_unknown_mode():
+    with pytest.raises(ValueError):
+        _sem.Observation(
+            source=_src(0, "0", 0, "1", san=True),
+            target=_sem.TargetObservation(defined=True), mode="bogus")
+
+
+def test_semantics_observation_from_reexec_is_none_when_unavailable():
+    from src.ub_oracle.reexec import ReexecResult
+    r = ReexecResult(available=False, divergence_class="signed_overflow", inputs={})
+    assert _sem.observation_from_reexec(r) is None
+    # The coincidence theorem holds vacuously on unavailable runs.
+    assert _sem.coincides_with_harness(r)
+
+
+@_requires_toolchain
+def test_semantics_predicate_coincides_with_harness_on_real_programs():
+    # The formal predicate must equal the harness's confirmed flag on BOTH a
+    # genuinely-diverging unit and an equivalent (non-diverging) one, compiled
+    # and run for real.
+    harness = ReexecHarness(_TC)
+
+    # (1) Exploited signed-overflow divergence (confirmed=True expected).
+    orc = get_oracle("signed_overflow")
+    unit = {"kind": "binop_const", "op": "add", "const": 1,
+            "width": 32, "var": "x", "signed": True}
+    res = orc.confirm(orc.find_divergence(unit), harness)
+    rr = res.reexec
+    assert rr.available and rr.confirmed
+    obs = _sem.observation_from_reexec(rr)
+    assert obs is not None
+    assert _sem.is_divergence(obs) == rr.confirmed == True
+    assert _sem.coincides_with_harness(rr)
+
+    # (2) Equivalent (wrapping) translation: no UB, harness not confirmed, and
+    # the formal predicate must agree (False == False).
+    c_src = (
+        "#include <stdio.h>\n#include <stdlib.h>\n"
+        "int f(unsigned x){ return (x + 1u) > x; }\n"
+        "int main(int c,char**v){ if(c<2) return 2; "
+        "unsigned x=(unsigned)strtoull(v[1],0,10); printf(\"%d\\n\",f(x)); return 0; }\n"
+    )
+    rust_src = (
+        "fn f(x:u32)->i32{ (x.wrapping_add(1) > x) as i32 }\n"
+        "fn main(){ let x:u32 = std::env::args().nth(1).unwrap().parse().unwrap(); "
+        "println!(\"{}\", f(x)); }\n"
+    )
+    rr2 = harness.confirm_ub_divergence(c_src, rust_src, ["4294967295"])
+    assert rr2.available and not rr2.confirmed
+    obs2 = _sem.observation_from_reexec(rr2)
+    assert obs2 is not None
+    assert _sem.is_divergence(obs2) == rr2.confirmed == False
+    assert _sem.coincides_with_harness(rr2)

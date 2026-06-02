@@ -85,6 +85,20 @@ from .completeness import (
     check_all_completeness,
     check_pair_completeness,
 )
+from .semantics import (
+    EXPLOITED,
+    TRAP_VS_DEFINED,
+    MODES,
+    Outcome,
+    SourceObservation,
+    TargetObservation,
+    Observation,
+    DivergenceJudgment,
+    is_divergence,
+    judge,
+    observation_from_reexec,
+    coincides_with_harness,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -139,4 +153,16 @@ __all__ = [
     "check_class_completeness",
     "check_all_completeness",
     "check_pair_completeness",
+    "EXPLOITED",
+    "TRAP_VS_DEFINED",
+    "MODES",
+    "Outcome",
+    "SourceObservation",
+    "TargetObservation",
+    "Observation",
+    "DivergenceJudgment",
+    "is_divergence",
+    "judge",
+    "observation_from_reexec",
+    "coincides_with_harness",
 ]
