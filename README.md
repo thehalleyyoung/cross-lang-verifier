@@ -160,6 +160,16 @@ python3 -m src.cli.main discover \
   (a 2-arg `add` whose name is closest to a 1-arg `add_one`), it recovers the
   ground-truth pairing exactly while a name-only baseline does not — so divergence
   oracles compare the *right* function pairs even across heavy renaming
+- a **soundness-frontier detector** (`foreign_effects.py`) that keeps the tool
+  honest: the oracles reason about a *pure* C fragment, so this detector flags
+  every construct that leaves it — `volatile` accesses, inline `__asm__`, calls
+  to undefined `extern` functions (true FFI), atomics, `setjmp`/`longjmp`, signal
+  handlers — and makes the tool **abstain loudly** (a named reason per site)
+  instead of guessing, while ordinary libc-only code stays CLEAR. Each abstention
+  is *justified against real clang IR*: a `volatile` loop keeps four separate
+  `load volatile` where the pure version coalesces to one (so a value-folding
+  model is provably unsound), inline asm is an opaque `call ... asm`, an `extern`
+  callee is an undefined `declare`, and an atomic lowers to `load atomic`
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

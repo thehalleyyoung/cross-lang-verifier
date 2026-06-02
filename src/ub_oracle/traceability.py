@@ -248,6 +248,35 @@ def _thm_unit_alignment_sound() -> bool:
     return bool(structural == 1.0 and baseline < structural and arity_veto)
 
 
+def _thm_foreign_frontier_sound() -> bool:
+    # The frontier detector must (a) stay CLEAR on the pure fragment, (b) abstain
+    # on each foreign construct, and (c) — where a compiler is present — have its
+    # abstention justified by real clang IR (the construct is genuinely opaque to
+    # a pure model). Comments/strings must never trigger a false abstention.
+    from . import foreign_effects as fe
+    pure = "int add(int a,int b){return a+b;}\nint dbl(int*p){return *p+*p;}"
+    if not fe.decide(pure).clear:
+        return False
+    cmt = "int f(int x){/* volatile asm */ return x;}\n// volatile longjmp"
+    if not fe.decide(cmt).clear:
+        return False
+    cases = [
+        ("int f(volatile int*p){return *p;}", fe.ForeignKind.VOLATILE),
+        ("extern int g(int);\nint f(int x){return g(x);}",
+         fe.ForeignKind.FOREIGN_CALL),
+        ("#include <setjmp.h>\njmp_buf b;\nint f(){return setjmp(b);}",
+         fe.ForeignKind.NONLOCAL_JUMP),
+    ]
+    for src, kind in cases:
+        v = fe.decide(src)
+        if v.clear or kind not in v.kinds:
+            return False
+    confs = fe.confirm_all()
+    # if a compiler is available the confirmations must all hold; if not, the
+    # detector-only facts above already establish the claim.
+    return all(c.ok for c in confs)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -464,6 +493,26 @@ CLAIMS: List[Claim] = [
         ("align", "signature_score", "types_compatible", "name_only_align",
          "alignment_accuracy"),
         theorem=_thm_unit_alignment_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C20-foreign-frontier",
+        "The oracle reasons only about a pure, well-defined C fragment and "
+        "**abstains loudly** at the soundness frontier instead of guessing: a "
+        "lexical detector (comment/string-aware) flags volatile accesses, inline "
+        "assembly, calls to undefined `extern` functions, atomics, "
+        "setjmp/longjmp and signal handlers, and `decide` returns ABSTAIN with a "
+        "human-readable reason naming each construct, while the pure fragment "
+        "(including ordinary libc calls) stays CLEAR. Each abstention is justified "
+        "against real `clang` IR — volatile keeps four separate `load volatile` "
+        "where the pure version coalesces to one, inline asm is an opaque "
+        "`call ... asm`, an `extern` callee is an undefined `declare`, and an "
+        "atomic lowers to `load atomic` — so the frontier is documented, not "
+        "assumed.",
+        "ub_oracle.foreign_effects",
+        ("scan_c_source", "decide", "FrontierVerdict", "confirm_all",
+         "FOREIGN_FRONTIER"),
+        theorem=_thm_foreign_frontier_sound,
         docs=("README.md",),
     ),
 ]

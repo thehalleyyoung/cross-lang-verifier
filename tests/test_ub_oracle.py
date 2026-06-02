@@ -3383,3 +3383,86 @@ def test_alignment_reports_unmatched_when_confidence_too_low():
 def test_alignment_is_deterministic():
     c, t = _ua.example_c_unit(), _ua.example_target_unit()
     assert _ua.align(c, t).mapping == _ua.align(c, t).mapping
+
+
+# ---------------------------------------------------------------------------
+# Step 35 — foreign-effect / soundness-frontier detector (abstain loudly).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import foreign_effects as _fe  # noqa: E402
+
+_clang_present = pytest.mark.skipif(
+    not _os.path.exists(_fe.CC), reason="clang not available")
+
+
+def test_frontier_clear_on_pure_fragment():
+    pure = "int add(int a,int b){return a+b;}\nint dbl(int*p){return *p+*p;}"
+    v = _fe.decide(pure)
+    assert v.clear and v.status == "CLEAR"
+    assert v.reasons == []
+
+
+@pytest.mark.parametrize("src,kind", [
+    ("int f(volatile int*p){return *p;}", _fe.ForeignKind.VOLATILE),
+    ('int f(int x){int y;__asm__("mov %1,%0":"=r"(y):"r"(x));return y;}',
+     _fe.ForeignKind.INLINE_ASM),
+    ("extern int g(int);\nint f(int x){return g(x);}",
+     _fe.ForeignKind.FOREIGN_CALL),
+    ("#include <stdatomic.h>\nint f(_Atomic int*p){return atomic_load(p);}",
+     _fe.ForeignKind.ATOMIC),
+    ("#include <setjmp.h>\njmp_buf b;\nint f(){return setjmp(b);}",
+     _fe.ForeignKind.NONLOCAL_JUMP),
+    ("#include <signal.h>\nvoid f(){signal(2,0);}", _fe.ForeignKind.SIGNAL),
+])
+def test_frontier_abstains_on_each_foreign_construct(src, kind):
+    v = _fe.decide(src)
+    assert not v.clear and v.status == "ABSTAIN"
+    assert kind in v.kinds
+    # abstention must be loud: a human-readable reason naming the construct.
+    assert any(kind.value in r for r in v.reasons)
+    assert "ABSTAIN" in v.loud_message()
+
+
+def test_frontier_ignores_comments_and_string_literals():
+    cmt = "int f(int x){/* volatile asm setjmp */ return x;}\n// volatile longjmp"
+    strlit = 'int f(){const char*s="volatile asm atomic_load"; return 0;}'
+    assert _fe.decide(cmt).clear
+    assert _fe.decide(strlit).clear
+
+
+def test_frontier_does_not_flag_pure_libc_or_keywords():
+    src = ("int f(int*p,int n){int s=0;for(int i=0;i<n;i++){if(p[i])"
+           "s+=p[i];}return s+abs(s);}")
+    assert _fe.decide(src).clear
+
+
+@_clang_present
+def test_frontier_volatile_opacity_confirmed_by_clang_ir():
+    c = _fe.confirm_volatile_opaque()
+    assert c is not None and c.ok
+    # the pure-model fold (one load) is provably unsound: clang keeps >= 4.
+    assert "kept=4" in c.detail
+
+
+@_clang_present
+def test_frontier_inline_asm_opacity_confirmed_by_clang_ir():
+    c = _fe.confirm_inline_asm_opaque()
+    assert c is not None and c.ok
+
+
+@_clang_present
+def test_frontier_foreign_call_opacity_confirmed_by_clang_ir():
+    c = _fe.confirm_foreign_call_opaque()
+    assert c is not None and c.ok
+
+
+@_clang_present
+def test_frontier_atomic_opacity_confirmed_by_clang_ir():
+    c = _fe.confirm_atomic_opaque()
+    assert c is not None and c.ok
+
+
+@_clang_present
+def test_frontier_all_confirmations_pass():
+    cs = _fe.confirm_all()
+    assert len(cs) == 4 and all(c.ok for c in cs)
