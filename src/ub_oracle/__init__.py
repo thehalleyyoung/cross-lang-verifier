@@ -77,6 +77,14 @@ from .ir import (
     is_valid,
     assert_valid,
 )
+from .completeness import (
+    FRAGMENTS,
+    Fragment,
+    ClassCompleteness,
+    check_class_completeness,
+    check_all_completeness,
+    check_pair_completeness,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -125,4 +133,10 @@ __all__ = [
     "validate_unit",
     "is_valid",
     "assert_valid",
+    "FRAGMENTS",
+    "Fragment",
+    "ClassCompleteness",
+    "check_class_completeness",
+    "check_all_completeness",
+    "check_pair_completeness",
 ]

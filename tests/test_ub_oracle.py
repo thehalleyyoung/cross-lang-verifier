@@ -2297,3 +2297,78 @@ def test_cli_no_validate_bypasses_rejection(tmp_path):
                    '"width":7}]}')
     rc = _cli3.run(["--units", str(bad), "--no-confirm", "--no-validate"])
     assert rc == 0
+
+
+# --- Step 81: per-class completeness characterization -----------------------
+from src.ub_oracle import completeness as _comp  # noqa: E402
+
+
+def test_completeness_fragments_cover_the_integer_classes():
+    assert set(_comp.FRAGMENTS) == {
+        "signed_overflow", "shift_oob", "div_by_zero", "intmin_div_neg1"}
+    for frag in _comp.FRAGMENTS.values():
+        assert frag.description and callable(frag.enumerate_points)
+
+
+@pytest.mark.parametrize("cls", sorted(_comp.FRAGMENTS))
+def test_oracle_is_complete_on_its_characterized_fragment(cls):
+    # The decisive completeness evidence: over the whole fragment grid the
+    # symbolic search agrees EXACTLY with brute-forced ground truth (it reports
+    # DIVERGENT iff a triggering input exists in the declared range), and every
+    # reported witness is in range and genuinely triggers the UB.
+    res = _comp.check_class_completeness(cls)
+    assert res.n_points > 0
+    # the grid must exercise BOTH sides of the boundary (some diverge, some not).
+    assert 0 < res.n_with_divergence < res.n_points
+    assert res.mismatches == [], res.mismatches[:5]
+    assert res.bad_witnesses == [], res.bad_witnesses[:5]
+    assert res.complete
+
+
+def test_ground_truth_predicates_match_the_c_rules():
+    # the brute-force predicates are the spec; pin their behavior at boundaries.
+    assert _comp._ub_signed_overflow("add", 1, 32, _comp._smax(32))
+    assert not _comp._ub_signed_overflow("add", 1, 32, _comp._smax(32) - 1)
+    assert _comp._ub_signed_overflow("sub", 1, 32, _comp._smin(32))
+    assert _comp._ub_shift(32, 32) and _comp._ub_shift(32, 33)
+    assert not _comp._ub_shift(32, 31)
+    assert _comp._ub_div_by_zero(0) and not _comp._ub_div_by_zero(1)
+    assert _comp._ub_intmin_div_neg1(32, _comp._smin(32), -1)
+    assert not _comp._ub_intmin_div_neg1(32, _comp._smin(32) + 1, -1)
+    assert not _comp._ub_intmin_div_neg1(32, _comp._smin(32), 1)
+
+
+def test_completeness_holds_across_every_registered_pair():
+    # completeness established on the shared symbolic search transfers to every
+    # language pair (C->Rust/Go/Swift), since the pairs differ only in the
+    # emitted target program, not the witness search.
+    by_pair = _comp.check_pair_completeness()
+    assert ("c", "rust") in by_pair and ("c", "go") in by_pair \
+        and ("c", "swift") in by_pair
+    for pair, results in by_pair.items():
+        assert results, pair
+        for r in results:
+            assert r.complete, (pair, r.divergence_class,
+                                r.mismatches[:3], r.bad_witnesses[:3])
+
+
+def test_out_of_fragment_classes_are_documented_not_claimed():
+    # honesty: memory-shape / FP classes are explicitly NOT claimed complete.
+    for k in _comp.OUT_OF_FRAGMENT:
+        assert k not in _comp.FRAGMENTS
+
+
+@_requires_toolchain
+def test_completeness_witnesses_confirm_against_real_compilers():
+    # spot-check that the completeness fragment's *positive* points are not just
+    # symbolically-sound but really divergent: take one diverging unit per class
+    # and confirm it end-to-end with real clang+UBSan + the target compiler.
+    from src.ub_oracle.verify import verify_unit as _vu, VerifyVerdict as _VV
+    confirmed = 0
+    for cls, frag in _comp.FRAGMENTS.items():
+        pos = [p for p in frag.enumerate_points() if p.has_divergence]
+        assert pos, cls
+        rep = _vu(pos[0].unit, ReexecHarness(_TC), status=_TC)
+        assert rep.verdict is _VV.DIVERGENT, (cls, rep.detail)
+        confirmed += 1
+    assert confirmed == len(_comp.FRAGMENTS)

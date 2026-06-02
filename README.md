@@ -99,6 +99,13 @@ python3 -m src.cli.main discover \
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
   at the manifest boundary (the CLI exits non-zero on a malformed unit) while
   still accepting well-formed-but-uncovered units as `NOT_COVERED`
+- a **per-class completeness characterization** (`completeness.py`, spec in
+  `docs/COMPLETENESS.md`): for the integer classes the symbolic search is proven
+  not just sound but **complete on a precisely-stated bounded fragment** — an
+  executable check enumerates ground truth by brute force and asserts the oracle
+  reports a witness *exactly* when one exists (no false negatives), across every
+  registered language pair, with one diverging unit per class confirmed end-to-end
+  against real compilers
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout
