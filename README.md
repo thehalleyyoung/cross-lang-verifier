@@ -92,6 +92,10 @@ python3 -m src.cli.main discover \
   backbone's growth out to 512-bit widths — the deterministic grid
   (`experiments/perf_curves/grid.json`) is checked for byte-identical
   regeneration in CI (`make perf-check`)
+- a Tier-1 **c2rust-output** corpus (`make c2rust-corpus-check`): 12
+  real-library extraction units are translated by the actual `c2rust 0.22.1`
+  binary, the generated Rust artifacts are checked in, and the verifier-backed
+  verdict layer is byte-reproducible
 - a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against

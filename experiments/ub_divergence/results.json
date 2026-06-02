@@ -98,17 +98,17 @@
   "fuzz_trials": 200000,
   "language_pair": "c->rust",
   "precision_recall_symbolic": {
-    "num_cases": 21,
+    "num_cases": 23,
     "num_negative": 4,
-    "num_positive": 17,
+    "num_positive": 19,
     "overall": {
       "divergence_class": "__overall__",
       "fn": 0,
       "fp": 0,
       "precision": 1.0,
       "recall": 1.0,
-      "tn": 256,
-      "tp": 17
+      "tn": 326,
+      "tp": 19
     },
     "per_class": {
       "array_oob": {
@@ -117,7 +117,16 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
+        "tp": 1
+      },
+      "bitfield_layout": {
+        "divergence_class": "bitfield_layout",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 22,
         "tp": 1
       },
       "div_by_zero": {
@@ -126,8 +135,17 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 19,
+        "tn": 21,
         "tp": 2
+      },
+      "enum_out_of_range": {
+        "divergence_class": "enum_out_of_range",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 22,
+        "tp": 1
       },
       "fast_math_reassoc": {
         "divergence_class": "fast_math_reassoc",
@@ -135,7 +153,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "float_cast_overflow": {
@@ -144,7 +162,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "fp_contraction": {
@@ -153,7 +171,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "intmin_div_neg1": {
@@ -162,7 +180,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "pointer_provenance": {
@@ -171,7 +189,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "restrict_violation": {
@@ -180,7 +198,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "shift_oob": {
@@ -189,7 +207,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 19,
+        "tn": 21,
         "tp": 2
       },
       "signed_overflow": {
@@ -198,7 +216,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 18,
+        "tn": 20,
         "tp": 3
       },
       "strict_aliasing": {
@@ -207,7 +225,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "uninit_read": {
@@ -216,7 +234,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       },
       "vla_bound": {
@@ -225,7 +243,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 20,
+        "tn": 22,
         "tp": 1
       }
     }

@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check package-check coverage coverage-check
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check
 
 help:
 	@echo "Targets:"
@@ -24,6 +24,8 @@ help:
 	@echo "  perf-check        assert the perf scalability grid regenerates byte-identically"
 	@echo "  redteam           run the internal red-team against real compilers (study)"
 	@echo "  redteam-check     assert the red-team adversarial grid regenerates byte-identically"
+	@echo "  c2rust-corpus     regenerate the Tier-1 c2rust-output corpus artifacts"
+	@echo "  c2rust-corpus-check assert c2rust corpus results and generated Rust reproduce"
 	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
 	@echo "  guard             run the credibility guard (no simulated results)"
 	@echo "  test-ub           run the ub_oracle test suite only"
@@ -75,6 +77,12 @@ redteam:
 
 redteam-check:
 	$(PYTHON) -m experiments.redteam.run --check
+
+c2rust-corpus:
+	$(PYTHON) -m experiments.c2rust_corpus.run --regenerate
+
+c2rust-corpus-check:
+	$(PYTHON) -m experiments.c2rust_corpus.run --check --check-generated
 
 package-check:
 	bash scripts/verify_packaging.sh
