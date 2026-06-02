@@ -375,6 +375,25 @@ def _thm_ir_ingest_sound() -> bool:
     return okc and okm
 
 
+def _thm_project_ingest_sound() -> bool:
+    # Whole-project ingestion must recover the union of symbols from a real C
+    # compilation database and enumerate a real Cargo workspace's members. Where
+    # a tool is absent we fall back to consistency-only checks (argv parsing).
+    from . import project_ingest as pi
+    if pi._include_dirs_from_argv(["cc", "-I", "inc", "x.c"], "/p") != ("/p/inc",):
+        return False
+    if pi._entry_command({"command": "cc -c x.c"}) != ["cc", "-c", "x.c"]:
+        return False
+    import os as _os7
+    okc = True
+    if _os7.path.exists(pi.CLANG):
+        okc = bool(pi.confirm_compile_db().ok)
+    okw = True
+    if _os7.path.exists(pi.CARGO):
+        okw = bool(pi.confirm_cargo_workspace().ok)
+    return okc and okw
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -704,6 +723,24 @@ CLAIMS: List[Claim] = [
         ("ingest_clang", "ingest_rustc_mir", "confirm_clang_ingest",
          "confirm_mir_ingest", "IRModule"),
         theorem=_thm_ir_ingest_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C26-project-ingest",
+        "Ingestion scales from a single hand-picked file to a whole build tree on "
+        "both sides of a migration. The source side reads a Clang "
+        "`compile_commands.json` compilation database (the CMake/Bear standard), "
+        "recovers each translation unit's `-I` include directories, lowers every "
+        "TU through the clang-AST ingester and unions their symbols into one "
+        "`ProjectModule` — proven on a real two-file C project where `add`/`helper`"
+        "/`slen` are recovered across files with correct types and storage. The "
+        "target side enumerates a Cargo workspace via `cargo metadata` (the build "
+        "graph Cargo itself uses), discovering every member package, target name, "
+        "kind and source root — proven on a real two-member workspace.",
+        "ub_oracle.project_ingest",
+        ("ingest_compile_db", "ingest_cargo_workspace", "confirm_compile_db",
+         "confirm_cargo_workspace", "ProjectModule"),
+        theorem=_thm_project_ingest_sound,
         docs=("README.md",),
     ),
 ]

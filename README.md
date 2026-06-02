@@ -206,6 +206,14 @@ python3 -m src.cli.main discover \
   recorded as *consumed*; a `Copy` `i32` is not — ownership for free, from the
   compiler itself), with builtins filtered by source-location provenance and the
   ingesters self-confirming against the real clang/rustc on every run
+- **whole-project ingestion** (`project_ingest.py`): scales from a single file to
+  a whole build tree on both sides — the source side reads a Clang
+  `compile_commands.json` database (the CMake/Bear standard), recovers each unit's
+  `-I` directories and unions all translation units' symbols into one
+  `ProjectModule`; the target side enumerates a Cargo workspace via `cargo
+  metadata` (the build graph Cargo itself uses), discovering every member package,
+  target and source root — both proven against the real clang/cargo on generated
+  multi-file projects
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

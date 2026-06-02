@@ -114,9 +114,14 @@ def _split_fn_qualtype(qual: str) -> Tuple[str, ...]:
     return tuple(p.strip() for p in inner.split(","))
 
 
-def ingest_clang(src: str) -> Optional[IRModule]:
-    """Build an IRModule from a C translation unit via the clang AST."""
-    ast = clang_ast_json(src)
+def ingest_clang(src: str,
+                 extra_args: Optional[List[str]] = None) -> Optional[IRModule]:
+    """Build an IRModule from a C translation unit via the clang AST.
+
+    ``extra_args`` (e.g. ``["-I", incdir]``) are forwarded to the AST dump so
+    translation units that include project headers parse correctly.
+    """
+    ast = clang_ast_json(src, extra_args=extra_args)
     if ast is None:
         return None
     mod = IRModule("c", "clang-ast-json")

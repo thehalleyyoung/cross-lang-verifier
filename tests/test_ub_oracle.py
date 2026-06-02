@@ -3737,3 +3737,52 @@ def test_ir_clang_function_qualtype_param_split():
     assert _iri._split_fn_qualtype("char *(const char *)") == ("const char *",)
     assert _iri._split_fn_qualtype("int (int, int)") == ("int", "int")
     assert _iri._split_fn_qualtype("void (void)") == ()
+
+
+# ---------------------------------------------------------------------------
+# Step 31 — whole-project ingestion (compile_commands.json + cargo workspace).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import project_ingest as _pri  # noqa: E402
+
+_clang_for_proj = pytest.mark.skipif(
+    not _os.path.exists(_pri.CLANG), reason="clang not available")
+_cargo_for_proj = pytest.mark.skipif(
+    not _os.path.exists(_pri.CARGO), reason="cargo not available")
+
+
+@_clang_for_proj
+def test_proj_compile_db_ingests_whole_c_tree():
+    c = _pri.confirm_compile_db()
+    assert c.available and c.ok
+    fns = c.project.all_functions()
+    # functions from *both* translation units are present in one project model.
+    assert {"add", "helper", "slen"} <= set(fns)
+    assert fns["add"].ret_type == "int"
+    assert fns["helper"].storage == "static"
+    assert len(c.project.units) == 2
+
+
+@_cargo_for_proj
+def test_proj_cargo_workspace_enumerates_members():
+    w = _pri.confirm_cargo_workspace()
+    assert w.available and w.ok
+    pkgs = w.project.packages
+    assert {"alpha", "beta"} <= set(pkgs)
+    # the source roots are exactly what cargo metadata reports for each crate.
+    assert pkgs["alpha"].src_path.endswith(_os.path.join("src", "lib.rs"))
+    assert "lib" in pkgs["beta"].kind
+
+
+def test_proj_include_dir_extraction_handles_both_forms():
+    # -I dir and -Idir, relative paths resolved against the entry directory.
+    argv = ["clang", "-c", "-I", "include", "-Iother", "/abs/x.c"]
+    dirs = _pri._include_dirs_from_argv(argv, "/proj")
+    assert "/proj/include" in dirs and "/proj/other" in dirs
+
+
+def test_proj_entry_command_accepts_arguments_or_command_string():
+    assert _pri._entry_command({"arguments": ["clang", "-c", "x.c"]}) == \
+        ["clang", "-c", "x.c"]
+    assert _pri._entry_command({"command": "clang -c x.c"}) == \
+        ["clang", "-c", "x.c"]
