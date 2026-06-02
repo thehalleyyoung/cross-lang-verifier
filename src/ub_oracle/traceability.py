@@ -449,6 +449,20 @@ def _thm_conformance_green() -> bool:
     return conf.ok and conf.passed == conf.applicable
 
 
+def _thm_eval_order_sound() -> bool:
+    # Unsequenced-modification UB must be flagged (and loudly abstained on) while
+    # clean code is not. Where clang is absent, the comment/string stripper still
+    # gives a toolchain-free consistency check.
+    from . import eval_order as eo
+    if "i++" in eo._strip_comments_strings('int x;/* i++ */ x=1;'):
+        return False
+    import os as _os10
+    if not _os10.path.exists(eo.CLANG):
+        return True
+    c = eo.confirm_sequencing()
+    return bool(c.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -850,6 +864,24 @@ CLAIMS: List[Claim] = [
         ("run_conformance", "confirm_conformance", "ALL_CASES",
          "ConformanceCase", "CaseResult"),
         theorem=_thm_conformance_green,
+        docs=("README.md",),
+    ),
+    claim(
+        "C30-eval-order",
+        "The sequencing oracle treats C's evaluation-order rules as a cross-language "
+        "soundness hazard. Unsequenced modification (`i = i++ + i++`, `g(i++, i++)`) "
+        "is genuine *undefined behavior* — the whole program's value is undefined — "
+        "so the oracle detects it precisely with clang's `-Wunsequenced` (proven: "
+        "the increment, call-argument and self-assignment idioms each produce a "
+        "located diagnostic; clean sequenced code produces none) and returns a loud "
+        "ABSTAIN, because no target translation that picks a concrete order can be "
+        "proven equivalent to another legal C compilation. Unspecified "
+        "argument-evaluation order with side effects (defined left-to-right in "
+        "Rust/Go but not in C, and invisible in any single run) is documented as "
+        "the sequencing soundness frontier.",
+        "ub_oracle.eval_order",
+        ("detect_unsequenced", "decide", "confirm_sequencing", "UnsequencedReport"),
+        theorem=_thm_eval_order_sound,
         docs=("README.md",),
     ),
 ]

@@ -3915,3 +3915,41 @@ def test_conf_full_applicable_suite_is_green():
     assert c.applicable >= 1
     assert c.ok
     assert c.passed == c.applicable
+
+
+# ---------------------------------------------------------------------------
+# Step 20 — evaluation-order / sequencing oracle (clang -Wunsequenced).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import eval_order as _eo  # noqa: E402
+
+_clang_for_seq = pytest.mark.skipif(
+    not _os.path.exists(_eo.CLANG), reason="clang not available")
+
+
+@_clang_for_seq
+def test_seq_unsequenced_modification_is_flagged_and_abstained():
+    for src in (_eo.UNSEQUENCED_INCR, _eo.UNSEQUENCED_CALL, _eo.UNSEQUENCED_ASSIGN):
+        dec = _eo.decide(src)
+        assert dec.is_abstain
+        assert dec.diagnostics  # clang gave a concrete location
+
+
+@_clang_for_seq
+def test_seq_clean_code_is_not_abstained():
+    dec = _eo.decide(_eo.SEQUENCED_CLEAN)
+    assert not dec.is_abstain
+    assert dec.verdict == _eo.EQUIVALENT_OK
+    assert dec.diagnostics == ()
+
+
+@_clang_for_seq
+def test_seq_confirmation_holds_against_real_clang():
+    c = _eo.confirm_sequencing()
+    assert c.available and c.ok
+
+
+def test_seq_comment_string_stripper_is_safe():
+    # the side-effect screen must not be confused by code in comments/strings.
+    s = _eo._strip_comments_strings('int x; /* i++ */ char* s="a++b"; x=1;')
+    assert "i++" not in s and "a++b" not in s

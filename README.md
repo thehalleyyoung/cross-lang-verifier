@@ -232,6 +232,12 @@ python3 -m src.cli.main discover \
   `static` linkage on the C side; by-value `Vec`/`Box`/`String` *moves* vs
   reference/`Copy` non-moves on the Rust side — checked against the real
   compilers so any drift in how a construct lowers turns a case red
+- an **evaluation-order / sequencing oracle** (`eval_order.py`): unsequenced
+  modification (`i = i++ + i++`, `g(i++, i++)`) is genuine C undefined behavior,
+  detected precisely via clang `-Wunsequenced` and answered with a loud `ABSTAIN`
+  (no target translation picking a concrete order can be proven equivalent to
+  another legal C compilation); unspecified argument-evaluation order with side
+  effects is documented as the sequencing soundness frontier
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
