@@ -63,6 +63,10 @@ python3 -m src.cli.main discover \
   (`cross-lang-verify --triage` / `--write-baseline` / `--suppress`) so teams can
   adopt the checker on a large existing migration and fail CI only on *new*
   divergences
+- an incremental cache (`--cache`) that re-verifies only changed units — keyed by
+  unit content **and** the real toolchain version, so a compiler upgrade
+  invalidates stale verdicts (~25× speedup at full reuse on the sample manifest)
+- a self-contained, offline migration-risk HTML dashboard (`--dashboard`)
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout

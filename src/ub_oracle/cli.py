@@ -35,6 +35,8 @@ from typing import Dict, List, Optional, Sequence
 
 from .report import aggregate_reports, pair_of, to_sarif
 from .reexec import toolchain_available
+from .cache import VerificationCache, verify_incremental
+from .dashboard import render_dashboard
 from .suppress import (
     apply_suppressions,
     build_baseline,
@@ -148,6 +150,14 @@ def create_parser() -> argparse.ArgumentParser:
     p.add_argument("--write-baseline", metavar="OUT.json",
                    help="write a suppression file baselining every current "
                         "finding (by fingerprint), then exit 0")
+    p.add_argument("--cache", metavar="CACHE.json",
+                   help="incremental mode: reuse cached verdicts for unchanged "
+                        "units (keyed by unit content + toolchain version); only "
+                        "changed/new units are re-verified, and the cache is "
+                        "updated in place")
+    p.add_argument("--dashboard", metavar="OUT.html",
+                   help="write a self-contained, offline migration-risk HTML "
+                        "dashboard summarizing risk per divergence class")
     return p
 
 
@@ -202,9 +212,20 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         return 2
 
     status = toolchain_available()
-    reports: List[VerifyReport] = [
-        verify_unit(u, confirm=not args.no_confirm, status=status) for u in units
-    ]
+    cache = None
+    inc = None
+    if args.cache:
+        cache = VerificationCache.load(args.cache)
+        inc = verify_incremental(units, cache, confirm=not args.no_confirm,
+                                 status=status)
+        reports: List[VerifyReport] = inc.reports
+        cache.prune_to(units)
+        cache.save(args.cache)
+    else:
+        reports = [
+            verify_unit(u, confirm=not args.no_confirm, status=status)
+            for u in units
+        ]
     summary = aggregate_reports(reports)
 
     # --write-baseline: capture every current finding and exit (adoption path).
@@ -254,10 +275,20 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             sys.stderr.write(f"error: cannot write SARIF: {exc}\n")
             return 2
 
+    if args.dashboard:
+        try:
+            with open(args.dashboard, "w", encoding="utf-8") as fh:
+                fh.write(render_dashboard(reports))
+        except OSError as exc:
+            sys.stderr.write(f"error: cannot write dashboard: {exc}\n")
+            return 2
+        sys.stderr.write(f"wrote {args.dashboard}\n")
+
     if args.format == "json":
         json.dump({
             "summary": summary,
             "suppressed": len(suppressed),
+            "cache": inc.to_dict() if inc is not None else None,
             "units": [
                 {"label": _unit_label(u, i), "verdict": r.verdict.value,
                  "pair": pair_of(r), "detail": r.detail,
@@ -268,6 +299,11 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         sys.stdout.write("\n")
     else:
         _print_text(reports, units, summary, color, status.full)
+        if inc is not None:
+            sys.stdout.write(
+                "\n  " + color("2", f"cache: {inc.hits} hit(s), {inc.misses} "
+                                    f"re-verified, {inc.stored} stored "
+                                    f"({inc.hit_rate:.0%} reuse)") + "\n")
         if suppressed:
             sys.stdout.write(
                 "\n  " + color("2", f"{len(suppressed)} finding(s) suppressed by "

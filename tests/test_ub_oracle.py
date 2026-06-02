@@ -1539,3 +1539,201 @@ def test_cli_baseline_flips_the_fail_gate_against_real_compilers(tmp_path):
     rc = run(["--units", str(manifest), "--suppress", str(baseline),
               "--color", "never"])
     assert rc == 0
+
+
+# --------------------------------------------------------------------------- #
+# Step 66: incremental verification cache.
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import cache as _cache  # noqa: E402
+from src.ub_oracle.cache import (  # noqa: E402
+    VerificationCache, CacheEntry, cache_key, canonical_unit,
+    toolchain_fingerprint, verify_incremental, SEMANTICS_VERSION,
+)
+
+
+def _fp(**kw):
+    base = {"cc": "clang X", "ubsan": "yes", "rust": "rustc Y"}
+    base.update(kw)
+    return base
+
+
+def test_canonical_unit_is_order_independent():
+    a = {"name": "u", "op": "add", "const": 1}
+    b = {"const": 1, "op": "add", "name": "u"}
+    assert canonical_unit(a) == canonical_unit(b)
+
+
+def test_cache_key_changes_with_unit_toolchain_and_semantics():
+    u1 = {"name": "u", "op": "add", "const": 1}
+    u2 = {"name": "u", "op": "add", "const": 2}
+    fp1 = _fp()
+    fp2 = _fp(cc="clang DIFFERENT")
+    k = cache_key(u1, fp1)
+    # changing the unit changes the key ...
+    assert cache_key(u2, fp1) != k
+    # ... changing the toolchain fingerprint changes the key (soundness!) ...
+    assert cache_key(u1, fp2) != k
+    # ... and the same inputs are stable.
+    assert cache_key(u1, fp1) == k
+
+
+def test_cache_only_stores_deterministic_verdicts():
+    c = VerificationCache(fingerprint=_fp())
+    div = _divergent_report("d", "signed_overflow")
+    cand = _report(VerifyVerdict.CANDIDATE, "c", probe="array_oob")
+    unk = _report(VerifyVerdict.UNKNOWN, "u", probe="div_by_zero")
+    clean = _report(VerifyVerdict.NO_DIVERGENCE_FOUND, "ok", probe="signed_overflow")
+    assert c.put({"name": "d"}, div) is True
+    assert c.put({"name": "ok"}, clean) is True
+    # candidate/unknown are environment/timeout dependent: never cached.
+    assert c.put({"name": "c"}, cand) is False
+    assert c.put({"name": "u"}, unk) is False
+    assert len(c) == 2
+
+
+def test_cache_save_load_roundtrip(tmp_path):
+    c = VerificationCache(fingerprint=_fp())
+    c.put({"name": "d"}, _divergent_report("d", "signed_overflow"))
+    path = tmp_path / "cache.json"
+    c.save(str(path))
+    c2 = VerificationCache.load(str(path), fingerprint=_fp())
+    assert len(c2) == 1
+    entry = c2.get({"name": "d"})
+    assert entry is not None
+    assert entry.verdict == "divergent"
+    assert entry.divergence_class == "signed_overflow"
+
+
+def test_cache_miss_when_fingerprint_differs(tmp_path):
+    # A cache written under one toolchain must MISS under a different toolchain,
+    # so a compiler upgrade never serves a stale confirmation.
+    c = VerificationCache(fingerprint=_fp())
+    c.put({"name": "d"}, _divergent_report("d", "signed_overflow"))
+    path = tmp_path / "cache.json"
+    c.save(str(path))
+    other = VerificationCache.load(str(path), fingerprint=_fp(rust="rustc NEWER"))
+    assert other.get({"name": "d"}) is None
+
+
+def test_cache_prune_drops_unreferenced_entries():
+    c = VerificationCache(fingerprint=_fp())
+    c.put({"name": "a"}, _divergent_report("a", "signed_overflow"))
+    c.put({"name": "b"}, _divergent_report("b", "array_oob"))
+    removed = c.prune_to([{"name": "a"}])
+    assert removed == 1
+    assert c.get({"name": "a"}) is not None
+    assert c.get({"name": "b"}) is None
+
+
+@_requires_toolchain
+def test_incremental_warm_run_is_full_reuse_and_verdict_faithful():
+    # Cold run really compiles+runs; warm run serves every verdict from cache,
+    # and the cached verdicts match the freshly-computed ones exactly.
+    units = [
+        {"name": "add1_w32", "kind": "binop_const", "op": "add", "const": 1,
+         "width": 32, "var": "x", "signed": True, "probe": "signed_overflow",
+         "source_lang": "c", "target_lang": "rust"},
+        {"name": "noovf", "kind": "binop_const", "op": "add", "const": 0,
+         "width": 32, "var": "x", "signed": True, "probe": "signed_overflow",
+         "source_lang": "c", "target_lang": "rust"},
+    ]
+    fp = toolchain_fingerprint()
+    cold_cache = VerificationCache(fingerprint=fp)
+    cold = verify_incremental(units, cold_cache)
+    assert cold.hits == 0 and cold.misses == 2
+    cold_verdicts = [r.verdict for r in cold.reports]
+    assert VerifyVerdict.DIVERGENT in cold_verdicts
+    assert VerifyVerdict.NO_DIVERGENCE_FOUND in cold_verdicts
+
+    warm = verify_incremental(units, cold_cache)
+    assert warm.hits == 2 and warm.misses == 0
+    assert warm.hit_rate == 1.0
+    # cached verdicts are faithful to the cold (real-compiler) run.
+    assert [r.verdict for r in warm.reports] == cold_verdicts
+    # a cached DIVERGENT still carries its class (so the fail gate / triage work).
+    div = next(r for r in warm.reports if r.verdict is VerifyVerdict.DIVERGENT)
+    assert div.divergence is not None
+    assert div.divergence.divergence_class == "signed_overflow"
+
+
+@_requires_toolchain
+def test_incremental_changed_unit_is_reverified():
+    units = [{"name": "add1_w32", "kind": "binop_const", "op": "add", "const": 1,
+              "width": 32, "var": "x", "signed": True, "probe": "signed_overflow",
+              "source_lang": "c", "target_lang": "rust"}]
+    c = VerificationCache(fingerprint=toolchain_fingerprint())
+    verify_incremental(units, c)
+    # mutate the unit (const 1 -> 5): a different unit, hence a cache MISS.
+    changed = [dict(units[0], const=5, name="add5_w32")]
+    second = verify_incremental(changed, c)
+    assert second.misses == 1 and second.hits == 0
+
+
+# --------------------------------------------------------------------------- #
+# Step 68: local, telemetry-free quality dashboard.
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import dashboard as _dashboard  # noqa: E402
+from src.ub_oracle.dashboard import (  # noqa: E402
+    dashboard_data, class_risks, render_dashboard,
+)
+
+
+def _mixed_reports():
+    return [
+        _divergent_report("a", "signed_overflow"),   # CRITICAL confirmed
+        _divergent_report("b", "fp_contraction"),    # MODERATE confirmed
+        _report(VerifyVerdict.CANDIDATE, "c", probe="array_oob"),
+        _report(VerifyVerdict.NO_DIVERGENCE_FOUND, "d", probe="signed_overflow"),
+        _report(VerifyVerdict.NOT_COVERED, "e", pair=("go", "rust")),
+    ]
+
+
+def test_dashboard_data_counts_each_verdict():
+    d = dashboard_data(_mixed_reports())
+    assert d.total == 5
+    assert d.confirmed == 2
+    assert d.candidate == 1
+    assert d.clean == 1
+    assert d.not_covered == 1
+    assert d.posture == "AT RISK"   # any confirmed divergence => AT RISK
+
+
+def test_dashboard_posture_degrades_gracefully():
+    only_clean = [_report(VerifyVerdict.NO_DIVERGENCE_FOUND, "x",
+                          probe="signed_overflow")]
+    assert dashboard_data(only_clean).posture == "NO DIVERGENCE FOUND"
+    cand = [_report(VerifyVerdict.CANDIDATE, "x", probe="array_oob")]
+    assert dashboard_data(cand).posture == "NEEDS REVIEW"
+
+
+def test_class_risks_rank_critical_confirmed_first():
+    rows = class_risks(_mixed_reports())
+    # signed_overflow (critical, confirmed) outranks fp_contraction (moderate).
+    assert rows[0].divergence_class == "signed_overflow"
+    assert rows[0].risk_score > rows[1].risk_score
+    so = next(r for r in rows if r.divergence_class == "signed_overflow")
+    assert so.confirmed == 1 and so.severity == "critical"
+
+
+def test_render_dashboard_is_offline_and_self_contained():
+    html_doc = render_dashboard(_mixed_reports(), generated_at="2026-01-01 00:00")
+    assert html_doc.startswith("<!DOCTYPE html>")
+    # absolutely no network egress: no external scripts, fonts, or URLs.
+    for bad in ("http://", "https://", "<script", "googleapis", "cdn."):
+        assert bad not in html_doc
+    # the honesty disclaimer is rendered in the page itself.
+    assert "not a proof of equivalence" in html_doc.lower()
+    # the riskiest classes and the posture are visible.
+    assert "AT RISK" in html_doc
+    assert "signed_overflow" in html_doc and "fp_contraction" in html_doc
+    # deterministic given a fixed timestamp.
+    assert html_doc == render_dashboard(_mixed_reports(),
+                                        generated_at="2026-01-01 00:00")
+
+
+def test_dashboard_escapes_unit_names():
+    r = _divergent_report("<img src=x onerror=alert(1)>", "signed_overflow")
+    html_doc = render_dashboard([r], generated_at="2026-01-01 00:00")
+    # the malicious unit name is HTML-escaped, never injected raw.
+    assert "<img src=x" not in html_doc
+    assert "&lt;img" in html_doc
