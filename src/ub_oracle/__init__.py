@@ -69,6 +69,14 @@ from .abstract_interp import (
     analyze_unit,
     prunable_classes,
 )
+from .ir import (
+    KNOWN_KINDS,
+    IRError,
+    IRValidationError,
+    validate_unit,
+    is_valid,
+    assert_valid,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -111,4 +119,10 @@ __all__ = [
     "PrePassResult",
     "analyze_unit",
     "prunable_classes",
+    "KNOWN_KINDS",
+    "IRError",
+    "IRValidationError",
+    "validate_unit",
+    "is_valid",
+    "assert_valid",
 ]

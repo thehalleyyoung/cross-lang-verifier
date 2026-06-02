@@ -44,6 +44,7 @@ from .suppress import (
 )
 from .triage import render_triage, triage_reports
 from .verify import VerifyReport, VerifyVerdict, verify_unit
+from .ir import assert_valid, IRValidationError
 
 _VERDICT_STYLE = {
     VerifyVerdict.DIVERGENT: ("31;1", "DIVERGENT"),          # bold red
@@ -83,7 +84,7 @@ def _want_color(arg: str) -> bool:
     return sys.stdout.isatty()
 
 
-def _load_units(path: str) -> List[Dict]:
+def _load_units(path: str, *, validate: bool = True) -> List[Dict]:
     with open(path, "r", encoding="utf-8") as fh:
         data = json.load(fh)
     if isinstance(data, dict):
@@ -96,6 +97,12 @@ def _load_units(path: str) -> List[Dict]:
         raise ValueError("manifest must be a JSON object or array")
     if not isinstance(units, list) or not all(isinstance(u, dict) for u in units):
         raise ValueError("'units' must be an array of unit objects")
+    if validate:
+        # Reject ill-formed lowerings loudly at the frontend boundary (step 6):
+        # every unit must satisfy the frozen shared-IR contract before the
+        # engine touches it.
+        for i, unit in enumerate(units):
+            assert_valid(unit, label=_unit_label(unit, i))
     return units
 
 
@@ -158,6 +165,10 @@ def create_parser() -> argparse.ArgumentParser:
     p.add_argument("--dashboard", metavar="OUT.html",
                    help="write a self-contained, offline migration-risk HTML "
                         "dashboard summarizing risk per divergence class")
+    p.add_argument("--no-validate", action="store_true",
+                   help="skip the shared-IR contract validation of the manifest "
+                        "(by default every unit is validated and ill-formed "
+                        "lowerings are rejected before verification)")
     return p
 
 
@@ -206,7 +217,10 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         fail_verdicts |= _FAIL_ON[tok]
 
     try:
-        units = _load_units(args.units)
+        units = _load_units(args.units, validate=not args.no_validate)
+    except IRValidationError as exc:
+        sys.stderr.write(f"error: {exc}\n")
+        return 2
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         sys.stderr.write(f"error: {exc}\n")
         return 2

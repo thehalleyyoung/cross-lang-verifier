@@ -94,6 +94,11 @@ python3 -m src.cli.main discover \
   no-divergence, never asserts one) that also lets a unit declare a safe range
   so it isn't flagged for a divergence that range forbids; the same range is
   honored by the oracles' searches so the fast path and the SMT path always agree
+- a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
+  language-pair-agnostic translation-unit shape every frontend lowers into and
+  every oracle consumes, plus a validator that **rejects ill-formed lowerings**
+  at the manifest boundary (the CLI exits non-zero on a malformed unit) while
+  still accepting well-formed-but-uncovered units as `NOT_COVERED`
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout

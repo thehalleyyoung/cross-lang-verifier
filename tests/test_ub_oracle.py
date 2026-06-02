@@ -2166,3 +2166,134 @@ def test_prepass_never_prunes_a_real_confirmable_divergence():
     r2 = verify_unit(safe, ReexecHarness(_TC), status=_TC)
     assert r2.verdict is VerifyVerdict.NO_DIVERGENCE_FOUND
     assert "signed_overflow" in r2.prepass_pruned
+
+
+# --- Step 6: shared semantic-IR contract + validator ------------------------
+from src.ub_oracle import ir as _ir  # noqa: E402
+from src.ub_oracle.ir import (  # noqa: E402
+    validate_unit as _validate_unit,
+    is_valid as _is_valid,
+    assert_valid as _assert_valid,
+    IRValidationError as _IRValidationError,
+)
+
+
+def test_ir_accepts_every_canonical_unit_shape():
+    good = [
+        {"kind": "binop_const", "op": "add", "const": 1, "width": 32,
+         "signed": True},
+        {"kind": "binop_const", "op": "sub", "const": 7, "width": 64,
+         "x_range": [0, 10]},
+        {"kind": "shift", "width": 32, "shift_range": [0, 31]},
+        {"kind": "div", "width": 32, "b_range": [1, 9]},
+        {"kind": "rem", "width": 64, "a_range": [-5, 5], "b_range": [1, 2]},
+        {"kind": "array_index", "length": 8},
+        {"kind": "type_pun"},
+        {"kind": "fp_fma"},
+        {"kind": "binop_const", "op": "add", "const": 1, "target_lang": "go"},
+        {"kind": "binop_const", "op": "add", "const": 1, "target_lang": "swift"},
+        {"kind": "div", "width": 32, "probe": "div_by_zero"},
+    ]
+    for u in good:
+        assert _validate_unit(u) == [], (u, _validate_unit(u))
+        assert _is_valid(u)
+
+
+def test_ir_rejects_bad_envelope():
+    assert _validate_unit("not a dict")[0].field == "<unit>"
+    assert any(e.field == "kind" for e in _validate_unit({}))
+    assert any(e.field == "kind" for e in _validate_unit({"kind": 5}))
+
+
+def test_ir_rejects_unsupported_width():
+    errs = _validate_unit({"kind": "binop_const", "op": "add", "const": 1,
+                           "width": 7})
+    assert any(e.field == "width" for e in errs)
+
+
+def test_ir_rejects_missing_binop_operands():
+    errs = _validate_unit({"kind": "binop_const", "width": 32})
+    fields = {e.field for e in errs}
+    assert "op" in fields and "const" in fields
+
+
+def test_ir_rejects_non_integer_const():
+    errs = _validate_unit({"kind": "binop_const", "op": "add", "const": "x",
+                           "width": 32})
+    assert any(e.field == "const" for e in errs)
+    # bool is not a valid integer operand even though bool is an int subclass.
+    errs2 = _validate_unit({"kind": "binop_const", "op": "add", "const": True,
+                            "width": 32})
+    assert any(e.field == "const" for e in errs2)
+
+
+def test_ir_rejects_bad_array_length():
+    assert any(e.field == "length"
+               for e in _validate_unit({"kind": "array_index"}))
+    assert any(e.field == "length"
+               for e in _validate_unit({"kind": "array_index", "length": 0}))
+    assert any(e.field == "length"
+               for e in _validate_unit({"kind": "array_index", "length": -3}))
+
+
+def test_ir_rejects_malformed_range():
+    for bad in ([1, 2, 3], [5, 1], "nope", [1.5, 2.0]):
+        errs = _validate_unit({"kind": "binop_const", "op": "add", "const": 1,
+                               "width": 32, "x_range": bad})
+        assert any(e.field == "x_range" for e in errs), bad
+
+
+def test_ir_rejects_unknown_language_and_probe():
+    assert any(e.field == "target_lang"
+               for e in _validate_unit({"kind": "type_pun",
+                                        "target_lang": "haskell"}))
+    assert any(e.field == "source_lang"
+               for e in _validate_unit({"kind": "type_pun", "source_lang": 3}))
+    assert any(e.field == "probe"
+               for e in _validate_unit({"kind": "div", "width": 32,
+                                        "probe": "no_such_class"}))
+
+
+def test_ir_require_known_kind_flag():
+    u = {"kind": "string_concat", "width": 32}
+    assert _validate_unit(u) == []                       # well-formed envelope
+    assert any(e.field == "kind"
+               for e in _validate_unit(u, require_known_kind=True))
+
+
+def test_ir_assert_valid_raises_with_all_errors():
+    with pytest.raises(_IRValidationError) as ei:
+        _assert_valid({"kind": "binop_const", "width": 99}, label="u0")
+    msg = str(ei.value)
+    assert "u0" in msg and "width" in msg and "op" in msg and "const" in msg
+    assert ei.value.errors
+
+
+def test_ir_bundled_manifest_validates():
+    import json as _json
+    import os as _os2
+    root = _os2.path.dirname(_os2.path.dirname(_os2.path.abspath(__file__)))
+    with open(_os2.path.join(root, "examples", "units_manifest.json")) as fh:
+        data = _json.load(fh)
+    units = data["units"] if isinstance(data, dict) else data
+    for u in units:
+        assert _validate_unit(u) == [], (u, _validate_unit(u))
+
+
+def test_cli_rejects_ill_formed_manifest(tmp_path):
+    from src.ub_oracle import cli as _cli2
+    bad = tmp_path / "bad.json"
+    bad.write_text('{"units":[{"kind":"binop_const","width":7}]}')
+    rc = _cli2.run(["--units", str(bad), "--no-confirm"])
+    assert rc == 2
+
+
+def test_cli_no_validate_bypasses_rejection(tmp_path):
+    from src.ub_oracle import cli as _cli3
+    # an ill-formed-but-loadable unit: --no-validate must skip the IR gate so
+    # the engine proceeds (and simply reports it NOT_COVERED, exit 0).
+    bad = tmp_path / "bad.json"
+    bad.write_text('{"units":[{"kind":"binop_const","op":"add","const":1,'
+                   '"width":7}]}')
+    rc = _cli3.run(["--units", str(bad), "--no-confirm", "--no-validate"])
+    assert rc == 0
