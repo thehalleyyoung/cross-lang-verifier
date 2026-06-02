@@ -480,6 +480,26 @@ def _thm_cve_corpus_catches() -> bool:
     return conf.ok
 
 
+def _thm_ground_truth_labeled() -> bool:
+    # The labeled ground-truth set must be large (>= 500 pairs across >= 2
+    # language pairs) and faithfully labeled: on any full toolchain, the
+    # authoritative sanitizer-based labeler must agree with every sampled
+    # declared label. Absent a full toolchain only the corpus shape is checkable.
+    from . import ground_truth as gt
+    full = gt.enumerate_corpus()
+    if len(full) < 500:
+        return False
+    if len({it.lang for it in full}) < 2:
+        return False
+    labels = {it.declared_label for it in full}
+    if labels != {"divergent", "equivalent"}:
+        return False
+    conf = gt.confirm_ground_truth(sample_per_class=1)
+    if not conf.available:
+        return True
+    return conf.ok
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -916,6 +936,28 @@ CLAIMS: List[Claim] = [
         "ub_oracle.cve_corpus",
         ("run_corpus", "confirm_corpus", "coverage_table", "CORPUS", "CveCase"),
         theorem=_thm_cve_corpus_catches,
+        docs=("README.md",),
+    ),
+    claim(
+        "C32-ground-truth",
+        "A labeled ground-truth set of >=500 (C program, target translation) pairs "
+        "across two language pairs (C->Rust and C->Go) underpins any "
+        "precision/recall claim. The label of every item — 'divergent' or "
+        "'equivalent' — is established not by the oracle but by *bounded "
+        "enumeration + real sanitizers*: the C program is compiled under "
+        "UBSan/bounds instrumentation and run; a trap (with a defined, "
+        "deterministic target) labels the pair divergent, while a non-trapping C "
+        "whose observable output matches a defined, deterministic target labels it "
+        "equivalent. The corpus is enumerated parametrically (UB families: "
+        "div-by-zero, OOB read, oversized shift, signed overflow, INT_MIN/-1; safe "
+        "families: add, mul, in-bounds index, in-range shift, mod). On a full "
+        "toolchain the sanitizer-established label agrees with the constructed "
+        "label on every sampled item across both languages and both labels — the "
+        "labeling authority is independent of the verifier under test.",
+        "ub_oracle.ground_truth",
+        ("enumerate_corpus", "label_item", "establish_ground_truth",
+         "confirm_ground_truth", "corpus_stats"),
+        theorem=_thm_ground_truth_labeled,
         docs=("README.md",),
     ),
 ]

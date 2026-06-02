@@ -244,6 +244,13 @@ python3 -m src.cli.main discover \
   (CWE-682) — each translated to Rust *and* Go and **verified end-to-end** by
   compiling and running both sides: C traps under the sanitizer while the target
   is defined and deterministic. Every catch is executed, not asserted
+- a **labeled ground-truth set** (`ground_truth.py`): **≥500** `(C program,
+  target translation)` pairs across **two** language pairs whose `divergent`/
+  `equivalent` label is fixed by *bounded enumeration + real sanitizers* (UBSan
+  traps and observable-output comparison), not by the oracle — the independent
+  substrate that makes a precision/recall claim defensible. On a full toolchain
+  the sanitizer-established label agrees with the constructed label on every
+  sampled item, across both languages and both labels
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

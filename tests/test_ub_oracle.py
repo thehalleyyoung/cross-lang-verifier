@@ -3997,3 +3997,75 @@ def test_cve_corpus_confirmation_is_green():
     c = _cve.confirm_corpus()
     assert c.available and c.ok
     assert c.report.confirmed_count == len(c.report.applicable)
+
+
+# --------------------------------------------------------------------------- #
+# Step 45 — labeled ground-truth set (sanitizer-established precision substrate)
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import ground_truth as _gt  # noqa: E402
+
+
+def test_ground_truth_corpus_is_large_and_two_pairs():
+    items = _gt.enumerate_corpus()
+    assert len(items) >= 500, f"only {len(items)} items"
+    langs = {it.lang for it in items}
+    assert {"rust", "go"}.issubset(langs)
+    labels = {it.declared_label for it in items}
+    assert labels == {"divergent", "equivalent"}
+    # every divergent item carries a CWE; equivalent items do not
+    for it in items:
+        if it.declared_label == "divergent":
+            assert it.cwe.startswith("CWE-"), it.item_id
+        else:
+            assert it.cwe == "", it.item_id
+
+
+def test_ground_truth_stats_distribution():
+    s = _gt.corpus_stats()
+    assert s["total"] >= 500 and s["n_langs"] == 2
+    assert s["by_label"]["divergent"] >= 100
+    assert s["by_label"]["equivalent"] >= 100
+    # a healthy spread of UB classes and safe classes
+    assert len([k for k in s["by_class"] if k.startswith("safe_")]) >= 3
+    assert len([k for k in s["by_class"] if not k.startswith("safe_")]) >= 4
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="no full toolchain for any target")
+def test_ground_truth_labeler_matches_declarations():
+    # The authoritative sanitizer-based labeler must agree with every declared
+    # label on a per-family sample spanning both languages and both labels.
+    conf = _gt.confirm_ground_truth(sample_per_class=2)
+    assert conf.available and conf.ok, [
+        (r.item_id, r.declared_label, r.observed_label, r.detail)
+        for r in conf.report.disagreements
+    ]
+    assert conf.corpus_size >= 500 and conf.n_langs >= 2
+    assert not conf.report.disagreements
+    kinds = {r.observed_label for r in conf.report.labeled}
+    assert {"divergent", "equivalent"}.issubset(kinds)
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_ground_truth_rust_divergent_is_ub_trap():
+    # Pick a concrete divergent Rust item and confirm the label is established by
+    # an actual sanitizer trap (not by declaration).
+    items = [it for it in _gt.enumerate_corpus(("rust",))
+             if it.klass == "div_by_zero"]
+    assert items
+    from src.ub_oracle.reexec import ReexecHarness
+    ev = _gt.label_item(ReexecHarness(_TC), items[0])
+    assert ev.observed_label == "divergent"
+    assert ev.ub_trapped
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_ground_truth_rust_equivalent_outputs_match():
+    items = [it for it in _gt.enumerate_corpus(("rust",))
+             if it.klass == "safe_add"]
+    assert items
+    from src.ub_oracle.reexec import ReexecHarness
+    ev = _gt.label_item(ReexecHarness(_TC), items[0])
+    assert ev.observed_label == "equivalent"
+    assert not ev.ub_trapped
+    assert ev.c_out == ev.target_out
