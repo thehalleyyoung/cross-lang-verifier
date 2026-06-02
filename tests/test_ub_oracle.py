@@ -3632,3 +3632,51 @@ def test_preprocess_include_resolution_works():
     c = _pp.confirm_include_resolution()
     assert c.available and c.ok
     assert c.symbol_present and c.value == 42
+
+
+# ---------------------------------------------------------------------------
+# Step 32 — behavior-accurate libc/runtime modeling (differential vs real libc).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import libc_model as _lc  # noqa: E402
+
+_clang_for_lc = pytest.mark.skipif(
+    not _os.path.exists(_lc.CC), reason="clang not available")
+
+
+def test_libc_specs_pure_model_values():
+    # spot-check the pure models without a compiler.
+    assert _lc.model_strlen(b"hello\x00") == 5
+    assert _lc.model_strcmp(b"abc\x00", b"abd\x00") == -1
+    assert _lc.model_strcmp(b"abc\x00", b"abc\x00") == 0
+    assert _lc.model_memcmp(b"\x01\x02", b"\x01\x03", 2) == -1
+    assert _lc.model_memcpy(b"\xaa\xbb\xcc", 2) == b"\xaa\xbb"
+    assert _lc.model_memset(b"\x00\x00\x00", 0x41, 2) == b"\x41\x41\x00"
+    assert _lc.model_strchr(b"abc\x00", ord("b")) == 1
+    assert _lc.model_strchr(b"abc\x00", ord("z")) == -1
+
+
+def test_libc_specs_encode_ub_preconditions():
+    # strlen/strcmp/strchr require NUL termination — the model refuses otherwise.
+    with pytest.raises(ValueError):
+        _lc.model_strlen(b"no terminator")
+    with pytest.raises(ValueError):
+        _lc.model_strcmp(b"a\x00", b"no term")
+    # the contract table documents the overlap/sign rules.
+    assert "overlap" in _lc.LIBC_CONTRACTS["memcpy"]
+    assert "SIGN" in _lc.LIBC_CONTRACTS["strcmp"]
+
+
+@_clang_for_lc
+@pytest.mark.parametrize("name", list(_lc.SPECS))
+def test_libc_spec_matches_real_libc_on_random_inputs(name):
+    c = _lc.confirm_spec(name, trials=150, seed=7)
+    assert c.available and c.trials == 150
+    assert c.ok, f"{name} mismatches: {c.mismatches[:3]}"
+
+
+@_clang_for_lc
+def test_libc_all_specs_confirmed_together():
+    results = _lc.confirm_all(trials=80)
+    assert len(results) == len(_lc.SPECS)
+    assert all(r.ok for r in results)

@@ -191,6 +191,13 @@ python3 -m src.cli.main discover \
   function-like macro is **semantically load-bearing** (`MUL(1+1,2)` → `1+1*2` → 3
   vs the parenthesized 4, and the hazardous macro is detected up front), `#ifdef`
   conditionals **select the program**, and `#include` symbols **resolve**
+- a **behavior-accurate libc model** (`libc_model.py`): executable specs for the
+  most-hit runtime surface (`strlen`, `strcmp`, `strncmp`, `memcmp`, `memcpy`,
+  `memset`, `strchr`) proven against the **real libc** by randomized differential
+  testing — each spec runs on the host libc through a compiled harness and matches
+  the pure model on hundreds of inputs (zero mismatches), encoding the exact
+  contract (sign-only comparisons, NUL preconditions, `memcpy` no-overlap). The
+  `LibcSpec`/`confirm_spec` framework is runtime-agnostic and reusable
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

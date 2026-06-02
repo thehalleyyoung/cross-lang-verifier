@@ -333,6 +333,26 @@ def _thm_preprocess_real() -> bool:
                 and pp.confirm_include_resolution().ok)
 
 
+def _thm_libc_model_accurate() -> bool:
+    # The pure models must satisfy their value contracts (sign semantics, NUL
+    # preconditions) and, where clang is present, agree with the real libc on a
+    # randomized differential check across the whole modelled surface.
+    from . import libc_model as lc
+    if lc.model_strcmp(b"abc\x00", b"abd\x00") != -1:
+        return False
+    if lc.model_memset(b"\x00\x00\x00", 0x41, 2) != b"\x41\x41\x00":
+        return False
+    try:
+        lc.model_strlen(b"no terminator")
+        return False
+    except ValueError:
+        pass
+    import os as _os5
+    if not _os5.path.exists(lc.CC):
+        return True
+    return all(r.ok for r in lc.confirm_all(trials=40))
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -625,6 +645,25 @@ CLAIMS: List[Claim] = [
          "confirm_macro_precedence_hazard", "confirm_conditional_compilation",
          "confirm_include_resolution"),
         theorem=_thm_preprocess_real,
+        docs=("README.md",),
+    ),
+    claim(
+        "C24-libc-model",
+        "The most-hit libc/runtime surface is modelled with behavior-accurate, "
+        "executable specs and proven against the *real* libc by randomized "
+        "differential testing: `strlen`, `strcmp`, `strncmp`, `memcmp`, `memcpy`, "
+        "`memset` and `strchr` each run on the host libc through a compiled "
+        "harness and their output is compared to the pure-Python model on "
+        "hundreds of random inputs, with zero mismatches. The specs encode the "
+        "runtime's exact value contract — `strcmp`/`memcmp` return only the SIGN "
+        "of the first differing unsigned byte, `strlen`/`strcmp`/`strchr` require "
+        "NUL termination (the model raises on violation), `memcpy` forbids overlap "
+        "while `memmove` allows it — and the `LibcSpec`/`confirm_spec` framework is "
+        "runtime-agnostic (a new function = a model + a harness mode).",
+        "ub_oracle.libc_model",
+        ("SPECS", "confirm_spec", "confirm_all", "model_strcmp",
+         "LIBC_CONTRACTS"),
+        theorem=_thm_libc_model_accurate,
         docs=("README.md",),
     ),
 ]
