@@ -145,6 +145,13 @@ python3 -m src.cli.main discover \
   The confirmable distinctions — forming vs dereferencing one-past-the-end, and
   in-bounds arithmetic round-trips — are checked against **AddressSanitizer** on
   real code, and the general provenance interface is documented for other pairs
+- an **ownership / borrow-fact extractor** (`ownership.py`) that takes the Rust
+  borrow checker's verdict as ground truth: the idiomatic *safe* translation of a
+  mutably-aliasing C idiom is **rejected** by real `rustc` (`E0499`/`E0502`/
+  `E0382`), while disjoint borrows are accepted and the `unsafe` raw-pointer
+  re-expression compiles — exactly the translator's dilemma. Each accept/reject
+  verdict (and error code) is *observed* by compiling, not assumed, and the
+  interface is documented to retarget to other safety models
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

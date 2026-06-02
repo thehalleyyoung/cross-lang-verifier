@@ -3253,3 +3253,62 @@ def test_provenance_scenarios_confirmed_by_real_asan(scenario):
     assert conf.consistent, (scenario, conf.predicted_fault, conf.asan_trapped)
     _, predicts_fault = _pv.CONFIRMABLE[scenario]
     assert conf.asan_trapped is predicts_fault
+
+
+# ---------------------------------------------------------------------------
+# Step 76 — ownership / borrow facts from the real Rust borrow checker.
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import ownership as _ow  # noqa: E402
+
+
+def test_ownership_patterns_are_well_formed():
+    for name, pat in _ow.PATTERNS.items():
+        assert pat.name == name
+        assert pat.rust_src and pat.c_gloss and pat.consequence
+        # rejected patterns must name an error code; accepted ones must not.
+        assert bool(pat.error_code) == (not pat.accepts)
+
+
+def test_ownership_interface_is_documented():
+    keys = _ow.OWNERSHIP_INTERFACE
+    for required in ("ownership_fact_is_a_checker_verdict",
+                     "rejection_forces_a_translation_choice",
+                     "acceptance_licenses_alias_assumptions",
+                     "retargetable"):
+        assert required in keys and keys[required]
+
+
+def test_ownership_unknown_pattern_raises():
+    with pytest.raises(KeyError):
+        _ow.pattern("does_not_exist")
+
+
+@_requires_toolchain
+@pytest.mark.parametrize("name", sorted(_ow.PATTERNS))
+def test_ownership_facts_confirmed_by_real_rustc(name):
+    """Every predicted borrow-check verdict is confirmed by the real rustc
+    borrow checker, including the exact error code on rejection."""
+    rustc = _TC.target_path("rust")
+    if rustc is None:
+        pytest.skip("rustc unavailable")
+    pat = _ow.pattern(name)
+    conf = _ow.confirm_ownership(name, rustc=rustc)
+    assert conf.available, conf.reason
+    assert conf.accepted is pat.accepts, (name, conf.stderr)
+    assert conf.matches(pat), (name, conf.error_code, conf.stderr)
+
+
+@_requires_toolchain
+def test_ownership_mutable_aliasing_is_rejected_but_unsafe_compiles():
+    """The headline ownership fact: C mutable aliasing has no safe Rust analogue
+    (borrow-check rejects two &mut), yet the unsafe raw-pointer re-expression
+    compiles — exactly the translator's dilemma."""
+    rustc = _TC.target_path("rust")
+    if rustc is None:
+        pytest.skip("rustc unavailable")
+    rejected = _ow.confirm_ownership("two_mut_borrows", rustc=rustc)
+    assert rejected.accepted is False
+    assert rejected.error_code == "E0499"
+    unsafe = _ow.confirm_ownership("raw_ptr_aliasing", rustc=rustc)
+    assert unsafe.accepted is True

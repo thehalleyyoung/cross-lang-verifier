@@ -219,6 +219,19 @@ def _thm_provenance_pnvi_sound() -> bool:
                 and opaque_ok and uaf_ok)
 
 
+def _thm_ownership_facts_sound() -> bool:
+    # Every ownership pattern's prediction must be internally consistent (an
+    # error code iff rejected); the headline fact is that mutable aliasing is
+    # rejected (E0499) while its unsafe re-expression is accepted.
+    from . import ownership as o
+    consistent = all(bool(p.error_code) == (not p.accepts)
+                     for p in o.PATTERNS.values())
+    headline = (o.pattern("two_mut_borrows").accepts is False
+                and o.pattern("two_mut_borrows").error_code == "E0499"
+                and o.pattern("raw_ptr_aliasing").accepts is True)
+    return bool(consistent and headline)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -404,6 +417,20 @@ CLAIMS: List[Claim] = [
         ("simulate", "first_fault", "ProvEvent", "ProvFault",
          "PROVENANCE_INTERFACE", "confirm_provenance"),
         theorem=_thm_provenance_pnvi_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C18-ownership-facts",
+        "Ownership facts are taken as ground truth from the real Rust borrow "
+        "checker: the idiomatic safe translation of a mutably-aliasing C idiom is "
+        "rejected (E0499 for two &mut, E0502 for &mut while & is live, E0382 for "
+        "use-after-move), while disjoint/sequential borrows are accepted and the "
+        "unsafe raw-pointer re-expression compiles. Each verdict — accept/reject "
+        "plus the exact error code — is observed by compiling with rustc, not "
+        "assumed, and the general (retargetable) ownership interface is documented.",
+        "ub_oracle.ownership",
+        ("PATTERNS", "pattern", "confirm_ownership", "OWNERSHIP_INTERFACE"),
+        theorem=_thm_ownership_facts_sound,
         docs=("README.md",),
     ),
 ]
