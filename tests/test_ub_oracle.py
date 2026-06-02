@@ -1056,15 +1056,18 @@ def test_matrix_pair_coverage_is_honest_about_class_breadth():
     m = _matrix.build_matrix()
     cov = {(c["source_lang"], c["target_lang"]): c for c in m["coverage"]}
     # the anchor implements the full catalogue of executable oracles; the
-    # generated pairs implement the five argv-driven integer/memory classes
-    # plus the optimizer-exploited uninitialized-read class (which is confirmed
-    # by two conforming C builds disagreeing while the target stays defined, so
-    # it transfers to every target pair, not just the anchor).
+    # generated pairs implement the argv-driven integer/memory classes plus the
+    # optimizer-exploited / trap-vs-defined classes that transfer to every safe
+    # target (Rust and Go), while Swift only carries the core integer/memory set.
     assert {"strict_aliasing", "fp_contraction"} <= set(cov[("c", "rust")]["classes_covered"])
-    for tgt in ("go", "swift"):
-        covered = set(cov[("c", tgt)]["classes_covered"])
-        assert {"signed_overflow", "shift_oob", "div_by_zero",
-                "intmin_div_neg1", "array_oob", "uninit_read"} == covered
+    go_covered = set(cov[("c", "go")]["classes_covered"])
+    assert {"signed_overflow", "shift_oob", "div_by_zero", "intmin_div_neg1",
+            "array_oob", "uninit_read", "strict_aliasing", "vla_bound",
+            "float_cast_overflow", "fast_math_reassoc", "restrict_violation",
+            "pointer_provenance"} == go_covered
+    swift_covered = set(cov[("c", "swift")]["classes_covered"])
+    assert {"signed_overflow", "shift_oob", "div_by_zero",
+            "intmin_div_neg1", "array_oob", "uninit_read"} == swift_covered
 
 
 def test_matrix_is_byte_reproducible_in_a_fresh_process():

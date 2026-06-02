@@ -39,6 +39,43 @@
       }
     },
     {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "fast_math_reassoc",
+      "divergence_witness": "C `(x + y) - x` with x=-9980019905295580.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
+      "source_definedness": "unspecified",
+      "source_lang": "c",
+      "source_sha16": "ec4d585a651e3e19",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "7a91a217459e8a02",
+      "verdict": "divergent",
+      "witness": {
+        "x": -9980019905295580.0,
+        "y": 1.0
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "float_cast_overflow",
+      "divergence_witness": "C `(int)x` with x=2147483648.0 rounds outside the range of `int` and is UB (C17 6.3.1.4p1; UBSan `float-cast-overflow` traps); the safe Go port `int32(x)` is a defined conversion (implementation-specified but deterministic, never a trap).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "f921b0c9fe1ba920",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "b13bb470eb70bb52",
+      "verdict": "divergent",
+      "witness": {
+        "x": 2147483648
+      }
+    },
+    {
       "confirmation_mode": "trap_vs_defined",
       "divergence_class": "intmin_div_neg1",
       "divergence_witness": "C `a / b` with a=-2147483648, b=-1 overflows signed division (UB); Go defines x/-1 == x for the most-negative x.",
@@ -55,6 +92,42 @@
       "witness": {
         "a": -2147483648,
         "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "pointer_provenance",
+      "divergence_witness": "C `p = a + n` with n=4611686018427387904 forms a pointer whose byte offset n*4 overflows the address space (UB, C17 6.5.6p8; UBSan `pointer-overflow` traps); the safe Go port bounds-checks the index and returns a deterministic, defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "e6160de7587546aa",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "96bc577663e698f9",
+      "verdict": "divergent",
+      "witness": {
+        "n": 4611686018427387904
+      }
+    },
+    {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "restrict_violation",
+      "divergence_witness": "C `f(int *restrict a, int *restrict b)` called with aliasing pointers (sel=1) violates the restrict promise (C17 6.7.3.1p4): `-O0` re-reads memory and returns 4 while `-O2` caches `*a=1` and returns 3 \u2014 the same source diverges across optimisation levels. The safe go port cannot alias (Rust `&mut` uniqueness / Go has no restrict) and is a single deterministic, defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "215c364977507485",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "6e53056c044265d5",
+      "verdict": "divergent",
+      "witness": {
+        "sel": 1
       }
     },
     {
@@ -96,6 +169,22 @@
     },
     {
       "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "strict_aliasing",
+      "divergence_witness": "C punning int*/long* over the same storage (A=1, B=0) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 1. The safe go translation is a single defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "a55c7125eef1c041",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "460d821cc07156b9",
+      "verdict": "divergent",
+      "witness": {}
+    },
+    {
+      "confirmation_mode": "optimizer_exploited",
       "divergence_class": "uninit_read",
       "divergence_witness": "C reads slot 'b' of struct storage while its definedness is 'uninit' (uninitialized): UB. Its value is indeterminate, and the -O0 and -O2 builds of the *same* C source disagree on the printed value. Go zero-initializes all storage, so the read is defined and deterministic.",
       "source_definedness": "undefined",
@@ -110,6 +199,24 @@
       "verdict": "divergent",
       "witness": {
         "s": 7
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "vla_bound",
+      "divergence_witness": "C `int a[n]` with n=-1 <= 0 is UB (C17 6.7.6.2p5; UBSan `vla-bound` traps); the safe Go port `make([]int32, n)` rejects a negative length with a deterministic `makeslice` panic.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "6433f1252738bfda",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "c07fe8779ff6f156",
+      "verdict": "divergent",
+      "witness": {
+        "n": -1
       }
     },
     {
@@ -151,8 +258,45 @@
     },
     {
       "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "fast_math_reassoc",
+      "divergence_witness": "C `(x + y) - x` with x=-9434306675244316.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
+      "source_definedness": "unspecified",
+      "source_lang": "c",
+      "source_sha16": "ec4d585a651e3e19",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "51821464be323c10",
+      "verdict": "divergent",
+      "witness": {
+        "x": -9434306675244316.0,
+        "y": 1.0
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "float_cast_overflow",
+      "divergence_witness": "C `(int)x` with x=2147483648.0 rounds outside the range of `int` and is UB (C17 6.3.1.4p1; UBSan `float-cast-overflow` traps); the safe Rust port `x as i32` is a defined saturating cast (a single deterministic value).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "f921b0c9fe1ba920",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "b14ee0b7f70d5bcd",
+      "verdict": "divergent",
+      "witness": {
+        "x": 2147483648
+      }
+    },
+    {
+      "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fp_contraction",
-      "divergence_witness": "C `a*b + c` with a=-497.63157636995805, b=1.8695501249788824, c=930.3471757964197 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "divergence_witness": "C `a*b + c` with a=-2.441571637338042, b=1.6382890126579919, c=3.9999999870683016 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "994ef280de9c8299",
@@ -164,9 +308,9 @@
       "target_sha16": "7171facf9aec0f3f",
       "verdict": "divergent",
       "witness": {
-        "a": -497.63157636995805,
-        "b": 1.8695501249788824,
-        "c": 930.3471757964197
+        "a": -2.441571637338042,
+        "b": 1.6382890126579919,
+        "c": 3.9999999870683016
       }
     },
     {
@@ -186,6 +330,42 @@
       "witness": {
         "a": -2147483648,
         "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "pointer_provenance",
+      "divergence_witness": "C `p = a + n` with n=4611686018427387904 forms a pointer whose byte offset n*4 overflows the address space (UB, C17 6.5.6p8; UBSan `pointer-overflow` traps, `-O0` derives from a wild pointer); the safe Rust port keeps an index and accesses through `a.get(i)`, a checked operation that yields a deterministic, defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "e6160de7587546aa",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "4a7305d85ba6f02e",
+      "verdict": "divergent",
+      "witness": {
+        "n": 4611686018427387904
+      }
+    },
+    {
+      "confirmation_mode": "optimizer_exploited",
+      "divergence_class": "restrict_violation",
+      "divergence_witness": "C `f(int *restrict a, int *restrict b)` called with aliasing pointers (sel=1) violates the restrict promise (C17 6.7.3.1p4): `-O0` re-reads memory and returns 4 while `-O2` caches `*a=1` and returns 3 \u2014 the same source diverges across optimisation levels. The safe rust port cannot alias (Rust `&mut` uniqueness / Go has no restrict) and is a single deterministic, defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "215c364977507485",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "add0b45f9136a355",
+      "verdict": "divergent",
+      "witness": {
+        "sel": 1
       }
     },
     {
@@ -228,16 +408,16 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "strict_aliasing",
-      "divergence_witness": "C punning int*/long* over the same storage (A=1, B=0) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 1. Rust's translation is a single defined value.",
+      "divergence_witness": "C punning int*/long* over the same storage (A=0, B=1) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 0. The safe rust translation is a single defined value.",
       "source_definedness": "undefined",
       "source_lang": "c",
-      "source_sha16": "a55c7125eef1c041",
+      "source_sha16": "041c989f7d8dff4d",
       "target_defined_returncodes": [
         0,
         101
       ],
       "target_lang": "rust",
-      "target_sha16": "be28aae0acd28951",
+      "target_sha16": "21c4351350207a8e",
       "verdict": "divergent",
       "witness": {}
     },
@@ -257,6 +437,24 @@
       "verdict": "divergent",
       "witness": {
         "s": 7
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "vla_bound",
+      "divergence_witness": "C `int a[n]` with n=-1 <= 0 is UB (C17 6.7.6.2p5; UBSan `vla-bound` traps, `-O0` segfaults); the safe Rust port sizes a heap `Vec` from a checked conversion and panics deterministically (a defined outcome).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "6433f1252738bfda",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "8fc8d2ed435b5050",
+      "verdict": "divergent",
+      "witness": {
+        "n": -1
       }
     },
     {
@@ -376,13 +574,19 @@
       "classes_covered": [
         "array_oob",
         "div_by_zero",
+        "fast_math_reassoc",
+        "float_cast_overflow",
         "intmin_div_neg1",
+        "pointer_provenance",
+        "restrict_violation",
         "shift_oob",
         "signed_overflow",
-        "uninit_read"
+        "strict_aliasing",
+        "uninit_read",
+        "vla_bound"
       ],
-      "n_classes": 6,
-      "n_divergent": 6,
+      "n_classes": 12,
+      "n_divergent": 12,
       "source_lang": "c",
       "target_lang": "go"
     },
@@ -390,15 +594,20 @@
       "classes_covered": [
         "array_oob",
         "div_by_zero",
+        "fast_math_reassoc",
+        "float_cast_overflow",
         "fp_contraction",
         "intmin_div_neg1",
+        "pointer_provenance",
+        "restrict_violation",
         "shift_oob",
         "signed_overflow",
         "strict_aliasing",
-        "uninit_read"
+        "uninit_read",
+        "vla_bound"
       ],
-      "n_classes": 8,
-      "n_divergent": 8,
+      "n_classes": 13,
+      "n_divergent": 13,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -420,17 +629,22 @@
   "divergence_classes": [
     "array_oob",
     "div_by_zero",
+    "fast_math_reassoc",
+    "float_cast_overflow",
     "fp_contraction",
     "intmin_div_neg1",
+    "pointer_provenance",
+    "restrict_violation",
     "shift_oob",
     "signed_overflow",
     "strict_aliasing",
-    "uninit_read"
+    "uninit_read",
+    "vla_bound"
   ],
   "language_pairs": [
     "c->go",
     "c->rust",
     "c->swift"
   ],
-  "n_cells": 20
+  "n_cells": 31
 }

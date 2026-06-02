@@ -44,6 +44,11 @@ CANONICAL_UNITS: Dict[str, Dict[str, Any]] = {
     "uninit_read": {"kind": "uninit_read",
                     "storage": {"kind": "struct", "fields": ["a", "b"]},
                     "writes": [{"slot": "a"}], "read": "b"},
+    "vla_bound": {"kind": "vla", "width": 32, "var": "n"},
+    "float_cast_overflow": {"kind": "float_cast", "width": 32, "var": "x"},
+    "fast_math_reassoc": {"kind": "fp_reassoc"},
+    "restrict_violation": {"kind": "restrict_pair"},
+    "pointer_provenance": {"kind": "pointer_offset", "width": 32, "var": "n"},
 }
 
 
