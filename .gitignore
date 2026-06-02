@@ -47,3 +47,4 @@ dist/
 
 # Step 54 replication kit manifest (regenerated, not tracked)
 reproduction_manifest.json
+site/

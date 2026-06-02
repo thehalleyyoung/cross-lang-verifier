@@ -342,6 +342,11 @@ python3 -m src.cli.main discover \
   runs the **live oracle** on the paste — no mock; an absent toolchain answers an
   honest `available=false`. Proven end to end through a real socket: a div-by-zero
   translation is flagged on the UB input and silent on a safe one
+- a **buildable docs site** (`mkdocs.yml`, `playground`/`docs_site.py`): a real
+  `mkdocs build --strict` site whose centrepiece — a **gallery of caught
+  divergences** — is machine-generated from the live corpora, so it can never
+  drift from the real catalogue; the strict build (any broken nav/missing page
+  fails) is itself a machine-checked claim
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

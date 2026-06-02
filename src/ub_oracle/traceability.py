@@ -688,6 +688,16 @@ def _thm_playground() -> bool:
     return bool(conf.ok)
 
 
+def _thm_docs_site() -> bool:
+    # The documentation site is a REAL mkdocs build, not a description: the
+    # gallery is machine-generated from the live corpora and `mkdocs build
+    # --strict` (which fails on any broken nav entry or missing page) produces a
+    # site. Consistency-only when mkdocs is not installed.
+    from . import docs_site as ds
+    rep = ds.confirm_docs_site()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1423,6 +1433,23 @@ CLAIMS: List[Claim] = [
         ("confirm_playground", "evaluate", "make_server"),
         theorem=_thm_playground,
         docs=("README.md", "docs/PLAYGROUND.md"),
+    ),
+    claim(
+        "C46-docs-site",
+        "A real, buildable **documentation site** (`ub_oracle.docs_site` + "
+        "`mkdocs.yml`) gathers the project's reference docs into a navigable site "
+        "whose centrepiece — a **gallery of caught divergences** — is "
+        "**machine-generated from the live corpora** (`idiomatic_corpus`, "
+        "`multipair_corpus`), so it can never drift from the real catalogue "
+        "(every catalogued function, its class, label and language pairs "
+        "appears). The machine-checked claim invokes the **real `mkdocs` binary** "
+        "with `build --strict` — which turns any broken nav entry, missing page "
+        "or dangling reference into a failure — and confirms an HTML site is "
+        "produced; consistency-only when `mkdocs` is absent (never fabricated).",
+        "ub_oracle.docs_site",
+        ("confirm_docs_site", "generate_gallery"),
+        theorem=_thm_docs_site,
+        docs=("README.md",),
     ),
 ]
 

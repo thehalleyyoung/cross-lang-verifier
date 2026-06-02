@@ -4723,3 +4723,32 @@ def test_playground_evaluate_flags_real_divergence():
 def test_playground_http_endpoint_end_to_end():
     conf = _pg.confirm_playground()
     assert conf.available and conf.ok, conf.detail
+
+
+from src.ub_oracle import docs_site as _ds  # noqa: E402
+
+
+def test_docs_site_gallery_lists_every_corpus_item():
+    path = _ds.generate_gallery()
+    text = path.read_text()
+    for it in _ds._idio.CORPUS:
+        assert f"`{it.item_id}`" in text, it.item_id
+    for fn in _ds._multi.CORPUS:
+        assert f"`{fn.func_id}`" in text, fn.func_id
+    assert "Auto-generated" in text
+
+
+def test_docs_site_mkdocs_yml_present_and_nav_targets_exist():
+    import re
+    yml = _ds._MKDOCS_YML.read_text()
+    # every nav markdown target must exist under docs/.
+    for m in re.findall(r":\s*([A-Za-z0-9_./-]+\.md)\s*$", yml, re.MULTILINE):
+        assert (_ds._DOCS / m).exists(), m
+
+
+@pytest.mark.skipif(_ds._mkdocs_invocation() is None,
+                    reason="mkdocs not installed")
+def test_docs_site_strict_build_succeeds():
+    rep = _ds.confirm_docs_site()
+    assert rep.available and rep.ok, rep.detail
+    assert rep.strict_build and rep.pages_built > 0

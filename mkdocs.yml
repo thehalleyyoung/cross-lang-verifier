@@ -1,0 +1,39 @@
+site_name: cross-lang-verifier
+site_description: >-
+  A C→{Rust,Go,Swift} cross-language semantic-divergence oracle rooted in C
+  undefined behaviour — every claim proven against real compiled code.
+docs_dir: docs
+theme:
+  name: readthedocs
+
+validation:
+  nav:
+    omitted_files: ignore
+    not_found: warn
+  links:
+    absolute_links: ignore
+    unrecognized_links: ignore
+    not_found: ignore
+
+nav:
+  - Home: index.md
+  - Tutorial (quickstart): tutorial.md
+  - Gallery of caught divergences: gallery.md
+  - Concepts:
+      - Problem statement: problem_statement.md
+      - Architecture: architecture.md
+      - Target semantics: SEMANTICS.md
+      - Shared IR contract: IR.md
+      - Product-program oracle: PRODUCT_PROGRAM.md
+      - Translation validation: TRANSLATION_VALIDATION.md
+  - Soundness & completeness:
+      - Per-pair soundness statements: COMPLETENESS.md
+      - Mechanized soundness (Lean): MECHANIZED_SOUNDNESS.md
+      - Claim → proof traceability: TRACEABILITY.md
+  - Integrations:
+      - Transpiler recipes: TRANSPILER_RECIPES.md
+      - Web playground: PLAYGROUND.md
+      - Plugin SDK: SDK.md
+  - Reproducibility:
+      - Artifact evaluation: ARTIFACT.md
+      - Positioning: POSITIONING.md

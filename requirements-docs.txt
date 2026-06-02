@@ -1,0 +1,3 @@
+# Documentation-site build dependencies (optional).
+# Build the site with: python -m ub_oracle.docs_site   (or: mkdocs build --strict)
+mkdocs>=1.6
