@@ -3165,3 +3165,91 @@ def test_memory_model_safe_traces_run_clean_under_asan(trace):
     assert conf.predicted_fault is None
     assert conf.asan_trapped is False
     assert conf.consistent
+
+
+# ---------------------------------------------------------------------------
+# Step 77 — pointer-provenance (PNVI) memory model.
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import provenance as _pv  # noqa: E402
+
+
+def test_provenance_one_past_formable_but_not_dereferenceable():
+    # forming the one-past-the-end pointer is legal...
+    assert _pv.first_fault(_pv.one_past_form_only()) is None
+    # ...but dereferencing it is out of bounds.
+    f = _pv.first_fault(_pv.one_past_form_then_deref())
+    assert f is not None and f.kind is _pv.ProvFault.DEREF_OOB
+    assert "one-past-the-end" in f.detail
+
+
+def test_provenance_preserved_across_arithmetic_roundtrip():
+    assert _pv.first_fault(_pv.arithmetic_roundtrip()) is None
+
+
+def test_provenance_formation_oob_is_a_fault_before_any_deref():
+    f = _pv.first_fault(_pv.formation_out_of_bounds())
+    assert f is not None and f.kind is _pv.ProvFault.FORMATION_OOB
+
+
+def test_provenance_integer_roundtrip_requires_exposure():
+    # exposed pointer -> provenance recovered -> deref safe.
+    assert _pv.first_fault(_pv.exposed_roundtrip_recovers_provenance()) is None
+    # opaque integer -> no provenance -> deref undefined.
+    f = _pv.first_fault(_pv.opaque_int_has_no_provenance())
+    assert f is not None and f.kind is _pv.ProvFault.NO_PROVENANCE
+
+
+def test_provenance_unexposed_roundtrip_loses_provenance():
+    # same as exposed roundtrip but WITHOUT the Expose step: provenance is not
+    # recovered, so the deref of the rebuilt pointer is undefined.
+    trace = [_pv.Alloc("a", 16), _pv.Form("p", "a", 0),
+             _pv.FromExposedAddr("q", "p"), _pv.Deref("q", 4)]
+    f = _pv.first_fault(trace)
+    assert f is not None and f.kind is _pv.ProvFault.NO_PROVENANCE
+
+
+def test_provenance_free_revokes_provenance():
+    f = _pv.first_fault(_pv.use_after_free_via_provenance())
+    assert f is not None and f.kind is _pv.ProvFault.USE_AFTER_FREE
+
+
+def test_provenance_arithmetic_out_of_range_is_formation_fault():
+    # offsetting past one-past-the-end is an out-of-bounds pointer formation.
+    trace = [_pv.Alloc("a", 16), _pv.Form("p", "a", 0), _pv.Add("p", "p", 17)]
+    f = _pv.first_fault(trace)
+    assert f is not None and f.kind is _pv.ProvFault.FORMATION_OOB
+    # exactly one-past (offset == size) is allowed to form.
+    ok = [_pv.Alloc("a", 16), _pv.Form("p", "a", 0), _pv.Add("p", "p", 16)]
+    assert _pv.first_fault(ok) is None
+
+
+def test_provenance_interface_is_documented():
+    keys = _pv.PROVENANCE_INTERFACE
+    for required in ("pointer_carries_provenance",
+                     "arithmetic_preserves_provenance",
+                     "one_past_the_end_is_formable_not_dereferenceable",
+                     "integer_roundtrip_requires_exposure",
+                     "cross_provenance_access_is_undefined",
+                     "free_revokes_provenance"):
+        assert required in keys and keys[required]
+
+
+def test_provenance_is_deterministic():
+    a = _pv.simulate(_pv.one_past_form_then_deref())
+    b = _pv.simulate(_pv.one_past_form_then_deref())
+    assert (a.fault.kind, a.steps) == (b.fault.kind, b.steps)
+
+
+@_requires_toolchain
+@pytest.mark.parametrize("scenario", sorted(_pv.CONFIRMABLE))
+def test_provenance_scenarios_confirmed_by_real_asan(scenario):
+    """The PNVI distinctions are confirmed on real compiled code: forming and
+    comparing a one-past-the-end pointer runs clean, dereferencing it traps under
+    ASan, and an in-bounds arithmetic round-trip is safe — each exactly as the
+    model predicts."""
+    conf = _pv.confirm_provenance(scenario, cc=_TC.cc)
+    assert conf.available, conf.reason
+    assert conf.consistent, (scenario, conf.predicted_fault, conf.asan_trapped)
+    _, predicts_fault = _pv.CONFIRMABLE[scenario]
+    assert conf.asan_trapped is predicts_fault

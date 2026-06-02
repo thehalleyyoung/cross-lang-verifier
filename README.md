@@ -137,6 +137,14 @@ python3 -m src.cli.main discover \
   checked to trap **iff** the model predicts a fault — reporting the *same* fault
   kind — so the model never invents (or misses) a memory bug on the traces it
   generates
+- a **pointer-provenance (PNVI) model** (`provenance.py`) for the part of the C
+  memory model where translation bugs actually live: every pointer carries the
+  *provenance* of one allocation, a one-past-the-end pointer is **formable and
+  comparable but not dereferenceable**, pointer arithmetic preserves provenance,
+  and an integer round-trip recovers provenance **only** via exposure (PNVI-ae).
+  The confirmable distinctions — forming vs dereferencing one-past-the-end, and
+  in-bounds arithmetic round-trips — are checked against **AddressSanitizer** on
+  real code, and the general provenance interface is documented for other pairs
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

@@ -200,6 +200,25 @@ def _thm_memory_model_sound() -> bool:
     return bool(faults_ok and safe_ok and prov_ok)
 
 
+def _thm_provenance_pnvi_sound() -> bool:
+    # The PNVI provenance model must (a) allow forming a one-past-the-end pointer
+    # but flag its dereference, (b) preserve provenance across an in-bounds
+    # arithmetic round-trip, (c) recover provenance only via exposure, and
+    # (d) revoke provenance on free.
+    from . import provenance as p
+    one_past_safe = p.first_fault(p.one_past_form_only()) is None
+    deref = p.first_fault(p.one_past_form_then_deref())
+    deref_oob = deref is not None and deref.kind is p.ProvFault.DEREF_OOB
+    arith_ok = p.first_fault(p.arithmetic_roundtrip()) is None
+    exposed_ok = p.first_fault(p.exposed_roundtrip_recovers_provenance()) is None
+    opaque = p.first_fault(p.opaque_int_has_no_provenance())
+    opaque_ok = opaque is not None and opaque.kind is p.ProvFault.NO_PROVENANCE
+    uaf = p.first_fault(p.use_after_free_via_provenance())
+    uaf_ok = uaf is not None and uaf.kind is p.ProvFault.USE_AFTER_FREE
+    return bool(one_past_safe and deref_oob and arith_ok and exposed_ok
+                and opaque_ok and uaf_ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -367,6 +386,24 @@ CLAIMS: List[Claim] = [
         "ub_oracle.memory_model",
         ("simulate", "first_fault", "MemEvent", "FaultKind", "confirm_memory"),
         theorem=_thm_memory_model_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C17-pointer-provenance",
+        "Pointer provenance is modelled in the C PNVI-ae style: every pointer "
+        "carries the provenance of one allocation; a one-past-the-end pointer is "
+        "formable and comparable but its dereference is out of bounds; pointer "
+        "arithmetic preserves provenance; an integer round-trip recovers "
+        "provenance only when the allocation was exposed (an opaque integer "
+        "yields a no-provenance pointer whose dereference is undefined); and free "
+        "revokes provenance. The real-compiler-confirmable distinctions — forming "
+        "vs dereferencing one-past-the-end, and in-bounds arithmetic round-trips "
+        "— agree with AddressSanitizer on compiled code, and the general "
+        "provenance interface is documented.",
+        "ub_oracle.provenance",
+        ("simulate", "first_fault", "ProvEvent", "ProvFault",
+         "PROVENANCE_INTERFACE", "confirm_provenance"),
+        theorem=_thm_provenance_pnvi_sound,
         docs=("README.md",),
     ),
 ]
