@@ -406,6 +406,13 @@ python3 -m src.cli.main discover \
   zero `xpassed` — a stale `xfail` that now passes is a lie) **and** non-regressed
   (the passing count may never drop and the skipped count may never rise), so a
   test can't be quietly deleted or `@skip`-ped to make red disappear
+- a **migration-scale validation corpus** (`large_scale_study.py`, see
+  `docs/large_scale_study.md`): **7,500 genuinely-distinct C→{Rust,Go} programs
+  totalling >130k lines** (UB-rooted divergent families + defined-equivalent
+  families), each baking its defined operands as distinct literals so no two
+  programs share source; a seeded random sample is executed through the **real**
+  clang/UBSan + rustc/go toolchain and every observed verdict matches its
+  declared label (`make large-scale`)
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

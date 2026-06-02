@@ -94,5 +94,8 @@ test-ub:
 green-check:
 	$(PYTHON) scripts/test_ratchet.py --fast
 
+large-scale:
+	PYTHONPATH=src $(PYTHON) -m ub_oracle.large_scale_study
+
 ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check redteam-check test-ub
 	@echo "ci: PASSED"

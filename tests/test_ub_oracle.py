@@ -5098,3 +5098,61 @@ def test_ratchet_baseline_file_is_well_formed():
     assert ok
     bad_ok, _ = _trc.is_baselineable(_green_counts(xpassed=1))
     assert not bad_ok
+
+
+# ---------------------------------------------------------------------------
+# Step 85 — large-scale (>=100k LOC) migration study
+# ---------------------------------------------------------------------------
+from src.ub_oracle import large_scale_study as _ls  # noqa: E402
+
+
+def test_large_scale_census_meets_loc_floor_and_all_distinct():
+    items = _ls.generate_corpus()
+    cen = _ls.corpus_census(items)
+    assert int(cen["total_loc"]) >= _ls.MIN_TOTAL_LOC
+    # every program in the corpus is genuinely distinct source.
+    assert cen["n_items"] == cen["n_distinct_programs"]
+    # balanced-ish across the two declared labels.
+    by_label = cen["by_label"]
+    assert by_label["divergent"] > 1000
+    assert by_label["equivalent"] > 1000
+
+
+def test_large_scale_census_has_pair_and_class_breadth():
+    items = _ls.generate_corpus()
+    cen = _ls.corpus_census(items)
+    assert set(cen["pairs"]) == {"go", "rust"}
+    # both UB-rooted divergent families and defined-equivalent families present.
+    classes = set(cen["by_class"].keys())
+    assert {"div_by_zero", "oob_read", "oversized_shift", "signed_overflow"} <= classes
+    assert any(k.startswith("safe_") for k in classes)
+
+
+def test_large_scale_ok_logic_is_loc_gated():
+    items = _ls.generate_corpus()
+    cen = _ls.corpus_census(items)
+    # consistency-only (no toolchain) report passes purely on the LOC floor.
+    rep_ok = _ls.StudyReport(
+        schema_version=_ls.SCHEMA_VERSION, available=False,
+        census=cen, sample_size=0, seed=0)
+    assert rep_ok.ok is True
+    # a corpus below the floor can never be ok, even with agreeing results.
+    small = dict(cen)
+    small["total_loc"] = _ls.MIN_TOTAL_LOC - 1
+    rep_bad = _ls.StudyReport(
+        schema_version=_ls.SCHEMA_VERSION, available=False,
+        census=small, sample_size=0, seed=0)
+    assert rep_bad.ok is False
+
+
+@pytest.mark.skipif(
+    not (_TC.full_for("rust") and _TC.full_for("go")),
+    reason="needs both rustc+clang and go toolchains")
+def test_large_scale_live_sample_confirms_labels_and_is_deterministic():
+    rep1 = _ls.confirm_large_scale_study(sample_size=10, seed=0xC0FFEE)
+    assert rep1.available is True
+    assert rep1.ok is True
+    assert rep1.aggregates["agree"] == rep1.aggregates["executed"]
+    # the verdict-layer content hash is reproducible for a fixed seed.
+    rep2 = _ls.confirm_large_scale_study(sample_size=10, seed=0xC0FFEE)
+    assert rep2.content_hash == rep1.content_hash

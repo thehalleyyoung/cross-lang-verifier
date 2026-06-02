@@ -36,6 +36,7 @@ nav:
       - Mechanized soundness (Lean): MECHANIZED_SOUNDNESS.md
       - Claim → proof traceability: TRACEABILITY.md
       - True-green test ratchet: test_ratchet.md
+      - Large-scale study (>130k LOC): large_scale_study.md
   - Integrations:
       - Transpiler recipes: TRANSPILER_RECIPES.md
       - Web playground: PLAYGROUND.md

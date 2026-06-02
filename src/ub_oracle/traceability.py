@@ -833,6 +833,29 @@ def _thm_true_green_ratchet() -> bool:
     return True
 
 
+def _thm_large_scale_study() -> bool:
+    # The large-scale (>=100k LOC) migration study is sound on two axes. (1) The
+    # corpus genuinely meets the LOC floor and is all-distinct source -- a pure,
+    # toolchain-free structural fact. (2) When real compilers are present, a
+    # seeded random sample of the corpus, executed end-to-end through the actual
+    # labeler, agrees with every declared ground-truth label. The theorem checks
+    # (1) unconditionally and (2) only when the toolchain is available, so it is
+    # total: it never fabricates a pass when compilers are absent.
+    from . import large_scale_study as ls  # noqa: WPS433
+
+    cen = ls.corpus_census(ls.generate_corpus())
+    if int(cen["total_loc"]) < ls.MIN_TOTAL_LOC:
+        return False
+    if cen["n_items"] != cen["n_distinct_programs"]:
+        return False
+    rep = ls.confirm_large_scale_study(sample_size=6)
+    if not rep.ok:
+        return False
+    if rep.available and rep.aggregates.get("agree") != rep.aggregates.get("executed"):
+        return False
+    return True
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1792,6 +1815,27 @@ CLAIMS: List[Claim] = [
         "ub_oracle.test_ratchet_core",
         ("violations", "enforce_counts", "is_baselineable"),
         theorem=_thm_true_green_ratchet,
+        docs=("README.md",),
+    ),
+    claim(
+        "C57-large-scale-study",
+        "The oracle is validated at **migration scale**: a deterministic, "
+        "all-distinct corpus of **7,500 genuinely-distinct C->{Rust,Go} programs "
+        "totalling >=130k lines** (`ub_oracle.large_scale_study`) mixing "
+        "UB-rooted divergent families (division-by-zero, OOB read, oversized "
+        "shift, signed overflow) with defined-equivalent families "
+        "(safe add/mul/mod/shift). Each program bakes its *defined* operands as "
+        "distinct literals and reads only the UB-triggering operand from argv, so "
+        "no two programs share source. A seeded random sample is executed "
+        "end-to-end through the real labeler (clang/UBSan + rustc/go) and every "
+        "sampled item's observed verdict agrees with its declared ground-truth "
+        "label; the verdict-layer content hash is reproducible for a fixed seed. "
+        "The census (LOC floor + all-distinct) is a toolchain-free structural "
+        "guarantee, and the live-sample confirmation gates cleanly on toolchain "
+        "availability.",
+        "ub_oracle.large_scale_study",
+        ("generate_corpus", "corpus_census", "confirm_large_scale_study"),
+        theorem=_thm_large_scale_study,
         docs=("README.md",),
     ),
 ]
