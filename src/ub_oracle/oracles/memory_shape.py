@@ -108,12 +108,44 @@ class ArrayOutOfBoundsOracle(DivergenceOracle):
         )
 
 
-class StrictAliasingOracle(DivergenceOracle):
+def _find_pun_pair() -> tuple:
+    """Z3-find the smallest non-negative pair ``(A, B)`` with ``A`` differing
+    from the low 32 bits of ``B`` (so the aliased read ``(int)B`` differs from
+    the strict-aliasing assumption ``A``)."""
+    a = z3.BitVec("A", 32)
+    b = z3.BitVec("B", 64)
+    opt = z3.Optimize()
+    opt.add(a != z3.Extract(31, 0, b))  # A differs from the low 32 bits of B
+    opt.add(a >= 0)
+    opt.add(b >= 0)
+    opt.minimize(z3.Concat(z3.BitVecVal(0, 32), a) + b)
+    if opt.check() != z3.sat:  # pragma: no cover - always sat
+        return None
+    m = opt.model()
+    return m[a].as_long(), m[b].as_long()
+
+
+_SA_C_SRC = (
+    "#include <stdio.h>\n"
+    "int f(int *pi, long *pl){{\n"
+    "    *pi = {a};\n"
+    "    *pl = {b}L;\n"
+    "    return *pi;\n"
+    "}}\n"
+    "int main(void){{\n"
+    "    long storage = 0;\n"
+    "    int r = f((int*)&storage, &storage);\n"
+    "    printf(\"%d\\n\", r);\n"
+    "    return 0;\n"
+    "}}\n"
+)
+
+
+class _StrictAliasingBase(DivergenceOracle):
     """Type-punned stores through incompatible pointer types (strict aliasing)."""
 
     divergence_class = STRICT_ALIASING.key
     source_lang = "c"
-    target_lang = "rust"
     confirmation_mode = "optimizer_exploited"
 
     def applies_to(self, unit: Dict) -> bool:
@@ -121,69 +153,35 @@ class StrictAliasingOracle(DivergenceOracle):
             return False
         return unit.get("kind") == "type_pun"
 
+    def _target_src(self, a_val: int, b_val: int) -> str:  # pragma: no cover
+        raise NotImplementedError
+
     def find_divergence(self, unit: Dict) -> OracleResult:
         if not self.applies_to(unit):
             return OracleResult(OracleVerdict.NOT_APPLICABLE, self.divergence_class,
                                 detail="unit is not a type-pun")
-
-        # C does: *pi = A; *pl = B; return *pi;  Under strict aliasing the
-        # optimiser may assume *pi is unchanged and return A; the real aliased
-        # read returns (int)B. The divergence needs A != (int)B. Z3 finds such
-        # a pair (deterministically: the smallest distinct example).
-        a = z3.BitVec("A", 32)
-        b = z3.BitVec("B", 64)
-        opt = z3.Optimize()
-        opt.add(a != z3.Extract(31, 0, b))  # A differs from the low 32 bits of B
-        opt.add(a >= 0)
-        opt.add(b >= 0)
-        opt.minimize(z3.Concat(z3.BitVecVal(0, 32), a) + b)
-        if opt.check() != z3.sat:  # pragma: no cover - always sat
+        pair = _find_pun_pair()
+        if pair is None:  # pragma: no cover - always sat
             return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class)
-        m = opt.model()
-        a_val = m[a].as_long()
-        b_val = m[b].as_long()
-
+        a_val, b_val = pair
         ce = self._build(a_val, b_val)
         return OracleResult(OracleVerdict.DIVERGENT, self.divergence_class,
                             counterexample=ce,
                             detail=f"Z3 witness A={a_val}, B={b_val}")
 
     def _build(self, a_val: int, b_val: int) -> Counterexample:
-        c_src = (
-            "#include <stdio.h>\n"
-            "int f(int *pi, long *pl){\n"
-            f"    *pi = {a_val};\n"
-            f"    *pl = {b_val}L;\n"
-            "    return *pi;\n"
-            "}\n"
-            "int main(void){\n"
-            "    long storage = 0;\n"
-            "    int r = f((int*)&storage, &storage);\n"
-            "    printf(\"%d\\n\", r);\n"
-            "    return 0;\n"
-            "}\n"
-        )
-        # A defined Rust translation: the storage genuinely holds B, so reading
-        # the low int is a defined truncation. Deterministic by construction.
-        rust_src = (
-            "fn main(){\n"
-            f"    let _a: i32 = {a_val};\n"
-            f"    let b: i64 = {b_val};\n"
-            "    let r: i32 = b as i32;\n"
-            "    println!(\"{}\", r);\n"
-            "}\n"
-        )
+        c_src = _SA_C_SRC.format(a=a_val, b=b_val)
         return Counterexample(
             divergence_class=self.divergence_class,
-            source_lang="c", target_lang="rust",
+            source_lang="c", target_lang=self.target_lang,
             inputs={},  # the witness values are baked into the source
-            source_snippet=c_src, target_snippet=rust_src,
+            source_snippet=c_src, target_snippet=self._target_src(a_val, b_val),
             source_definedness=Definedness.UNDEFINED.value,
             divergence_witness=(
                 f"C punning int*/long* over the same storage (A={a_val}, B={b_val}) "
                 f"is a strict-aliasing violation: -O0 returns the aliased value "
                 f"while -O2 may assume the int is unchanged and return {a_val}. "
-                f"Rust's translation is a single defined value."
+                f"The safe {self.target_lang} translation is a single defined value."
             ),
             definedness_witness=(
                 "the program reads/writes only valid, in-bounds storage; the "
@@ -192,5 +190,43 @@ class StrictAliasingOracle(DivergenceOracle):
         )
 
 
+class StrictAliasingOracle(_StrictAliasingBase):
+    """C int*/long* type-pun vs a defined Rust truncation."""
+
+    target_lang = "rust"
+
+    def _target_src(self, a_val: int, b_val: int) -> str:
+        # A defined Rust translation: the storage genuinely holds B, so reading
+        # the low int is a defined truncation. Deterministic by construction.
+        return (
+            "fn main(){\n"
+            f"    let _a: i32 = {a_val};\n"
+            f"    let b: i64 = {b_val};\n"
+            "    let r: i32 = b as i32;\n"
+            "    println!(\"{}\", r);\n"
+            "}\n"
+        )
+
+
+class GoStrictAliasingOracle(_StrictAliasingBase):
+    """C int*/long* type-pun vs a defined Go truncation."""
+
+    target_lang = "go"
+
+    def _target_src(self, a_val: int, b_val: int) -> str:
+        # Go has no strict-aliasing rewrite; the idiomatic safe port keeps the
+        # value in a typed variable and truncates with a defined conversion.
+        return (
+            "package main\n"
+            "import \"fmt\"\n"
+            "func main(){\n"
+            f"\tvar b int64 = {b_val}\n"
+            "\tr := int32(b)\n"
+            "\tfmt.Println(r)\n"
+            "}\n"
+        )
+
+
 register(ArrayOutOfBoundsOracle())
 register(StrictAliasingOracle())
+register(GoStrictAliasingOracle())

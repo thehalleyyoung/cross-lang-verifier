@@ -5434,3 +5434,27 @@ def test_pointer_provenance_go_confirmed_against_real_compilers():
     assert rr.ub_reachable, "UBSan pointer-overflow must trap on the offset"
     assert rr.rust_defined, "Go bounds-checked index is deterministic & defined"
     assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 101 — strict-aliasing (type-punning) oracle: C->Go parity
+# ---------------------------------------------------------------------------
+def test_strict_aliasing_registered_for_go():
+    go_orc = _plugin.get_oracle_for("strict_aliasing", "c", "go")
+    assert go_orc.target_lang == "go"
+    assert go_orc.confirmation_mode == "optimizer_exploited"
+    res = go_orc.find_divergence({"kind": "type_pun"})
+    assert res.verdict is _plugin.OracleVerdict.DIVERGENT
+    assert "package main" in res.counterexample.target_snippet
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+go toolchain")
+def test_strict_aliasing_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("strict_aliasing", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "type_pun"}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "optimizer_exploited"
+    assert rr.c_runs["A"].stdout != rr.c_runs["B"].stdout, "-O0 vs -O2 must disagree"
+    assert rr.rust_defined, "Go must be deterministic & defined"
+    assert rr.confirmed and res.counterexample.confirmed
