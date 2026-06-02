@@ -756,6 +756,18 @@ def _thm_paper_figures() -> bool:
     return bool(rep.ok)
 
 
+def _thm_ecosystem() -> bool:
+    # The v1 public API is a real, enforced SemVer surface: every promised
+    # symbol is still exported in ub_oracle.__all__ and importable (so a
+    # removal/rename -- a breaking change -- is caught mechanically), AND the
+    # shipped `cargo cross-lang-verify` subcommand is valid shell that runs
+    # end-to-end against a real manifest and emits JSON byte-identical to the
+    # in-process library, so the integration cannot drift from the oracle.
+    from . import ecosystem as eco
+    rep = eco.confirm_ecosystem()
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1608,6 +1620,27 @@ CLAIMS: List[Claim] = [
         "ub_oracle.figures",
         ("confirm_figures", "collect", "generate_figures"),
         theorem=_thm_paper_figures,
+        docs=("README.md",),
+    ),
+    claim(
+        "C52-ecosystem-semver",
+        "The tool ships a **stable v1 public API with an enforced SemVer "
+        "guard** and a real **`cargo` subcommand** integration "
+        "(`ub_oracle.ecosystem`). `PUBLIC_API_V1` is the committed surface "
+        "downstream code may depend on; `confirm_api_surface`/`_confirm_api` "
+        "imports the package and asserts every promised symbol is still "
+        "exported in `__all__` and is a live object, so any removal or rename "
+        "(a breaking change) is caught mechanically before release, and the "
+        "surface is snapshotted to `integrations/api_surface_v1.json`. The "
+        "shipped `cargo-cross-lang-verify` shim follows cargo's `cargo-<name>` "
+        "discovery convention and forwards to the proven CLI; "
+        "`confirm_ecosystem()` checks it is valid shell (`bash -n`), runs it "
+        "**end-to-end** against a real manifest, and requires its JSON to be "
+        "**byte-identical** to the in-process library — so the integration "
+        "cannot drift from the oracle.",
+        "ub_oracle.ecosystem",
+        ("confirm_ecosystem", "PUBLIC_API_V1", "generate_artifacts"),
+        theorem=_thm_ecosystem,
         docs=("README.md",),
     ),
 ]

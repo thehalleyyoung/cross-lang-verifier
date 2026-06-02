@@ -4895,3 +4895,33 @@ def test_figures_are_data_faithful():
     assert rep.ok, rep.checks
     assert rep.n_pairs >= 2 and rep.n_classes >= 2
     assert rep.catalogue_total == sum(_fig.collect().per_class_totals.values())
+
+
+from src.ub_oracle import ecosystem as _eco  # noqa: E402
+
+
+def test_ecosystem_v1_api_surface_intact():
+    ok, missing = _eco._confirm_api()
+    assert ok, f"v1 public API regressed (SemVer-breaking): missing {missing}"
+    # every promised symbol is also genuinely exported in __all__.
+    import src.ub_oracle as _pkg
+    exported = set(_pkg.__all__)
+    for name in _eco.PUBLIC_API_V1:
+        assert name in exported, name
+
+
+def test_ecosystem_generates_cargo_shim_and_snapshot():
+    shim, snap = _eco.generate_artifacts()
+    assert shim.exists() and (shim.stat().st_mode & 0o111)
+    assert shim.read_text().startswith("#!/usr/bin/env bash")
+    import json as _json
+    data = _json.loads(snap.read_text())
+    assert data["semver"] == _eco.SEMVER
+    assert set(data["symbols"]) == set(_eco.PUBLIC_API_V1)
+
+
+def test_ecosystem_cargo_subcommand_matches_library():
+    rep = _eco.confirm_ecosystem()
+    assert rep.api_ok and rep.shim_syntax_ok, rep.checks
+    assert rep.shim_ran and rep.shim_matches_library, rep.checks
+    assert rep.ok

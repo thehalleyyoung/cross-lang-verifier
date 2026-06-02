@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# cargo-cross-lang-verify -- a `cargo` subcommand wrapper for the
+# cross-language divergence oracle.  Cargo discovers any executable named
+# `cargo-<name>` on PATH and exposes it as `cargo <name>`, so installing this
+# shim (chmod +x and place on PATH) enables:
+#
+#     cargo cross-lang-verify --units units_manifest.json --format json
+#
+# It is a thin forwarder to the proven CLI; it adds no semantics of its own and
+# therefore cannot drift from the oracle.
+set -euo pipefail
+
+# Cargo invokes `cargo-<name> <name> <args...>`; drop the leading subcommand
+# token so the CLI sees only its real flags.
+if [[ "${1:-}" == "cross-lang-verify" ]]; then
+  shift
+fi
+
+# Prefer an installed console script; fall back to running from a source tree.
+if command -v cross-lang-verify >/dev/null 2>&1; then
+  exec cross-lang-verify "$@"
+fi
+
+PYTHON="${CROSS_LANG_VERIFY_PYTHON:-python3}"
+SRC="${CROSS_LANG_VERIFY_SRC:-}"
+if [[ -n "${SRC}" ]]; then
+  PYTHONPATH="${SRC}${PYTHONPATH:+:${PYTHONPATH}}" exec "${PYTHON}" -m ub_oracle.cli "$@"
+fi
+exec "${PYTHON}" -m ub_oracle.cli "$@"

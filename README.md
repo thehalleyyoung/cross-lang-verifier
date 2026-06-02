@@ -377,6 +377,11 @@ python3 -m src.cli.main discover \
   confirmed-divergences-by-class table — rendered as pure-stdlib SVGs whose every
   number is recomputed from the live data and checked by `confirm_figures()`, so
   the figures cannot drift from the evidence
+- a **stable v1 public API + SemVer guard** and a **`cargo` subcommand**
+  (`ecosystem.py`, `integrations/`): `PUBLIC_API_V1` is the committed surface;
+  `confirm_ecosystem()` mechanically catches any removed/renamed export (a
+  breaking change) and runs the shipped `cargo cross-lang-verify` shim
+  end-to-end, requiring its JSON to be byte-identical to the in-process library
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
