@@ -639,6 +639,19 @@ def _thm_mechanized_soundness() -> bool:
     return bool(rep.ok)
 
 
+def _thm_idiomatic_corpus() -> bool:
+    # The oracle keeps its guarantees on idiomatic, value-carrying ports: every
+    # divergent item is flagged on its UB input and silent on its safe input,
+    # and every equivalent item is never flagged, across >=2 languages, with a
+    # content-hash-stable verdict layer. Consistency-only when toolchain absent.
+    from . import idiomatic_corpus as ic
+    conf = ic.confirm_idiomatic_corpus()
+    if not conf.available:
+        return True
+    return bool(conf.ok and conf.n_divergent > 0 and conf.n_equivalent > 0
+                and conf.n_langs >= 2 and conf.hash_stable)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1294,6 +1307,26 @@ CLAIMS: List[Claim] = [
         ("confirm_mechanized_soundness", "REQUIRED_THEOREMS", "LEAN_SOURCE"),
         theorem=_thm_mechanized_soundness,
         docs=("README.md", "docs/MECHANIZED_SOUNDNESS.md"),
+    ),
+    claim(
+        "C42-idiomatic-corpus",
+        "A **Tier-2 anchor corpus of human-idiomatic ports** proves the oracle "
+        "keeps both guarantees on realistic, value-carrying functions — not toy "
+        "`a/b` pairs. Each item is a real-world-shaped function with provenance "
+        "(the binary-search/merge **midpoint `(lo+hi)/2`** signed-overflow bug, "
+        "a packed-struct **bit-field shift**, a coreutils-style **rate divide**, "
+        "and the equivalent idiomatic fixes: a 64-bit-widened **safe average**, "
+        "a saturating **byte clamp**, an Internet-checksum-shaped **additive "
+        "checksum**). On every (item × language) cell across **rust** and **go** "
+        "the oracle is exactly right: every **divergent** item is flagged on its "
+        "UB-triggering input and silent on its safe input, and every "
+        "**equivalent** idiomatic port is never flagged (the true-negative a "
+        "naive value-differ would false-positive on). The per-item verdict layer "
+        "is content-hashed and reproduces an identical hash across runs.",
+        "ub_oracle.idiomatic_corpus",
+        ("confirm_idiomatic_corpus", "run_corpus", "CORPUS"),
+        theorem=_thm_idiomatic_corpus,
+        docs=("README.md",),
     ),
 ]
 

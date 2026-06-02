@@ -314,6 +314,12 @@ python3 -m src.cli.main discover \
   equivalent pairs are never flagged — are proven in **Lean 4** for a
   language-pair-parametric calculus instantiated to C→Rust, and the real Lean
   kernel is invoked to confirm it (see `docs/MECHANIZED_SOUNDNESS.md`)
+- a **Tier-2 idiomatic anchor corpus** (`idiomatic_corpus.py`): realistic,
+  value-carrying ported functions — the binary-search **midpoint `(lo+hi)/2`**
+  overflow bug, a packed-struct bit-field shift, a coreutils-style rate divide,
+  and their equivalent idiomatic fixes (64-bit-widened average, byte clamp,
+  additive checksum) — on which the oracle is exactly right across rust and go:
+  every divergent port flagged, every equivalent port left silent
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

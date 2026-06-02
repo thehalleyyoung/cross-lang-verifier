@@ -4555,3 +4555,42 @@ def test_mechanized_soundness_consistency_only_when_lean_absent_still_safe():
     # fully_checked implies the kernel actually ran and accepted.
     if rep.fully_checked:
         assert rep.available and rep.kernel_accepted is True
+
+
+from src.ub_oracle import idiomatic_corpus as _ic  # noqa: E402
+
+
+def test_idiomatic_corpus_has_both_labels_and_provenance():
+    labels = {it.declared_label for it in _ic.CORPUS}
+    assert labels == {"divergent", "equivalent"}
+    # every item carries real-world provenance and at least one target port.
+    for it in _ic.CORPUS:
+        assert it.provenance and len(it.provenance) > 20
+        assert it.targets, it.item_id
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go),
+                    reason="need C+UBSan+rustc and go for the idiomatic corpus")
+def test_idiomatic_corpus_oracle_correct_on_every_item_and_lang():
+    conf = _ic.confirm_idiomatic_corpus(langs=("rust", "go"))
+    assert conf.available and conf.ok, conf.detail
+    assert conf.n_divergent > 0 and conf.n_equivalent > 0
+    assert conf.n_langs >= 2
+    # every (item x lang) verdict matches its declared label.
+    for v in conf.report.verdicts:
+        assert v.correct, (v.item_id, v.lang, v.detail)
+        if v.declared_label == "divergent":
+            assert v.ub_confirmed and not v.safe_confirmed
+        else:
+            assert not v.ub_confirmed and not v.safe_confirmed
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go),
+                    reason="need >=2 langs for breadth + hash stability")
+def test_idiomatic_corpus_hash_is_reproducible():
+    r1 = _ic.run_corpus(("rust", "go"))
+    r2 = _ic.run_corpus(("rust", "go"))
+    assert r1.content_hash == r2.content_hash and r1.content_hash
+    # the midpoint-overflow item is the headline real-world divergence.
+    mids = [v for v in r1.verdicts if v.item_id == "midpoint-overflow"]
+    assert mids and all(v.ub_confirmed and not v.safe_confirmed for v in mids)
