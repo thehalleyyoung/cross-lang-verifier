@@ -4955,3 +4955,42 @@ def test_claims_audit_catches_unbacked_named_pair():
     # generality bar holds live.
     v = _ca._live_values()
     assert _ca._check_generality_two_pairs(v).ok
+
+
+from src.ub_oracle import case_studies as _cs  # noqa: E402
+
+
+def test_case_studies_plan_items_exist_with_real_inputs():
+    # Every planned case maps to a real corpus item with ub + safe inputs and
+    # an idiomatic target in the chosen language.
+    for item_id, lang in _cs._CASE_PLAN:
+        it = _cs._item(item_id)
+        assert it.declared_label == "divergent"
+        assert lang in it.targets and it.targets[lang].strip()
+        assert any(a != "" for a in it.ub_inputs)
+        assert any(a != "" for a in it.safe_inputs)
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go),
+                    reason="need C/UBSan + rust + go to walk the case studies")
+def test_case_studies_walk_end_to_end_and_show_gap():
+    rep = _cs.confirm_case_studies(trials=600, seed=0)
+    assert rep.available and rep.ok, rep.detail
+    assert rep.n_walked == rep.n_cases
+    assert rep.n_gap >= 1
+    for c in rep.cases:
+        assert c.ub_reachable and c.target_defined
+        assert c.oracle_confirms_witness and c.oracle_silent_on_safe
+    # the div-by-zero case is the certain gap: random int32 won't be 0.
+    div = [c for c in rep.cases if c.divergence_class == "div_by_zero"]
+    assert div and div[0].fuzzing_gap
+
+
+@pytest.mark.skipif(not (_full_rust and _full_go),
+                    reason="need C/UBSan + rust + go to render walked studies")
+def test_case_studies_markdown_renders_each_walk():
+    path, rep = _cs.generate_case_studies(trials=600, seed=0)
+    text = path.read_text()
+    assert "Case studies" in text and "Cost / benefit summary" in text
+    for item_id, _lang in _cs._CASE_PLAN:
+        assert f"`{item_id}`" in text

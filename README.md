@@ -387,6 +387,13 @@ python3 -m src.cli.main discover \
   pair with a real oracle, the general framing must clear the **≥2-working-pairs**
   bar, and every literal count in prose (e.g. "14 exhibits across rust/go/swift")
   must equal the live count — so a doc edited to overclaim fails
+- **end-to-end case studies with measured cost/benefit** (`case_studies.py`,
+  `docs/case_studies.md`): three real-world-derived migrations (the JDK
+  binary-search midpoint overflow, a `total/count` divide-by-zero, a
+  packed-bitfield shift) walked through the full pipeline against real
+  compilers, then raced against an **equal-budget differential fuzzer on the
+  same binaries** — the oracle confirms sparse-UB bugs the fuzzer's whole budget
+  never hits
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

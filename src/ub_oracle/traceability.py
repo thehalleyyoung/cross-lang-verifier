@@ -779,6 +779,19 @@ def _thm_claims_audit() -> bool:
     return bool(rep.ok)
 
 
+def _thm_case_studies() -> bool:
+    # Three real-world-derived C->target migrations are walked end-to-end against
+    # real compilers: on the witnessing input the C UB is reachable (UBSan
+    # traps), the idiomatic target is well-defined, the oracle confirms the
+    # divergence and stays silent on the safe input -- AND an equal-budget
+    # differential fuzzer on the SAME real binaries demonstrably misses at least
+    # one bug the oracle confirms (the false-negative gap). Consistency-only
+    # when no target toolchain is present.
+    from . import case_studies as cs
+    rep = cs.confirm_case_studies(trials=600)
+    return bool(rep.ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -1672,6 +1685,30 @@ CLAIMS: List[Claim] = [
         "ub_oracle.claims_audit",
         ("confirm_claims_audit", "audit_text"),
         theorem=_thm_claims_audit,
+        docs=("README.md",),
+    ),
+    claim(
+        "C54-case-studies",
+        "Three **real-world-derived migrations are walked end to end** against "
+        "real compilers with a measured **cost/benefit** versus fuzzing "
+        "(`ub_oracle.case_studies`): each case (e.g. the classic "
+        "JDK/`Arrays.binarySearch` midpoint-overflow `(lo+hi)/2`, a "
+        "throughput `total/count` divide-by-zero, a packed-bitfield oversized "
+        "shift) is taken through the full pipeline — clang+UBSan shows the C UB "
+        "is **reachable** on the witnessing input, the idiomatic Rust/Go "
+        "translation is **well-defined**, the oracle **confirms** the divergence "
+        "(timed) and stays **silent** on the safe input — and then an "
+        "**equal-budget differential fuzzer is run on the very same compiled "
+        "binaries**. The headline benefit is the **false-negative gap**: for "
+        "sparse-UB classes (e.g. divide-by-zero, where a random int32 is almost "
+        "never 0) the fuzzer burns its whole budget without ever hitting the "
+        "bug the oracle finds deterministically, while dense-UB classes show "
+        "parity (proving the harness is not rigged against fuzzing). "
+        "`confirm_case_studies()` requires every case to walk and at least one "
+        "fuzzing gap; consistency-only when no toolchain is present.",
+        "ub_oracle.case_studies",
+        ("confirm_case_studies", "generate_case_studies", "CaseResult"),
+        theorem=_thm_case_studies,
         docs=("README.md",),
     ),
 ]
