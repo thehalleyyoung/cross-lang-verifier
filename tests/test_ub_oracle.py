@@ -4069,3 +4069,71 @@ def test_ground_truth_rust_equivalent_outputs_match():
     assert ev.observed_label == "equivalent"
     assert not ev.ub_trapped
     assert ev.c_out == ev.target_out
+
+
+# --------------------------------------------------------------------------- #
+# Step 46 — scale measurement infrastructure (content-hashed results JSON)
+# --------------------------------------------------------------------------- #
+from src.ub_oracle import scale_measure as _sm  # noqa: E402
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="no full toolchain for any target")
+def test_scale_measure_records_time_and_verdict():
+    rep = _sm.run_scale(sample_per_class=1)
+    assert rep.available and rep.measured
+    for m in rep.measured:
+        assert m.wall_ms >= 0.0
+        assert m.peak_rss_kb >= 0
+        assert m.decided != m.abstained  # exactly one is true
+        if m.decided:
+            assert m.observed_label in ("divergent", "equivalent")
+    assert rep.decided > 0
+    assert rep.faithful  # measurement layer did not corrupt the verdict
+    assert rep.total_wall_ms > 0.0
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="no full toolchain for any target")
+def test_scale_measure_content_hash_is_stable():
+    # Two independent runs over the same sample must yield the same verdict-layer
+    # content hash, even though wall-time/memory differ.
+    r1 = _sm.run_scale(sample_per_class=1)
+    r2 = _sm.run_scale(sample_per_class=1)
+    assert _sm.content_hash(r1) == _sm.content_hash(r2)
+    # ...and timing is genuinely separate from the hashed verdict layer.
+    doc = _sm.results_document(r1)
+    assert "content_hash" in doc and "measurements" in doc
+    assert "total_wall_ms" in doc["measurements"]
+    # the verdict layer must not contain timing fields
+    for v in doc["verdicts"]:
+        assert "wall_ms" not in v and "peak_rss_kb" not in v
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="no full toolchain for any target")
+def test_scale_measure_emit_json_roundtrip(tmp_path):
+    import json as _json
+    rep = _sm.run_scale(sample_per_class=1)
+    out = tmp_path / "results.json"
+    h = _sm.emit_results_json(str(out), rep)
+    doc = _json.loads(out.read_text())
+    assert doc["schema"] == _sm.SCHEMA_VERSION
+    assert doc["content_hash"] == h
+    assert doc["n_items"] == len(rep.measured)
+    assert doc["n_decided"] + doc["n_abstained"] == doc["n_items"]
+    # re-hash the persisted verdict layer → identical
+    import hashlib as _hl
+    canon = _json.dumps(doc["verdicts"], sort_keys=True,
+                        separators=(",", ":")).encode()
+    assert _hl.sha256(canon).hexdigest() == h
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="no full toolchain for any target")
+def test_scale_measure_confirmation_green():
+    c = _sm.confirm_scale(sample_per_class=1)
+    assert c.available and c.ok
+    assert c.hash_stable
+    assert c.n_decided > 0
+    assert c.n_decided + c.n_abstained == c.n_items

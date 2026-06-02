@@ -500,6 +500,23 @@ def _thm_ground_truth_labeled() -> bool:
     return conf.ok
 
 
+def _thm_scale_measure_reproducible() -> bool:
+    # The scale harness must expose a content-hashed verdict layer that is stable
+    # across runs and faithful to the sanitizer-grounded labels. Absent a full
+    # toolchain only the schema/SPI shape is checkable.
+    from . import scale_measure as sm
+    if not isinstance(sm.SCHEMA_VERSION, str) or not sm.SCHEMA_VERSION:
+        return False
+    for k in ("run_scale", "results_document", "emit_results_json",
+              "content_hash", "confirm_scale"):
+        if k not in sm.SCALE_MEASURE_SPI:
+            return False
+    conf = sm.confirm_scale(sample_per_class=1)
+    if not conf.available:
+        return True
+    return conf.ok and conf.hash_stable
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -958,6 +975,25 @@ CLAIMS: List[Claim] = [
         ("enumerate_corpus", "label_item", "establish_ground_truth",
          "confirm_ground_truth", "corpus_stats"),
         theorem=_thm_ground_truth_labeled,
+        docs=("README.md",),
+    ),
+    claim(
+        "C33-scale-measure",
+        "A scale-measurement harness drives the labeled corpus through the real "
+        "(sanitizer-anchored) decision procedure, recording time, memory, verdict "
+        "and abstention per item, and emits a canonical results JSON. Crucially the "
+        "verdict layer is content-hashed while timing/memory are not: wall-clock "
+        "and RSS are non-deterministic, so the sha256 is computed over only the "
+        "verdict-relevant fields with sorted keys, and two independent runs on the "
+        "same toolchain yield the identical content_hash even though their timings "
+        "differ. Aggregates (decided/abstained by language pair and by divergence "
+        "class, total wall time, peak RSS) are computed from the per-item records, "
+        "and every decided item matches its sanitizer-grounded label (the "
+        "measurement layer never corrupts the verdict).",
+        "ub_oracle.scale_measure",
+        ("run_scale", "results_document", "emit_results_json", "content_hash",
+         "confirm_scale"),
+        theorem=_thm_scale_measure_reproducible,
         docs=("README.md",),
     ),
 ]

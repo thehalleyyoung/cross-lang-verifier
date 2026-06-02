@@ -251,6 +251,12 @@ python3 -m src.cli.main discover \
   substrate that makes a precision/recall claim defensible. On a full toolchain
   the sanitizer-established label agrees with the constructed label on every
   sampled item, across both languages and both labels
+- a **scale-measurement harness** (`scale_measure.py`): drives the labeled corpus
+  through the real decision procedure recording **time/memory/verdict/abstention
+  per item** and emits a **canonical results JSON** whose *verdict layer* is
+  content-hashed (sorted keys, stable separators) while timing/memory are kept in
+  a separate, explicitly non-hashed section — so two runs on the same toolchain
+  reproduce the identical `content_hash` even though wall-clock and RSS vary
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
