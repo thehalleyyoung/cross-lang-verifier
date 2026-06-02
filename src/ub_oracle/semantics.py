@@ -73,6 +73,7 @@ from typing import Optional
 __all__ = [
     "EXPLOITED",
     "TRAP_VS_DEFINED",
+    "LIBC_CONTRACT_TRAP_VS_DEFINED",
     "MODES",
     "Outcome",
     "SourceObservation",
@@ -87,7 +88,8 @@ __all__ = [
 
 EXPLOITED = "exploited"
 TRAP_VS_DEFINED = "trap_vs_defined"
-MODES = (EXPLOITED, TRAP_VS_DEFINED)
+LIBC_CONTRACT_TRAP_VS_DEFINED = "libc_contract_trap_vs_defined"
+MODES = (EXPLOITED, TRAP_VS_DEFINED, LIBC_CONTRACT_TRAP_VS_DEFINED)
 
 
 @dataclass(frozen=True)
@@ -172,8 +174,8 @@ def _consequence(obs: Observation) -> bool:
     """Clause (C) of the definition, by mode."""
     if obs.mode == EXPLOITED:
         return obs.source.opt_levels_disagree
-    # TRAP_VS_DEFINED: the consequence is the definedness gap itself, i.e. (P)∧(T),
-    # plus determinism of the defined target outcome.
+    # Trap-vs-defined modes: the consequence is the definedness gap itself,
+    # i.e. (P)∧(T), plus determinism of the defined target outcome.
     return obs.source.ub_reached and obs.target.defined and obs.target.deterministic
 
 

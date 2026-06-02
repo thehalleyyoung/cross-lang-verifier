@@ -103,6 +103,10 @@ POSITIVE_CASES: List[LabeledCase] = [
     LabeledCase("enum_out_of_range",
                 {"kind": "enum_cast", "probe": "enum_out_of_range"},
                 "enum_out_of_range"),
+    LabeledCase("memcpy_overlap",
+                {"kind": "memcpy_overlap", "buffer_len": 16,
+                 "probe": "memcpy_overlap"},
+                "memcpy_overlap"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus

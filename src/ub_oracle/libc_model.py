@@ -79,6 +79,30 @@ def model_memcpy(src: bytes, n: int) -> bytes:
     return bytes(src[:n])
 
 
+def ranges_overlap(dst: int, src: int, n: int) -> bool:
+    """Whether two half-open byte ranges `[dst,dst+n)` and `[src,src+n)` overlap."""
+    if n <= 0:
+        return False
+    return max(dst, src) < min(dst + n, src + n)
+
+
+def model_memmove(buf: bytes, dst: int, src: int, n: int) -> bytes:
+    """Defined in-place move: as if the source bytes were copied through a temp."""
+    if min(dst, src, n) < 0 or dst + n > len(buf) or src + n > len(buf):
+        raise ValueError("memmove ranges must be in bounds")
+    out = bytearray(buf)
+    tmp = bytes(out[src:src + n])
+    out[dst:dst + n] = tmp
+    return bytes(out)
+
+
+def model_memcpy_into(buf: bytes, dst: int, src: int, n: int) -> bytes:
+    """In-place memcpy model for valid, non-overlapping ranges."""
+    if ranges_overlap(dst, src, n):
+        raise ValueError("memcpy source and destination must not overlap")
+    return model_memmove(buf, dst, src, n)
+
+
 def model_memset(buf: bytes, c: int, n: int) -> bytes:
     out = bytearray(buf)
     for k in range(n):
@@ -143,6 +167,11 @@ int main(int argc,char**argv){
         unsigned char s[4096],dst[4096]; size_t sn=unhex(argv[2],s,sizeof s);
         int n=atoi(argv[3]); memset(dst,0,sizeof dst); memcpy(dst,s,(size_t)n);
         put_hex(dst,(size_t)n); (void)sn;
+    } else if(!strcmp(mode,"memmove")){
+        unsigned char buf[4096]; size_t bn=unhex(argv[2],buf,sizeof buf);
+        int dst=atoi(argv[3]); int src=atoi(argv[4]); int n=atoi(argv[5]);
+        memmove(buf+(size_t)dst,buf+(size_t)src,(size_t)n);
+        put_hex(buf,bn);
     } else if(!strcmp(mode,"memset")){
         unsigned char buf[4096]; size_t bn=unhex(argv[2],buf,sizeof buf);
         int c=atoi(argv[3]); int n=atoi(argv[4]); memset(buf,c,(size_t)n);
@@ -211,6 +240,12 @@ SPECS: Dict[str, LibcSpec] = {
         "memcpy", "memcpy", model_memcpy,
         lambda rng: (lambda s, n: ((s, n), [str(n)]))(*_mem_copy_case(rng)),
         lambda r: r.hex()),  # type: ignore[union-attr]
+    "memmove": LibcSpec(
+        "memmove", "memmove", model_memmove,
+        lambda rng: (lambda buf, dst, src, n: ((buf, dst, src, n),
+                                               [str(dst), str(src), str(n)]))(
+            *_mem_move_case(rng)),
+        lambda r: r.hex()),  # type: ignore[union-attr]
     "memset": LibcSpec(
         "memset", "memset", model_memset,
         lambda rng: (lambda buf, c, n: ((buf, c, n), [str(c), str(n)]))(
@@ -241,6 +276,24 @@ def _mem_copy_case(rng: random.Random) -> Tuple[bytes, int]:
     n = rng.randint(1, 16)
     s = bytes(rng.randint(0, 255) for _ in range(n))
     return s, n
+
+
+def _mem_move_case(rng: random.Random) -> Tuple[bytes, int, int, int]:
+    blen = rng.randint(8, 24)
+    buf = bytes(rng.randint(0, 255) for _ in range(blen))
+    n = rng.randint(1, min(8, blen - 1))
+    if rng.random() < 0.6:
+        src = rng.randint(0, blen - n - 1)
+        # Prefer a nearby destination so overlap is exercised often.
+        lo = max(0, src - n + 1)
+        hi = min(blen - n, src + n - 1)
+        dst = rng.randint(lo, hi)
+        if dst == src and hi > lo:
+            dst = hi if src != hi else lo
+    else:
+        src = rng.randint(0, blen - n)
+        dst = rng.randint(0, blen - n)
+    return buf, dst, src, n
 
 
 def _mem_set_case(rng: random.Random) -> Tuple[bytes, int, int]:

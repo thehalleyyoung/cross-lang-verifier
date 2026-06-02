@@ -4,7 +4,7 @@
 
 A machine-readable, indexed catalogue of the cross-language divergence patterns this tool catches, **indexed by class and language pair**. Every divergent exhibit carries a concrete **witnessing input** and is **re-confirmed live** by `confirm_zoo()` (the oracle must still flag the divergence on the witness and stay silent on the safe input).
 
-*content hash: `009f00d99eb82f44` — 14 divergent exhibits across 3 classes.*
+*content hash: `89fa293729640760` — 16 divergent exhibits across 4 classes.*
 
 ## Index — class × pair
 
@@ -13,6 +13,8 @@ A machine-readable, indexed catalogue of the cross-language divergence patterns 
 | `div_by_zero` | `c->go` | `idio:rate-divide:go`, `multi:rate:go` |
 | `div_by_zero` | `c->rust` | `idio:rate-divide:rust`, `multi:rate:rust` |
 | `div_by_zero` | `c->swift` | `multi:rate:swift` |
+| `memcpy_overlap` | `c->go` | `idio:memcpy-overlap:go` |
+| `memcpy_overlap` | `c->rust` | `idio:memcpy-overlap:rust` |
 | `oversized_shift` | `c->go` | `multi:bitfield:go` |
 | `oversized_shift` | `c->rust` | `idio:bitfield-shift:rust`, `multi:bitfield:rust` |
 | `oversized_shift` | `c->swift` | `multi:bitfield:swift` |
@@ -39,6 +41,58 @@ fn main(){
   let v: i32 = std::env::args().nth(1).unwrap().parse().unwrap();
   let w: u32 = std::env::args().nth(2).unwrap().parse().unwrap();
   println!("{}", field(v,w));
+}
+```
+
+### `idio:memcpy-overlap:go` — memcpy_overlap (c->go)
+
+*Mirrors:* in-place buffer shift written with `memcpy` instead of `memmove`; the overlapping C call is UB, while Rust `copy_within` and Go `copy` have defined memmove-like slice semantics.. *Witness:* `['1', '0', '4']` (safe: `['8', '0', '4']`).
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#ifdef CLV_CHECK_MEMCPY
+static void *clv_checked_memcpy(void *dst,const void *src,size_t n){uintptr_t d=(uintptr_t)dst;uintptr_t s=(uintptr_t)src;if(n>0&&d<s+n&&s<d+n){fprintf(stderr,"runtime error: memcpy-param-overlap dst=%p src=%p n=%zu\n",dst,src,n);abort();}return memmove(dst,src,n);}
+#define memcpy(d,s,n) clv_checked_memcpy((d),(s),(n))
+#endif
+static void shift(char *buf,int dst,int src,int n){memcpy(buf+dst,buf+src,(size_t)n);}
+int main(int argc,char**argv){int dst=atoi(argv[1]);int src=atoi(argv[2]);int n=atoi(argv[3]);char buf[17]="ABCDEFGHIJKLMNOP";if(dst<0||src<0||n<0||dst+n>16||src+n>16)return 3;shift(buf,dst,src,n);printf("%s\n",buf);return 0;}
+```
+
+```go
+package main
+import ("fmt";"os";"strconv")
+func main(){dst,_:=strconv.Atoi(os.Args[1]);src,_:=strconv.Atoi(os.Args[2]);n,_:=strconv.Atoi(os.Args[3]);buf:=[]byte("ABCDEFGHIJKLMNOP");copy(buf[dst:dst+n],buf[src:src+n]);fmt.Println(string(buf))}
+```
+
+### `idio:memcpy-overlap:rust` — memcpy_overlap (c->rust)
+
+*Mirrors:* in-place buffer shift written with `memcpy` instead of `memmove`; the overlapping C call is UB, while Rust `copy_within` and Go `copy` have defined memmove-like slice semantics.. *Witness:* `['1', '0', '4']` (safe: `['8', '0', '4']`).
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#ifdef CLV_CHECK_MEMCPY
+static void *clv_checked_memcpy(void *dst,const void *src,size_t n){uintptr_t d=(uintptr_t)dst;uintptr_t s=(uintptr_t)src;if(n>0&&d<s+n&&s<d+n){fprintf(stderr,"runtime error: memcpy-param-overlap dst=%p src=%p n=%zu\n",dst,src,n);abort();}return memmove(dst,src,n);}
+#define memcpy(d,s,n) clv_checked_memcpy((d),(s),(n))
+#endif
+static void shift(char *buf,int dst,int src,int n){memcpy(buf+dst,buf+src,(size_t)n);}
+int main(int argc,char**argv){int dst=atoi(argv[1]);int src=atoi(argv[2]);int n=atoi(argv[3]);char buf[17]="ABCDEFGHIJKLMNOP";if(dst<0||src<0||n<0||dst+n>16||src+n>16)return 3;shift(buf,dst,src,n);printf("%s\n",buf);return 0;}
+```
+
+```rust
+fn main(){
+  let a: Vec<String> = std::env::args().collect();
+  let dst: usize = a[1].parse().unwrap();
+  let src: usize = a[2].parse().unwrap();
+  let n: usize = a[3].parse().unwrap();
+  let mut buf = b"ABCDEFGHIJKLMNOP".to_vec();
+  buf.copy_within(src..src+n, dst);
+  println!("{}", String::from_utf8_lossy(&buf));
 }
 ```
 

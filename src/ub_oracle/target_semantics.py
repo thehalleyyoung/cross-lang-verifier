@@ -121,6 +121,7 @@ _RUST = TargetPack(
         "div_by_zero": "guaranteed panic (a defined, deterministic abort)",
         "intmin_div_neg1": "guaranteed panic on the overflowing division",
         "array_oob": "bounds-checked index; guaranteed panic",
+        "memcpy_overlap": "slice::copy_within has defined memmove semantics under overlap",
     },
 )
 
@@ -137,6 +138,7 @@ _GO = TargetPack(
         "div_by_zero": "runtime panic, os.Exit(2) (a defined, deterministic abort)",
         "intmin_div_neg1": "x/-1 == x for the most-negative x (a defined value)",
         "array_oob": "bounds-checked index; runtime panic (defined abort)",
+        "memcpy_overlap": "built-in copy on slices is defined for overlapping ranges",
     },
 )
 

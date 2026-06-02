@@ -101,6 +101,36 @@ _RATE_GO = (
     "func main(){t,_:=strconv.Atoi(os.Args[1]);c,_:=strconv.Atoi(os.Args[2]);"
     "fmt.Println(rate(t,c))}\n")
 
+_MEMCPY_C = (
+    "#include <stdio.h>\n#include <stdlib.h>\n#include <stdint.h>\n#include <string.h>\n"
+    "#ifdef CLV_CHECK_MEMCPY\n"
+    "static void *clv_checked_memcpy(void *dst,const void *src,size_t n){"
+    "uintptr_t d=(uintptr_t)dst;uintptr_t s=(uintptr_t)src;"
+    "if(n>0&&d<s+n&&s<d+n){fprintf(stderr,\"runtime error: memcpy-param-overlap dst=%p src=%p n=%zu\\n\",dst,src,n);abort();}"
+    "return memmove(dst,src,n);}\n"
+    "#define memcpy(d,s,n) clv_checked_memcpy((d),(s),(n))\n"
+    "#endif\n"
+    "static void shift(char *buf,int dst,int src,int n){memcpy(buf+dst,buf+src,(size_t)n);}\n"
+    "int main(int argc,char**argv){"
+    "int dst=atoi(argv[1]);int src=atoi(argv[2]);int n=atoi(argv[3]);"
+    "char buf[17]=\"ABCDEFGHIJKLMNOP\";"
+    "if(dst<0||src<0||n<0||dst+n>16||src+n>16)return 3;"
+    "shift(buf,dst,src,n);printf(\"%s\\n\",buf);return 0;}\n")
+_MEMCPY_RUST = (
+    "fn main(){\n"
+    "  let a: Vec<String> = std::env::args().collect();\n"
+    "  let dst: usize = a[1].parse().unwrap();\n"
+    "  let src: usize = a[2].parse().unwrap();\n"
+    "  let n: usize = a[3].parse().unwrap();\n"
+    "  let mut buf = b\"ABCDEFGHIJKLMNOP\".to_vec();\n"
+    "  buf.copy_within(src..src+n, dst);\n"
+    "  println!(\"{}\", String::from_utf8_lossy(&buf));\n}\n")
+_MEMCPY_GO = (
+    "package main\nimport (\"fmt\";\"os\";\"strconv\")\n"
+    "func main(){dst,_:=strconv.Atoi(os.Args[1]);src,_:=strconv.Atoi(os.Args[2]);"
+    "n,_:=strconv.Atoi(os.Args[3]);buf:=[]byte(\"ABCDEFGHIJKLMNOP\");"
+    "copy(buf[dst:dst+n],buf[src:src+n]);fmt.Println(string(buf))}\n")
+
 # ---- equivalent items ------------------------------------------------------- #
 _AVG_C = _c(
     "static int avg(int a,int b){long s=(long)a+(long)b;return (int)(s/2);}",
@@ -174,6 +204,14 @@ CORPUS: Tuple[IdiomaticItem, ...] = (
         "div_by_zero", "divergent",
         _RATE_C, {"rust": _RATE_RUST, "go": _RATE_GO},
         ("100", "0"), ("100", "4")),
+    IdiomaticItem(
+        "memcpy-overlap",
+        "in-place buffer shift written with `memcpy` instead of `memmove`; the "
+        "overlapping C call is UB, while Rust `copy_within` and Go `copy` have "
+        "defined memmove-like slice semantics.",
+        "memcpy_overlap", "divergent",
+        _MEMCPY_C, {"rust": _MEMCPY_RUST, "go": _MEMCPY_GO},
+        ("1", "0", "4"), ("8", "0", "4")),
     IdiomaticItem(
         "safe-average",
         "overflow-safe average widening to 64 bits before halving; well-defined "
@@ -259,9 +297,19 @@ def _expected(label: str) -> Tuple[bool, bool]:
     return False, False  # equivalent: never flagged, on any input.
 
 
+def _confirm_item(h: ReexecHarness, item: IdiomaticItem, target_src: str,
+                  args: List[str], lang: str):
+    if item.klass == "memcpy_overlap":
+        return h.confirm_libc_contract_trap_vs_defined(item.c_src, target_src, args,
+                                                       item.klass, lang)
+    return h.confirm_trap_vs_defined(item.c_src, target_src, args,
+                                     item.klass, lang)
+
+
 def run_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
     status = toolchain_available()
-    avail = tuple(l for l in langs if status.full_for(l))
+    avail = tuple(l for l in langs if status.full_for(l)
+                  or status.full_libc_contract_for(l))
     if not avail:
         return CorpusReport(available=False, langs=())
     h = ReexecHarness(status)
@@ -273,10 +321,8 @@ def run_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
                 continue
             ub_args = [a for a in item.ub_inputs if a != ""]
             safe_args = [a for a in item.safe_inputs if a != ""]
-            r_ub = h.confirm_trap_vs_defined(item.c_src, tgt, ub_args,
-                                             item.klass, lang)
-            r_safe = h.confirm_trap_vs_defined(item.c_src, tgt, safe_args,
-                                               item.klass, lang)
+            r_ub = _confirm_item(h, item, tgt, ub_args, lang)
+            r_safe = _confirm_item(h, item, tgt, safe_args, lang)
             if not (r_ub.available and r_safe.available):
                 continue
             ubc = bool(r_ub.confirmed)

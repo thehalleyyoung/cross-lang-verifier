@@ -13,6 +13,9 @@ For the C->Rust UB anchor it:
     - ``O2``  : ``clang -O2``                          (optimizer may exploit UB)
     - ``san`` : ``clang -O1 -fsanitize=undefined -fno-sanitize-recover=all``
                 (traps -> proves the UB is actually *reachable* on this input)
+    Libc-contract classes (e.g. overlapping ``memcpy``) use a separate
+    confirmation mode because UBSan does not instrument those preconditions
+    and some host ASan runtimes do not report ``memcpy-param-overlap``.
 * compiles the Rust source with ``rustc -O`` and runs it on the same input.
 
 A signed-overflow divergence is *confirmed* when, on a fully-defined input:
@@ -48,6 +51,7 @@ class ToolchainStatus:
 
     cc: Optional[str]
     ubsan: bool
+    asan: bool = False
     targets: Tuple[Tuple[str, Optional[str]], ...] = ()
 
     def target_path(self, name: str = "rust") -> Optional[str]:
@@ -95,6 +99,14 @@ class ToolchainStatus:
         available. ``full`` is preserved as the Rust-anchor shorthand."""
         return self.c_available and self.ubsan and self.target_available(name)
 
+    def full_asan_for(self, name: str = "rust") -> bool:
+        """Whether the ASan-backed C + target confirmation path is available."""
+        return self.c_available and self.asan and self.target_available(name)
+
+    def full_libc_contract_for(self, name: str = "rust") -> bool:
+        """Whether the C-libc-contract + target confirmation path is available."""
+        return self.c_available and self.target_available(name)
+
     @property
     def full(self) -> bool:
         return self.full_for("rust")
@@ -126,6 +138,24 @@ def _check_ubsan(cc: str) -> bool:
             return False
 
 
+def _check_asan(cc: str) -> bool:
+    """Verify the C compiler actually supports AddressSanitizer."""
+    src = "int main(void){return 0;}\n"
+    with tempfile.TemporaryDirectory() as d:
+        cpath = os.path.join(d, "t.c")
+        opath = os.path.join(d, "t.out")
+        with open(cpath, "w") as f:
+            f.write(src)
+        try:
+            r = subprocess.run(
+                [cc, "-fsanitize=address", "-o", opath, cpath],
+                capture_output=True, timeout=60,
+            )
+            return r.returncode == 0
+        except (subprocess.SubprocessError, OSError):
+            return False
+
+
 def _resolve_compiler(pack) -> Optional[str]:
     for cand in pack.compiler_candidates:
         path = shutil.which(cand)
@@ -137,8 +167,9 @@ def _resolve_compiler(pack) -> Optional[str]:
 def toolchain_available() -> ToolchainStatus:
     cc = _find_cc()
     ubsan = _check_ubsan(cc) if cc else False
+    asan = _check_asan(cc) if cc else False
     targets = tuple((name, _resolve_compiler(pack)) for name, pack in PACKS.items())
-    return ToolchainStatus(cc=cc, ubsan=ubsan, targets=targets)
+    return ToolchainStatus(cc=cc, ubsan=ubsan, asan=asan, targets=targets)
 
 
 @dataclass
@@ -155,6 +186,21 @@ class RunOutcome:
             return True
         # SIGABRT from -fno-sanitize-recover shows up as 134 (128+6) or -6.
         return self.returncode in (134, -6) and "runtime error:" in self.stderr
+
+    @property
+    def asan_trapped(self) -> bool:
+        """An AddressSanitizer-instrumented run that aborted on a memory fault."""
+        if "AddressSanitizer:" in self.stderr:
+            return True
+        # Some libc interceptors print only the diagnostic kind on compact builds.
+        if "memcpy-param-overlap" in self.stderr:
+            return True
+        return False
+
+    @property
+    def libc_contract_trapped(self) -> bool:
+        """A checked-libc-contract run that aborted on a modeled C UB precondition."""
+        return "runtime error:" in self.stderr and "memcpy-param-overlap" in self.stderr
 
     @property
     def rust_outcome_defined(self) -> bool:
@@ -249,9 +295,10 @@ class ReexecHarness:
         self.timeout = timeout
 
     # ── low-level runners ────────────────────────────────────────────────
-    def _run(self, argv: List[str]) -> RunOutcome:
+    def _run(self, argv: List[str], env: Optional[Dict[str, str]] = None) -> RunOutcome:
         try:
-            r = subprocess.run(argv, capture_output=True, timeout=self.timeout, text=True)
+            r = subprocess.run(argv, capture_output=True, timeout=self.timeout,
+                               text=True, env=env)
             return RunOutcome(r.returncode, r.stdout.strip(), r.stderr.strip())
         except subprocess.TimeoutExpired:
             return RunOutcome(-1, "", "timeout", timed_out=True)
@@ -312,6 +359,28 @@ class ReexecHarness:
             missing.append("C compiler")
         if not status.ubsan:
             missing.append("UBSan")
+        if not status.target_available(target_lang):
+            pack = PACKS.get(target_lang)
+            missing.append(pack.compiler_candidates[0] if pack else target_lang)
+        return missing
+
+    @staticmethod
+    def _missing_for_asan(status: "ToolchainStatus", target_lang: str) -> List[str]:
+        missing = []
+        if not status.c_available:
+            missing.append("C compiler")
+        if not status.asan:
+            missing.append("AddressSanitizer")
+        if not status.target_available(target_lang):
+            pack = PACKS.get(target_lang)
+            missing.append(pack.compiler_candidates[0] if pack else target_lang)
+        return missing
+
+    @staticmethod
+    def _missing_for_libc_contract(status: "ToolchainStatus", target_lang: str) -> List[str]:
+        missing = []
+        if not status.c_available:
+            missing.append("C compiler")
         if not status.target_available(target_lang):
             pack = PACKS.get(target_lang)
             missing.append(pack.compiler_candidates[0] if pack else target_lang)
@@ -464,6 +533,113 @@ class ReexecHarness:
                 f"rust_defined={res.rust_defined} (deterministic={rust_deterministic})"
             )
         return res
+
+    # ── ASan-definedness confirmation: C memory UB vs defined target ───────
+    def confirm_libc_contract_trap_vs_defined(
+        self,
+        c_src: str,
+        rust_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "memcpy_overlap",
+        target_lang: str = "rust",
+    ) -> ReexecResult:
+        """Confirm a C library-precondition divergence that UBSan does not cover.
+
+        Overlapping ``memcpy`` is undefined by the C library contract, but UBSan
+        does not instrument that precondition and Apple clang's ASan runtime does
+        not reliably report ``memcpy-param-overlap``. This mode therefore runs
+        two real C binaries on the witness: an ASan build when available, and a
+        contract-sanitized build enabled by ``-DCLV_CHECK_MEMCPY``. The latter is
+        an explicit executable check of the C17 ``memcpy`` non-overlap rule, while
+        the target still runs as an ordinary compiled program.
+        """
+        res = ReexecResult(available=self.status.full_libc_contract_for(target_lang),
+                           divergence_class=divergence_class,
+                           mode="libc_contract_trap_vs_defined",
+                           inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
+        if not self.status.full_libc_contract_for(target_lang):
+            res.reason = "toolchain unavailable: " + ", ".join(
+                self._missing_for_libc_contract(self.status, target_lang))
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            asan = None
+            if self.status.asan:
+                asan = self._compile_c(
+                    c_src,
+                    ["-O1", "-g", "-fsanitize=address", "-fno-omit-frame-pointer",
+                     "-fno-builtin-memcpy"],
+                    d, "c_asan",
+                )
+            contract = self._compile_c(
+                c_src, ["-O1", "-DCLV_CHECK_MEMCPY"], d, "c_contract")
+            o0 = self._compile_c(c_src, ["-O0"], d, "c_o0")
+            rs = self._compile_target(rust_src, target_lang, d, "tgt")
+            if not all((contract, o0, rs)):
+                res.reason = "compilation failed (contract=%s o0=%s tgt=%s)" % (
+                    bool(contract), bool(o0), bool(rs))
+                res.available = False
+                return res
+
+            if asan is not None:
+                asan_env = dict(os.environ)
+                asan_env["ASAN_OPTIONS"] = (
+                    "abort_on_error=1:"
+                    "detect_stack_use_after_return=0:"
+                    + asan_env.get("ASAN_OPTIONS", "")
+                )
+                res.c_runs["asan"] = self._run([asan, *argv_inputs], env=asan_env)
+            res.c_runs["contract"] = self._run([contract, *argv_inputs])
+            res.c_runs["O0"] = self._run([o0, *argv_inputs])
+            target_a = self._run([rs, *argv_inputs])
+            target_b = self._run([rs, *argv_inputs])
+            res.rust_run = target_a
+
+        asan_run = res.c_runs.get("asan")
+        contract_run = res.c_runs["contract"]
+        res.ub_reachable = bool(
+            (asan_run is not None and asan_run.asan_trapped)
+            or contract_run.libc_contract_trapped
+        )
+        target_deterministic = (
+            target_a.returncode == target_b.returncode
+            and target_a.stdout == target_b.stdout
+        )
+        res.rust_defined = (
+            target_a.target_outcome_defined(target_lang)
+            and target_b.target_outcome_defined(target_lang)
+            and target_deterministic
+        )
+        res.ub_consequential = res.ub_reachable and res.rust_defined
+        res.confirmed = res.ub_reachable and res.rust_defined
+        if res.confirmed:
+            trapping = asan_run if (asan_run is not None and asan_run.asan_trapped) else contract_run
+            first = trapping.stderr.splitlines()[0] if trapping.stderr else "contract trap"
+            kind = "value" if target_a.returncode == 0 else "panic"
+            res.reason = (
+                f"UB reachable (libc contract trapped: {first!r}); "
+                f"{target_lang} defined & deterministic "
+                f"({kind}, rc={target_a.returncode}, out={target_a.stdout!r})"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: contract_reachable={res.ub_reachable}, "
+                f"target_defined={res.rust_defined} "
+                f"(deterministic={target_deterministic})"
+            )
+        return res
+
+    def confirm_asan_trap_vs_defined(
+        self,
+        c_src: str,
+        rust_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "memcpy_overlap",
+        target_lang: str = "rust",
+    ) -> ReexecResult:
+        """Backward-compatible alias for the libc-contract memory-UB path."""
+        return self.confirm_libc_contract_trap_vs_defined(
+            c_src, rust_src, argv_inputs, divergence_class, target_lang)
 
     # ── exploited-without-trap: O0 != O2 vs defined Rust ─────────────────
     def confirm_optimizer_exploited(

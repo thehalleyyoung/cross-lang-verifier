@@ -206,8 +206,12 @@ def confirm_zoo() -> ZooReport:
     h = ReexecHarness(status)
     divergent = [e for e in EXHIBITS if e.declared_label == "divergent"]
 
-    if not any(status.full_for(lang)
-               for lang in {e.target_lang for e in divergent}):
+    def _available(e: ZooExhibit) -> bool:
+        if e.divergence_class == "memcpy_overlap":
+            return status.full_libc_contract_for(e.target_lang)
+        return status.full_for(e.target_lang)
+
+    if not any(_available(e) for e in divergent):
         return ZooReport(
             available=False, ok=True, content_hash=content_hash(),
             n_divergent=len(divergent), n_confirmed=0,
@@ -216,14 +220,20 @@ def confirm_zoo() -> ZooReport:
     checks: List[ExhibitCheck] = []
     confirmed = 0
     for e in divergent:
-        if not status.full_for(e.target_lang):
+        if not _available(e):
             continue
         w = [a for a in e.witness if a != ""]
         s = [a for a in e.safe if a != ""]
-        ub = h.confirm_trap_vs_defined(e.c_src, e.target_src, w,
-                                       e.divergence_class, e.target_lang)
-        safe = h.confirm_trap_vs_defined(e.c_src, e.target_src, s,
-                                         e.divergence_class, e.target_lang)
+        if e.divergence_class == "memcpy_overlap":
+            ub = h.confirm_libc_contract_trap_vs_defined(
+                e.c_src, e.target_src, w, e.divergence_class, e.target_lang)
+            safe = h.confirm_libc_contract_trap_vs_defined(
+                e.c_src, e.target_src, s, e.divergence_class, e.target_lang)
+        else:
+            ub = h.confirm_trap_vs_defined(e.c_src, e.target_src, w,
+                                           e.divergence_class, e.target_lang)
+            safe = h.confirm_trap_vs_defined(e.c_src, e.target_src, s,
+                                             e.divergence_class, e.target_lang)
         good = bool(ub.confirmed) and not bool(safe.confirmed)
         confirmed += int(good)
         checks.append(ExhibitCheck(

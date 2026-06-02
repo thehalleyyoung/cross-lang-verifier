@@ -150,6 +150,26 @@
       }
     },
     {
+      "confirmation_mode": "libc_contract_trap_vs_defined",
+      "divergence_class": "memcpy_overlap",
+      "divergence_witness": "C `memcpy(buf+1, buf+0, 4)` copies overlapping byte ranges [1,5) and [0,4) in the same object, violating C17 7.24.2.1p2. The target go slice operation is memmove-like and therefore deterministic.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "eecf601cc62aa60d",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "ba987c6efdd0ede2",
+      "verdict": "divergent",
+      "witness": {
+        "dst": 1,
+        "n": 4,
+        "src": 0
+      }
+    },
+    {
       "confirmation_mode": "trap_vs_defined",
       "divergence_class": "pointer_provenance",
       "divergence_witness": "C `p = a + n` with n=4611686018427387904 forms a pointer whose byte offset n*4 overflows the address space (UB, C17 6.5.6p8; UBSan `pointer-overflow` traps); the safe Go port bounds-checks the index and returns a deterministic, defined value.",
@@ -225,16 +245,16 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "strict_aliasing",
-      "divergence_witness": "C punning int*/long* over the same storage (A=1, B=0) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 1. The safe go translation is a single defined value.",
+      "divergence_witness": "C punning int*/long* over the same storage (A=0, B=1) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 0. The safe go translation is a single defined value.",
       "source_definedness": "undefined",
       "source_lang": "c",
-      "source_sha16": "a55c7125eef1c041",
+      "source_sha16": "041c989f7d8dff4d",
       "target_defined_returncodes": [
         0,
         2
       ],
       "target_lang": "go",
-      "target_sha16": "460d821cc07156b9",
+      "target_sha16": "7d9787ec14dfa476",
       "verdict": "divergent",
       "witness": {}
     },
@@ -426,7 +446,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=9788211288362160.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=-1e+16, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -438,7 +458,7 @@
       "target_sha16": "51821464be323c10",
       "verdict": "divergent",
       "witness": {
-        "x": 9788211288362160.0,
+        "x": -1e+16,
         "y": 1.0
       }
     },
@@ -463,7 +483,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fp_contraction",
-      "divergence_witness": "C `a*b + c` with a=-8.662523674234807, b=8.313469802567473, c=72.01562897983335 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "divergence_witness": "C `a*b + c` with a=-1.0835926257001185, b=621.7650512103372, c=673.7400244098699 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "994ef280de9c8299",
@@ -475,9 +495,9 @@
       "target_sha16": "7171facf9aec0f3f",
       "verdict": "divergent",
       "witness": {
-        "a": -8.662523674234807,
-        "b": 8.313469802567473,
-        "c": 72.01562897983335
+        "a": -1.0835926257001185,
+        "b": 621.7650512103372,
+        "c": 673.7400244098699
       }
     },
     {
@@ -497,6 +517,26 @@
       "witness": {
         "a": -2147483648,
         "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "libc_contract_trap_vs_defined",
+      "divergence_class": "memcpy_overlap",
+      "divergence_witness": "C `memcpy(buf+1, buf+0, 4)` copies overlapping byte ranges [1,5) and [0,4) in the same object, violating C17 7.24.2.1p2. The target rust slice operation is memmove-like and therefore deterministic.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "eecf601cc62aa60d",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "167fdf947c2081c1",
+      "verdict": "divergent",
+      "witness": {
+        "dst": 1,
+        "n": 4,
+        "src": 0
       }
     },
     {
@@ -774,6 +814,7 @@
         "fast_math_reassoc",
         "float_cast_overflow",
         "intmin_div_neg1",
+        "memcpy_overlap",
         "pointer_provenance",
         "restrict_violation",
         "shift_oob",
@@ -782,8 +823,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 14,
-      "n_divergent": 14,
+      "n_classes": 15,
+      "n_divergent": 15,
       "source_lang": "c",
       "target_lang": "go"
     },
@@ -809,6 +850,7 @@
         "float_cast_overflow",
         "fp_contraction",
         "intmin_div_neg1",
+        "memcpy_overlap",
         "pointer_provenance",
         "restrict_violation",
         "shift_oob",
@@ -817,8 +859,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 15,
-      "n_divergent": 15,
+      "n_classes": 16,
+      "n_divergent": 16,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -855,6 +897,7 @@
     "float_cast_overflow",
     "fp_contraction",
     "intmin_div_neg1",
+    "memcpy_overlap",
     "pointer_provenance",
     "restrict_violation",
     "shift_oob",
@@ -872,5 +915,5 @@
     "c->swift",
     "go->rust"
   ],
-  "n_cells": 41
+  "n_cells": 43
 }

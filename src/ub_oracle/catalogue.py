@@ -94,6 +94,7 @@ POINTER_PROVENANCE = DivergenceClass("pointer_provenance", "Pointer arithmetic o
 SIGNED_SHIFT_SIGN_BIT = DivergenceClass("signed_shift_sign_bit", "Left-shift of a 1 into the sign bit (UB in C, defined in C++20)")
 BITFIELD_LAYOUT = DivergenceClass("bitfield_layout", "Implementation-defined bit-field layout / packing")
 ENUM_OUT_OF_RANGE = DivergenceClass("enum_out_of_range", "Out-of-range value stored in / read from an enum")
+MEMCPY_OVERLAP = DivergenceClass("memcpy_overlap", "Overlapping memcpy ranges")
 
 
 @dataclass(frozen=True)
@@ -415,6 +416,24 @@ _ENTRIES: List[DivergenceEntry] = [
         witness_recipe="Feed the least value just past the largest enumerator; C "
                        "retains it verbatim while the safe target collapses it to "
                        "its default variant — a defined-but-different value.",
+    ),
+    DivergenceEntry(
+        cls=MEMCPY_OVERLAP,
+        source_definedness=Definedness.UNDEFINED,
+        source_rule="The C library `memcpy` contract requires the source and "
+                    "destination ranges not to overlap; copying between "
+                    "overlapping objects has undefined behavior.",
+        c_standard_ref="C17 7.24.2.1p2",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="Idiomatic safe translations use `memmove`-equivalent slice "
+                    "operations (`slice::copy_within` in Rust, `copy` on Go "
+                    "slices), which define overlapping copies by first preserving "
+                    "the source bytes.",
+        severity=Severity.CRITICAL,
+        witness_recipe="Use a single buffer and copy n runtime bytes from offset "
+                       "0 to offset 1 with n >= 4; the checked-libc contract "
+                       "build reports `memcpy-param-overlap`, while the target "
+                       "slice copy deterministically produces the memmove result.",
     ),
 ]
 

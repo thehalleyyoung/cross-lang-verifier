@@ -52,6 +52,7 @@ CANONICAL_UNITS: Dict[str, Dict[str, Any]] = {
     "signed_shift_sign_bit": {"kind": "sign_bit_shift", "width": 32, "var": "n"},
     "bitfield_layout": {"kind": "bitfield_struct"},
     "enum_out_of_range": {"kind": "enum_cast"},
+    "memcpy_overlap": {"kind": "memcpy_overlap", "buffer_len": 16},
 }
 
 
@@ -157,7 +158,10 @@ def confirm_matrix(harness) -> Dict[str, Any]:
         # Go->Rust, confirmed by re-executing two defined programs) needs only
         # the two language compilers.
         if src == "c":
-            ok = status.full_for(tgt)
+            ok = status.full_libc_contract_for(tgt) if (
+                oracle.confirmation_mode in ("asan_trap_vs_defined",
+                                             "libc_contract_trap_vs_defined")
+            ) else status.full_for(tgt)
         else:
             ok = status.can_compile(src) and status.can_compile(tgt)
         if not ok:

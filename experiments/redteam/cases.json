@@ -2,6 +2,30 @@
   "cases": [
     {
       "breach": false,
+      "divergence_class": "signed_shift_sign_bit",
+      "label": "c->cpp:signed_shift_sign_bit#0",
+      "source_lang": "c",
+      "target_lang": "cpp",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_shift_sign_bit",
+      "label": "c->cpp:signed_shift_sign_bit#1",
+      "source_lang": "c",
+      "target_lang": "cpp",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_shift_sign_bit",
+      "label": "c->cpp:signed_shift_sign_bit#2",
+      "source_lang": "c",
+      "target_lang": "cpp",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "array_oob",
       "label": "c->go:array_oob#0",
       "source_lang": "c",
@@ -12,6 +36,22 @@
       "breach": false,
       "divergence_class": "array_oob",
       "label": "c->go:array_oob#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "bitfield_layout",
+      "label": "c->go:bitfield_layout#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "bitfield_layout",
+      "label": "c->go:bitfield_layout#1",
       "source_lang": "c",
       "target_lang": "go",
       "verdict": "candidate"
@@ -50,6 +90,62 @@
     },
     {
       "breach": false,
+      "divergence_class": "enum_out_of_range",
+      "label": "c->go:enum_out_of_range#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "enum_out_of_range",
+      "label": "c->go:enum_out_of_range#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "fast_math_reassoc",
+      "label": "c->go:fast_math_reassoc#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "fast_math_reassoc",
+      "label": "c->go:fast_math_reassoc#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "float_cast_overflow",
+      "label": "c->go:float_cast_overflow#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "float_cast_overflow",
+      "label": "c->go:float_cast_overflow#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "float_cast_overflow",
+      "label": "c->go:float_cast_overflow#2",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "intmin_div_neg1",
       "label": "c->go:intmin_div_neg1#0",
       "source_lang": "c",
@@ -76,6 +172,62 @@
       "breach": false,
       "divergence_class": "intmin_div_neg1",
       "label": "c->go:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "memcpy_overlap",
+      "label": "c->go:memcpy_overlap#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "memcpy_overlap",
+      "label": "c->go:memcpy_overlap#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "pointer_provenance",
+      "label": "c->go:pointer_provenance#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "pointer_provenance",
+      "label": "c->go:pointer_provenance#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "pointer_provenance",
+      "label": "c->go:pointer_provenance#2",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "restrict_violation",
+      "label": "c->go:restrict_violation#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "restrict_violation",
+      "label": "c->go:restrict_violation#1",
       "source_lang": "c",
       "target_lang": "go",
       "verdict": "candidate"
@@ -162,6 +314,22 @@
     },
     {
       "breach": false,
+      "divergence_class": "strict_aliasing",
+      "label": "c->go:strict_aliasing#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "strict_aliasing",
+      "label": "c->go:strict_aliasing#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "uninit_read",
       "label": "c->go:uninit_read#0",
       "source_lang": "c",
@@ -178,6 +346,158 @@
     },
     {
       "breach": false,
+      "divergence_class": "vla_bound",
+      "label": "c->go:vla_bound#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "vla_bound",
+      "label": "c->go:vla_bound#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "vla_bound",
+      "label": "c->go:vla_bound#2",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->ocaml:array_oob#0",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->ocaml:array_oob#1",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->ocaml:div_by_zero#0",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->ocaml:div_by_zero#1",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->ocaml:div_by_zero#2",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->ocaml:div_by_zero#3",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->ocaml:intmin_div_neg1#0",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->ocaml:intmin_div_neg1#1",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->ocaml:intmin_div_neg1#2",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->ocaml:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->ocaml:signed_overflow#0",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->ocaml:signed_overflow#1",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->ocaml:signed_overflow#2",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->ocaml:signed_overflow#3",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->ocaml:signed_overflow#4",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->ocaml:signed_overflow#5",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "array_oob",
       "label": "c->rust:array_oob#0",
       "source_lang": "c",
@@ -188,6 +508,22 @@
       "breach": false,
       "divergence_class": "array_oob",
       "label": "c->rust:array_oob#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "bitfield_layout",
+      "label": "c->rust:bitfield_layout#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "bitfield_layout",
+      "label": "c->rust:bitfield_layout#1",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "candidate"
@@ -220,6 +556,62 @@
       "breach": false,
       "divergence_class": "div_by_zero",
       "label": "c->rust:div_by_zero#3",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "enum_out_of_range",
+      "label": "c->rust:enum_out_of_range#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "enum_out_of_range",
+      "label": "c->rust:enum_out_of_range#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "fast_math_reassoc",
+      "label": "c->rust:fast_math_reassoc#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "fast_math_reassoc",
+      "label": "c->rust:fast_math_reassoc#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "float_cast_overflow",
+      "label": "c->rust:float_cast_overflow#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "float_cast_overflow",
+      "label": "c->rust:float_cast_overflow#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "float_cast_overflow",
+      "label": "c->rust:float_cast_overflow#2",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "candidate"
@@ -260,6 +652,62 @@
       "breach": false,
       "divergence_class": "intmin_div_neg1",
       "label": "c->rust:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "memcpy_overlap",
+      "label": "c->rust:memcpy_overlap#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "memcpy_overlap",
+      "label": "c->rust:memcpy_overlap#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "pointer_provenance",
+      "label": "c->rust:pointer_provenance#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "pointer_provenance",
+      "label": "c->rust:pointer_provenance#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "pointer_provenance",
+      "label": "c->rust:pointer_provenance#2",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "restrict_violation",
+      "label": "c->rust:restrict_violation#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "restrict_violation",
+      "label": "c->rust:restrict_violation#1",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "candidate"
@@ -372,6 +820,30 @@
       "breach": false,
       "divergence_class": "uninit_read",
       "label": "c->rust:uninit_read#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "vla_bound",
+      "label": "c->rust:vla_bound#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "vla_bound",
+      "label": "c->rust:vla_bound#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "vla_bound",
+      "label": "c->rust:vla_bound#2",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "candidate"
@@ -551,10 +1023,42 @@
       "source_lang": "c",
       "target_lang": "swift",
       "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "go->rust:intmin_div_neg1#0",
+      "source_lang": "go",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "go->rust:intmin_div_neg1#1",
+      "source_lang": "go",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "go->rust:intmin_div_neg1#2",
+      "source_lang": "go",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "go->rust:intmin_div_neg1#3",
+      "source_lang": "go",
+      "target_lang": "rust",
+      "verdict": "candidate"
     }
   ],
   "n_breaches": 0,
-  "n_cases": 69,
+  "n_cases": 132,
   "n_confirmed_divergent": 0,
   "sound": true,
   "toolchain_full": false

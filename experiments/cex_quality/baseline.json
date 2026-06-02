@@ -1,11 +1,22 @@
 {
-  "n_oracles": 8,
+  "n_oracles": 16,
   "rows": [
     {
       "divergence_class": "array_oob",
       "raw_cost": 4,
       "raw_inputs": {
         "i": 4
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "bitfield_layout",
+      "raw_cost": 293,
+      "raw_inputs": {
+        "a": 7,
+        "b": 31,
+        "c": 255
       },
       "source_lang": "c",
       "target_lang": "rust"
@@ -21,12 +32,40 @@
       "target_lang": "rust"
     },
     {
+      "divergence_class": "enum_out_of_range",
+      "raw_cost": 3,
+      "raw_inputs": {
+        "n": 3
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "fast_math_reassoc",
+      "raw_cost": 0,
+      "raw_inputs": {
+        "x": 9810087568392704.0,
+        "y": 1.0
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "float_cast_overflow",
+      "raw_cost": 2147483648,
+      "raw_inputs": {
+        "x": 2147483648
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
       "divergence_class": "fp_contraction",
       "raw_cost": 0,
       "raw_inputs": {
-        "a": -5.252709328295452,
-        "b": 4.43882062403236,
-        "c": 23.315834498484953
+        "a": -11.667212139869443,
+        "b": 8.000001831427221,
+        "c": 93.33771848660624
       },
       "source_lang": "c",
       "target_lang": "rust"
@@ -37,6 +76,35 @@
       "raw_inputs": {
         "a": -2147483648,
         "b": -1
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "memcpy_overlap",
+      "raw_cost": 5,
+      "raw_inputs": {
+        "dst": 1,
+        "n": 4,
+        "src": 0
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "pointer_provenance",
+      "raw_cost": 4611686018427387904,
+      "raw_inputs": {
+        "n": 4611686018427387904
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "restrict_violation",
+      "raw_cost": 1,
+      "raw_inputs": {
+        "sel": 1
       },
       "source_lang": "c",
       "target_lang": "rust"
@@ -72,6 +140,15 @@
       "raw_cost": 7,
       "raw_inputs": {
         "s": 7
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "vla_bound",
+      "raw_cost": 1,
+      "raw_inputs": {
+        "n": -1
       },
       "source_lang": "c",
       "target_lang": "rust"

@@ -88,6 +88,7 @@ from .completeness import (
 from .semantics import (
     EXPLOITED,
     TRAP_VS_DEFINED,
+    LIBC_CONTRACT_TRAP_VS_DEFINED,
     MODES,
     Outcome,
     SourceObservation,
@@ -162,6 +163,7 @@ __all__ = [
     "check_pair_completeness",
     "EXPLOITED",
     "TRAP_VS_DEFINED",
+    "LIBC_CONTRACT_TRAP_VS_DEFINED",
     "MODES",
     "Outcome",
     "SourceObservation",

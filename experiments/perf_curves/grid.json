@@ -1,8 +1,22 @@
 {
   "class_pair_profile": [
     {
+      "divergence_class": "signed_shift_sign_bit",
+      "label": "c->cpp:signed_shift_sign_bit",
+      "source_lang": "c",
+      "target_lang": "cpp",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "array_oob",
       "label": "c->go:array_oob",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "bitfield_layout",
+      "label": "c->go:bitfield_layout",
       "source_lang": "c",
       "target_lang": "go",
       "verdict": "divergent"
@@ -15,8 +29,50 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "enum_out_of_range",
+      "label": "c->go:enum_out_of_range",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "fast_math_reassoc",
+      "label": "c->go:fast_math_reassoc",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "float_cast_overflow",
+      "label": "c->go:float_cast_overflow",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "intmin_div_neg1",
       "label": "c->go:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "memcpy_overlap",
+      "label": "c->go:memcpy_overlap",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "pointer_provenance",
+      "label": "c->go:pointer_provenance",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "restrict_violation",
+      "label": "c->go:restrict_violation",
       "source_lang": "c",
       "target_lang": "go",
       "verdict": "divergent"
@@ -36,10 +92,52 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "strict_aliasing",
+      "label": "c->go:strict_aliasing",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "uninit_read",
       "label": "c->go:uninit_read",
       "source_lang": "c",
       "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "vla_bound",
+      "label": "c->go:vla_bound",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "array_oob",
+      "label": "c->ocaml:array_oob",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "label": "c->ocaml:div_by_zero",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->ocaml:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "ocaml",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "label": "c->ocaml:signed_overflow",
+      "source_lang": "c",
+      "target_lang": "ocaml",
       "verdict": "divergent"
     },
     {
@@ -50,8 +148,36 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "bitfield_layout",
+      "label": "c->rust:bitfield_layout",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "div_by_zero",
       "label": "c->rust:div_by_zero",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "enum_out_of_range",
+      "label": "c->rust:enum_out_of_range",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "fast_math_reassoc",
+      "label": "c->rust:fast_math_reassoc",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "float_cast_overflow",
+      "label": "c->rust:float_cast_overflow",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "divergent"
@@ -66,6 +192,27 @@
     {
       "divergence_class": "intmin_div_neg1",
       "label": "c->rust:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "memcpy_overlap",
+      "label": "c->rust:memcpy_overlap",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "pointer_provenance",
+      "label": "c->rust:pointer_provenance",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "restrict_violation",
+      "label": "c->rust:restrict_violation",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "divergent"
@@ -94,6 +241,13 @@
     {
       "divergence_class": "uninit_read",
       "label": "c->rust:uninit_read",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "vla_bound",
+      "label": "c->rust:vla_bound",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "divergent"
@@ -138,6 +292,13 @@
       "label": "c->swift:uninit_read",
       "source_lang": "c",
       "target_lang": "swift",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "go->rust:intmin_div_neg1",
+      "source_lang": "go",
+      "target_lang": "rust",
       "verdict": "divergent"
     }
   ],

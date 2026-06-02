@@ -148,17 +148,22 @@ def verify_unit(
     status = status or toolchain_available()
     src_lang = unit.get("source_lang") or "c"
     tgt_lang = unit.get("target_lang") or "rust"
+    applicable = applicable_oracles(unit)
     # A C-source pair confirms via the sanitizer / optimiser path and needs the
     # full C+UBSan+target toolchain. A non-C source pair (e.g. Go->Rust) confirms
     # by re-executing two defined programs, so it needs only the two compilers.
     if src_lang == "c":
-        tool_ok = status.full_for(tgt_lang)
+        needs_libc_contract = any(
+            o.confirmation_mode in ("asan_trap_vs_defined",
+                                    "libc_contract_trap_vs_defined")
+            for o in applicable)
+        tool_ok = status.full_for(tgt_lang) or (
+            needs_libc_contract and status.full_libc_contract_for(tgt_lang))
     else:
         tool_ok = status.can_compile(src_lang) and status.can_compile(tgt_lang)
     if confirm and tool_ok and harness is None:
         harness = ReexecHarness(status)
 
-    applicable = applicable_oracles(unit)
     if not applicable:
         return VerifyReport(VerifyVerdict.NOT_COVERED, unit,
                             toolchain_available=tool_ok,

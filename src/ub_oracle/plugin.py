@@ -60,6 +60,10 @@ class DivergenceOracle(abc.ABC):
     #: "optimizer_exploited" — same C source yields different output under two
     #:                         conforming compilations (no sanitizer can trap it)
     #:                         while Rust is defined & deterministic.
+    #: "libc_contract_trap_vs_defined"
+    #:                       — a real C build with an executable libc-contract
+    #:                         check traps on a memory/precondition UB class that
+    #:                         UBSan does not cover, while the target is defined.
     #: "defined_divergence"  — two *safe* languages (e.g. Go and Rust) are each
     #:                         fully defined on the input yet observably differ.
     confirmation_mode: str = "exploited"
@@ -88,6 +92,11 @@ class DivergenceOracle(abc.ABC):
         argv = [str(v) for v in ce.inputs.values()]
         if self.confirmation_mode == "trap_vs_defined":
             rr = harness.confirm_trap_vs_defined(
+                ce.source_snippet, ce.target_snippet, argv, ce.divergence_class,
+                target_lang=self.target_lang)
+        elif self.confirmation_mode in ("asan_trap_vs_defined",
+                                        "libc_contract_trap_vs_defined"):
+            rr = harness.confirm_libc_contract_trap_vs_defined(
                 ce.source_snippet, ce.target_snippet, argv, ce.divergence_class,
                 target_lang=self.target_lang)
         elif self.confirmation_mode == "optimizer_exploited":

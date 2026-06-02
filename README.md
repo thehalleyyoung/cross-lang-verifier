@@ -58,16 +58,17 @@ python3 -m src.cli.main discover \
   overflow, shift-out-of-range, division-by-zero, `INT_MIN/-1`, array
   out-of-bounds, strict aliasing (type-punning), floating-point contraction,
   **variable-length-array (VLA) bound**, **float→int out-of-range conversion**,
-  **pointer-provenance / address-space-overflow arithmetic**, **`-ffast-math`
-  reassociation**, **`restrict`-aliasing violation**, **implementation-defined
+  **pointer-provenance / address-space-overflow arithmetic**, **overlapping
+  `memcpy` vs memmove-like slice copy**, **`-ffast-math` reassociation**,
+  **`restrict`-aliasing violation**, **implementation-defined
   bit-field packing**, **out-of-range `enum` representation**, and **`1 << 31`
   (UB in C, *defined* in C++20)** — the last proving the C/C++ boundary is itself a
   divergence surface (each confirmed against real
   `clang`/`rustc`/`go`/`clang++`/`ocamlopt`:
   the same input is C UB — UBSan-trapping, or a value that flips across two
-  conforming compilations no sanitizer can trap, with a sweep pinning the exact
-  `-O` level the UB first surfaces — while the safe Rust *and* Go *and* C++ *and*
-  OCaml ports
+  conforming compilations no sanitizer can trap, or executable libc-contract
+  UB checks, with a sweep pinning the exact `-O` level the UB first surfaces —
+  while the safe Rust *and* Go *and* C++ *and* OCaml ports
   are defined and deterministic), plus an
   **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on
   a real three-point definedness-lattice dataflow analysis that flags reads of
@@ -103,9 +104,9 @@ python3 -m src.cli.main discover \
 - an internal **red-team** (`make redteam`) that, for every oracle on every
   supported language pair, throws a battery of semantics-preserving adversarial
   mutations of a genuinely-divergent unit at the verifier and proves it never
-  falsely returns "no divergence" — 63/63 cases confirmed divergent against real
-  compilers, **zero soundness breaches** (the byte-reproducible adversarial grid
-  is CI-checked via `make redteam-check`)
+  falsely returns "no divergence" — **132 adversarial cases**, **zero soundness
+  breaches**, with the byte-reproducible adversarial grid CI-checked via
+  `make redteam-check` and the real-compiler attack available via `make redteam`
 - a **branch-coverage ratchet** over the toolchain-independent brain of the tool
   (`make coverage` / `make coverage-check`): 20 curated core modules — the IR,
   oracle SPI, decision layer, symbolic searches, and finding pipeline — held at
@@ -347,7 +348,8 @@ python3 -m src.cli.main discover \
   **safe→safe pair, Go→Rust** — *neither side has any UB* — catches the
   **defined-but-different** hazard where `INT_MIN/-1` wraps to a value in Go
   yet panics in Rust, confirmed by re-executing both real binaries
-  (**41 confirmed cells across 6 pairs**).
+  (**43 confirmed cells across 6 pairs**, including real C checked-libc
+  `memcpy`-overlap cells).
   An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.
   Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a
