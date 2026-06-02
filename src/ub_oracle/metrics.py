@@ -97,6 +97,12 @@ POSITIVE_CASES: List[LabeledCase] = [
                 {"kind": "pointer_offset", "width": 32, "var": "n",
                  "probe": "pointer_provenance"},
                 "pointer_provenance"),
+    LabeledCase("bitfield_layout",
+                {"kind": "bitfield_struct", "probe": "bitfield_layout"},
+                "bitfield_layout"),
+    LabeledCase("enum_out_of_range",
+                {"kind": "enum_cast", "probe": "enum_out_of_range"},
+                "enum_out_of_range"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus

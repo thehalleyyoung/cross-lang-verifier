@@ -22,4 +22,4 @@ The three figures a paper is written around, **generated from the real in-repo d
 | Fig 2 | `experiments/cross_pair_matrix/results.json`, `experiments/ub_invisible_results.json` |
 | Fig 3 | `divergence_zoo` per-class totals |
 
-Catalogue total: **14** confirmed exhibits across **5** language pairs and **3** divergence classes.
+Catalogue total: **14** confirmed exhibits across **6** language pairs and **3** divergence classes.

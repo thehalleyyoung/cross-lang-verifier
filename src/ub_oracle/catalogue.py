@@ -92,6 +92,8 @@ FAST_MATH_REASSOC = DivergenceClass("fast_math_reassoc", "Floating-point reassoc
 RESTRICT_VIOLATION = DivergenceClass("restrict_violation", "Aliasing through restrict-qualified pointers")
 POINTER_PROVENANCE = DivergenceClass("pointer_provenance", "Pointer arithmetic out of object provenance / address overflow")
 SIGNED_SHIFT_SIGN_BIT = DivergenceClass("signed_shift_sign_bit", "Left-shift of a 1 into the sign bit (UB in C, defined in C++20)")
+BITFIELD_LAYOUT = DivergenceClass("bitfield_layout", "Implementation-defined bit-field layout / packing")
+ENUM_OUT_OF_RANGE = DivergenceClass("enum_out_of_range", "Out-of-range value stored in / read from an enum")
 
 
 @dataclass(frozen=True)
@@ -373,6 +375,46 @@ _ENTRIES: List[DivergenceEntry] = [
                        "sign bit (n = width-1); the C UBSan build traps while the "
                        "C++20 build returns INT_MIN deterministically.",
         int_widths=(32, 64),
+    ),
+    DivergenceEntry(
+        cls=BITFIELD_LAYOUT,
+        source_definedness=Definedness.IMPLEMENTATION_DEFINED,
+        source_rule="The allocation order, alignment and storage unit of a C "
+                    "bit-field are implementation-defined: `unsigned a:3; b:5; "
+                    "c:8;` is packed into a single addressable storage unit "
+                    "(here a 4-byte `unsigned`), so the struct's size and in-"
+                    "memory byte image are fixed by the ABI, not the source.",
+        c_standard_ref="C17 6.7.2.1p11",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="A faithful field-by-field translation gives each bit-field "
+                    "its own integer field (`#[repr(C)]` `u8` / Go `uint8`), so "
+                    "the target struct is *unpacked*: a different size and a "
+                    "different, deterministic byte image. Serialising the struct "
+                    "to a wire/ABI boundary therefore diverges.",
+        severity=Severity.MODERATE,
+        witness_recipe="Pick nonzero field values in range; the C packed image "
+                       "(one storage unit) and the unpacked target image (one "
+                       "byte per field) differ in both size and bytes — a "
+                       "defined ABI/serialisation divergence on real layout.",
+    ),
+    DivergenceEntry(
+        cls=ENUM_OUT_OF_RANGE,
+        source_definedness=Definedness.IMPLEMENTATION_DEFINED,
+        source_rule="A C enumeration has an implementation-defined integer type "
+                    "able to hold every enumerator; storing a value outside the "
+                    "enumerator set (but within that type) is permitted and "
+                    "reads back the raw value — `(enum E)n` is just `n`.",
+        c_standard_ref="C17 6.7.2.2p4 / 6.2.6.1",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="A safe target enum has no representation for an out-of-range "
+                    "discriminant: the idiomatic port matches on the integer and "
+                    "collapses any unknown value to a default variant (Rust "
+                    "`match { _ => Default }` / Go const + switch), so the same "
+                    "input yields a different, deterministic value.",
+        severity=Severity.MODERATE,
+        witness_recipe="Feed the least value just past the largest enumerator; C "
+                       "retains it verbatim while the safe target collapses it to "
+                       "its default variant — a defined-but-different value.",
     ),
 ]
 

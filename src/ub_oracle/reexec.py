@@ -203,6 +203,13 @@ class RunOutcome:
         Unknown target names raise loudly rather than defaulting to value-only."""
         if self.timed_out:
             return False
+        if target_lang == "c":
+            # C is normally the *source* (UB) side, but the impl-defined classes
+            # (bit-field layout, out-of-range enum) are language-*defined* given
+            # the implementation: a clean exit (rc 0) is a defined outcome. This
+            # lets the defined-vs-different harness compare a defined C program
+            # against a defined target program without registering a full pack.
+            return self.returncode == 0
         return self.returncode in get_pack(target_lang).defined_returncodes
 
 

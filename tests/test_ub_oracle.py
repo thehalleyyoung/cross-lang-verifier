@@ -1170,7 +1170,7 @@ def test_matrix_pair_coverage_is_honest_about_class_breadth():
     assert {"signed_overflow", "shift_oob", "div_by_zero", "intmin_div_neg1",
             "array_oob", "uninit_read", "strict_aliasing", "vla_bound",
             "float_cast_overflow", "fast_math_reassoc", "restrict_violation",
-            "pointer_provenance"} == go_covered
+            "pointer_provenance", "bitfield_layout", "enum_out_of_range"} == go_covered
     swift_covered = set(cov[("c", "swift")]["classes_covered"])
     assert {"signed_overflow", "shift_oob", "div_by_zero",
             "intmin_div_neg1", "array_oob", "uninit_read"} == swift_covered
@@ -6078,3 +6078,121 @@ def test_smt_witness_matches_operational_oracle_for_intmin():
     assert res.verdict == OracleVerdict.DIVERGENT
     smt = _smt.smt_witness("intmin_div_neg1", 32)
     assert res.counterexample.inputs == smt
+
+
+# ---------------------------------------------------------------------------
+# Step 112 — bit-field layout & packing ABI divergence oracle (C->Rust, C->Go)
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import bitfield_layout as _bf  # noqa: E402,F401
+
+
+def test_bitfield_oracle_registered_for_rust_and_go_defined_mode():
+    rust = _plugin.get_oracle_for("bitfield_layout", "c", "rust")
+    go = _plugin.get_oracle_for("bitfield_layout", "c", "go")
+    assert rust.confirmation_mode == "defined_divergence"
+    assert go.confirmation_mode == "defined_divergence"
+    assert "bitfield_layout" in CATALOGUE
+    # impl-defined, not UB-rooted.
+    assert not CATALOGUE["bitfield_layout"].is_ub_rooted()
+    assert CATALOGUE["bitfield_layout"].c_standard_ref == "C17 6.7.2.1p11"
+
+
+def test_bitfield_witness_is_in_range_and_images_differ():
+    orc = _plugin.get_oracle_for("bitfield_layout", "c", "rust")
+    res = orc.find_divergence({"kind": "bitfield_struct"})
+    assert res.verdict is _plugin.OracleVerdict.DIVERGENT
+    vals = res.counterexample.inputs
+    # default fields a:3,b:5,c:8 maximised -> 7,31,255 (all in range, nonzero).
+    assert vals == {"a": 7, "b": 31, "c": 255}
+    # the packed C image (4 bytes) and the unpacked target image (3 bytes) differ.
+    assert _bf._c_image([("a", 3), ("b", 5), ("c", 8)], vals) == "ffff0000"
+    assert _bf._target_image([("a", 3), ("b", 5), ("c", 8)], vals) == "071fff"
+    # a declared per-field range is honoured by the Z3 search.
+    r2 = orc.find_divergence(
+        {"kind": "bitfield_struct", "value_ranges": {"c": [1, 3]}})
+    assert r2.counterexample.inputs["c"] == 3
+    # not applicable to a non-bitfield unit.
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not _TC.full_for("rust"),
+                    reason="needs C+rustc toolchain")
+def test_bitfield_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("bitfield_layout", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "bitfield_struct"}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "defined_divergence"
+    assert rr.rust_defined, "both C and Rust must be defined & deterministic"
+    assert rr.ub_consequential, "the size/byte image must observably differ"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+go toolchain")
+def test_bitfield_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("bitfield_layout", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "bitfield_struct"}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "defined_divergence"
+    assert rr.rust_defined and rr.ub_consequential
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+# ---------------------------------------------------------------------------
+# Step 108 — out-of-range enum / trap-representation oracle (C->Rust, C->Go)
+# ---------------------------------------------------------------------------
+from src.ub_oracle.oracles import enum_repr as _enum  # noqa: E402,F401
+
+
+def test_enum_oracle_registered_for_rust_and_go_defined_mode():
+    rust = _plugin.get_oracle_for("enum_out_of_range", "c", "rust")
+    go = _plugin.get_oracle_for("enum_out_of_range", "c", "go")
+    assert rust.confirmation_mode == "defined_divergence"
+    assert go.confirmation_mode == "defined_divergence"
+    assert "enum_out_of_range" in CATALOGUE
+    assert not CATALOGUE["enum_out_of_range"].is_ub_rooted()
+
+
+def test_enum_witness_is_least_value_past_last_enumerator():
+    orc = _plugin.get_oracle_for("enum_out_of_range", "c", "rust")
+    res = orc.find_divergence({"kind": "enum_cast"})
+    assert res.verdict is _plugin.OracleVerdict.DIVERGENT
+    # 3 enumerators (0,1,2) -> least out-of-range value is 3.
+    assert res.counterexample.inputs == {"n": 3}
+    # a declared range is honoured by the Z3 search.
+    r2 = orc.find_divergence({"kind": "enum_cast", "value_range": [10, 20]})
+    assert r2.counterexample.inputs == {"n": 10}
+    # more enumerators -> the boundary moves.
+    r3 = orc.find_divergence({"kind": "enum_cast", "enumerators": 5})
+    assert r3.counterexample.inputs == {"n": 5}
+    # not applicable to a non-enum unit.
+    assert orc.find_divergence(
+        {"kind": "div", "width": 32}).verdict is _plugin.OracleVerdict.NOT_APPLICABLE
+
+
+@pytest.mark.skipif(not _TC.full_for("rust"),
+                    reason="needs C+rustc toolchain")
+def test_enum_rust_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("enum_out_of_range", "c", "rust")
+    res = orc.confirm(orc.find_divergence({"kind": "enum_cast"}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "defined_divergence"
+    assert rr.rust_defined, "C keeps the raw value; Rust collapses to default (both defined)"
+    assert rr.ub_consequential, "the printed value must differ (C=3 vs target=0)"
+    assert rr.confirmed and res.counterexample.confirmed
+
+
+@pytest.mark.skipif(not _TC.full_for("go"),
+                    reason="needs C+go toolchain")
+def test_enum_go_confirmed_against_real_compilers():
+    orc = _plugin.get_oracle_for("enum_out_of_range", "c", "go")
+    res = orc.confirm(orc.find_divergence({"kind": "enum_cast"}),
+                      ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "defined_divergence"
+    assert rr.rust_defined and rr.ub_consequential
+    assert rr.confirmed and res.counterexample.confirmed

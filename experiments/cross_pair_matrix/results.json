@@ -37,6 +37,26 @@
       }
     },
     {
+      "confirmation_mode": "defined_divergence",
+      "divergence_class": "bitfield_layout",
+      "divergence_witness": "C packs a:3, b:5, c:8 into one 4-byte storage unit -> size=4 bytes=ffff0000, while the faithful go field-by-field port is unpacked -> size=3 bytes=071fff. Both programs are fully defined and deterministic, yet their ABI byte image differs: a struct serialised across a wire/FFI boundary changes meaning under the port.",
+      "source_definedness": "impl_defined",
+      "source_lang": "c",
+      "source_sha16": "d6e4147975083e96",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "cf30a6d7cba8062e",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 31,
+        "c": 255
+      }
+    },
+    {
       "confirmation_mode": "trap_vs_defined",
       "divergence_class": "div_by_zero",
       "divergence_witness": "C `a / b` with b=0 is UB; Go panics deterministically at runtime (a defined, observable outcome).",
@@ -56,9 +76,27 @@
       }
     },
     {
+      "confirmation_mode": "defined_divergence",
+      "divergence_class": "enum_out_of_range",
+      "divergence_witness": "n=3 is past the last enumerator (index 2): C stores and reads it verbatim, printing 3, while the faithful go port has no representation for it and collapses to its default variant, printing 0. Both programs are defined and deterministic, yet a C->go port silently changes the value on this input.",
+      "source_definedness": "impl_defined",
+      "source_lang": "c",
+      "source_sha16": "fc18aa42e63ad976",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "b8277df0434562cc",
+      "verdict": "divergent",
+      "witness": {
+        "n": 3
+      }
+    },
+    {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=9295311343239328.0, y=-1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=-1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=9147971312549952.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -70,8 +108,8 @@
       "target_sha16": "7a91a217459e8a02",
       "verdict": "divergent",
       "witness": {
-        "x": 9295311343239328.0,
-        "y": -1.0
+        "x": 9147971312549952.0,
+        "y": 1.0
       }
     },
     {
@@ -329,6 +367,26 @@
       }
     },
     {
+      "confirmation_mode": "defined_divergence",
+      "divergence_class": "bitfield_layout",
+      "divergence_witness": "C packs a:3, b:5, c:8 into one 4-byte storage unit -> size=4 bytes=ffff0000, while the faithful rust field-by-field port is unpacked -> size=3 bytes=071fff. Both programs are fully defined and deterministic, yet their ABI byte image differs: a struct serialised across a wire/FFI boundary changes meaning under the port.",
+      "source_definedness": "impl_defined",
+      "source_lang": "c",
+      "source_sha16": "d6e4147975083e96",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "a06fb183534a4731",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 31,
+        "c": 255
+      }
+    },
+    {
       "confirmation_mode": "trap_vs_defined",
       "divergence_class": "div_by_zero",
       "divergence_witness": "C `a / b` with b=0 is UB; Rust panics deterministically (a defined, observable outcome).",
@@ -348,9 +406,27 @@
       }
     },
     {
+      "confirmation_mode": "defined_divergence",
+      "divergence_class": "enum_out_of_range",
+      "divergence_witness": "n=3 is past the last enumerator (index 2): C stores and reads it verbatim, printing 3, while the faithful rust port has no representation for it and collapses to its default variant, printing 0. Both programs are defined and deterministic, yet a C->rust port silently changes the value on this input.",
+      "source_definedness": "impl_defined",
+      "source_lang": "c",
+      "source_sha16": "fc18aa42e63ad976",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "71e93bcdee5e62d2",
+      "verdict": "divergent",
+      "witness": {
+        "n": 3
+      }
+    },
+    {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=9788310682169284.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=9788211288362160.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -362,7 +438,7 @@
       "target_sha16": "51821464be323c10",
       "verdict": "divergent",
       "witness": {
-        "x": 9788310682169284.0,
+        "x": 9788211288362160.0,
         "y": 1.0
       }
     },
@@ -387,7 +463,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fp_contraction",
-      "divergence_witness": "C `a*b + c` with a=-48.64551591873169, b=1.0484271480855116, c=51.00127952183721 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "divergence_witness": "C `a*b + c` with a=-8.662523674234807, b=8.313469802567473, c=72.01562897983335 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "994ef280de9c8299",
@@ -399,9 +475,9 @@
       "target_sha16": "7171facf9aec0f3f",
       "verdict": "divergent",
       "witness": {
-        "a": -48.64551591873169,
-        "b": 1.0484271480855116,
-        "c": 51.00127952183721
+        "a": -8.662523674234807,
+        "b": 8.313469802567473,
+        "c": 72.01562897983335
       }
     },
     {
@@ -692,7 +768,9 @@
     {
       "classes_covered": [
         "array_oob",
+        "bitfield_layout",
         "div_by_zero",
+        "enum_out_of_range",
         "fast_math_reassoc",
         "float_cast_overflow",
         "intmin_div_neg1",
@@ -704,8 +782,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 12,
-      "n_divergent": 12,
+      "n_classes": 14,
+      "n_divergent": 14,
       "source_lang": "c",
       "target_lang": "go"
     },
@@ -724,7 +802,9 @@
     {
       "classes_covered": [
         "array_oob",
+        "bitfield_layout",
         "div_by_zero",
+        "enum_out_of_range",
         "fast_math_reassoc",
         "float_cast_overflow",
         "fp_contraction",
@@ -737,8 +817,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 13,
-      "n_divergent": 13,
+      "n_classes": 15,
+      "n_divergent": 15,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -768,7 +848,9 @@
   ],
   "divergence_classes": [
     "array_oob",
+    "bitfield_layout",
     "div_by_zero",
+    "enum_out_of_range",
     "fast_math_reassoc",
     "float_cast_overflow",
     "fp_contraction",
@@ -790,5 +872,5 @@
     "c->swift",
     "go->rust"
   ],
-  "n_cells": 37
+  "n_cells": 41
 }

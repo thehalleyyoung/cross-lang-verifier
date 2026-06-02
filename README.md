@@ -59,8 +59,9 @@ python3 -m src.cli.main discover \
   out-of-bounds, strict aliasing (type-punning), floating-point contraction,
   **variable-length-array (VLA) bound**, **float→int out-of-range conversion**,
   **pointer-provenance / address-space-overflow arithmetic**, **`-ffast-math`
-  reassociation**, **`restrict`-aliasing violation**, and **`1 << 31` (UB in C,
-  *defined* in C++20)** — the last proving the C/C++ boundary is itself a
+  reassociation**, **`restrict`-aliasing violation**, **implementation-defined
+  bit-field packing**, **out-of-range `enum` representation**, and **`1 << 31`
+  (UB in C, *defined* in C++20)** — the last proving the C/C++ boundary is itself a
   divergence surface (each confirmed against real
   `clang`/`rustc`/`go`/`clang++`/`ocamlopt`:
   the same input is C UB — UBSan-trapping, or a value that flips across two
@@ -342,7 +343,7 @@ python3 -m src.cli.main discover \
   **safe→safe pair, Go→Rust** — *neither side has any UB* — catches the
   **defined-but-different** hazard where `INT_MIN/-1` wraps to a value in Go
   yet panics in Rust, confirmed by re-executing both real binaries
-  (**37 confirmed cells across 6 pairs**).
+  (**41 confirmed cells across 6 pairs**).
   An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.
   Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a
