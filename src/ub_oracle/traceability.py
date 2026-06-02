@@ -394,6 +394,25 @@ def _thm_project_ingest_sound() -> bool:
     return okc and okw
 
 
+def _thm_solver_portfolio_robust() -> bool:
+    # The portfolio must reach the known ground-truth answer on every divergence-
+    # class query with full agreement among available solvers, and (when more than
+    # one backend is present) at least one query must be decided by all of them.
+    from . import solver_portfolio as sp
+    rep = sp.robustness_report(timeout=10.0)
+    if not rep or not all(c.consensus == c.expected and c.agreement for c in rep):
+        return False
+    solvers = sp.available_solvers()
+    if len(solvers) >= 2:
+        cross = any(
+            all(c.per_solver.get(s) in (sp.SAT, sp.UNSAT) for s in solvers)
+            for c in rep
+        )
+        if not cross:
+            return False
+    return True
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -741,6 +760,24 @@ CLAIMS: List[Claim] = [
         ("ingest_compile_db", "ingest_cargo_workspace", "confirm_compile_db",
          "confirm_cargo_workspace", "ProjectModule"),
         theorem=_thm_project_ingest_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C27-solver-portfolio",
+        "Decision procedures run as a *portfolio*, not a single point of failure: "
+        "z3 (in-process) and boolector (out-of-process on a temp SMT-LIB2 file, "
+        "exit 10/20 = sat/unsat) race the same query in parallel under a shared "
+        "wall-clock timeout; the first decisive answer wins and all solvers that "
+        "answered are cross-checked for agreement (a disagreement yields a loud "
+        "UNKNOWN, never a silently-chosen verdict). A robustness battery spanning "
+        "divergence-relevant bit-vector classes (signed overflow, unsigned wrap, "
+        "truncation, shift-by-width, even-product low bit, xor-self) is solved by "
+        "*every available solver* and matches the known ground truth, with at least "
+        "one query decided by both backends so the cross-check is real.",
+        "ub_oracle.solver_portfolio",
+        ("solve_portfolio", "robustness_report", "confirm_portfolio",
+         "available_solvers", "PortfolioResult"),
+        theorem=_thm_solver_portfolio_robust,
         docs=("README.md",),
     ),
 ]

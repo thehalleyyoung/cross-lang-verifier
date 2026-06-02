@@ -3786,3 +3786,50 @@ def test_proj_entry_command_accepts_arguments_or_command_string():
         ["clang", "-c", "x.c"]
     assert _pri._entry_command({"command": "clang -c x.c"}) == \
         ["clang", "-c", "x.c"]
+
+
+# ---------------------------------------------------------------------------
+# Step 51 — solver portfolio + parallelism (z3 + boolector, with timeouts).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import solver_portfolio as _sp  # noqa: E402
+
+
+def test_portfolio_has_at_least_one_real_solver():
+    # the project ships with z3 in-process; boolector is used when present.
+    assert "z3" in _sp.available_solvers()
+
+
+def test_portfolio_solves_known_sat_and_unsat():
+    sat_q = ("(set-logic QF_BV)(declare-fun x () (_ BitVec 8))"
+             "(assert (= (bvadd x #x01) #x00))(check-sat)")
+    unsat_q = ("(set-logic QF_BV)(declare-fun x () (_ BitVec 8))"
+               "(assert (distinct (bvxor x x) #x00))(check-sat)")
+    rs = _sp.solve_portfolio(sat_q, timeout=10.0)
+    ru = _sp.solve_portfolio(unsat_q, timeout=10.0)
+    assert rs.status == _sp.SAT and rs.agreement and rs.winner is not None
+    assert ru.status == _sp.UNSAT and ru.agreement
+
+
+def test_portfolio_robustness_battery_matches_ground_truth():
+    c = _sp.confirm_portfolio(timeout=10.0)
+    assert c.ok
+    # every divergence-class query reaches its known answer with agreement.
+    for cr in c.report:
+        assert cr.consensus == cr.expected
+        assert cr.agreement
+
+
+@pytest.mark.skipif(not _os.path.exists(_sp.BOOLECTOR),
+                    reason="boolector not available")
+def test_portfolio_boolector_and_z3_cross_check():
+    # when both backends are present, at least one query is decided by BOTH,
+    # i.e. the portfolio genuinely cross-checks rather than trusting one solver.
+    c = _sp.confirm_portfolio(timeout=10.0)
+    assert "z3" in c.available_solvers and "boolector" in c.available_solvers
+    both = [cr for cr in c.report
+            if cr.per_solver.get("z3") in (_sp.SAT, _sp.UNSAT)
+            and cr.per_solver.get("boolector") in (_sp.SAT, _sp.UNSAT)]
+    assert both, "no query was decided by both solvers"
+    for cr in both:
+        assert cr.per_solver["z3"] == cr.per_solver["boolector"]
