@@ -128,6 +128,15 @@ python3 -m src.cli.main discover \
   while the default `repr(Rust)` genuinely diverges **precisely when** predicted,
   and Go's declaration-order layout matches C — so a layout/width hazard (a silent
   memory-safety bug no value-level oracle can see) is never fabricated
+- a **byte-addressed provenance memory model** (`memory_model.py`) that decides
+  spatial (out-of-bounds) and temporal (use-after-free, double-free) safety on
+  whole allocation/free/load/store **traces**: every pointer carries the
+  *provenance* of its allocation, so an access is legal **iff** it stays inside
+  that object's bytes (never an adjacent one) and only while the object is alive.
+  Each trace is emitted as C, compiled under **AddressSanitizer**, and ASan is
+  checked to trap **iff** the model predicts a fault — reporting the *same* fault
+  kind — so the model never invents (or misses) a memory bug on the traces it
+  generates
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

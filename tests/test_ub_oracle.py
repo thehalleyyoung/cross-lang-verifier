@@ -3082,3 +3082,86 @@ def test_abi_enum_model_tracks_rustc_across_variant_counts():
         conf = _abi.confirm_enum(n, cc=_TC.cc, rustc=rustc)
         assert conf.rust_default_size == _abi.rust_default_enum_size(n), n
         assert conf.rust_reprc_size == _abi.C_ENUM_SIZE
+
+
+# ---------------------------------------------------------------------------
+# Step 21 — byte-addressed provenance memory model (spatial/temporal safety).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import memory_model as _mm  # noqa: E402
+
+
+def test_memory_model_flags_spatial_oob():
+    f = _mm.first_fault(_mm.oob_trace())
+    assert f is not None and f.kind is _mm.FaultKind.OOB_SPATIAL
+
+
+def test_memory_model_flags_use_after_free():
+    f = _mm.first_fault(_mm.uaf_trace())
+    assert f is not None and f.kind is _mm.FaultKind.USE_AFTER_FREE
+
+
+def test_memory_model_flags_double_free():
+    f = _mm.first_fault(_mm.double_free_trace())
+    assert f is not None and f.kind is _mm.FaultKind.DOUBLE_FREE
+
+
+def test_memory_model_accepts_safe_traces():
+    assert _mm.first_fault(_mm.safe_trace()) is None
+    assert _mm.first_fault(_mm.safe_boundary_trace()) is None
+
+
+def test_memory_model_boundary_is_exact():
+    # last legal byte of an 8-byte object is in bounds; one past is not.
+    assert _mm.first_fault([_mm.Alloc("p", 8), _mm.Load("p", 7, 1)]) is None
+    assert _mm.first_fault([_mm.Alloc("p", 8), _mm.Load("p", 8, 1)]).kind \
+        is _mm.FaultKind.OOB_SPATIAL
+    # a 4-byte load straddling the end is OOB even though byte 7 alone is legal.
+    assert _mm.first_fault([_mm.Alloc("p", 8), _mm.Load("p", 5, 4)]).kind \
+        is _mm.FaultKind.OOB_SPATIAL
+
+
+def test_memory_model_provenance_is_per_allocation():
+    # an in-bounds access to q must not be excused by p's size and vice versa;
+    # freeing p does not free q.
+    trace = [_mm.Alloc("p", 4), _mm.Alloc("q", 16), _mm.Free("p"),
+             _mm.Load("q", 12, 4)]
+    assert _mm.first_fault(trace) is None
+    # but reading p after it is freed is a UAF, regardless of q being alive.
+    trace2 = trace + [_mm.Load("p", 0, 1)]
+    assert _mm.first_fault(trace2).kind is _mm.FaultKind.USE_AFTER_FREE
+
+
+def test_memory_model_is_deterministic():
+    a = _mm.simulate(_mm.oob_trace())
+    b = _mm.simulate(_mm.oob_trace())
+    assert (a.fault.kind, a.steps) == (b.fault.kind, b.steps)
+
+
+@_requires_toolchain
+@pytest.mark.parametrize("name,trace,expect_kind", [
+    ("oob", _mm.oob_trace(), "oob_spatial"),
+    ("uaf", _mm.uaf_trace(), "use_after_free"),
+    ("double_free", _mm.double_free_trace(), "double_free"),
+])
+def test_memory_model_faults_confirmed_by_real_asan(name, trace, expect_kind):
+    """Each predicted fault is confirmed by AddressSanitizer on real compiled
+    code — and ASan's reported fault *kind* matches the model's."""
+    conf = _mm.confirm_memory(trace, cc=_TC.cc)
+    assert conf.available, conf.reason
+    assert conf.predicted_fault is not None
+    assert conf.asan_trapped is True
+    assert conf.consistent
+    assert _mm._asan_kind(conf.asan_report) == expect_kind
+
+
+@_requires_toolchain
+@pytest.mark.parametrize("trace", [_mm.safe_trace(), _mm.safe_boundary_trace()])
+def test_memory_model_safe_traces_run_clean_under_asan(trace):
+    """Soundness: when the model abstains, ASan does not trap — no fabricated
+    memory bug."""
+    conf = _mm.confirm_memory(trace, cc=_TC.cc)
+    assert conf.available, conf.reason
+    assert conf.predicted_fault is None
+    assert conf.asan_trapped is False
+    assert conf.consistent

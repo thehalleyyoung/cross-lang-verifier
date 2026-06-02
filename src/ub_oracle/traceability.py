@@ -180,8 +180,29 @@ def _thm_abi_layout_sound() -> bool:
     return bool(sound_hazard and sound_safe and sound_fidelity)
 
 
+def _thm_memory_model_sound() -> bool:
+    # The provenance memory model must flag spatial OOB, use-after-free and
+    # double-free on the canonical traces, accept the safe and boundary traces,
+    # and keep provenance per-allocation (freeing one object is not freeing
+    # another).
+    from . import memory_model as m
+    oob = m.first_fault(m.oob_trace())
+    uaf = m.first_fault(m.uaf_trace())
+    df = m.first_fault(m.double_free_trace())
+    faults_ok = (oob is not None and oob.kind is m.FaultKind.OOB_SPATIAL
+                 and uaf is not None and uaf.kind is m.FaultKind.USE_AFTER_FREE
+                 and df is not None and df.kind is m.FaultKind.DOUBLE_FREE)
+    safe_ok = (m.first_fault(m.safe_trace()) is None
+               and m.first_fault(m.safe_boundary_trace()) is None)
+    prov = m.first_fault([m.Alloc("p", 4), m.Alloc("q", 16), m.Free("p"),
+                          m.Load("q", 12, 4)])
+    prov_ok = prov is None
+    return bool(faults_ok and safe_ok and prov_ok)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
+
 
 CLAIMS: List[Claim] = [
     claim(
@@ -331,6 +352,21 @@ CLAIMS: List[Claim] = [
         ("c_layout", "optimized_layout", "abi_divergence", "union_layout",
          "enum_abi_divergence", "confirm_abi"),
         theorem=_thm_abi_layout_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C16-provenance-memory",
+        "Spatial and temporal memory safety is decided on whole traces by a "
+        "byte-addressed memory model in which every pointer carries the "
+        "provenance of its allocation: an access is in bounds iff it lies in "
+        "[0,size) of that allocation (never an adjacent object), and any access "
+        "through a freed allocation is a use-after-free. The model's predicted "
+        "fault — spatial OOB, use-after-free or double-free — is confirmed on "
+        "real compiled code under AddressSanitizer, which traps iff a fault is "
+        "predicted and reports the same fault kind; model-safe traces run clean.",
+        "ub_oracle.memory_model",
+        ("simulate", "first_fault", "MemEvent", "FaultKind", "confirm_memory"),
+        theorem=_thm_memory_model_sound,
         docs=("README.md",),
     ),
 ]
