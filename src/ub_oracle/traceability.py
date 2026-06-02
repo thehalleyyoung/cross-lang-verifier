@@ -413,6 +413,24 @@ def _thm_solver_portfolio_robust() -> bool:
     return True
 
 
+def _thm_frontend_fuzz_hardened() -> bool:
+    # A seeded differential-fuzz run of the C frontend against clang must compile a
+    # meaningful number of random well-typed programs and recover every function's
+    # signature/storage with zero divergences and zero crashes; garbage input must
+    # never raise. Absent clang, fall back to the toolchain-free garbage contract.
+    from . import frontend_fuzz as ff
+    for g in ff.GARBAGE_INPUTS:
+        try:
+            ff._iri.ingest_clang(g)
+        except Exception:
+            return False
+    import os as _os8
+    if not _os8.path.exists(ff.CLANG):
+        return True
+    rep = ff.fuzz_clang_frontend(iterations=30, seed=0xA11CE)
+    return rep.ok and rep.compiled >= 15
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -778,6 +796,24 @@ CLAIMS: List[Claim] = [
         ("solve_portfolio", "robustness_report", "confirm_portfolio",
          "available_solvers", "PortfolioResult"),
         theorem=_thm_solver_portfolio_robust,
+        docs=("README.md",),
+    ),
+    claim(
+        "C28-frontend-fuzz",
+        "The C frontend is hardened by a *differential fuzzer* that uses the real "
+        "clang as oracle: a seeded generator emits random but always-compilable "
+        "well-typed translation units (random function counts, return types across "
+        "the integer/pointer/void zoo, random arity, parameter types and storage "
+        "classes); each is compiled by clang, ingested, and the recovered "
+        "`IRFunction` set is diffed against the generator's ground truth — names, "
+        "arity, return types, parameter types and storage class must match exactly. "
+        "Dozens of programs survive a fixed-seed run with zero parse-divergences "
+        "and zero crashes, and a corpus of malformed/non-C inputs makes the "
+        "frontend return `None` rather than raise.",
+        "ub_oracle.frontend_fuzz",
+        ("fuzz_clang_frontend", "confirm_fuzz", "generate_program",
+         "GARBAGE_INPUTS", "FuzzReport"),
+        theorem=_thm_frontend_fuzz_hardened,
         docs=("README.md",),
     ),
 ]

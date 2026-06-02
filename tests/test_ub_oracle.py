@@ -3833,3 +3833,43 @@ def test_portfolio_boolector_and_z3_cross_check():
     assert both, "no query was decided by both solvers"
     for cr in both:
         assert cr.per_solver["z3"] == cr.per_solver["boolector"]
+
+
+# ---------------------------------------------------------------------------
+# Step 36 — fuzzer-guided frontend hardening (differential vs real clang).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import frontend_fuzz as _ff  # noqa: E402
+
+_clang_for_fuzz = pytest.mark.skipif(
+    not _os.path.exists(_ff.CLANG), reason="clang not available")
+
+
+def test_fuzz_generator_emits_compilable_well_typed_c():
+    import random as _r
+    prog = _ff.generate_program(_r.Random(1), 0)
+    assert prog.functions and "return" in prog.source
+
+
+def test_fuzz_garbage_never_crashes_the_frontend_object():
+    # the malformed-input contract is toolchain-independent: ingest must not raise.
+    for g in _ff.GARBAGE_INPUTS:
+        try:
+            _ff._iri.ingest_clang(g)
+        except Exception as e:  # pragma: no cover
+            assert False, f"frontend raised on garbage: {e!r}"
+
+
+@_clang_for_fuzz
+def test_fuzz_clang_frontend_zero_divergences_zero_crashes():
+    rep = _ff.fuzz_clang_frontend(iterations=40, seed=0xBEEF)
+    assert rep.compiled >= 20
+    assert rep.divergences == [], rep.divergences[:5]
+    assert rep.crashes == [], rep.crashes[:5]
+
+
+@_clang_for_fuzz
+def test_fuzz_confirm_survives_a_sizeable_run():
+    c = _ff.confirm_fuzz(iterations=40, seed=0x1234)
+    assert c.available and c.ok
+    assert c.report.compiled >= 20

@@ -220,6 +220,12 @@ python3 -m src.cli.main discover \
   agreement (a disagreement is a loud `UNKNOWN`, never a silently-chosen verdict).
   A robustness battery over divergence-relevant bit-vector classes is solved by
   every available solver and matched against ground truth
+- a **differentially-fuzzed C frontend** (`frontend_fuzz.py`): a seeded generator
+  emits random but always-compilable well-typed C, and every program is diffed
+  against clang's ground truth — names, arity, return/parameter types and storage
+  class must match exactly. Dozens of programs survive each fixed-seed run with
+  zero parse-divergences and zero crashes, and malformed input returns `None`
+  rather than raising
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
