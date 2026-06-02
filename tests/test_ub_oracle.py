@@ -1034,6 +1034,112 @@ def test_swift_value_vs_trap_resolutions_are_both_confirmed():
 from src.ub_oracle import regression_matrix as _matrix
 
 
+# ── Step 120: Go -> Rust defined-but-different pair ──────────────────────────
+
+_requires_go_rust = pytest.mark.skipif(
+    not (_TC.can_compile("go") and _TC.can_compile("rust")),
+    reason=f"needs a go + rustc toolchain ({_TC})")
+
+
+def _go_rust_oracle():
+    return _plugin.get_oracle_for("intmin_div_neg1", "go", "rust")
+
+
+def test_go_rust_pair_registered_as_a_safe_to_safe_pair():
+    assert ("go", "rust") in _plugin.language_pairs()
+    orc = _go_rust_oracle()
+    assert orc.source_lang == "go" and orc.target_lang == "rust"
+    # this is the *defined-but-different* mode: neither side has UB.
+    assert orc.confirmation_mode == "defined_divergence"
+
+
+def test_go_rust_oracle_does_not_pollute_the_c_rust_anchor():
+    # the anchor REGISTRY entry for the class is still the C->Rust oracle.
+    anchor = _plugin.REGISTRY["intmin_div_neg1"]
+    assert (anchor.source_lang, anchor.target_lang) == ("c", "rust")
+    # and the oracle triples remain unique per (source, target, class).
+    triples = [(o.source_lang, o.target_lang, o.divergence_class)
+               for o in _plugin.ALL_ORACLES]
+    assert len(triples) == len(set(triples))
+
+
+def test_go_rust_oracle_scopes_to_go_source_only():
+    orc = _go_rust_oracle()
+    # a C-source div unit must NOT be claimed by the Go->Rust oracle.
+    assert not orc.applies_to({"kind": "div", "width": 32, "signed": True,
+                               "source_lang": "c", "target_lang": "rust"})
+    # its own pair, div and rem, are in scope.
+    assert orc.applies_to({"kind": "div", "width": 32, "signed": True,
+                           "source_lang": "go", "target_lang": "rust"})
+    assert orc.applies_to({"kind": "rem", "width": 64, "signed": True})
+
+
+@pytest.mark.parametrize("kind,width", [("div", 32), ("rem", 32), ("div", 64)])
+def test_go_rust_finds_the_signed_overflow_pair_symbolically(kind, width):
+    orc = _go_rust_oracle()
+    res = orc.find_divergence({"kind": kind, "width": width, "signed": True})
+    assert res.verdict == OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    # the Z3-found witness is exactly INT_MIN op -1.
+    vals = list(ce.inputs.values())
+    assert -(1 << (width - 1)) in vals and -1 in vals
+    assert ce.source_lang == "go" and ce.target_lang == "rust"
+    # the Go source is defined (no UB on either side).
+    assert ce.source_definedness == "defined"
+    assert "package main" in ce.source_snippet
+    assert "fn f(" in ce.target_snippet
+
+
+@_requires_go_rust
+@pytest.mark.parametrize("kind,go_out", [("div", "-2147483648"), ("rem", "0")])
+def test_go_rust_confirmed_against_real_go_and_rustc(kind, go_out):
+    # The flagship safe<->safe claim, end-to-end on real compilers: Go defines
+    # INT_MIN op -1 by modular wraparound (a value, exit 0) while the faithful
+    # Rust port panics (a defined abort, exit 101). Both defined; observably
+    # different => a real Go->Rust translation hazard, confirmed by re-execution.
+    orc = _go_rust_oracle()
+    res = orc.confirm(orc.find_divergence(
+        {"kind": kind, "width": 32, "signed": True}), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available and rr.mode == "defined_divergence"
+    assert rr.confirmed, rr.reason
+    # Go side: a defined value; Rust side: a defined panic (exit 101).
+    assert rr.c_runs["A"].returncode == 0 and rr.c_runs["A"].stdout == go_out
+    assert rr.rust_run.returncode == 101 and rr.rust_run.stdout == ""
+    assert res.counterexample.confirmed
+
+
+@_requires_go_rust
+def test_defined_divergence_negative_control_two_agreeing_programs():
+    # A harness-level negative control: two programs that compute the *same*
+    # defined value must NOT be reported as a divergence, even though both are
+    # defined. This guards the defined_divergence predicate against false
+    # positives on genuinely-equivalent safe<->safe ports.
+    go_src = ("package main\nimport (\n\t\"fmt\"\n\t\"os\"\n\t\"strconv\"\n)\n"
+              "func main(){ a,_:=strconv.Atoi(os.Args[1]); fmt.Println(a*2) }\n")
+    rust_src = ("fn main(){ let v:Vec<String>=std::env::args().collect();\n"
+                "    let a:i64=v[1].parse().unwrap(); println!(\"{}\", a*2); }\n")
+    rr = ReexecHarness(_TC).confirm_defined_divergence(
+        go_src, "go", rust_src, "rust", ["21"], "intmin_div_neg1")
+    assert rr.available and rr.mode == "defined_divergence"
+    assert not rr.confirmed
+    # both ran defined and agreed (42 == 42), so there is no divergence.
+    assert rr.rust_defined and not rr.ub_reachable
+
+
+@_requires_go_rust
+def test_go_rust_verify_unit_confirms_without_needing_c_toolchain():
+    # verify_unit must route a go->rust unit to the new pair and confirm it via
+    # the two compilers alone — it must not demand the C compiler / UBSan.
+    from src.ub_oracle.verify import verify_unit, VerifyVerdict
+    rep = verify_unit({"kind": "div", "width": 32, "signed": True,
+                       "source_lang": "go", "target_lang": "rust"},
+                      status=_TC)
+    assert rep.verdict is VerifyVerdict.DIVERGENT
+    assert rep.divergence.divergence_class == "intmin_div_neg1"
+
+
+
 def test_matrix_covers_every_registered_pair_and_class():
     m = _matrix.build_matrix()
     # one cell per registered oracle.
@@ -1108,6 +1214,8 @@ def test_matrix_confirm_marks_unavailable_pairs_skipped_not_dropped():
     # a host with no compilers must still account for *every* cell, as skipped.
     class _Dead:
         def full_for(self, _t):
+            return False
+        def can_compile(self, _lang):
             return False
     class _Harness:
         status = _Dead()

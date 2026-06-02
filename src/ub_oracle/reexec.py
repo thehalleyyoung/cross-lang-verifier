@@ -63,6 +63,16 @@ class ToolchainStatus:
     def target_available(self, name: str = "rust") -> bool:
         return self.target_path(name) is not None
 
+    def can_compile(self, lang: str) -> bool:
+        """Whether a program in ``lang`` can be built on this host. ``"c"`` maps
+        to the C compiler; every other language maps to its semantics-pack
+        compiler. This is the single availability predicate used to gate the
+        non-C source pairs (e.g. Go->Rust) whose confirmation needs neither the
+        C compiler nor UBSan."""
+        if lang == "c":
+            return self.c_available
+        return self.target_available(lang)
+
     # back-compat accessors for the anchor pair.
     @property
     def rust_available(self) -> bool:
@@ -275,6 +285,18 @@ class ReexecHarness:
         if r.returncode != 0:
             return None
         return opath
+
+    def _compile_lang(self, src: str, lang: str, workdir: str,
+                      name: str) -> Optional[str]:
+        """Compile ``src`` written in ``lang`` (``"c"`` or any pack language).
+
+        C is built at ``-O2`` (a single, defined optimisation level); every other
+        language is built through its semantics pack. Used by the
+        ``defined_divergence`` confirmation, where each side is a fully-defined
+        program in its own language."""
+        if lang == "c":
+            return self._compile_c(src, ["-O2"], workdir, name)
+        return self._compile_target(src, lang, workdir, name)
 
     @staticmethod
     def _missing_for(status: "ToolchainStatus", target_lang: str) -> List[str]:
@@ -528,6 +550,84 @@ class ReexecHarness:
             res.reason = (
                 f"not confirmed: A!=B={res.ub_consequential}, "
                 f"rust_defined={res.rust_defined} (deterministic={rust_deterministic})"
+            )
+        return res
+
+    # ── defined-but-different: two *safe* languages disagree (e.g. Go->Rust) ──
+    def confirm_defined_divergence(
+        self,
+        src_a: str,
+        lang_a: str,
+        src_b: str,
+        lang_b: str,
+        argv_inputs: List[str],
+        divergence_class: str = "intmin_div_neg1",
+    ) -> ReexecResult:
+        """Confirm a *defined-but-different* divergence between two languages that
+        are each fully defined on the witnessing input (the safe<->safe case, e.g.
+        **Go -> Rust**).
+
+        Unlike the UB modes there is no sanitizer to trap and no optimisation
+        level to disagree: *both* programs are language-defined. The evidence of a
+        cross-language divergence is that, on the *same* input, the two defined
+        programs produce **observably different** behaviour — a different printed
+        value, or one returns a value while the other takes a guaranteed,
+        deterministic abort (e.g. Go wraps ``INT_MIN/-1`` to a value while Rust
+        panics). A program faithfully "translated" from ``lang_a`` to ``lang_b``
+        therefore changes meaning.
+
+        Both sides are run **twice** and required to be deterministic before they
+        are compared, so a nondeterministic program can never be mistaken for a
+        divergence. Only ``stdout`` and the return code are compared; panic
+        diagnostics on ``stderr`` (paths, versions, backtraces) are ignored.
+        """
+        avail = (self.status.can_compile(lang_a)
+                 and self.status.can_compile(lang_b))
+        res = ReexecResult(available=avail, divergence_class=divergence_class,
+                           mode="defined_divergence",
+                           inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
+        if not avail:
+            res.reason = (f"toolchain unavailable: needs {lang_a} and {lang_b}")
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            ea = self._compile_lang(src_a, lang_a, d, "a")
+            eb = self._compile_lang(src_b, lang_b, d, "b")
+            if not (ea and eb):
+                res.available = False
+                res.reason = "compilation failed (a=%s b=%s)" % (bool(ea), bool(eb))
+                return res
+            a1 = self._run([ea, *argv_inputs])
+            a2 = self._run([ea, *argv_inputs])
+            b1 = self._run([eb, *argv_inputs])
+            b2 = self._run([eb, *argv_inputs])
+
+        res.c_runs["A"] = a1
+        res.c_runs["B"] = b1
+        res.rust_run = b1
+
+        a_det = (a1.returncode == a2.returncode and a1.stdout == a2.stdout)
+        b_det = (b1.returncode == b2.returncode and b1.stdout == b2.stdout)
+        a_defined = a_det and a1.target_outcome_defined(lang_a)
+        b_defined = b_det and b1.target_outcome_defined(lang_b)
+        # observable difference: a different value, or value-vs-abort.
+        differs = (a1.stdout != b1.stdout) or ((a1.returncode == 0) != (b1.returncode == 0))
+
+        res.rust_defined = a_defined and b_defined           # both sides defined
+        res.ub_reachable = differs
+        res.ub_consequential = differs
+        res.confirmed = a_defined and b_defined and differs
+        if res.confirmed:
+            res.reason = (
+                f"both defined & deterministic but observably differ: "
+                f"{lang_a}=(rc={a1.returncode}, out={a1.stdout!r}) vs "
+                f"{lang_b}=(rc={b1.returncode}, out={b1.stdout!r})"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: {lang_a}_defined={a_defined} "
+                f"{lang_b}_defined={b_defined} differs={differs} "
+                f"(a_det={a_det}, b_det={b_det})"
             )
         return res
 

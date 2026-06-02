@@ -58,7 +58,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=-9631285372737536.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=9295311343239328.0, y=-1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=-1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -70,8 +70,8 @@
       "target_sha16": "7a91a217459e8a02",
       "verdict": "divergent",
       "witness": {
-        "x": -9631285372737536.0,
-        "y": 1.0
+        "x": 9295311343239328.0,
+        "y": -1.0
       }
     },
     {
@@ -350,7 +350,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=-9288674231451648.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=9788310682169284.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe rust port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -362,7 +362,7 @@
       "target_sha16": "51821464be323c10",
       "verdict": "divergent",
       "witness": {
-        "x": -9288674231451648.0,
+        "x": 9788310682169284.0,
         "y": 1.0
       }
     },
@@ -387,7 +387,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fp_contraction",
-      "divergence_witness": "C `a*b + c` with a=-2.3500285296330072, b=1.923069968108641, c=4.519269289535997 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
+      "divergence_witness": "C `a*b + c` with a=-48.64551591873169, b=1.0484271480855116, c=51.00127952183721 is unspecified up to FMA contraction: `-ffp-contract=off` and `-ffp-contract=fast` give different results, while Rust always rounds twice (deterministic).",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "994ef280de9c8299",
@@ -399,9 +399,9 @@
       "target_sha16": "7171facf9aec0f3f",
       "verdict": "divergent",
       "witness": {
-        "a": -2.3500285296330072,
-        "b": 1.923069968108641,
-        "c": 4.519269289535997
+        "a": -48.64551591873169,
+        "b": 1.0484271480855116,
+        "c": 51.00127952183721
       }
     },
     {
@@ -499,16 +499,16 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "strict_aliasing",
-      "divergence_witness": "C punning int*/long* over the same storage (A=0, B=1) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 0. The safe rust translation is a single defined value.",
+      "divergence_witness": "C punning int*/long* over the same storage (A=1, B=0) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 1. The safe rust translation is a single defined value.",
       "source_definedness": "undefined",
       "source_lang": "c",
-      "source_sha16": "041c989f7d8dff4d",
+      "source_sha16": "a55c7125eef1c041",
       "target_defined_returncodes": [
         0,
         101
       ],
       "target_lang": "rust",
-      "target_sha16": "21c4351350207a8e",
+      "target_sha16": "be28aae0acd28951",
       "verdict": "divergent",
       "witness": {}
     },
@@ -658,6 +658,25 @@
       "witness": {
         "s": 7
       }
+    },
+    {
+      "confirmation_mode": "defined_divergence",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "Go `a / b` with a=-2147483648, b=-1 is the signed two's-complement overflow pair: Go defines it by modular wraparound to -2147483648 (a defined value, exit 0), while the faithful Rust port `a / b` panics deterministically (a defined abort, exit 101). Both languages are fully defined here, yet the observable behaviour differs \u2014 a Go->Rust port silently changes meaning on this input.",
+      "source_definedness": "defined",
+      "source_lang": "go",
+      "source_sha16": "94f6c776114aa3ef",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "4050cf3fa9d6dead",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
     }
   ],
   "coverage": [
@@ -736,6 +755,15 @@
       "n_divergent": 6,
       "source_lang": "c",
       "target_lang": "swift"
+    },
+    {
+      "classes_covered": [
+        "intmin_div_neg1"
+      ],
+      "n_classes": 1,
+      "n_divergent": 1,
+      "source_lang": "go",
+      "target_lang": "rust"
     }
   ],
   "divergence_classes": [
@@ -759,7 +787,8 @@
     "c->go",
     "c->ocaml",
     "c->rust",
-    "c->swift"
+    "c->swift",
+    "go->rust"
   ],
-  "n_cells": 36
+  "n_cells": 37
 }

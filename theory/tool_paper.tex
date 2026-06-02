@@ -90,9 +90,15 @@ uninitialized-read/definedness analysis, and a C/C++-boundary class
 (\texttt{1 << 31}, undefined in C yet defined in C++20)---driven across five
 target languages (Rust, Go, Swift, C++, and a GC'd, exception-based OCaml port)
 by a deterministic, byte-reproducible
-cross-pair regression matrix whose 36 toolchain-backed cells are \emph{all}
+cross-pair regression matrix whose toolchain-backed cells are \emph{all}
 confirmed against real compilers (\texttt{clang}, \texttt{rustc}, \texttt{go},
-\texttt{clang++}, \texttt{ocamlopt}). Beyond pairwise checks, an
+\texttt{clang++}, \texttt{ocamlopt}). The framework is not limited to
+\mbox{C-rooted} undefined behaviour: a first \emph{safe$\to$safe} pair,
+Go$\to$Rust---in which \emph{neither} side has any undefined behaviour---catches
+the \emph{defined-but-different} hazard where \texttt{INT\_MIN/-1} is a defined
+modular value in Go yet a guaranteed panic in Rust, raising the matrix to
+\textbf{37 cells over 6 pairs}, every one re-executed on both real binaries.
+Beyond pairwise checks, an
 \emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
 targets at once and flags the minority target whose live output disagrees, and a
 target-pack conformance suite mechanically certifies that every back end
@@ -397,12 +403,15 @@ FP contraction (FMA)       & unspec. & IEEE-strict     & \textsc{opt} \\
 \paragraph{Cross-pair generality.} Because each class shares one
 \texttt{divergence\_class} key across language pairs, a single Z3 witness drives
 the class against \emph{every} target that implements it. The deterministic
-cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{5 language pairs}
-(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++) with 13, 12, 6, 4,
-and 1 classes
-respectively---\textbf{36 cells in total}---and is byte-reproducible per fresh
-process. When the host toolchain is present, \emph{all 36 cells confirm against
+cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{6 language pairs}
+(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++, and the
+\emph{safe$\to$safe} Go$\to$Rust) with 13, 12, 6, 4, 1, and 1 classes
+respectively---\textbf{37 cells in total}---and is byte-reproducible per fresh
+process. When the host toolchain is present, \emph{all 37 cells confirm against
 real \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}}.
+The Go$\to$Rust pair is qualitatively new: \emph{neither} source nor target has
+any undefined behaviour, so the framework's reach extends past C-UB to the
+broader \emph{defined-but-different} regime (\S\ref{sec:eval-matrix}).
 The C$\to$C++
 pair is qualitatively distinct: its witness, the byte-identical token
 \texttt{1 << 31}, is \emph{undefined} in C (C17~6.5.7p4) yet \emph{defined} in
@@ -957,23 +966,52 @@ regression matrix (\texttt{src/ub\_oracle/regression\_matrix.py}):
     deterministic and defined.
 \end{enumerate}
 
-Table~\ref{tab:matrix} reports the matrix. It spans \textbf{5 target languages}
-and \textbf{36 cells} (C$\to$Rust: 13 classes; C$\to$Go: 12; C$\to$Swift: 6,
-the argv-driven integer/memory core; C$\to$OCaml: 4, a GC'd exception-based
-target; C$\to$C++: 1, the C/C++-boundary shift class). On a host with the full
+Table~\ref{tab:matrix} reports the matrix. Its C-rooted core spans \textbf{5
+target languages} and \textbf{36 cells} (C$\to$Rust: 13 classes; C$\to$Go: 12;
+C$\to$Swift: 6, the argv-driven integer/memory core; C$\to$OCaml: 4, a GC'd
+exception-based target; C$\to$C++: 1, the C/C++-boundary shift class). A
+\textbf{6th pair, the safe$\to$safe Go$\to$Rust} cell described below, raises the
+total to \textbf{37 cells over 6 pairs}. On a host with the full
 toolchain,
-\textbf{all 36 cells confirm against real compilers}---no verdict is taken on
+\textbf{all 37 cells confirm against real compilers}---no verdict is taken on
 faith. Crucially, the matrix file contains \emph{no per-language branches}: it
 discovers pairs and oracles from the plugin registry, so adding a target
 language or a divergence class makes the corresponding cells appear
 automatically, and the soundness obligation is discharged uniformly.
+
+\paragraph{A safe$\to$safe pair: defined-but-different (Go$\to$Rust).} Every
+C-rooted cell exploits an asymmetry in which \emph{one} side (C) is undefined.
+The framework, however, is not tied to undefined behaviour at all---its real
+content is \emph{observable divergence between two language semantics}. To
+demonstrate this we add the first pair in which \emph{neither} side has any UB:
+Go$\to$Rust. The oracle's Z3 search rediscovers the \texttt{INT\_MIN/-1} signed
+overflow as the witness, but now \emph{both} languages \emph{define} it---and
+they define it \emph{differently}. Go specifies modular two's-complement
+arithmetic, so \texttt{INT\_MIN/-1} evaluates to \texttt{-2147483648} and the
+program exits $0$; Rust specifies that signed division overflow is a guaranteed
+\emph{panic}, so the faithful port aborts with exit $101$. Both outcomes are
+language-defined; the \emph{observable} behaviour (a value vs.\ a deterministic
+abort) differs---exactly the hazard a Go$\to$Rust transpiler would silently
+introduce. A new confirmation mode, \texttt{defined\_divergence}, captures this:
+it builds both ports, runs each \emph{twice} for determinism, and confirms iff
+\emph{both} return codes lie in their language's defined set \emph{and} the
+observable results differ (the remainder form \texttt{INT\_MIN\%-1} is handled
+distinctly---$0$ in Go, panic in Rust). The cell is gated on \emph{both}
+toolchains (\texttt{go} and \texttt{rustc}) rather than the C path, and confirms
+live on each. This single addition shows the oracle, the product-program
+construction, and the matrix contract all generalize verbatim from
+``C-UB vs.\ defined target'' to ``two defined languages that simply disagree.''
 
 \begin{table}[t]
 \centering
 \small
 \caption{Cross-pair regression matrix coverage. ``D'' = a symbolic divergence
 witness is found and (with toolchain) confirmed against real compilers; ``--'' =
-class not implemented for that pair. All 36 implemented cells confirm. The
+class not implemented for that pair. All 36 C-rooted cells confirm; a
+\textbf{37th cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
+\texttt{INT\_MIN/-1}: a value in Go, a panic in Rust)---is described in the text
+and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{37 cells over 6
+pairs}. The
 C$\to$C++ column carries the single C/C++-boundary class whose witness
 (\texttt{1 << 31}) is UB in C but defined in C++20; the C$\to$OCaml column
 carries the integer/memory core, witnessed against real \texttt{ocamlopt}

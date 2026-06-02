@@ -60,6 +60,8 @@ class DivergenceOracle(abc.ABC):
     #: "optimizer_exploited" — same C source yields different output under two
     #:                         conforming compilations (no sanitizer can trap it)
     #:                         while Rust is defined & deterministic.
+    #: "defined_divergence"  — two *safe* languages (e.g. Go and Rust) are each
+    #:                         fully defined on the input yet observably differ.
     confirmation_mode: str = "exploited"
     #: for "optimizer_exploited" oracles, the pair of C flag-sets whose
     #: disagreement evidences the divergence (e.g. FP contraction off vs fast).
@@ -99,6 +101,11 @@ class DivergenceOracle(abc.ABC):
                 rr = harness.confirm_optimizer_exploited(
                     ce.source_snippet, ce.target_snippet, argv, ce.divergence_class,
                     target_lang=self.target_lang)
+        elif self.confirmation_mode == "defined_divergence":
+            rr = harness.confirm_defined_divergence(
+                ce.source_snippet, self.source_lang,
+                ce.target_snippet, self.target_lang, argv,
+                ce.divergence_class)
         else:
             rr = harness.confirm_ub_divergence(
                 ce.source_snippet, ce.target_snippet, argv, ce.divergence_class,

@@ -338,8 +338,12 @@ python3 -m src.cli.main discover \
   equivalent function on none (15 function×pair verdicts, all correct)
 - a **5th target pair and multi-language oracles**: C→**OCaml** (a GC'd,
   exception-based port, witnessed live on real `ocamlopt`) joins
-  Rust/Go/Swift/C++ in the byte-reproducible matrix (**36 confirmed cells**);
-  an **N-language consistency oracle** (`consistency.py`) compiles one C source
+  Rust/Go/Swift/C++ in the byte-reproducible matrix; and a first
+  **safe→safe pair, Go→Rust** — *neither side has any UB* — catches the
+  **defined-but-different** hazard where `INT_MIN/-1` wraps to a value in Go
+  yet panics in Rust, confirmed by re-executing both real binaries
+  (**37 confirmed cells across 6 pairs**).
+  An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.
   Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a
   **target-pack conformance suite** (`pack_conformance.py`) mechanically holds

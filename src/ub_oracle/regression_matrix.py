@@ -144,15 +144,23 @@ def confirm_matrix(harness) -> Dict[str, Any]:
     status = harness.status
     cells: List[Dict[str, Any]] = []
     for oracle in _sorted_oracles():
+        src = oracle.source_lang
         tgt = oracle.target_lang
         entry: Dict[str, Any] = {
-            "source_lang": oracle.source_lang,
+            "source_lang": src,
             "target_lang": tgt,
             "divergence_class": oracle.divergence_class,
         }
-        if not status.full_for(tgt):
+        # A C-source pair needs C+UBSan+target; a non-C source pair (e.g.
+        # Go->Rust, confirmed by re-executing two defined programs) needs only
+        # the two language compilers.
+        if src == "c":
+            ok = status.full_for(tgt)
+        else:
+            ok = status.can_compile(src) and status.can_compile(tgt)
+        if not ok:
             entry.update(skipped=True,
-                         reason=f"toolchain not available for c->{tgt}")
+                         reason=f"toolchain not available for {src}->{tgt}")
             cells.append(entry)
             continue
         res = oracle.confirm(oracle.find_divergence(canonical_unit_for(oracle)),
