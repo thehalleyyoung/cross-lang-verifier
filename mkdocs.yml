@@ -22,6 +22,7 @@ nav:
   - Concepts:
       - Problem statement: problem_statement.md
       - Architecture: architecture.md
+      - Frontends & SPI: FRONTENDS.md
       - Target semantics: SEMANTICS.md
       - Shared IR contract: IR.md
       - Product-program oracle: PRODUCT_PROGRAM.md

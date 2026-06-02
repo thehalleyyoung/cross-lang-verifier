@@ -4770,3 +4770,40 @@ def test_vscode_extension_compiles_with_real_tsc():
     rep = _vsx.confirm_vscode_extension()
     assert rep.available and rep.ok, rep.detail
     assert rep.manifest_ok and rep.compiled and rep.entry_built
+
+
+from src.ub_oracle import frontends as _fe  # noqa: E402
+
+
+def test_frontend_spi_registers_three_and_protocol():
+    names = {f.name for f in _fe.FRONTENDS}
+    assert {"treesitter-c", "clang-ast-c", "rustc-mir-rust"} <= names
+    for f in _fe.FRONTENDS:
+        assert isinstance(f, _fe.Frontend)
+        assert isinstance(f.available(), bool)
+    assert {f.name for f in _fe.frontends_for("c")} == {"treesitter-c", "clang-ast-c"}
+    with pytest.raises(ValueError):
+        _fe.get_frontend("nope")
+
+
+@pytest.mark.skipif(not _fe.treesitter_available(), reason="tree-sitter not installed")
+def test_treesitter_frontend_extracts_functions():
+    mod = _fe.ingest_treesitter(
+        "static int add(int a, long b){return a+b;}\n"
+        "char *pick(const char *a, char *b, int w){return w?b:(char*)a;}\n")
+    assert mod is not None
+    assert set(mod.functions) == {"add", "pick"}
+    assert mod.functions["add"].arity == 2
+    assert mod.functions["add"].storage == "static"
+    assert [p.name for p in mod.functions["add"].params] == ["a", "b"]
+    assert mod.functions["pick"].arity == 3
+
+
+@pytest.mark.skipif(
+    not (_fe.treesitter_available() and __import__("os").path.exists(_fe.ingest_clang.__globals__["CLANG"])),
+    reason="need tree-sitter + clang to cross-validate")
+def test_treesitter_frontend_agrees_with_clang_ast():
+    rep = _fe.confirm_real_frontends()
+    assert rep.available and rep.ok, rep.detail
+    assert len(rep.agreements) == len(_fe._SAMPLES)
+    assert all(a.ok for a in rep.agreements)

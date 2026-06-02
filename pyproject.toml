@@ -32,6 +32,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7", "pytest-cov"]
+frontends = ["tree-sitter>=0.24,<0.26", "tree-sitter-c>=0.24,<0.25"]
+docs = ["mkdocs>=1.6"]
 
 [project.scripts]
 # The console script and a long alias matching the distribution name both point

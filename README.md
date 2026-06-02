@@ -352,6 +352,13 @@ python3 -m src.cli.main discover \
   shelling out to the proven `cross-lang-verify` CLI (no second implementation
   to drift). Its TypeScript compiles cleanly with the real `tsc` against the real
   `@types/vscode` typings — a machine-checked claim
+- **robust, real source frontends** behind a documented **frontend SPI**
+  (`frontends.py`, `docs/FRONTENDS.md`): a `Frontend` protocol with three
+  registered frontends — `treesitter-c` (a **tree-sitter** grammar parser, the
+  supported path for real C), `clang-ast-c`, and `rustc-mir-rust`. The
+  tree-sitter frontend is **cross-validated against the clang AST** (the
+  compiler's own ground truth): on real C the extracted function tables agree on
+  names, arities, parameter names and storage class — a machine-checked claim
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
