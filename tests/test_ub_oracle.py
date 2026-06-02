@@ -3953,3 +3953,47 @@ def test_seq_comment_string_stripper_is_safe():
     # the side-effect screen must not be confused by code in comments/strings.
     s = _eo._strip_comments_strings('int x; /* i++ */ char* s="a++b"; x=1;')
     assert "i++" not in s and "a++b" not in s
+
+
+# ---------------------------------------------------------------------------
+# Step 44 — known-bug / CVE corpus (real UB-rooted bug classes, proven).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import cve_corpus as _cve  # noqa: E402
+
+_full_rust = _TC.full_for("rust") if hasattr(_TC, "full_for") else False
+_full_go = _TC.full_for("go") if hasattr(_TC, "full_for") else False
+
+
+def test_cve_corpus_is_curated_and_cwe_tagged():
+    assert len(_cve.CORPUS) >= 5
+    for c in _cve.CORPUS:
+        assert c.cwe.startswith("CWE-") and c.targets and c.inputs
+    table = _cve.coverage_table()
+    assert all(set(r) >= {"cwe", "case", "title", "langs"} for r in table)
+
+
+@pytest.mark.skipif(not _full_rust, reason="C/UBSan/rust toolchain unavailable")
+def test_cve_corpus_catches_every_c_to_rust_bug():
+    rep = _cve.run_corpus(langs=("rust",))
+    applic = rep.applicable
+    assert applic, "no C->Rust cases ran"
+    for r in applic:
+        assert r.confirmed, f"{r.cwe} {r.case_id}: {r.reason}"
+
+
+@pytest.mark.skipif(not _full_go, reason="C/UBSan/go toolchain unavailable")
+def test_cve_corpus_catches_c_to_go_bugs():
+    rep = _cve.run_corpus(langs=("go",))
+    applic = rep.applicable
+    assert applic, "no C->Go cases ran"
+    for r in applic:
+        assert r.confirmed, f"{r.cwe} {r.case_id}: {r.reason}"
+
+
+@pytest.mark.skipif(not (_full_rust or _full_go),
+                    reason="no full toolchain for any target")
+def test_cve_corpus_confirmation_is_green():
+    c = _cve.confirm_corpus()
+    assert c.available and c.ok
+    assert c.report.confirmed_count == len(c.report.applicable)

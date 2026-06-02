@@ -238,6 +238,12 @@ python3 -m src.cli.main discover \
   (no target translation picking a concrete order can be proven equivalent to
   another legal C compilation); unspecified argument-evaluation order with side
   effects is documented as the sequencing soundness frontier
+- a **known-bug / CVE corpus** (`cve_corpus.py`): a curated "we catch real bugs"
+  table of UB-rooted weakness classes — division by zero (CWE-369), out-of-bounds
+  read (CWE-125), signed overflow (CWE-190), oversized shift (CWE-758), INT_MIN/-1
+  (CWE-682) — each translated to Rust *and* Go and **verified end-to-end** by
+  compiling and running both sides: C traps under the sanitizer while the target
+  is defined and deterministic. Every catch is executed, not asserted
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

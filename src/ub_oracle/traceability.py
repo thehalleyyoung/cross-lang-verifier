@@ -463,6 +463,23 @@ def _thm_eval_order_sound() -> bool:
     return bool(c.ok)
 
 
+def _thm_cve_corpus_catches() -> bool:
+    # The curated CWE-tagged corpus must be well-formed, and on any full toolchain
+    # every applicable (case, target) pair must confirm a real definedness
+    # divergence end-to-end. Absent a full toolchain, only the corpus shape is
+    # checkable (consistency-only).
+    from . import cve_corpus as cc
+    if len(cc.CORPUS) < 5:
+        return False
+    for c in cc.CORPUS:
+        if not c.cwe.startswith("CWE-") or not c.targets or not c.inputs:
+            return False
+    conf = cc.confirm_corpus()
+    if not conf.available:
+        return True
+    return conf.ok
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -882,6 +899,23 @@ CLAIMS: List[Claim] = [
         "ub_oracle.eval_order",
         ("detect_unsequenced", "decide", "confirm_sequencing", "UnsequencedReport"),
         theorem=_thm_eval_order_sound,
+        docs=("README.md",),
+    ),
+    claim(
+        "C31-cve-corpus",
+        "A curated 'we catch real bugs' corpus of UB-rooted weakness classes — each "
+        "tagged with its CWE — is verified end-to-end across language pairs. Every "
+        "entry pairs a C program that executes undefined behavior on a concrete "
+        "input (confirmed by the UBSan/bounds build trapping) with a faithful Rust "
+        "or Go translation that is fully defined and deterministic, and the "
+        "re-execution harness confirms the definedness divergence by actually "
+        "compiling and running both. Covered: division by zero (CWE-369), "
+        "out-of-bounds array read (CWE-125), signed integer overflow (CWE-190), "
+        "shift past bit-width (CWE-758) and INT_MIN/-1 (CWE-682), spanning C→Rust "
+        "and C→Go. Nothing is asserted — every catch is executed.",
+        "ub_oracle.cve_corpus",
+        ("run_corpus", "confirm_corpus", "coverage_table", "CORPUS", "CveCase"),
+        theorem=_thm_cve_corpus_catches,
         docs=("README.md",),
     ),
 ]
