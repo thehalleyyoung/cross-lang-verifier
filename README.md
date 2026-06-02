@@ -102,6 +102,13 @@ python3 -m src.cli.main discover \
   no-divergence, never asserts one) that also lets a unit declare a safe range
   so it isn't flagged for a divergence that range forbids; the same range is
   honored by the oracles' searches so the fast path and the SMT path always agree
+- a **counterexample-guided abstraction-refinement (CEGAR) loop** (`cegar.py`)
+  for the *path-sensitive* fragments the interval pre-pass cannot discharge: it
+  starts from the bare UB condition, and on every spurious model **learns one
+  path-condition (`assume`) at a time**, terminating either in a proof that no
+  guarded input is undefined or in a concrete witness — whose verdict is checked
+  against exact enumeration of the UB region and whose witnesses are confirmed
+  against the real C `-O0`/`-O2` builds
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**

@@ -2655,3 +2655,112 @@ def test_uninit_divergence_confirmed_against_real_compilers(target, unit_name):
     # the two C builds really printed different values:
     obs = out.counterexample.source_observed
     assert obs["A"] != obs["B"], obs
+
+
+# ── Step 73: counterexample-guided abstraction refinement ────────────────────
+from src.ub_oracle import cegar as _cegar  # noqa: E402
+
+
+def _cegar_queries():
+    """A spread of guarded fragments: some equivalent, some divergent, with and
+    without forced refinement."""
+    return {
+        # only INT_MAX (odd) overflows x+1, but the guard demands even ⟹ no UB.
+        "even_guard_prunes_add1":
+            _cegar.GuardedQuery("add", 1, 32, "x", (_cegar.even(),)),
+        # x-1 underflows only at INT_MIN (even); odd guard ⟹ no UB (width 64).
+        "odd_guard_prunes_sub1_w64":
+            _cegar.GuardedQuery("sub", 1, 64, "x", (_cegar.odd(),)),
+        # add 2 overflows {INT_MAX-1 (even), INT_MAX (odd)}; even guard keeps one.
+        "even_guard_keeps_witness":
+            _cegar.GuardedQuery("add", 2, 32, "x",
+                                (_cegar.even(), _cegar.at_least(0))),
+        # no guards at all ⟹ immediate witness, zero refinement.
+        "unguarded_add1":
+            _cegar.GuardedQuery("add", 1, 32),
+        # several guards, all satisfiable together with an overflowing input.
+        "multi_guard_divergent":
+            _cegar.GuardedQuery("add", 5, 32, "x",
+                                (_cegar.at_least(0), _cegar.multiple_of(1))),
+        # contradictory guards (<=10 yet must overflow at the top) ⟹ equivalent.
+        "contradictory_bound":
+            _cegar.GuardedQuery("add", 1, 32, "x", (_cegar.at_most(10),)),
+    }
+
+
+def test_cegar_agrees_with_brute_force_ground_truth():
+    """CEGAR's verdict must equal exact enumeration of the UB region on every
+    guarded fragment, and a divergent verdict's witness must really overflow and
+    satisfy every guard."""
+    for name, q in _cegar_queries().items():
+        res = _cegar.run_cegar(q)
+        bf = _cegar.brute_force_witness(q)
+        if res.verdict is _cegar.CegarVerdict.DIVERGENT:
+            assert bf is not None, f"{name}: CEGAR says divergent, brute force finds none"
+            assert res.witness is not None
+            assert _cegar._overflows_concretely(res.witness, q.op, q.const, q.width), name
+            assert all(p.holds_at(res.witness) for p in q.assumes), \
+                f"{name}: witness violates a guard"
+        else:
+            assert bf is None, f"{name}: CEGAR says equivalent, brute force found {bf}"
+
+
+def test_cegar_refinement_is_real_and_measured():
+    """The loop must actually *refine* on path-sensitive fragments the interval
+    domain cannot handle, and report honest statistics."""
+    q = _cegar.GuardedQuery("add", 1, 32, "x", (_cegar.even(),))
+    res = _cegar.run_cegar(q)
+    assert res.verdict is _cegar.CegarVerdict.EQUIVALENT
+    # it had to *learn* the even-guard (the coarse abstraction was too weak)…
+    assert res.refinements >= 1
+    assert res.learned_predicates == ["x % 2 == 0"]
+    # …and the solver-call count is refinements + the final discharging check.
+    assert res.solver_calls == res.refinements + 1
+    # the trace records the spurious model that drove the refinement.
+    assert any("refine" in line for line in res.trace)
+    assert any("UNSAT" in line for line in res.trace)
+
+
+def test_cegar_unguarded_query_needs_no_refinement():
+    res = _cegar.run_cegar(_cegar.GuardedQuery("add", 1, 32))
+    assert res.verdict is _cegar.CegarVerdict.DIVERGENT
+    assert res.refinements == 0
+    assert res.solver_calls == 1
+    assert res.witness == 2147483647  # INT_MAX is the sole overflowing input
+
+
+def test_cegar_loop_is_bounded_by_guard_count():
+    """At most one refinement per guard, plus the final check — never more."""
+    for q in _cegar_queries().values():
+        res = _cegar.run_cegar(q)
+        assert res.refinements <= len(q.assumes)
+        assert res.solver_calls <= len(q.assumes) + 1
+
+
+def test_cegar_is_deterministic():
+    q = _cegar.GuardedQuery("add", 2, 32, "x", (_cegar.even(), _cegar.at_least(0)))
+    a = _cegar.run_cegar(q)
+    b = _cegar.run_cegar(q)
+    assert (a.verdict, a.refinements, a.solver_calls, a.witness) == \
+           (b.verdict, b.refinements, b.solver_calls, b.witness)
+
+
+@_requires_toolchain
+def test_cegar_divergent_witness_confirmed_against_real_compilers():
+    """Close the loop: a CEGAR-discovered witness for a *guarded* fragment really
+    makes the compiled C ``-O0``/``-O2`` builds disagree while Rust is defined."""
+    q = _cegar.GuardedQuery("add", 2, 32, "x",
+                            (_cegar.even(), _cegar.at_least(0)))
+    res = _cegar.run_cegar(q)
+    assert res.verdict is _cegar.CegarVerdict.DIVERGENT
+    unit = _cegar.to_signed_overflow_unit(q, res.witness)
+    orc = get_oracle("signed_overflow")
+    out = orc.confirm(orc.find_divergence(unit), ReexecHarness(_TC))
+    rr = out.reexec
+    assert rr.available, rr.reason
+    assert rr.ub_reachable, "UBSan should trap on the CEGAR witness"
+    assert rr.ub_consequential, "O0 and O2 must disagree on the CEGAR witness"
+    assert rr.rust_defined, "Rust must stay defined"
+    assert rr.confirmed
+    # and the oracle really used the CEGAR witness (range was pinned to it).
+    assert out.counterexample.inputs["x"] == res.witness

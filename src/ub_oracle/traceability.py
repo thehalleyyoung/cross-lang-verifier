@@ -121,6 +121,25 @@ def _thm_uninit_definedness() -> bool:
             and u.uninitialized_read(initialized) is None)
 
 
+def _thm_cegar_sound_and_refines() -> bool:
+    # CEGAR must (a) match exact enumeration and (b) genuinely refine on a
+    # path-sensitive fragment the interval domain cannot discharge.
+    from . import cegar as c
+    equiv = c.GuardedQuery("add", 1, 32, "x", (c.even(),))
+    re = c.run_cegar(equiv)
+    sound_equiv = (re.verdict is c.CegarVerdict.EQUIVALENT
+                   and c.brute_force_witness(equiv) is None
+                   and re.refinements >= 1)
+    witn = c.GuardedQuery("add", 2, 32, "x", (c.even(), c.at_least(0)))
+    rw = c.run_cegar(witn)
+    bf = c.brute_force_witness(witn)
+    sound_div = (rw.verdict is c.CegarVerdict.DIVERGENT
+                 and bf is not None
+                 and rw.witness is not None
+                 and all(p.holds_at(rw.witness) for p in witn.assumes))
+    return bool(sound_equiv and sound_div)
+
+
 def claim(*args, **kwargs) -> Claim:  # small constructor alias
     return Claim(*args, **kwargs)
 
@@ -232,6 +251,18 @@ CLAIMS: List[Claim] = [
         ("analyze_definedness", "uninitialized_read", "UninitializedReadOracle"),
         theorem=_thm_uninit_definedness,
         docs=("README.md", "CAPABILITIES.md"),
+    ),
+    claim(
+        "C13-cegar-refinement",
+        "Guarded fragments the non-relational interval pre-pass cannot discharge "
+        "are decided by a lazy predicate-abstraction CEGAR loop: it starts from "
+        "the UB condition with no guards, refines one path-condition at a time on "
+        "each spurious model, and is sound (its verdict matches exact enumeration "
+        "of the UB region) while genuinely refining on path-sensitive fragments.",
+        "ub_oracle.cegar",
+        ("run_cegar", "brute_force_witness", "GuardedQuery"),
+        theorem=_thm_cegar_sound_and_refines,
+        docs=("README.md",),
     ),
 ]
 

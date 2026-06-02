@@ -25,6 +25,7 @@ Each row whose **Executable check** is ✓ has a fast, toolchain-free theorem co
 | `C10-ub-catalogue` | The supported undefined-behavior divergence classes are enumerated in a single catalogue. | `src/ub_oracle/catalogue.py` | `CATALOGUE`, `DivergenceClass`, `c_ub_classes` | ✓ | `README.md`, `CAPABILITIES.md` |
 | `C11-redteam` | An internal red-team actively tries to make the oracle call a truly divergent pair equivalent, on every supported pair. | `src/ub_oracle/redteam.py` | `build_cases`, `run_redteam`, `RedTeamReport` | — | `README.md` |
 | `C12-uninit-definedness` | The uninitialized-read class is decided by a real three-point definedness-lattice dataflow analysis that flags reads of slots not written on all paths and never flags a fully-initialized read. | `src/ub_oracle/oracles/uninit_read.py` | `analyze_definedness`, `uninitialized_read`, `UninitializedReadOracle` | ✓ | `README.md`, `CAPABILITIES.md` |
+| `C13-cegar-refinement` | Guarded fragments the non-relational interval pre-pass cannot discharge are decided by a lazy predicate-abstraction CEGAR loop: it starts from the UB condition with no guards, refines one path-condition at a time on each spurious model, and is sound (its verdict matches exact enumeration of the UB region) while genuinely refining on path-sensitive fragments. | `src/ub_oracle/cegar.py` | `run_cegar`, `brute_force_witness`, `GuardedQuery` | ✓ | `README.md` |
 
 ## How to extend
 
