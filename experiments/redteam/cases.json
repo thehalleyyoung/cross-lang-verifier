@@ -1,0 +1,513 @@
+{
+  "cases": [
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->go:array_oob#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->go:array_oob#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->go:div_by_zero#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->go:div_by_zero#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->go:div_by_zero#2",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->go:div_by_zero#3",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->go:intmin_div_neg1#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->go:intmin_div_neg1#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->go:intmin_div_neg1#2",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->go:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->go:shift_oob#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->go:shift_oob#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->go:shift_oob#2",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->go:shift_oob#3",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->go:signed_overflow#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->go:signed_overflow#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->go:signed_overflow#2",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->go:signed_overflow#3",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->go:signed_overflow#4",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->go:signed_overflow#5",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->rust:array_oob#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->rust:array_oob#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->rust:div_by_zero#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->rust:div_by_zero#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->rust:div_by_zero#2",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->rust:div_by_zero#3",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "fp_contraction",
+      "label": "c->rust:fp_contraction#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->rust:intmin_div_neg1#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->rust:intmin_div_neg1#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->rust:intmin_div_neg1#2",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->rust:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->rust:shift_oob#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->rust:shift_oob#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->rust:shift_oob#2",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->rust:shift_oob#3",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->rust:signed_overflow#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->rust:signed_overflow#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->rust:signed_overflow#2",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->rust:signed_overflow#3",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->rust:signed_overflow#4",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->rust:signed_overflow#5",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "strict_aliasing",
+      "label": "c->rust:strict_aliasing#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "strict_aliasing",
+      "label": "c->rust:strict_aliasing#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->swift:array_oob#0",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "array_oob",
+      "label": "c->swift:array_oob#1",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->swift:div_by_zero#0",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->swift:div_by_zero#1",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->swift:div_by_zero#2",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "div_by_zero",
+      "label": "c->swift:div_by_zero#3",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->swift:intmin_div_neg1#0",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->swift:intmin_div_neg1#1",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->swift:intmin_div_neg1#2",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->swift:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->swift:shift_oob#0",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->swift:shift_oob#1",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->swift:shift_oob#2",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "shift_oob",
+      "label": "c->swift:shift_oob#3",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->swift:signed_overflow#0",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->swift:signed_overflow#1",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->swift:signed_overflow#2",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->swift:signed_overflow#3",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->swift:signed_overflow#4",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "signed_overflow",
+      "label": "c->swift:signed_overflow#5",
+      "source_lang": "c",
+      "target_lang": "swift",
+      "verdict": "candidate"
+    }
+  ],
+  "n_breaches": 0,
+  "n_cases": 63,
+  "n_confirmed_divergent": 0,
+  "sound": true,
+  "toolchain_full": false
+}

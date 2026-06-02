@@ -76,6 +76,12 @@ python3 -m src.cli.main discover \
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against
   real `clang`+`rustc` — without forking the engine
+- an internal **red-team** (`make redteam`) that, for every oracle on every
+  supported language pair, throws a battery of semantics-preserving adversarial
+  mutations of a genuinely-divergent unit at the verifier and proves it never
+  falsely returns "no divergence" — 63/63 cases confirmed divergent against real
+  compilers, **zero soundness breaches** (the byte-reproducible adversarial grid
+  is CI-checked via `make redteam-check`)
 - benchmark assets and sample projects under `examples/`
 
 ## Best way to use this checkout

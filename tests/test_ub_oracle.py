@@ -1870,3 +1870,62 @@ def test_external_plugin_confirms_against_real_compilers(_isolated_registry):
     assert rr.ub_reachable and rr.rust_defined
     # the defined Rust outcome is the saturated i32::MAX.
     assert rr.rust_run.stdout.strip() == "2147483647"
+
+
+# ── internal red-team: no false "looks equivalent" (step 84) ─────────────────
+
+from src.ub_oracle import redteam as _redteam
+from src.ub_oracle.reexec import ToolchainStatus as _ToolchainStatus
+
+_NO_TC = _ToolchainStatus(cc=None, ubsan=False, targets=())
+
+
+def test_redteam_covers_every_oracle_and_pair():
+    cases = _redteam.build_cases()
+    assert len(cases) >= 60
+    pairs = {(c.source_lang, c.target_lang) for c in cases}
+    assert ("c", "rust") in pairs and ("c", "go") in pairs and ("c", "swift") in pairs
+    # every supported integer class gets its multi-width / multi-const mutations.
+    classes = {c.divergence_class for c in cases}
+    for cls in ("signed_overflow", "shift_oob", "div_by_zero", "intmin_div_neg1",
+                "array_oob"):
+        assert cls in classes
+    # the signed-overflow adversary varies the constant (not just INT_MAX).
+    so_consts = {c.unit.get("const") for c in cases
+                 if c.divergence_class == "signed_overflow"}
+    assert len(so_consts) >= 2
+
+
+def test_redteam_grid_is_byte_reproducible():
+    g1 = _redteam.run_redteam(status=_NO_TC, confirm=False).to_dict()
+    g2 = _redteam.run_redteam(status=_NO_TC, confirm=False).to_dict()
+    assert json.dumps(g1, sort_keys=True) == json.dumps(g2, sort_keys=True)
+
+
+def test_redteam_symbolic_path_makes_no_equivalence_claim():
+    # With no toolchain every genuinely-divergent case is a sound CANDIDATE —
+    # never NO_DIVERGENCE_FOUND (the one verdict that would look "equivalent").
+    report = _redteam.run_redteam(status=_NO_TC, confirm=False)
+    assert report.n_cases >= 60
+    assert report.sound and not report.breaches
+    assert all(c.verdict == "candidate" for c in report.cases)
+
+
+def test_redteam_never_reports_no_divergence_for_divergent_units():
+    # Direct property check against the verifier's forbidden verdict.
+    report = _redteam.run_redteam(status=_NO_TC, confirm=False)
+    assert all(c.verdict != "no_divergence_found" for c in report.cases)
+
+
+@_requires_toolchain
+def test_redteam_confirms_all_adversarial_cases_against_real_compilers():
+    # The full adversary: every semantics-preserving divergent mutation, across
+    # every supported pair, must be CONFIRMED divergent by real re-execution and
+    # leave ZERO soundness breaches. This is the executable form of the
+    # sound-for-divergence guarantee.
+    report = _redteam.run_redteam(harness=ReexecHarness(_TC), status=_TC)
+    assert report.toolchain_full
+    assert report.n_cases >= 60
+    assert not report.breaches, [b.label for b in report.breaches]
+    assert report.n_confirmed_divergent == report.n_cases
+    assert report.sound
