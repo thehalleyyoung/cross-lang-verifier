@@ -678,7 +678,11 @@ marketing mock-up.  The longer README-linked video is generated the same way:
 \texttt{c2rust} \texttt{nginx\_rate} extraction unit on a CWE-369-class witness
 with \texttt{clang}/UBSan and \texttt{rustc}, then confirms the C$\to$Go teaser
 case through the same harness; if either replay fails, the MP4 and poster are not
-rendered.
+rendered.  A separate launch-readiness gate
+(\texttt{scripts/validate\_launch\_readiness.py}, exposed as
+\texttt{make launch-check}) re-runs the same compiler-backed demo, validates the
+SARIF finding, and checks that the outreach, contribution, issue-template, and
+talk/blog artifacts cite only reproducible repository commands.
 
 \paragraph{Parser frontends.}
 Each language has two parsing backends: tree-sitter-c~0.24 and
@@ -1867,6 +1871,40 @@ development.  Future work includes interprocedural verification,
 struct/enum lowering, and integration with C2Rust for automated
 post-migration verification.
 
+
+%% ======================================================================
+\appendix
+\section{Proof Obligations Referenced by the Soundness Sketch}\label{app:proofs}
+%% ======================================================================
+
+This appendix records the four obligations used in the main proof sketch.  The
+repository maps these obligations to the executable product-program checks and
+the mechanized soundness files cited in Section~\ref{sec:soundness}; the
+statements here are intentionally compact so the paper body can focus on the
+tool and evaluation.
+
+\begin{lemma}[Bitvector encoding faithfulness]\label{lem:bv-faithful}
+For every expression in the handled integer fragment, the QF\_BV encoding
+evaluates to the same width-truncated value as the operational source or target
+semantics whenever the source-side well-definedness predicate holds.
+\end{lemma}
+
+\begin{lemma}[Well-definedness completeness]\label{lem:wd-complete}
+For the handled C undefined-behavior classes, the SMT well-definedness predicate
+is true exactly on executions that avoid the corresponding C11 UB precondition.
+\end{lemma}
+
+\begin{lemma}[$\sigma$-bridge correctness]\label{lem:sigma-correct}
+Every $\sigma$-bridge inserted at a source/target semantic boundary preserves the
+recorded target value while exposing any source-side precondition violation as a
+candidate divergence witness.
+\end{lemma}
+
+\begin{lemma}[Variable isolation]\label{lem:var-isolation}
+The product program shares only symbolic inputs; all source-local and
+target-local temporaries are alpha-renamed into disjoint namespaces before SMT
+encoding.
+\end{lemma}
 
 %% ======================================================================
 %% BIBLIOGRAPHY

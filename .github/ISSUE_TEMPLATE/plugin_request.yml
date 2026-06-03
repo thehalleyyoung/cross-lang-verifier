@@ -1,0 +1,41 @@
+name: Oracle or frontend plugin request
+description: Propose a new divergence class, frontend, or target-semantics pack.
+title: "[plugin] "
+labels: ["plugin", "needs-design"]
+body:
+  - type: input
+    id: surface
+    attributes:
+      label: Plugin surface
+      description: Divergence oracle, frontend, target semantics pack, or re-execution harness.
+      placeholder: divergence oracle
+    validations:
+      required: true
+  - type: textarea
+    id: semantics
+    attributes:
+      label: Source and target semantics
+      description: Name the exact source rule and target rule that can diverge.
+    validations:
+      required: true
+  - type: textarea
+    id: witness
+    attributes:
+      label: Positive witness
+      description: Provide a concrete input/program that should be reported.
+    validations:
+      required: true
+  - type: textarea
+    id: control
+    attributes:
+      label: Safe control
+      description: Provide a concrete input/program that should not be reported.
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Soundness hook
+      description: Point to a theorem, existing compendium row, or new statement needed for the soundness gate.
+    validations:
+      required: true

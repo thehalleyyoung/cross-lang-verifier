@@ -169,6 +169,9 @@ python3 -m src.cli.main discover \
   proving a third party can add a brand-new divergence class — confirmed against
   real `clang`+`rustc` — without forking the engine; `formal/SPIContract.lean`
   also Lake-checks the plugin/target-pack obligations as Lean typeclasses
+- a launch/community packet (`docs/launch.md`, `make launch-check`) that ties
+  public claims, outreach, blog/talk material, and contributor templates to the
+  same live compiler-backed README demo instead of hand-written marketing numbers
 - an internal **red-team** (`make redteam`) that, for every oracle on every
   supported language pair, throws a battery of semantics-preserving adversarial
   mutations of a genuinely-divergent unit at the verifier and proves it never

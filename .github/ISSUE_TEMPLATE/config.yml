@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Launch and community packet
+    url: https://github.com/thehalleyyoung/cross-lang-verifier/blob/main/docs/launch.md
+    about: Use the reproducible public-launch and outreach packet before posting claims.
