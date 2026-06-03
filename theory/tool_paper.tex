@@ -173,9 +173,16 @@ the exact \texttt{clang}/\texttt{rustc}/\texttt{go} version fingerprint and reje
 replay under a drifted toolchain, a deterministic process-pool harness whose
 merged hash is independent of worker scheduling, and a sharded-reproducibility
 proof whose per-shard canonical bytes repeat and whose concatenated shard verdict
-hash equals the unsharded run, plus a supervised peak-RSS cap whose proof rejects
-resource exhaustion and requires the bounded verdict-layer hash to match the
-unbounded run.  This includes a
+hash equals the unsharded run.  A new flaky-toolchain detector reruns the same
+items and hashes the fuller compiler/runtime evidence layer, quarantining any
+item whose output evidence changes even if its coarse verdict does not; a
+distributed manifest pins per-shard item identities for cross-machine farming and
+rejects missing, duplicate, or drifted shard results before merging; and a
+result-store v2 schema separates the stable verdict hash from the
+environment-bound store hash so legacy artifacts migrate without weakening the
+reproducibility lemma.  This sits alongside a supervised peak-RSS cap whose proof
+rejects resource exhaustion and requires the bounded verdict-layer hash to match
+the unbounded run.  The scale artifact includes a
 migration-scale corpus of \textbf{60{,}000}
 all-distinct C$\to$\{Rust,Go\} programs totaling \textbf{1{,}044{,}000 LOC}:
 the census proves every program hash unique and the labels balanced within
@@ -1074,6 +1081,21 @@ repeats the shards to prove byte stability, and globally re-canonicalizes the
 concatenated shard verdicts; \texttt{make sharded-repro-check} requires that hash
 to equal the unsharded content hash on schedule-adversarial tests and on a real
 C/Rust compiler sample.
+Step~148--154 harden this into a distributed evidence pipeline rather than a
+single-machine proof.  \texttt{flaky\_toolchain.py} reruns the same items and
+compares both the verdict hash and a fuller evidence hash over UB-trap flags,
+C output, target output, and compiler/runtime detail; items whose evidence changes
+are quarantined with per-run hashes.  \texttt{distributed\_manifest.py} emits a
+content-addressed manifest whose shard entries pin item keys, source/target
+content hashes, and input hashes, then validates remote shard result documents
+before merging; tampered identities, duplicate shards, missing shards, or foreign
+manifest hashes fail before a paper number can be computed.  \texttt{result\_store.py}
+defines schema v2: \texttt{hashes.verdict\_hash} remains the timing- and
+metadata-independent reproducibility lemma, while \texttt{hashes.store\_hash}
+also binds the artifact kind, producer, corpus hash, and toolchain fingerprint.
+The fast \texttt{make repro-hardening-check} target covers the sharded proof, the
+flaky-evidence quarantine, distributed merge, and v1$\to$v2 result-store
+migration tests.
 The memory-bounded proof uses the same discipline for resource control: the
 README demo's divergent signed-overflow witness and safe control replay under a
 4096\,MiB supervised RSS cap with the same verdict-layer hash as the unbounded

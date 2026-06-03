@@ -134,6 +134,25 @@ from .memory_bound import (
     MemoryBoundProof,
     prove_memory_bounded_equivalence,
 )
+from .flaky_toolchain import (
+    FlakyToolchainReport,
+    detect_flaky_toolchain,
+)
+from .distributed_manifest import (
+    DistributedManifest,
+    DistributedManifestProof,
+    create_manifest,
+    run_manifest_shard,
+    merge_shard_results,
+    confirm_distributed_manifest,
+)
+from .result_store import (
+    ReproducibilityLemma,
+    build_result_store_doc,
+    validate_result_store_doc,
+    migrate_scale_measure_v1,
+    prove_verdict_hash_stability,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -224,4 +243,17 @@ __all__ = [
     "confirm_parallel_determinism",
     "MemoryBoundProof",
     "prove_memory_bounded_equivalence",
+    "FlakyToolchainReport",
+    "detect_flaky_toolchain",
+    "DistributedManifest",
+    "DistributedManifestProof",
+    "create_manifest",
+    "run_manifest_shard",
+    "merge_shard_results",
+    "confirm_distributed_manifest",
+    "ReproducibilityLemma",
+    "build_result_store_doc",
+    "validate_result_store_doc",
+    "migrate_scale_measure_v1",
+    "prove_verdict_hash_stability",
 ]

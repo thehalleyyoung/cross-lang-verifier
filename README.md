@@ -135,10 +135,11 @@ python3 -m src.cli.main discover \
   cached verdicts replay the same certificate-bearing verdict layer
 - compiler-backed experiment artifacts pin exact `clang`/`rustc`/`go` version
   fingerprints and their replay checks fail fast on any toolchain drift
-- deterministic parallel and sharded ground-truth harnesses whose content-hashed
-  verdict layer is independent of worker scheduling and corpus partitioning;
-  `make sharded-repro-check` proves byte-stable shard hashes merge to the
-  whole-run hash
+- deterministic parallel, sharded, and distributed-manifest ground-truth
+  harnesses whose content-hashed verdict layer is independent of worker
+  scheduling, corpus partitioning, and machine farming; `make
+  repro-hardening-check` also quarantines flaky compiler/runtime evidence and
+  validates the result-store v2 reproducibility lemma
 - a supervised peak-RSS cap (`--max-rss-mb`, `make memory-bound-check`) that bounds
   real compiler/program subprocesses and proves the capped verdict layer matches
   the unbounded run

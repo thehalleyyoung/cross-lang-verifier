@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check demo-video
 
 help:
 	@echo "Targets:"
@@ -24,6 +24,9 @@ help:
 	@echo "  perf-check        assert the perf grid reproduces and latency budgets hold"
 	@echo "  memory-bound-check prove bounded/unbounded verdict equivalence"
 	@echo "  sharded-repro-check prove shard hashes merge to the whole-run verdict hash"
+	@echo "  flaky-toolchain-check quarantine unstable compiler/runtime evidence"
+	@echo "  distributed-manifest-check prove distributed shard manifests merge deterministically"
+	@echo "  result-store-check validate result-store v2 migration and reproducibility lemma"
 	@echo "  redteam           run the internal red-team against real compilers (study)"
 	@echo "  redteam-check     assert the red-team adversarial grid regenerates byte-identically"
 	@echo "  c2rust-corpus     regenerate the Tier-1 c2rust-output corpus artifacts"
@@ -36,7 +39,7 @@ help:
 	@echo "  coverage-check    enforce the coverage ratchet floor (slow, ~4 min)"
 	@echo "  verified-check    build the Lean boundary proof and smoke-test the checker"
 	@echo "  soundness-check   enforce one soundness statement per registered oracle"
-	@echo "  ci                guard + reproduce-check + matrix-check + cex-quality-check + perf-check + redteam-check + verified-check + soundness-check + test-ub"
+	@echo "  ci                guard + reproduce-check + matrix-check + cex-quality-check + perf-check + repro-hardening-check + redteam-check + verified-check + soundness-check + test-ub"
 
 reproduce:
 	$(PYTHON) -m experiments.ub_divergence.run
@@ -82,6 +85,17 @@ memory-bound-check:
 
 sharded-repro-check:
 	$(PYTHON) -m pytest tests/test_sharded_repro.py -q
+
+flaky-toolchain-check:
+	$(PYTHON) -m pytest tests/test_flaky_toolchain.py -q
+
+distributed-manifest-check:
+	$(PYTHON) -m pytest tests/test_distributed_manifest.py -q
+
+result-store-check:
+	$(PYTHON) -m pytest tests/test_result_store.py -q
+
+repro-hardening-check: sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check
 
 redteam:
 	$(PYTHON) -m experiments.redteam.run --attack --table
@@ -130,5 +144,5 @@ green-check:
 large-scale:
 	PYTHONPATH=src $(PYTHON) -m ub_oracle.large_scale_study
 
-ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check sharded-repro-check redteam-check verified-check soundness-check test-ub
+ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check repro-hardening-check redteam-check verified-check soundness-check test-ub
 	@echo "ci: PASSED"
