@@ -173,9 +173,10 @@ python3 -m src.cli.main discover \
   responsible, compiler-confirmed extraction-unit findings lane
   (`make real-bug-check`) plus a frozen bug-regression corpus
   (`make bug-regression-check`) that keeps upstream-defect claims gated on source audit
-- a generated **corpus datasheet** (`docs/corpus_datasheet.md`, `make
-  corpus-datasheet-check`) covering 13 corpus and benchmark surfaces with
-  provenance, balance, limitations, artifact hashes, and validation commands
+- a generated **corpus datasheet** plus a **120-case public leaderboard**
+  (`docs/corpus_datasheet.md`, `docs/leaderboard.md`, `make leaderboard-check`)
+  with source/target programs, label-omitted submission scoring, provenance,
+  limitations, artifact hashes, and validation commands
 - a scheduled **continuous corpus CI** monitor (`make continuous-corpus-ci`) that
   re-runs every datasheet validation command nightly, fails on drift/regression,
   and uploads the untracked runtime evidence

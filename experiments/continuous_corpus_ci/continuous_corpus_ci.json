@@ -65,6 +65,14 @@
       "timeout_seconds": 900
     },
     {
+      "command": "make leaderboard-check",
+      "command_id": "91f162595eac7d61",
+      "corpus_ids": [
+        "public-leaderboard"
+      ],
+      "timeout_seconds": 900
+    },
+    {
       "command": "make llm-scale-check",
       "command_id": "0fb30fa7062258be",
       "corpus_ids": [
@@ -106,8 +114,8 @@
       "timeout_seconds": 900
     }
   ],
-  "n_commands": 13,
-  "n_corpora": 13,
+  "n_commands": 14,
+  "n_corpora": 14,
   "purpose": "Nightly re-verification of every corpus surface in the generated datasheet. Each command is an existing corpus check whose nonzero exit is treated as a drift/regression alert and uploaded with an ephemeral runtime report.",
   "records": [
     {
@@ -321,6 +329,23 @@
       ]
     },
     {
+      "content_hash": "8763676749217e9bdb2fe9409f206b34788402680608181335e3e0dbca65436a",
+      "corpus_id": "public-leaderboard",
+      "label_balance": {
+        "divergent": 60,
+        "equivalent": 60
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust"
+      ],
+      "population_size": 120,
+      "unit": "leaderboard case",
+      "validation_commands": [
+        "make leaderboard-check"
+      ]
+    },
+    {
       "content_hash": "30227538c516d5a9a769b826",
       "corpus_id": "responsible-findings",
       "label_balance": {
@@ -337,7 +362,7 @@
     }
   ],
   "schema": "continuous-corpus-ci/v1",
-  "source_datasheet_hash": "1a0348fe24d9f08f95e00974bac8680d3c572dd8db1ef0ccf4845199eda1e851",
+  "source_datasheet_hash": "9b194f9768ef8c60b74df3310c80e1f63d75c3f9cfd4cdd0203655b0c287fb5f",
   "source_datasheet_schema": "corpus-datasheet/v1",
-  "verdict_layer_hash": "013ff7f9bd90a5628678a1ae37837aceccec43f23333b0892de9ff14d1333870"
+  "verdict_layer_hash": "744f4442d31466c988ee2be587274ac6f3baf39e7011f4a513c683d7ca50424f"
 }

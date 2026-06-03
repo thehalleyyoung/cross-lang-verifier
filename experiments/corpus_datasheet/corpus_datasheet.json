@@ -10,11 +10,12 @@
     "machine-translated corpus": 1,
     "multi-pair corpus": 1,
     "negative corpus": 1,
+    "open benchmark leaderboard": 1,
     "real-port extraction corpus": 1,
     "regression corpus": 1,
     "weakness replay corpus": 1
   },
-  "content_hash": "1a0348fe24d9f08f95e00974bac8680d3c572dd8db1ef0ccf4845199eda1e851",
+  "content_hash": "9b194f9768ef8c60b74df3310c80e1f63d75c3f9cfd4cdd0203655b0c287fb5f",
   "divergence_classes": [
     "array_oob",
     "div_by_zero",
@@ -33,6 +34,7 @@
     "safe_add_const",
     "safe_control",
     "safe_div",
+    "safe_index",
     "safe_mod",
     "safe_mul",
     "safe_rem",
@@ -52,7 +54,7 @@
     "c->swift",
     "rust->go"
   ],
-  "n_records": 13,
+  "n_records": 14,
   "records": [
     {
       "artifact_paths": [
@@ -525,6 +527,51 @@
       "unit": "true-equivalence port",
       "validation_commands": [
         "make negative-corpus-check"
+      ]
+    },
+    {
+      "artifact_paths": [
+        "experiments/leaderboard/public_cases.json",
+        "experiments/leaderboard/answer_key.json",
+        "experiments/leaderboard/sample_submission.json",
+        "docs/leaderboard.md"
+      ],
+      "construction": "Public cases omit labels and include runnable source plus argv inputs; the frozen answer key enables reproducible auto-scoring and can be kept server-side by a hosted leaderboard.",
+      "content_hash": "8763676749217e9bdb2fe9409f206b34788402680608181335e3e0dbca65436a",
+      "corpus_id": "public-leaderboard",
+      "divergence_classes": [
+        "div_by_zero",
+        "oob_read",
+        "oversized_shift",
+        "safe_add",
+        "safe_index",
+        "safe_mod",
+        "safe_mul",
+        "safe_shift",
+        "signed_overflow"
+      ],
+      "kind": "open benchmark leaderboard",
+      "label_balance": {
+        "divergent": 60,
+        "equivalent": 60
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust"
+      ],
+      "limitations": [
+        "The committed answer key is intentionally open for artifact reproducibility and is not an anti-cheat secret in a source checkout.",
+        "The benchmark uses executable extraction programs rather than full upstream repositories."
+      ],
+      "notes": [],
+      "population_size": 120,
+      "provenance": "Deterministic held-back split from the sanitizer-backed Step-45 ground-truth corpus across C-to-Rust and C-to-Go programs.",
+      "real_code_evidence": "The focused gate proves artifact freshness and scorer edge cases; when clang/UBSan plus a target compiler are available, a seeded sample is re-labeled by real compiler execution.",
+      "source_module": "ub_oracle.leaderboard",
+      "title": "Public submission leaderboard split",
+      "unit": "leaderboard case",
+      "validation_commands": [
+        "make leaderboard-check"
       ]
     },
     {

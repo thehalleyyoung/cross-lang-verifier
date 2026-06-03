@@ -1,0 +1,491 @@
+{
+  "benchmark_id": "xlev-semrec-public-leaderboard-2026-06",
+  "content_hash": "39e2109b4b88d79c122a925fac0c209b0964f95ab5f55813e53a2ef70cf43ba1",
+  "prediction_semantics": "Each prediction is one of divergent, equivalent, or abstain. Missing cases are scored as abstain.",
+  "predictions": [
+    {
+      "case_id": "lb-001",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-002",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-003",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-004",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-005",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-006",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-007",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-008",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-009",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-010",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-011",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-012",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-013",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-014",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-015",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-016",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-017",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-018",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-019",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-020",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-021",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-022",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-023",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-024",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-025",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-026",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-027",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-028",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-029",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-030",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-031",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-032",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-033",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-034",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-035",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-036",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-037",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-038",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-039",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-040",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-041",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-042",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-043",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-044",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-045",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-046",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-047",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-048",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-049",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-050",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-051",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-052",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-053",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-054",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-055",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-056",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-057",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-058",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-059",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-060",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-061",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-062",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-063",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-064",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-065",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-066",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-067",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-068",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-069",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-070",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-071",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-072",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-073",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-074",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-075",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-076",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-077",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-078",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-079",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-080",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-081",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-082",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-083",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-084",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-085",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-086",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-087",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-088",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-089",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-090",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-091",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-092",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-093",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-094",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-095",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-096",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-097",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-098",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-099",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-100",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-101",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-102",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-103",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-104",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-105",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-106",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-107",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-108",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-109",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-110",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-111",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-112",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-113",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-114",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-115",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-116",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-117",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-118",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-119",
+      "prediction": "abstain"
+    },
+    {
+      "case_id": "lb-120",
+      "prediction": "abstain"
+    }
+  ],
+  "schema": "leaderboard-submission/v1",
+  "submission_id": "sample-all-abstain",
+  "tool": "example-abstaining-baseline",
+  "tool_version": "0"
+}

@@ -194,10 +194,13 @@ compiles a from-scratch weakness-class witness, proves the C/UBSan side traps on
 the CVE-class input, checks a safe negative input, and verifies that the target
 has one language-defined outcome. The corpus is explicitly scoped as
 weakness-class replay rather than vendored third-party vulnerable source. The
-artifact now includes a generated corpus datasheet:
-\texttt{make corpus-datasheet-check} verifies a 13-record
-\texttt{docs/corpus\_datasheet.md} / JSON manifest that covers every persistent
-corpus or corpus-backed benchmark surface, records provenance, pair/class/label
+artifact now includes a public leaderboard and generated corpus datasheet:
+\texttt{make leaderboard-check} verifies a \textbf{120-case} C$\to$\{Rust,Go\}
+submission split with source/target programs, argv inputs, a frozen server-side
+answer-key format, edge-case scorer tests, and a seeded real-compiler label
+sample; \texttt{make corpus-datasheet-check} verifies the resulting 14-record
+\texttt{docs/corpus\_datasheet.md} / JSON manifest covering every persistent
+corpus or corpus-backed benchmark surface, with provenance, pair/class/label
 balance, validation commands, limitations, and artifact hashes, and explicitly
 marks same-subject benchmark rows so they are not double-counted as independent
 populations.  A scheduled continuous-corpus CI plan
@@ -1465,8 +1468,20 @@ Manifest hash prefix & \texttt{e79987d9d9c2} \\
 \end{table}
 
 \paragraph{Generated corpus datasheet.}
-Step~166 adds a datasheet layer over the evaluation populations rather than a new
-headline number.  The generator
+The artifact now exposes the evaluation suite as a submission surface as well as
+a paper table.  The public leaderboard
+(\texttt{src/ub\_oracle/leaderboard.py}) deterministically selects 120 executable
+C$\to$\{Rust,Go\} cases from the sanitizer-backed ground-truth corpus, balances
+them by pair and label (60 divergent, 60 equivalent), publishes source/target
+programs and argv inputs without labels, and scores submissions against a frozen
+answer key using a toolchain-free JSON scorer.  The committed key is intentionally
+open for artifact reproducibility; a hosted leaderboard can keep the same key
+server-side.  A separate live check recompiles a seeded sample with real
+\texttt{clang}/UBSan plus the available target compiler and requires the observed
+label to match the key.
+
+The generated corpus datasheet adds a layer over the evaluation populations rather
+than another headline number.  The generator
 (\texttt{src/ub\_oracle/corpus\_datasheet.py}) reads the live corpus APIs and
 emits both a JSON manifest
 (\texttt{experiments/corpus\_datasheet/corpus\_datasheet.json}) and a human page
@@ -1482,7 +1497,7 @@ checks the live counts against the owning corpus modules.
 \centering
 \small
 \caption{Generated corpus datasheet summary. The manifest hash prefix is
-\texttt{1a0348fe24d9}; \texttt{make corpus-datasheet-check} verifies all rows
+\texttt{9b194f9768ef}; \texttt{make corpus-datasheet-check} verifies all rows
 against the live corpus modules and committed artifacts.}
 \label{tab:corpus-datasheet}
 \begin{tabularx}{\linewidth}{@{}lrlX@{}}
@@ -1492,6 +1507,7 @@ Corpus surface & Population & Unit & Role \\
 \texttt{large-scale-generated} & 60{,}000 & pairs & 1M-LOC stress population \\
 \texttt{negative-true-equivalence} & 1{,}000 & ports & false-positive bound \\
 \texttt{llm-translations} & 216 & translations & frozen current-LLM study \\
+\texttt{public-leaderboard} & 120 & cases & auto-scored submission benchmark \\
 \texttt{historical-cve-replays} & 60 & CVEs & weakness-class replay \\
 \texttt{divergence-zoo} & 36 & exhibits & indexed class/pair gallery \\
 \texttt{idiomatic-ports} & 21 & function$\times$target & human-port evidence \\
@@ -1507,8 +1523,8 @@ Corpus surface & Population & Unit & Role \\
 
 The datasheet is also the source of truth for the continuous-corpus CI monitor:
 \texttt{src/ub\_oracle/continuous\_corpus\_ci.py} derives a deterministic
-13-command plan from the records above, hashes the expected corpus verdict layer
-(\texttt{013ff7f9bd90}), and the scheduled
+14-command plan from the records above, hashes the expected corpus verdict layer
+(\texttt{744f4442d314}), and the scheduled
 \texttt{corpus-drift.yml} workflow executes the real check targets under the same
 toolchain setup as CI.  Runtime reports are kept under an ignored
 \texttt{run\_reports/} directory and uploaded on success or failure, so reviewers

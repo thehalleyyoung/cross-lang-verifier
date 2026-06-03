@@ -24,6 +24,7 @@ from . import existing_tools_study
 from . import github_port_miner
 from . import idiomatic_corpus
 from . import large_scale_study
+from . import leaderboard
 from . import llm_scale_study
 from . import multipair_corpus
 from . import negative_corpus
@@ -609,6 +610,48 @@ def _large_scale_record() -> DatasheetRecord:
     )
 
 
+def _leaderboard_record() -> DatasheetRecord:
+    doc = leaderboard.results_document()
+    return DatasheetRecord(
+        corpus_id="public-leaderboard",
+        title="Public submission leaderboard split",
+        kind="open benchmark leaderboard",
+        source_module="ub_oracle.leaderboard",
+        artifact_paths=(
+            _rel(leaderboard.PUBLIC_CASES_PATH),
+            _rel(leaderboard.ANSWER_KEY_PATH),
+            _rel(leaderboard.SAMPLE_SUBMISSION_PATH),
+            _rel(leaderboard.DOC_PATH),
+        ),
+        population_size=int(doc["n_cases"]),
+        unit="leaderboard case",
+        language_pairs=tuple(sorted(str(pair) for pair in doc["by_pair"])),
+        divergence_classes=tuple(sorted(str(family) for family in doc["by_family"])),
+        label_balance=dict(sorted((str(k), int(v)) for k, v in doc["by_label"].items())),
+        provenance=(
+            "Deterministic held-back split from the sanitizer-backed Step-45 "
+            "ground-truth corpus across C-to-Rust and C-to-Go programs."
+        ),
+        construction=(
+            "Public cases omit labels and include runnable source plus argv inputs; "
+            "the frozen answer key enables reproducible auto-scoring and can be "
+            "kept server-side by a hosted leaderboard."
+        ),
+        validation_commands=("make leaderboard-check",),
+        real_code_evidence=(
+            "The focused gate proves artifact freshness and scorer edge cases; "
+            "when clang/UBSan plus a target compiler are available, a seeded "
+            "sample is re-labeled by real compiler execution."
+        ),
+        limitations=(
+            "The committed answer key is intentionally open for artifact reproducibility "
+            "and is not an anti-cheat secret in a source checkout.",
+            "The benchmark uses executable extraction programs rather than full upstream repositories.",
+        ),
+        content_hash=str(doc["content_hash"]),
+    )
+
+
 def _existing_tools_record() -> DatasheetRecord:
     subjects = existing_tools_study.build_subjects()
     classes = _counts(subject.divergence_class for subject in subjects)
@@ -674,6 +717,7 @@ def records() -> Tuple[DatasheetRecord, ...]:
         _historical_cve_record(),
         _idiomatic_record(),
         _large_scale_record(),
+        _leaderboard_record(),
         _llm_record(),
         _multipair_record(),
         _negative_record(),

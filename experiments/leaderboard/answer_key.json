@@ -1,0 +1,1925 @@
+{
+  "answers": [
+    {
+      "case_id": "lb-001",
+      "content_hash": "1752eb12979c4575d2eddad55e86148e57e3c07bcfc9028fa86d6f41bf28417e",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "19",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-18",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-002",
+      "content_hash": "db6f243e4e9e2d035578997ebf2caa1547a83d38ba3602080f07a454ec7f10a9",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "28",
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-34",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-003",
+      "content_hash": "9677932ae10af293ea1f527d73e46c56632625ad08d40b7f61f64e83376dd4b4",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "7",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-7",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-004",
+      "content_hash": "b05dc1681e03fa4c63f60d19b1393ff9b3e99933f5ef960a742e9e5ba2b8b389",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "12"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-12",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-005",
+      "content_hash": "f63fa57756791ea93b74378d02da291998db858a82b3fd6c1b9ca4aac201c270",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "55"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-shift-55",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-006",
+      "content_hash": "67a49a7bf8b70fedaa141d8db1299bdfeae64b7e22d9959d34884ec4002b0067",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "2",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-add-8",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "go",
+      "target_sha256": "16f1e10d76398a3133c8204dd423e5af7c2e6e6195005c98b0f8510e5d3902a7"
+    },
+    {
+      "case_id": "lb-007",
+      "content_hash": "2c1aed3280e3259ffc78f8a46fe2a794f41b5c69039af514379a1922a6270052",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "4",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mul-13",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "go",
+      "target_sha256": "b212a0d59df9945de3a396d2b56786cb463726264e0555c81222c2ac9ece4ed4"
+    },
+    {
+      "case_id": "lb-008",
+      "content_hash": "84cd634113e4edee6713392847c04b11a6f12ea05c7063307f0c8ee217beaa1f",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "13",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-5",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-009",
+      "content_hash": "a3d055d099af3e18bdd66d48c03b5b38e9d42684b9e14f5bb06cec569fb93105",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "4",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-sshift-23",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-010",
+      "content_hash": "9aa68ddfd706d7a170df0db7ec7ef53504701d3e5adc802e5e6f342a82d0426e",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "7",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mul-27",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "rust",
+      "target_sha256": "153eb5c30019574d49381f35b032250b9c67f30b869b26c959484aaf4e32740e"
+    },
+    {
+      "case_id": "lb-011",
+      "content_hash": "18f3cf1582fb4bc5454121f506be836a0fcf380aac404056806850ba991a659f",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "2",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-sshift-11",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-012",
+      "content_hash": "e310ec549732bd39d1e9429669d08289624e1366eff9990d8f5f1106a099ea7a",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "40"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-shift-40",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-013",
+      "content_hash": "34d9837b354f989be7be1bc00edd6353db25050e29b5c832a418c8e5f00606c4",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-idx-5-0",
+      "source_sha256": "76260c55e4c00654ba6f5fab8b417f7360ce46b86f8451e1e581a553cffa7b98",
+      "target_lang": "rust",
+      "target_sha256": "b2d6675aa251accf0568416287f3478ca986980b33966f170559334953c092bf"
+    },
+    {
+      "case_id": "lb-014",
+      "content_hash": "4654aab7f996dd62f4d0d4c1962ae90d95ee044ea6f8e8069322cf893c64f25a",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "8",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-add-39",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "go",
+      "target_sha256": "16f1e10d76398a3133c8204dd423e5af7c2e6e6195005c98b0f8510e5d3902a7"
+    },
+    {
+      "case_id": "lb-015",
+      "content_hash": "a31d3d2eae1afbc3e1fd823573fc2ac729732f9a02145c470f465cdfd01f4494",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "3",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-add-13",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "go",
+      "target_sha256": "16f1e10d76398a3133c8204dd423e5af7c2e6e6195005c98b0f8510e5d3902a7"
+    },
+    {
+      "case_id": "lb-016",
+      "content_hash": "1518c109da60b3163e18ca4f8c03901b491cd800a808e59e62a7132b06cf009b",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "34",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-40",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-017",
+      "content_hash": "32a776c0bdc0dbe8c4affa532b170af0b2ffbf71a0db49f7a7074dc6b2273ef7",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "32",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-32",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-018",
+      "content_hash": "d0d54cfac9b5870f8482148ed2effa89f619a96b805c6db14622e61c2a6c9311",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "56"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-shift-56",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "7f1b099d98a23be832725a07db9afd560fc17f52be68894cd9b98e7d98c92123"
+    },
+    {
+      "case_id": "lb-019",
+      "content_hash": "fa9bfd425333dc3eb977feb79b09ec7206e0b0a671686ec2e45613974ece23e0",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "8",
+        "1"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-add-35",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "916950b726ff12f8be91761ffd142fac206f94704384fd88c0973bb654537459"
+    },
+    {
+      "case_id": "lb-020",
+      "content_hash": "2cf423e91c5b68e8511784ec431ea2c715dcd6e2d738cf806bc816fb9d5cd13e",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "38",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-38",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-021",
+      "content_hash": "7bb7c7462179b864387f67aa6b3e67599483594c331fde55b50704ce1ebace80",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "25",
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-29",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-022",
+      "content_hash": "a54b5dea00256b6f527346c6f852ac32dd23cd9774b19282b60f50445fc856c8",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "23",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-23",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-023",
+      "content_hash": "18e77cbc0c7db02cf73148da6650eacc411e4184127f1129ebd8f666b4374e46",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "4",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mul-10",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "go",
+      "target_sha256": "b212a0d59df9945de3a396d2b56786cb463726264e0555c81222c2ac9ece4ed4"
+    },
+    {
+      "case_id": "lb-024",
+      "content_hash": "335c0bc607c46e2fabc15fac36e41a8d88f20fb220890bebd33e61a2de702c9c",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "4",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-4",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-025",
+      "content_hash": "847467152dd3b314639f98b3e9133afe9e127740f720d9ee7049fb6c8ddb7754",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "51"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-shift-51",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "7f1b099d98a23be832725a07db9afd560fc17f52be68894cd9b98e7d98c92123"
+    },
+    {
+      "case_id": "lb-026",
+      "content_hash": "c91dc1e0710db8bc050193c2e9eed10e0e9127e863345aec2c6f0cf5678aebc6",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "17"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-17",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-027",
+      "content_hash": "e17ec6f98abfa65f2bb8b3874ca03c5f3df8c640419a6e3d02405703c5782b47",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "55"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-shift-55",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "7f1b099d98a23be832725a07db9afd560fc17f52be68894cd9b98e7d98c92123"
+    },
+    {
+      "case_id": "lb-028",
+      "content_hash": "3a4018fae079f89979f1bce59377dfedaf847daa6bab1fbd2207db0a7aa99a9b",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "5",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-add-23",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "go",
+      "target_sha256": "16f1e10d76398a3133c8204dd423e5af7c2e6e6195005c98b0f8510e5d3902a7"
+    },
+    {
+      "case_id": "lb-029",
+      "content_hash": "ae8c5159825b324a241fe56fa53079ef95d62574bea36be32776caa86c94b2f2",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "60"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-shift-60",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-030",
+      "content_hash": "69847e978ef7d01b565dcce2dd83c1557082ebe7a20d7f6693d28999f970d6f7",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "3",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-add-14",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "916950b726ff12f8be91761ffd142fac206f94704384fd88c0973bb654537459"
+    },
+    {
+      "case_id": "lb-031",
+      "content_hash": "7bca5f4aaf024212cd9cb0b43fa545b044ab6f503b5d0c969812a69c14213df1",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "39"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-39",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-032",
+      "content_hash": "924f2d90a04ba24a3192cc880823c62f573d0306ecc05cc9edebdc0e54e6b126",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "13",
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-9",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-033",
+      "content_hash": "cf11f759f076b1b14174ed7b5e8188d240010b54ec05f41818fe241bce50217a",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "37",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-45",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-034",
+      "content_hash": "1a73adb842badca5363a77dc4dc643e71aae1e6dcab6fd5d53e63f3f880323ae",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "54"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-shift-54",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-035",
+      "content_hash": "a5c93bfe31d5abb41d2988be72dc76b09c69a26c9c89f1bd65e8997fad81a1f5",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "18"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-oob-18",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "rust",
+      "target_sha256": "2c862de4c8a0b077b4cdb9982381fbeba4274a52d2feb9c95e620ef273fd31aa"
+    },
+    {
+      "case_id": "lb-036",
+      "content_hash": "3f0ff65075b831c22b6c6521717c1fce0cb70e8dc7f249b3e8d63a7516dc9031",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "37",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-48",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-037",
+      "content_hash": "9a648774734c6ef9944f038cd3aeac13ce1e8b3c8a6a66a107a864485907eb25",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "13",
+        "3"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-6",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-038",
+      "content_hash": "3dc5cd675c350bde8a9b3c4220a5d4902d3e6bc2eb44b5872f9c0314cd56bae9",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "5",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-sshift-26",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-039",
+      "content_hash": "752755b81ac3b689daed0602878f83ec6e0e55acd84f20325ffab29691cd5be9",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "25",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-25",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-040",
+      "content_hash": "5884e25d4eec7e935988e7a5eea22b1c908be78ec88bfca923f46d0e8589611a",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "13",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-13",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-041",
+      "content_hash": "fa9711f02b0673bd2a76ad727ef54b89b393deb60ad98c2407ff8475ca044276",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "3",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mul-5",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "go",
+      "target_sha256": "b212a0d59df9945de3a396d2b56786cb463726264e0555c81222c2ac9ece4ed4"
+    },
+    {
+      "case_id": "lb-042",
+      "content_hash": "19e9292bf6ed84fcc2ab26aa8f2c319dc489337ced3783e46f7e8cb16474b057",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "31",
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-39",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-043",
+      "content_hash": "b3347b1f0800966be7b348661a444303f1c16e3c94ac31c6d784af5dd23e48ed",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "34",
+        "3"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-41",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-044",
+      "content_hash": "8d2caaa40c8ed30997d2d66b0ca015c3cfe9a6789775072dfef7f047edeea0c4",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-idx-6-0",
+      "source_sha256": "76260c55e4c00654ba6f5fab8b417f7360ce46b86f8451e1e581a553cffa7b98",
+      "target_lang": "rust",
+      "target_sha256": "b2d6675aa251accf0568416287f3478ca986980b33966f170559334953c092bf"
+    },
+    {
+      "case_id": "lb-045",
+      "content_hash": "99b875d679925d1892978c4bb98796269ffd317982bae7ef4b3da7febd871e7b",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "7"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-7",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-046",
+      "content_hash": "235b853e8e81b120e18b1a0f8cefd40ad6a89cfa56209f1c5c6fcf69216878fd",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "23"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-23",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-047",
+      "content_hash": "8071c6a1040b92eed7bff5f7c9c0fc0c7cf65e042d5b5e5b6bf176d26405218c",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "2",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-add-6",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "go",
+      "target_sha256": "16f1e10d76398a3133c8204dd423e5af7c2e6e6195005c98b0f8510e5d3902a7"
+    },
+    {
+      "case_id": "lb-048",
+      "content_hash": "ae0f980f62cdbf75a2b0bac8b11d127211d8c86c537110b88194fcdd534fe4c7",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "53"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-shift-53",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "7f1b099d98a23be832725a07db9afd560fc17f52be68894cd9b98e7d98c92123"
+    },
+    {
+      "case_id": "lb-049",
+      "content_hash": "f0d7ccf7d660892f82f3911727abadff50952c3907ca587f59d2fdb9269edd43",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "25"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-oob-25",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "rust",
+      "target_sha256": "2c862de4c8a0b077b4cdb9982381fbeba4274a52d2feb9c95e620ef273fd31aa"
+    },
+    {
+      "case_id": "lb-050",
+      "content_hash": "18741068e6d94dcba31caa7837f8d05435aaf2c40a3f6a53ed56e472d1671d06",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "35"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-shift-35",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "7f1b099d98a23be832725a07db9afd560fc17f52be68894cd9b98e7d98c92123"
+    },
+    {
+      "case_id": "lb-051",
+      "content_hash": "63c373c1cfdc1559201df0204289473ebb96c77bdf82fb44bc480405d05ce605",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "20"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-oob-20",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "rust",
+      "target_sha256": "2c862de4c8a0b077b4cdb9982381fbeba4274a52d2feb9c95e620ef273fd31aa"
+    },
+    {
+      "case_id": "lb-052",
+      "content_hash": "68db277b90f7783d2b9de984d0aa000b596190c2feee244637aeef0caf1a3799",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "22",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-22",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-053",
+      "content_hash": "5e69949e60622089efe273959a9dda178bde11b9e267a13e28b68edf8d326fe4",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "8",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-add-38",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "go",
+      "target_sha256": "16f1e10d76398a3133c8204dd423e5af7c2e6e6195005c98b0f8510e5d3902a7"
+    },
+    {
+      "case_id": "lb-054",
+      "content_hash": "f381e8f24b13fbb3aa269e761b399b38bef501570924665fb4b43c7edded65bc",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "33",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-33",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-055",
+      "content_hash": "7e1b62d99708eb57547e1f49c20b5e5eb481d5aed28ab506f3ac72d11ba315fe",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "26"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-26",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-056",
+      "content_hash": "3197e69db45e4f37947e0a10108c505a6831e88ccffb1e97cd14e94e4e9aec2c",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "6",
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mul-24",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "rust",
+      "target_sha256": "153eb5c30019574d49381f35b032250b9c67f30b869b26c959484aaf4e32740e"
+    },
+    {
+      "case_id": "lb-057",
+      "content_hash": "6f880a8b818b97aecd3a28fccf3ebcd6527d04c4ad7315c2aedadb7a4d054a3b",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-idx-4-3",
+      "source_sha256": "0bd4d1672c0169c8a3933fdec4bd18f6daf71567041ed7682f5b2ed458a181bf",
+      "target_lang": "rust",
+      "target_sha256": "b2d6675aa251accf0568416287f3478ca986980b33966f170559334953c092bf"
+    },
+    {
+      "case_id": "lb-058",
+      "content_hash": "bcbf5cac8fbe1d8d00953e806eb0dab4aef07dcca6322b8380535c07b9f443a9",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "29",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-29",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-059",
+      "content_hash": "65724aa51ef4269f05b14d79e63603ca9080b67411f94887d351e972ed49f04a",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "3",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-3",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-060",
+      "content_hash": "36888ff0ff920ef9a908e19db9cf9ab0834fc4364bab5d050880c463c27f4808",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "31",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-31",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-061",
+      "content_hash": "078df0efa51898259ac50e5d40c12b2718a09319ddab99f68d9448f1bc7b560a",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "7"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-idx-7-3",
+      "source_sha256": "0bd4d1672c0169c8a3933fdec4bd18f6daf71567041ed7682f5b2ed458a181bf",
+      "target_lang": "rust",
+      "target_sha256": "b2d6675aa251accf0568416287f3478ca986980b33966f170559334953c092bf"
+    },
+    {
+      "case_id": "lb-062",
+      "content_hash": "184bb569be068c42c0ce51a4e7dd9ffc2e1cbae189deab70efb05d075364b602",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "36"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-shift-36",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "7f1b099d98a23be832725a07db9afd560fc17f52be68894cd9b98e7d98c92123"
+    },
+    {
+      "case_id": "lb-063",
+      "content_hash": "278bec04d9e2d28be551d3a023aa12396493dd081947778ea3c54f01cdbc699f",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "21"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-21",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-064",
+      "content_hash": "646fc3feff22e67555313d9fc860762c1484d82e07296c1a414999a4327abb82",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "5",
+        "0"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-sshift-24",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "a5924e1ba4069b926561873f5df35ccc6fd50cef69cfcd9e97355cd783226f54"
+    },
+    {
+      "case_id": "lb-065",
+      "content_hash": "1926e7f579cf35f78a1921c9183bcff93ffe82206fab4c462c22bb31ce993b79",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "28"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-28",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-066",
+      "content_hash": "4f7a2237ea51bb53f56058ed4c85bdaab31fa0271d3a5b17ed23ad07b48fa40e",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "21",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-21",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-067",
+      "content_hash": "d6f576c2b51cf80bb96787e0e57745f4bd059a7363fd53cd33f2219dca2a3bfe",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "8"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-8",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-068",
+      "content_hash": "c3fd984a0fe3537f7713e2aebf32778f017c0464ce0f64301522fe1b668c292f",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "19",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-17",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-069",
+      "content_hash": "db17793a1054e3bd8711b8f6e404d29e16d915c3b2cc6a1064c9adbc5ab970e9",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "21",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-21",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-070",
+      "content_hash": "080451c375cf6f9f587c215b23ccfed348d77b904ae5ae999bbbf1acc54c5f10",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "2",
+        "1"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-sshift-7",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "a5924e1ba4069b926561873f5df35ccc6fd50cef69cfcd9e97355cd783226f54"
+    },
+    {
+      "case_id": "lb-071",
+      "content_hash": "28f1ec18835b4cb602de912ea4c39a14919e0adbbd9e36cdc5964d6e3c6e21a7",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "9",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-9",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-072",
+      "content_hash": "a6f5c8c1e832b588ad245cc92f671f9fdc9a1d2785821944339d84c290f72b2a",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "8",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-8",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-073",
+      "content_hash": "621408aa63a394208c5db3331365c84eb49633aa75646fae65402dd3b898686b",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "13",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-13",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-074",
+      "content_hash": "cd3b2f06b140b1bd3ae66b05a22c30debecb07a7ee6d7cf717360be08d3dba25",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "58"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-shift-58",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-075",
+      "content_hash": "8bac0d036f5d13a79a5b5b7d81bf2d3528d2860296b5f219adfa31d614169959",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "1",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-add-3",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "916950b726ff12f8be91761ffd142fac206f94704384fd88c0973bb654537459"
+    },
+    {
+      "case_id": "lb-076",
+      "content_hash": "8591ce12373ab3d1a720a7f5d88ee994b065c20f2a1963062e208f0e274fdb0c",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "19"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-19",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-077",
+      "content_hash": "7522fbc8de07b3eb0bc5b1abaa8c4f69fcad587246292ae42f3ede878f8e82ce",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "8",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-add-39",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "916950b726ff12f8be91761ffd142fac206f94704384fd88c0973bb654537459"
+    },
+    {
+      "case_id": "lb-078",
+      "content_hash": "92a41b596a2700da5f5dbfbbc5ac4f29f80ea0698e200e2bee623284558730fe",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "19",
+        "3"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-16",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-079",
+      "content_hash": "c8cbced1edf05f9d6696590f0771dc9489758d01a143708cce95dfc8c6f4b615",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "4",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mul-12",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "go",
+      "target_sha256": "b212a0d59df9945de3a396d2b56786cb463726264e0555c81222c2ac9ece4ed4"
+    },
+    {
+      "case_id": "lb-080",
+      "content_hash": "e8e61180a4b9d10a31631e9de7ac782b1eb776c6806cd3ce95d6aa10a4db157f",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "28",
+        "3"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-31",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-081",
+      "content_hash": "9c8b597bb5929491435e062a4d0d58b613a6d97bcf0693a8dc1fe82a3ced021d",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "1",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-sshift-2",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-082",
+      "content_hash": "22b34831f14bbf6cce332c79edfce37bce40db7311abe16c175bf6b5c3e3efc7",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "4",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-add-19",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "go",
+      "target_sha256": "16f1e10d76398a3133c8204dd423e5af7c2e6e6195005c98b0f8510e5d3902a7"
+    },
+    {
+      "case_id": "lb-083",
+      "content_hash": "3133d0e2c3be95ef7cea58b6c8d5d7fbec7fb73b5646f615ca5460fb5e931a8a",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "4"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-4",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-084",
+      "content_hash": "6a05d849c0d00da67142476e453d5c305a350b8747a64763cbeef29dbb6d88ec",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "7"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-idx-7-4",
+      "source_sha256": "9afcecffcda3b8d73a8c9e30d137b72fa05c3c10b7eb048ce4f8b589eceee9aa",
+      "target_lang": "rust",
+      "target_sha256": "b2d6675aa251accf0568416287f3478ca986980b33966f170559334953c092bf"
+    },
+    {
+      "case_id": "lb-085",
+      "content_hash": "32d39eb4bb877bae5be63569de53f486f7451b74ea35082c7fff48c4f767000a",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "10",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-10",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-086",
+      "content_hash": "ef1c2ad3b9080039c8963ec9a233d42fa03ddba355acdfacec34f457164d00df",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "28",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-30",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-087",
+      "content_hash": "77b86bd127284891ebec9da40cc5c8e178c5fa5a334c53429fcbf0331755a802",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "5",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-add-24",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "916950b726ff12f8be91761ffd142fac206f94704384fd88c0973bb654537459"
+    },
+    {
+      "case_id": "lb-088",
+      "content_hash": "126d05f4c50945157509fc01237bff25e5b19afb6050fb222ae6cda108c476f6",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "7",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mul-28",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "rust",
+      "target_sha256": "153eb5c30019574d49381f35b032250b9c67f30b869b26c959484aaf4e32740e"
+    },
+    {
+      "case_id": "lb-089",
+      "content_hash": "1c580d7d0a4ab013fc6cb5e03438edd2386d68acc0df3c2f0a8fd36a32145bf5",
+      "cwe": "",
+      "family": "safe_mul",
+      "inputs": [
+        "3",
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mul-9",
+      "source_sha256": "6e142f4a480f397c3aba29141beb34dd6b93d3c7f332559880563636bb9f58dd",
+      "target_lang": "go",
+      "target_sha256": "b212a0d59df9945de3a396d2b56786cb463726264e0555c81222c2ac9ece4ed4"
+    },
+    {
+      "case_id": "lb-090",
+      "content_hash": "a161b8f2fe132b076e913b1b7f5759305de5beb2eb9f79023722b8157c0c7b1a",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "17"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-oob-17",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "rust",
+      "target_sha256": "2c862de4c8a0b077b4cdb9982381fbeba4274a52d2feb9c95e620ef273fd31aa"
+    },
+    {
+      "case_id": "lb-091",
+      "content_hash": "cf5b4fedb3f46ccfd3cabe7326a315481ecaa20104858cb7f30570e5892f8ac9",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "10",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-3",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-092",
+      "content_hash": "a8edf85b934ed9e084e8ecc77e9f8a5ebb6d2de5408b0af50f9b7db3bd630dd6",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-idx-5-4",
+      "source_sha256": "9afcecffcda3b8d73a8c9e30d137b72fa05c3c10b7eb048ce4f8b589eceee9aa",
+      "target_lang": "rust",
+      "target_sha256": "b2d6675aa251accf0568416287f3478ca986980b33966f170559334953c092bf"
+    },
+    {
+      "case_id": "lb-093",
+      "content_hash": "0e9bf75f21ffa9cf5128b426605df23efaa13c3e1aaca10bd7d98186543489c4",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "7"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-idx-7-0",
+      "source_sha256": "76260c55e4c00654ba6f5fab8b417f7360ce46b86f8451e1e581a553cffa7b98",
+      "target_lang": "rust",
+      "target_sha256": "b2d6675aa251accf0568416287f3478ca986980b33966f170559334953c092bf"
+    },
+    {
+      "case_id": "lb-094",
+      "content_hash": "8732cfa6dd0db6234cdd2a86fecb3c46affc00ad3e9c89266ad5c7851a2fba4d",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "1",
+        "5"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-sshift-5",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "a5924e1ba4069b926561873f5df35ccc6fd50cef69cfcd9e97355cd783226f54"
+    },
+    {
+      "case_id": "lb-095",
+      "content_hash": "01ac6e2e99483a0236da663095cabea56874dde096bc954a1492fd1bdc2f7a41",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "13"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-13",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-096",
+      "content_hash": "b5529993d0200d903e9a54c65c11f700f8946d163c1a43cffa394fef2a17bfa3",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "27"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-27",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-097",
+      "content_hash": "4ed630cc31a2317c5fe1baf500bcf56c7fd643e9213ad3985c47ca32bed3d907",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "8",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-add-36",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "916950b726ff12f8be91761ffd142fac206f94704384fd88c0973bb654537459"
+    },
+    {
+      "case_id": "lb-098",
+      "content_hash": "740538d95d8051e74ae1bcc354462cedf6354a7aaec85ea6eb2254ce3825be10",
+      "cwe": "",
+      "family": "safe_shift",
+      "inputs": [
+        "3",
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-sshift-16",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "a5924e1ba4069b926561873f5df35ccc6fd50cef69cfcd9e97355cd783226f54"
+    },
+    {
+      "case_id": "lb-099",
+      "content_hash": "c4c9b3c26a24acf58afeeb72837ca02a55845b20e0d33146b6a11d4bd545d17a",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "0"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-idx-0-4",
+      "source_sha256": "9afcecffcda3b8d73a8c9e30d137b72fa05c3c10b7eb048ce4f8b589eceee9aa",
+      "target_lang": "go",
+      "target_sha256": "ecf12cb5d571e123dbccb45401c20ba0e64d19654e35ca4df1cea95a70c662d6"
+    },
+    {
+      "case_id": "lb-100",
+      "content_hash": "cbef55a9eccc0470b74cd2e1dbfea04a528acf7b8b40e4cdfe4002dcbb92d720",
+      "cwe": "",
+      "family": "safe_add",
+      "inputs": [
+        "3",
+        "1"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-add-10",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "916950b726ff12f8be91761ffd142fac206f94704384fd88c0973bb654537459"
+    },
+    {
+      "case_id": "lb-101",
+      "content_hash": "d0cad5b600615c4aa61f5c7f9daa91fadefcffc07ea2556a3c0fb0ccb0a611fd",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "34"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-34",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-102",
+      "content_hash": "ddb3da5a68df8c85ce2a12aa05c5df3ff04afe6a4860120900d7bea0ea5c34d5",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "29"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-29",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-103",
+      "content_hash": "ac1812a3aa78a7c96a57ad12929926acaa049742aea830b8b12638b32b7a9af8",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "16",
+        "2"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-10",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-104",
+      "content_hash": "c3671d1bb8822052537edd2b467859a4edf2bae6e71f322ef77ffca15b2e79b1",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "44"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-shift-44",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "rust",
+      "target_sha256": "7f1b099d98a23be832725a07db9afd560fc17f52be68894cd9b98e7d98c92123"
+    },
+    {
+      "case_id": "lb-105",
+      "content_hash": "4003255f25c2c33db41a04df8778f6fea185e02407c18ebb5b8c804215d775fb",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "19",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-19",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-106",
+      "content_hash": "a84b429a5f2a024f78342c660ed433d13d76fed8c11fad8bdeb16962e78b729f",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "33"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-oob-33",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "rust",
+      "target_sha256": "2c862de4c8a0b077b4cdb9982381fbeba4274a52d2feb9c95e620ef273fd31aa"
+    },
+    {
+      "case_id": "lb-107",
+      "content_hash": "68982221be745b5feb5ffb13e9e7bd006cd9a3dfc2485a6679e2a0ca9c3be024",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "10",
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->rust",
+      "source_item_id": "rust-mod-4",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "rust",
+      "target_sha256": "3470d618d825a0069defb95f6a6f220fdcb7bdf49fff31744ebc92cd8213f9bb"
+    },
+    {
+      "case_id": "lb-108",
+      "content_hash": "636254fed96e54319a89664d7c0f42f75ab19b568d56f54860052982ae96b435",
+      "cwe": "CWE-190",
+      "family": "signed_overflow",
+      "inputs": [
+        "2147483647",
+        "37"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-ovf-37",
+      "source_sha256": "a0993ef9b47ba2a3656d5aa1db73b4ee43cfb3618fb5eec78d1747ff2d6f2e9a",
+      "target_lang": "rust",
+      "target_sha256": "0f61763eb7d830723535cf607a22bdec49f24d44cf59c45b43c37b32badba552"
+    },
+    {
+      "case_id": "lb-109",
+      "content_hash": "9a478770cb6e1b45fa01d92cbe01fea9e4f4a7a09e84ce0949ab1fe122638d0d",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "35",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->rust",
+      "source_item_id": "rust-div0-35",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "rust",
+      "target_sha256": "19806ce3a61392c224fe5d7a9ecfac21da42ba7d56dd4ce393f60bd315439c9f"
+    },
+    {
+      "case_id": "lb-110",
+      "content_hash": "b19111d50bd5c7aaf6c7aaf86446637e95ba2c8f0bd7878a93d3f33cf022d463",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "24",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-24",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-111",
+      "content_hash": "9a700328697d310887a1028fd0c8cccb2f41b988de9304b35a48d99b2f4a4397",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "6"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-idx-6-3",
+      "source_sha256": "0bd4d1672c0169c8a3933fdec4bd18f6daf71567041ed7682f5b2ed458a181bf",
+      "target_lang": "go",
+      "target_sha256": "ecf12cb5d571e123dbccb45401c20ba0e64d19654e35ca4df1cea95a70c662d6"
+    },
+    {
+      "case_id": "lb-112",
+      "content_hash": "cf73988849f6f8fb9127b0d313ff9c11e127b2b718f848015f2a515bcefdf6f2",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "49"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-shift-49",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-113",
+      "content_hash": "9062756f8d9ffd572ef35fb9167394f6d2c59eb906754c76e70d00940ce4e757",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-idx-4-3",
+      "source_sha256": "0bd4d1672c0169c8a3933fdec4bd18f6daf71567041ed7682f5b2ed458a181bf",
+      "target_lang": "go",
+      "target_sha256": "ecf12cb5d571e123dbccb45401c20ba0e64d19654e35ca4df1cea95a70c662d6"
+    },
+    {
+      "case_id": "lb-114",
+      "content_hash": "199096a5a99d48eed6b556e55f93b34d2db8576fe5189f7ad38cc82062a5df3a",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "15"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-15",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-115",
+      "content_hash": "b4e6226c46c9faa7850fb037525f14716093578c7ea64ae6c30f355fc3d0bccc",
+      "cwe": "",
+      "family": "safe_index",
+      "inputs": [
+        "4"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-idx-4-1",
+      "source_sha256": "118698385824e9f2456e612940070dd8bbd69f780061ac255fa1ac0d0900d30f",
+      "target_lang": "go",
+      "target_sha256": "ecf12cb5d571e123dbccb45401c20ba0e64d19654e35ca4df1cea95a70c662d6"
+    },
+    {
+      "case_id": "lb-116",
+      "content_hash": "44a6bb0cf31745a64c438174a2b5f5c89a32711d46651b53732574e578eede2e",
+      "cwe": "",
+      "family": "safe_mod",
+      "inputs": [
+        "22",
+        "3"
+      ],
+      "label": "equivalent",
+      "pair": "c->go",
+      "source_item_id": "go-mod-21",
+      "source_sha256": "e98e679e97365e91add876d703e5d692d04035edc3e16065e0895fff5191de8e",
+      "target_lang": "go",
+      "target_sha256": "7c277b8532763d63c20cad408d4f99dfd4eff44247a11ab34435d95527896acf"
+    },
+    {
+      "case_id": "lb-117",
+      "content_hash": "9daa82dd1ab9fa2bc106fc43efeadc139493978240f5dd0f17f9a401309bd01f",
+      "cwe": "CWE-758",
+      "family": "oversized_shift",
+      "inputs": [
+        "1",
+        "59"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-shift-59",
+      "source_sha256": "243d339e15c580034ec117b596c015dba6af0ffc03a4a79d236f5d9f15201245",
+      "target_lang": "go",
+      "target_sha256": "86a3f7cb6a782fc910a6b817e3404d66b66cdbe074c65a9dafcd5a88a57f9925"
+    },
+    {
+      "case_id": "lb-118",
+      "content_hash": "21f122a00cdb62695c6c6bf1a7ce390c0ea4eaaad7e0f96eb3394b733f0ff418",
+      "cwe": "CWE-125",
+      "family": "oob_read",
+      "inputs": [
+        "22"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-oob-22",
+      "source_sha256": "9d0213209aa8fba4ae0394353aabb2d17e98e4bd85f32dab99ab4d5ccf37e669",
+      "target_lang": "go",
+      "target_sha256": "f4320079c3d9b027d00584a8a6d26a2fff5b343a1671d8ec6c73f9609110bc0c"
+    },
+    {
+      "case_id": "lb-119",
+      "content_hash": "463d5b8acc790d5a383a56610b1dc331b8a7f58c5d138dfd267eccc084b026b0",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "6",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-6",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    },
+    {
+      "case_id": "lb-120",
+      "content_hash": "95bde5b5f95e8bf0acc769d9fe5dfd76f6362d748c9d49f1540a18983d11678a",
+      "cwe": "CWE-369",
+      "family": "div_by_zero",
+      "inputs": [
+        "20",
+        "0"
+      ],
+      "label": "divergent",
+      "pair": "c->go",
+      "source_item_id": "go-div0-20",
+      "source_sha256": "18cac96b9480d308ab3dd64ba2d01ec74ed9755c3f3c44d9edfe963f18030574",
+      "target_lang": "go",
+      "target_sha256": "ec0666068be75c234a2ee7644d2d968afc294f4809bdc2661084f5258d34fba3"
+    }
+  ],
+  "benchmark_id": "xlev-semrec-public-leaderboard-2026-06",
+  "by_family": {
+    "div_by_zero": 23,
+    "oob_read": 13,
+    "oversized_shift": 14,
+    "safe_add": 14,
+    "safe_index": 11,
+    "safe_mod": 19,
+    "safe_mul": 8,
+    "safe_shift": 8,
+    "signed_overflow": 10
+  },
+  "by_label": {
+    "divergent": 60,
+    "equivalent": 60
+  },
+  "by_pair": {
+    "c->go": 60,
+    "c->rust": 60
+  },
+  "content_hash": "42b3c5e98ae6e995c20a2c687f09bc289f2c8383258ce0a52c423171ff919ba0",
+  "ground_truth_policy": "Labels come from the Step-45 sanitizer-backed ground-truth corpus. Scoring uses this frozen key without compiling; confirm_leaderboard_sample recompiles a deterministic sample with real clang/UBSan and target compilers as an evidence check.",
+  "n_cases": 120,
+  "public_cases_hash": "1f5da6384f4a49e05d4c4723dadc9e75e54f52c61ce7b0a1fd81c6ca0c1ab931",
+  "schema": "leaderboard-answer-key/v1"
+}

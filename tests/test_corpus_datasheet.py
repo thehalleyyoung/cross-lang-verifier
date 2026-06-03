@@ -13,6 +13,7 @@ from src.ub_oracle import existing_tools_study
 from src.ub_oracle import github_port_miner
 from src.ub_oracle import idiomatic_corpus
 from src.ub_oracle import large_scale_study
+from src.ub_oracle import leaderboard
 from src.ub_oracle import llm_scale_study
 from src.ub_oracle import multipair_corpus
 from src.ub_oracle import negative_corpus
@@ -28,6 +29,7 @@ EXPECTED_IDS = {
     "historical-cve-replays",
     "idiomatic-ports",
     "large-scale-generated",
+    "public-leaderboard",
     "llm-translations",
     "multi-pair-translations",
     "negative-true-equivalence",
@@ -79,6 +81,9 @@ def test_corpus_datasheet_covers_every_corpus_surface_with_live_counts():
     assert _record(doc, "existing-tools-head-to-head")["population_size"] == len(
         existing_tools_study.build_subjects()
     )
+    assert _record(doc, "public-leaderboard")["population_size"] == len(
+        leaderboard.build_cases()
+    )
 
     large = _record(doc, "large-scale-generated")
     live_large_census = large_scale_study.corpus_census(large_scale_study.generate_corpus())
@@ -113,6 +118,10 @@ def test_corpus_datasheet_records_have_datasheet_fields_and_honest_scope():
     bug = _record(doc, "bug-regressions")
     findings = _record(doc, "responsible-findings")
     assert bug["population_size"] == findings["population_size"]
+
+    public = _record(doc, "public-leaderboard")
+    assert public["label_balance"] == {"divergent": 60, "equivalent": 60}
+    assert public["validation_commands"] == ["make leaderboard-check"]
 
 
 def test_corpus_datasheet_artifacts_are_byte_fresh():
