@@ -98,17 +98,17 @@
   "fuzz_trials": 200000,
   "language_pair": "c->rust",
   "precision_recall_symbolic": {
-    "num_cases": 24,
-    "num_negative": 4,
-    "num_positive": 20,
+    "num_cases": 29,
+    "num_negative": 6,
+    "num_positive": 23,
     "overall": {
       "divergence_class": "__overall__",
       "fn": 0,
       "fp": 0,
       "precision": 1.0,
       "recall": 1.0,
-      "tn": 364,
-      "tp": 20
+      "tn": 528,
+      "tp": 23
     },
     "per_class": {
       "array_oob": {
@@ -117,7 +117,16 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
+        "tp": 1
+      },
+      "atomic_ordering": {
+        "divergence_class": "atomic_ordering",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 28,
         "tp": 1
       },
       "bitfield_layout": {
@@ -126,7 +135,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "div_by_zero": {
@@ -135,7 +144,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 22,
+        "tn": 27,
         "tp": 2
       },
       "enum_out_of_range": {
@@ -144,7 +153,16 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
+        "tp": 1
+      },
+      "eval_order": {
+        "divergence_class": "eval_order",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 28,
         "tp": 1
       },
       "fast_math_reassoc": {
@@ -153,7 +171,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "float_cast_overflow": {
@@ -162,7 +180,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "fp_contraction": {
@@ -171,7 +189,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "intmin_div_neg1": {
@@ -180,7 +198,16 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
+        "tp": 1
+      },
+      "longjmp_vla": {
+        "divergence_class": "longjmp_vla",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 28,
         "tp": 1
       },
       "memcpy_overlap": {
@@ -189,7 +216,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "pointer_provenance": {
@@ -198,7 +225,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "restrict_violation": {
@@ -207,7 +234,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "shift_oob": {
@@ -216,7 +243,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 22,
+        "tn": 27,
         "tp": 2
       },
       "signed_overflow": {
@@ -225,7 +252,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 21,
+        "tn": 26,
         "tp": 3
       },
       "strict_aliasing": {
@@ -234,7 +261,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "uninit_read": {
@@ -243,7 +270,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       },
       "vla_bound": {
@@ -252,7 +279,7 @@
         "fp": 0,
         "precision": 1.0,
         "recall": 1.0,
-        "tn": 23,
+        "tn": 28,
         "tp": 1
       }
     }

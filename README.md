@@ -1,16 +1,30 @@
 # SemRec / XLEV
 
-`cross-lang-verifier` ships two Python CLIs for **C↔Rust source-level
-equivalence analysis**:
+[![CI](https://github.com/thehalleyyoung/cross-lang-verifier/actions/workflows/ci.yml/badge.svg)](https://github.com/thehalleyyoung/cross-lang-verifier/actions/workflows/ci.yml)
+![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-- `semrec` for bounded, focused equivalence checking and benchmark runs
-- `xlev` for project discovery, verification, fuzzing, and analysis workflows
+**`cross-lang-verifier` is a sound-for-divergence oracle for translated code: it
+finds language-semantics bugs that compiling, diff testing, and IR comparison can
+miss.** The flagship case is C→Rust UB: C signed overflow, pointer/provenance,
+layout, memory, concurrency, and runtime-contract hazards that a safe target
+defines differently.
 
-The strongest verified claim for this repository is that it contains a real
-SMT-backed analysis stack for comparing C and Rust functions, with explicit
-front ends for source strings, source files, benchmark suites, and project
-discovery. Any broader benchmark numbers should be treated cautiously unless you
-rerun them locally.
+<p align="center">
+  <img src="docs/assets/readme_demo.gif" alt="Animated terminal demo: cross-lang-verify catches a confirmed C to Rust signed-overflow divergence and discharges a safe control." width="860">
+</p>
+
+The demo is generated from a real run:
+
+```bash
+python3 scripts/build_readme_demo.py
+python3 -m src.ub_oracle.cli --units examples/readme_demo_units.json --format text --color never --fail-on unknown
+```
+
+It confirms a C signed-overflow witness with real `clang`/UBSan and `rustc`, then
+discharges the safe control through the interval pre-pass. Unsupported constructs
+are reported as `UNKNOWN`, `CANDIDATE`, or `NOT-COVERED`; the tool does **not**
+silently claim full equivalence outside the covered fragment.
 
 ## Install
 
@@ -22,17 +36,27 @@ python3 -m pip install -e .
 
 ```bash
 python3 -m src.semrec_cli --help
+python3 -m src.ub_oracle.cli --help
 python3 -m src.cli.main --help
 ```
 
 The module entry points above correspond to:
 
 - `semrec`: `verify`, `cegar`, `bench`
+- `cross-lang-verify`: pair-aware manifest verification, SARIF, triage,
+  suppression baselines, caching, dashboards
 - `xlev`: `verify`, `discover`, `fuzz`, `analyze`, `benchmark`
 
 ## Correct usage examples
 
 ```bash
+# Confirmed C→Rust UB demo with a safe negative control
+python3 -m src.ub_oracle.cli \
+  --units examples/readme_demo_units.json \
+  --format text \
+  --color never \
+  --fail-on unknown
+
 # Inline C / Rust comparison
 python3 -m src.semrec_cli verify \
   --c-code 'int f(int x){return x+1;}' \

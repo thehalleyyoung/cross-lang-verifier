@@ -1,0 +1,28 @@
+{
+  "units": [
+    {
+      "name": "c_rust_signed_overflow",
+      "kind": "binop_const",
+      "op": "add",
+      "const": 1,
+      "width": 32,
+      "var": "x",
+      "signed": true,
+      "probe": "signed_overflow",
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "name": "c_rust_safe_add_zero",
+      "kind": "binop_const",
+      "op": "add",
+      "const": 0,
+      "width": 32,
+      "var": "x",
+      "signed": true,
+      "probe": "signed_overflow",
+      "source_lang": "c",
+      "target_lang": "rust"
+    }
+  ]
+}

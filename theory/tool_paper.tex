@@ -556,6 +556,19 @@ across the parser frontends, IR lowering, product builder, SMT
 encoder, and solver interface.  The test suite includes targeted
 real-compiler regression tests for every confirmation mode.
 
+\paragraph{Adoption surfaces.}
+The artifact is packaged as both a research harness and a usable guardrail:
+\texttt{cross-lang-verify} ingests pair-aware manifests, emits text/JSON/SARIF,
+supports triage, suppression baselines, caching and local dashboards, and is
+wrapped by a GitHub Action, VS Code diagnostics shim, playground and plugin SDK.
+Even the launch surface is generated from the verifier rather than hand-written:
+\texttt{scripts/build\_readme\_demo.py} runs the real CLI on
+\texttt{examples/readme\_demo\_units.json} and renders the README animation only
+when the C$\to$Rust signed-overflow witness is confirmed by
+\texttt{clang}/UBSan and \texttt{rustc}, while the safe control is discharged by
+the interval pre-pass.  Thus the public demo is a checked artifact, not a
+marketing mock-up.
+
 \paragraph{Parser frontends.}
 Each language has two parsing backends: tree-sitter-c~0.24 and
 tree-sitter-rust~0.24~\cite{treesitter2024} as primary, with
