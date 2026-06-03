@@ -164,7 +164,10 @@ each confirmed source-UB witness serializes a canonical, hash-bound certificate
 over the recorded \(P\wedge T\wedge C\) observation, which an offline checker
 validates before a Lake-built checker re-validates the final \texttt{oracle\_sound}
 inference.  The artifact regenerates every headline number from content-hashed
-real-compiler runs.
+real-compiler runs, and a new soundness-regression gate enumerates all 60
+registered oracle instances across 9 pairs, rejecting any plugin that lacks a
+per-pair soundness statement, matching confirmation mode, source-definedness
+premise, theorem/claim reference, and live witness probe.
 \end{abstract}
 
 
@@ -729,6 +732,24 @@ that found/confirmed witnesses are product-program violations.  The companion
 Python checker then ties the Lean source to the live registry and executable
 pack-conformance suite, so adding a target pack requires both a Lean instance and
 the concrete harness obligations.
+
+Step~137 closes the corresponding engineering loophole for oracle classes.
+\texttt{ub\_oracle.soundness\_gate} enumerates the live plugin registry after all
+built-in modules have registered themselves and requires a static
+\texttt{SoundnessStatement} for each exact
+\((\mathit{source},\mathit{target},\mathit{class})\) instance.  The statement
+binds the oracle to its expected confirmation mode (for example
+\texttt{trap\_vs\_defined}, \texttt{optimizer\_exploited},
+\texttt{defined\_divergence}, \texttt{model\_level\_divergence}, or
+\texttt{source\_defined\_target\_ub}), the source-definedness premise it claims,
+and a traceability or Lean theorem reference.  The gate then calls the oracle's
+real \texttt{find\_divergence} implementation on a concrete witness unit and
+checks that the emitted counterexample has the declared pair, class,
+source-definedness, non-empty source/target programs, and witness prose.  CI runs
+\texttt{make soundness-check}; the focused negative-control test appends an
+otherwise-valid plugin with no statement and proves the gate rejects it.  Thus a
+new oracle cannot enter the registry as an unreviewed soundness claim, even before
+the heavier real-compiler confirmation jobs run.
 
 Step~129 turns this mechanization into an executable artifact, and Step~132
 makes it durable in the counterexample format.  The repository pins Lean 4.14,

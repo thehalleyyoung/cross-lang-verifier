@@ -118,6 +118,10 @@ python3 -m src.cli.main discover \
   a canonical, hash-bound certificate over the recorded `P ∧ T ∧ C` facts; the
   offline checker rejects rebinding/corruption before Lake re-validates the final
   `oracle_sound` inference, and cached divergences preserve the certificate
+- a **soundness-regression CI gate** (`make soundness-check`) that enumerates all
+  60 registered oracle instances across 9 pairs and rejects any new plugin lacking
+  a per-pair soundness statement, matching confirmation mode, and live witness
+  probe
 - a severity-ranked triage view and linter-style baseline/suppression files
   (`cross-lang-verify --triage` / `--write-baseline` / `--suppress`) so teams can
   adopt the checker on a large existing migration and fail CI only on *new*

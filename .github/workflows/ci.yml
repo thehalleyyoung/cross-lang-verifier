@@ -58,6 +58,9 @@ jobs:
       - name: Verified Lean checker extraction
         run: make verified-check PYTHON=python
 
+      - name: Soundness regression gate
+        run: make soundness-check PYTHON=python
+
       - name: ub_oracle test suite (incl. real-compiler confirmation)
         run: python -m pytest tests/test_ub_oracle.py -q
 

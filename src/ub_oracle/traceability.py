@@ -1065,6 +1065,17 @@ def _thm_pointer_provenance_oracle() -> bool:
     return True
 
 
+def _thm_soundness_regression_gate() -> bool:
+    # Every registered built-in oracle must have a static soundness statement,
+    # matching confirmation mode, live theorem/claim references, and a concrete
+    # witness unit that exercises the plugin's real find_divergence path.  The
+    # negative-control tests show a new unstatemented oracle fails this gate.
+    from . import soundness_gate as sg
+
+    audit = sg.confirm_soundness_registry(probe_witnesses=True)
+    return audit.ok and len(audit.probes) == len(audit.registered) == len(audit.statements)
+
+
 CLAIMS: List[Claim] = [
     claim(
         "C1-soundness",
@@ -2172,6 +2183,23 @@ CLAIMS: List[Claim] = [
         ("PointerProvenanceOracle", "GoPointerProvenanceOracle"),
         theorem=_thm_pointer_provenance_oracle,
         docs=("README.md",),
+    ),
+    claim(
+        "C63-soundness-regression-gate",
+        "A **soundness-regression CI gate** (`ub_oracle.soundness_gate`) rejects "
+        "any built-in oracle instance that lacks a per-pair soundness statement. "
+        "The gate enumerates the live plugin registry, requires one static "
+        "statement per `(source,target,class)` instance, checks the registered "
+        "confirmation mode and source-definedness premise, validates the referenced "
+        "traceability/Lean evidence, and then executes each oracle's real "
+        "`find_divergence` path on a concrete witness unit to ensure the statement "
+        "is bound to working code rather than prose. A new plugin can no longer "
+        "land in CI as an unreviewed soundness claim.",
+        "ub_oracle.soundness_gate",
+        ("SOUNDNESS_STATEMENTS", "confirm_soundness_registry",
+         "audit_soundness_statements", "SoundnessStatement"),
+        theorem=_thm_soundness_regression_gate,
+        docs=("README.md", "docs/TRACEABILITY.md"),
     ),
 ]
 

@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check demo-video
 
 help:
 	@echo "Targets:"
@@ -33,7 +33,8 @@ help:
 	@echo "  coverage          print the core-module branch-coverage table"
 	@echo "  coverage-check    enforce the coverage ratchet floor (slow, ~4 min)"
 	@echo "  verified-check    build the Lean boundary proof and smoke-test the checker"
-	@echo "  ci                guard + reproduce-check + matrix-check + cex-quality-check + perf-check + redteam-check + verified-check + test-ub"
+	@echo "  soundness-check   enforce one soundness statement per registered oracle"
+	@echo "  ci                guard + reproduce-check + matrix-check + cex-quality-check + perf-check + redteam-check + verified-check + soundness-check + test-ub"
 
 reproduce:
 	$(PYTHON) -m experiments.ub_divergence.run
@@ -105,6 +106,9 @@ verified-check:
 	cd formal && .lake/build/bin/verified-checker --verdict divergent --ub true --target-defined true --consequence true
 	cd formal && ! .lake/build/bin/verified-checker --verdict divergent --ub false --target-defined true --consequence true
 
+soundness-check:
+	PYTHONPATH=src $(PYTHON) -m ub_oracle.soundness_gate --check
+
 guard:
 	bash scripts/check_no_simulated_results.sh
 
@@ -117,5 +121,5 @@ green-check:
 large-scale:
 	PYTHONPATH=src $(PYTHON) -m ub_oracle.large_scale_study
 
-ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check redteam-check verified-check test-ub
+ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check redteam-check verified-check soundness-check test-ub
 	@echo "ci: PASSED"
