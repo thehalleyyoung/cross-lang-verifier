@@ -46,10 +46,13 @@ import json
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
+from . import oracles as _oracles  # noqa: F401  (registers all built-in pairs)
+from . import plugin
 from . import target_semantics as tsem
 from .reexec import ReexecHarness, ToolchainStatus, toolchain_available
 
 SCHEMA_VERSION = "generalization/v1"
+SCHEMA_VERSION_V2 = "generalization/v2"
 
 TARGETS: Tuple[str, ...] = ("rust", "go", "swift")
 STYLES: Tuple[str, ...] = ("direct", "helper", "verbose")
@@ -346,6 +349,390 @@ GENERALIZATION_SPI = {
     "run_generalization": run_generalization,
     "confirm_generalization": confirm_generalization,
 }
+
+
+# --------------------------------------------------------------------------- #
+# Step 122 — cross-pair generalization study v2.
+#
+# V1 holds one C-rooted phenomenon fixed while varying target and producer style.
+# V2 is deliberately different: it exercises the *new language pairs and
+# directions* added after the original study, using each pair's registered oracle
+# and confirmation mode.  The claim is breadth/transfer of the plugin framework
+# (positive witnesses confirmed, safe controls not flagged) rather than a single
+# invariant outcome shared by semantically different pairs.
+# --------------------------------------------------------------------------- #
+
+_I32_MIN = -(1 << 31)
+
+
+@dataclass(frozen=True)
+class PairGeneralizationCase:
+    case_id: str
+    source_lang: str
+    target_lang: str
+    divergence_class: str
+    positive_unit: Dict
+    negative_unit: Dict
+    safe_argv: Tuple[str, ...]
+    new_pair: bool
+    description: str
+
+    @property
+    def pair(self) -> Tuple[str, str]:
+        return (self.source_lang, self.target_lang)
+
+
+def _c_to_target_case(target: str, *, new_pair: bool) -> PairGeneralizationCase:
+    return PairGeneralizationCase(
+        case_id=f"c_to_{target}_div_by_zero",
+        source_lang="c",
+        target_lang=target,
+        divergence_class="div_by_zero",
+        positive_unit={
+            "kind": "div", "width": 32, "signed": True,
+            "dividend": 7, "b_range": [0, 0],
+        },
+        negative_unit={
+            "kind": "div", "width": 32, "signed": True,
+            "dividend": 7, "b_range": [1, 1],
+        },
+        safe_argv=("7", "1"),
+        new_pair=new_pair,
+        description=f"C division-by-zero UB becomes a defined {target} outcome.",
+    )
+
+
+GENERALIZATION_V2_CASES: Tuple[PairGeneralizationCase, ...] = (
+    _c_to_target_case("rust", new_pair=False),
+    _c_to_target_case("go", new_pair=False),
+    _c_to_target_case("swift", new_pair=False),
+    _c_to_target_case("ocaml", new_pair=True),
+    _c_to_target_case("zig", new_pair=True),
+    _c_to_target_case("wasm", new_pair=True),
+    PairGeneralizationCase(
+        case_id="c_to_cpp_sign_bit_shift",
+        source_lang="c",
+        target_lang="cpp",
+        divergence_class="signed_shift_sign_bit",
+        positive_unit={
+            "kind": "sign_bit_shift", "width": 32, "shift_range": [31, 31],
+        },
+        negative_unit={
+            "kind": "sign_bit_shift", "width": 32, "shift_range": [1, 1],
+        },
+        safe_argv=("1",),
+        new_pair=True,
+        description="The byte-identical sign-bit shift is C UB but C++20-defined.",
+    ),
+    PairGeneralizationCase(
+        case_id="rust_to_c_intmin_div_neg1",
+        source_lang="rust",
+        target_lang="c",
+        divergence_class="intmin_div_neg1",
+        positive_unit={
+            "kind": "div", "width": 32, "signed": True,
+            "source_lang": "rust", "target_lang": "c",
+            "a_range": [_I32_MIN, _I32_MIN], "b_range": [-1, -1],
+        },
+        negative_unit={
+            "kind": "div", "width": 32, "signed": True,
+            "source_lang": "rust", "target_lang": "c",
+            "a_range": [42, 42], "b_range": [-1, -1],
+        },
+        safe_argv=("42", "-1"),
+        new_pair=True,
+        description="A Rust-defined panic can become target-side C UB.",
+    ),
+    PairGeneralizationCase(
+        case_id="go_to_rust_intmin_div_neg1",
+        source_lang="go",
+        target_lang="rust",
+        divergence_class="intmin_div_neg1",
+        positive_unit={
+            "kind": "div", "width": 32, "signed": True,
+            "source_lang": "go", "target_lang": "rust",
+            "a_range": [_I32_MIN, _I32_MIN], "b_range": [-1, -1],
+        },
+        negative_unit={
+            "kind": "div", "width": 32, "signed": True,
+            "source_lang": "go", "target_lang": "rust",
+            "a_range": [42, 42], "b_range": [-1, -1],
+        },
+        safe_argv=("42", "-1"),
+        new_pair=True,
+        description="Go and Rust are both defined but disagree on INT_MIN/-1.",
+    ),
+)
+
+
+def _case_oracle(case: PairGeneralizationCase):
+    return plugin.get_oracle_for(
+        case.divergence_class, case.source_lang, case.target_lang)
+
+
+def case_available(case: PairGeneralizationCase,
+                   status: Optional[ToolchainStatus] = None) -> bool:
+    """Whether this V2 case can be confirmed on the current host."""
+    status = status or toolchain_available()
+    orc = _case_oracle(case)
+    mode = orc.confirmation_mode
+    if mode == "defined_divergence":
+        return status.can_compile(case.source_lang) and status.can_compile(case.target_lang)
+    if mode == "source_defined_target_ub":
+        return status.can_compile(case.source_lang) and status.c_available and status.ubsan
+    if case.source_lang == "c" and case.target_lang != "c":
+        if mode == "trap_vs_defined":
+            return status.full_for(case.target_lang)
+        if mode in ("asan_trap_vs_defined", "libc_contract_trap_vs_defined"):
+            return status.full_libc_contract_for(case.target_lang)
+        if mode == "optimizer_exploited":
+            return (
+                status.c_available
+                and status.target_available(case.target_lang)
+                and status.target_runnable(case.target_lang)
+            )
+    return status.can_compile(case.source_lang) and status.can_compile(case.target_lang)
+
+
+def available_v2_cases(
+    status: Optional[ToolchainStatus] = None,
+    cases: Tuple[PairGeneralizationCase, ...] = GENERALIZATION_V2_CASES,
+) -> Tuple[PairGeneralizationCase, ...]:
+    status = status or toolchain_available()
+    return tuple(c for c in cases if case_available(c, status))
+
+
+@dataclass
+class PairCaseResult:
+    case_id: str
+    source_lang: str
+    target_lang: str
+    divergence_class: str
+    confirmation_mode: str
+    new_pair: bool
+    available: bool
+    positive_found: bool
+    positive_confirmed: bool
+    safe_exercised: bool
+    safe_flagged: bool
+    detail: str = ""
+
+    @property
+    def pair(self) -> Tuple[str, str]:
+        return (self.source_lang, self.target_lang)
+
+    @property
+    def ok(self) -> bool:
+        return (
+            self.available
+            and self.positive_found
+            and self.positive_confirmed
+            and self.safe_exercised
+            and not self.safe_flagged
+        )
+
+
+def _safe_control(
+    harness: ReexecHarness,
+    case: PairGeneralizationCase,
+    mode: str,
+    source_snippet: str,
+    target_snippet: str,
+) -> object:
+    argv = list(case.safe_argv)
+    if mode == "trap_vs_defined":
+        return harness.confirm_trap_vs_defined(
+            source_snippet, target_snippet, argv,
+            case.divergence_class, target_lang=case.target_lang)
+    if mode == "source_defined_target_ub":
+        return harness.confirm_source_defined_target_ub(
+            source_snippet, case.source_lang, target_snippet, argv,
+            case.divergence_class)
+    if mode == "defined_divergence":
+        return harness.confirm_defined_divergence(
+            source_snippet, case.source_lang, target_snippet, case.target_lang,
+            argv, case.divergence_class)
+    if mode == "optimizer_exploited":
+        return harness.confirm_optimizer_exploited(
+            source_snippet, target_snippet, argv,
+            case.divergence_class, target_lang=case.target_lang)
+    if mode in ("asan_trap_vs_defined", "libc_contract_trap_vs_defined"):
+        return harness.confirm_libc_contract_trap_vs_defined(
+            source_snippet, target_snippet, argv,
+            case.divergence_class, target_lang=case.target_lang)
+    raise ValueError(f"unsupported V2 confirmation mode {mode!r}")
+
+
+def run_generalization_v2_case(
+    case: PairGeneralizationCase,
+    harness: Optional[ReexecHarness] = None,
+) -> PairCaseResult:
+    status = harness.status if harness is not None else toolchain_available()
+    orc = _case_oracle(case)
+    mode = orc.confirmation_mode
+    available = case_available(case, status)
+    result = PairCaseResult(
+        case_id=case.case_id,
+        source_lang=case.source_lang,
+        target_lang=case.target_lang,
+        divergence_class=case.divergence_class,
+        confirmation_mode=mode,
+        new_pair=case.new_pair,
+        available=available,
+        positive_found=False,
+        positive_confirmed=False,
+        safe_exercised=False,
+        safe_flagged=False,
+    )
+    if not available:
+        result.detail = "toolchain unavailable"
+        return result
+
+    found = orc.find_divergence(case.positive_unit)
+    result.positive_found = found.is_divergent and found.counterexample is not None
+    if not result.positive_found:
+        result.detail = f"positive witness not found: {found.verdict} {found.detail}"
+        return result
+
+    h = harness or ReexecHarness(status)
+    confirmed = orc.confirm(found, h)
+    rr = confirmed.reexec
+    result.positive_confirmed = bool(rr is not None and rr.available and rr.confirmed)
+    if not result.positive_confirmed:
+        result.detail = f"positive not confirmed: {rr.reason if rr else 'no reexec'}"
+        return result
+
+    ce = found.counterexample
+    assert ce is not None  # for type checkers; guarded by positive_found
+    safe = _safe_control(h, case, mode, ce.source_snippet, ce.target_snippet)
+    result.safe_exercised = bool(getattr(safe, "available", False))
+    result.safe_flagged = bool(getattr(safe, "confirmed", False))
+    if not result.safe_exercised:
+        result.detail = f"safe control unavailable: {getattr(safe, 'reason', '')}"
+    elif result.safe_flagged:
+        result.detail = f"safe control falsely confirmed: {getattr(safe, 'reason', '')}"
+    else:
+        result.detail = "positive confirmed; safe control not flagged"
+    return result
+
+
+def _hash_v2_results(results: List[PairCaseResult]) -> str:
+    layer = sorted(
+        (
+            r.case_id, r.source_lang, r.target_lang, r.divergence_class,
+            r.confirmation_mode, int(r.new_pair), int(r.available),
+            int(r.positive_found), int(r.positive_confirmed),
+            int(r.safe_exercised), int(r.safe_flagged),
+        )
+        for r in results)
+    blob = json.dumps(layer, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode()).hexdigest()[:32]
+
+
+@dataclass
+class GeneralizationV2Report:
+    schema: str
+    results: List[PairCaseResult]
+    content_hash: str
+
+    @property
+    def available_results(self) -> List[PairCaseResult]:
+        return [r for r in self.results if r.available]
+
+    @property
+    def available_new_results(self) -> List[PairCaseResult]:
+        return [r for r in self.available_results if r.new_pair]
+
+    def by_pair(self) -> Dict[Tuple[str, str], Tuple[int, int, int, int]]:
+        """Return confirmed/positive and safe-flagged/safe counts per pair."""
+        agg: Dict[Tuple[str, str], List[int]] = {}
+        for r in self.available_results:
+            a = agg.setdefault(r.pair, [0, 0, 0, 0])
+            a[0] += int(r.positive_confirmed)
+            a[1] += 1
+            a[2] += int(r.safe_flagged)
+            a[3] += int(r.safe_exercised)
+        return {k: tuple(v) for k, v in agg.items()}
+
+    def render(self) -> str:
+        if not self.available_results:
+            return "generalization-v2: no new-pair toolchains available"
+        lines = [
+            "Cross-pair generalization v2 (registered oracle transfer):",
+            f"  available_cases={len(self.available_results)} "
+            f"new_pair_cases={len(self.available_new_results)} "
+            f"content_hash={self.content_hash}",
+            "  per pair (confirmed/positive, false-positive/safe):",
+        ]
+        for (src, tgt), (pc, pt, sf, st) in sorted(self.by_pair().items()):
+            lines.append(f"    {src}->{tgt}: confirm={pc}/{pt}  fp={sf}/{st}")
+        return "\n".join(lines)
+
+
+def run_generalization_v2(
+    cases: Tuple[PairGeneralizationCase, ...] = GENERALIZATION_V2_CASES,
+    harness: Optional[ReexecHarness] = None,
+) -> GeneralizationV2Report:
+    status = harness.status if harness is not None else toolchain_available()
+    h = harness or ReexecHarness(status)
+    results = [
+        run_generalization_v2_case(case, h)
+        for case in cases
+        if case_available(case, status)
+    ]
+    return GeneralizationV2Report(
+        SCHEMA_VERSION_V2, results, _hash_v2_results(results) if results else "")
+
+
+@dataclass
+class GeneralizationV2Confirmation:
+    available: bool
+    ok: bool
+    n_cases: int
+    n_new_pairs: int
+    all_positive_confirmed: bool
+    zero_safe_flags: bool
+    report: Optional[GeneralizationV2Report]
+    detail: str
+
+    def render(self) -> str:
+        if not self.available:
+            return "generalization-v2: toolchain unavailable (consistency only)"
+        return (self.report.render() if self.report else "") + (
+            f"\n  all_positive_confirmed={self.all_positive_confirmed} "
+            f"zero_safe_flags={self.zero_safe_flags} ok={self.ok}")
+
+
+def confirm_generalization_v2(
+    cases: Tuple[PairGeneralizationCase, ...] = GENERALIZATION_V2_CASES,
+) -> GeneralizationV2Confirmation:
+    rep = run_generalization_v2(cases)
+    if not rep.available_results:
+        return GeneralizationV2Confirmation(
+            available=False, ok=True, n_cases=0, n_new_pairs=0,
+            all_positive_confirmed=True, zero_safe_flags=True, report=rep,
+            detail="no V2 toolchains available: consistency-only pass")
+
+    positives_ok = all(r.positive_found and r.positive_confirmed for r in rep.available_results)
+    safe_ok = all(r.safe_exercised and not r.safe_flagged for r in rep.available_results)
+    new_pairs = {r.pair for r in rep.available_new_results}
+    breadth_ok = len(new_pairs) >= 2
+    ok = positives_ok and safe_ok and breadth_ok
+    detail = (
+        f"cases={len(rep.available_results)} new_pairs={len(new_pairs)} "
+        f"positives_ok={positives_ok} safe_ok={safe_ok} breadth_ok={breadth_ok}"
+    )
+    return GeneralizationV2Confirmation(
+        available=True, ok=ok, n_cases=len(rep.available_results),
+        n_new_pairs=len(new_pairs), all_positive_confirmed=positives_ok,
+        zero_safe_flags=safe_ok, report=rep, detail=detail)
+
+
+GENERALIZATION_SPI.update({
+    "GENERALIZATION_V2_CASES": GENERALIZATION_V2_CASES,
+    "run_generalization_v2": run_generalization_v2,
+    "confirm_generalization_v2": confirm_generalization_v2,
+})
 
 
 if __name__ == "__main__":  # pragma: no cover

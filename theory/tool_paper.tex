@@ -116,6 +116,13 @@ modular value in Go yet a guaranteed panic in Rust, raising the matrix to
 compiler/toolchain/runtime for every available cell. The new C$\to$WebAssembly
 column contributes four runtime-backed integer cells: C UB vs.\ wasm wrapping,
 shift-mask, division-by-zero trap, and signed-division-overflow trap semantics.
+To make the breadth claim falsifiable, a second cross-pair generalization study
+replays the registry over the newly added pairs/directions and requires every
+available positive witness to confirm while every safe control remains unflagged;
+an executable per-pair soundness checker separately verifies the registry entry,
+confirmation mode, target semantics pack, positive witness, negative control, and
+live confirmation for C$\to$Zig, C$\to$C++20, Rust$\to$C, C$\to$WebAssembly,
+Go$\to$Rust, and C$\to$OCaml.
 Beyond pairwise checks, an
 \emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
 targets at once and flags the minority target whose live output disagrees, and a
@@ -461,6 +468,17 @@ process. When the corresponding host toolchain is present, each attempted cell
 must confirm against real
 \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}/\texttt{zig}/\texttt{wasmtime}
 or the checked C contract build for preconditions UBSan does not cover.
+A second registry-backed generalization study
+(\texttt{generalization.run\_generalization\_v2}) exercises the newer pairs and
+directions directly: one live positive witness and one safe control per available
+pair, including C$\to$C++20, C$\to$OCaml, Rust$\to$C, and Go$\to$Rust on our
+host, must respectively confirm and remain unflagged. This is a breadth/precision
+transfer claim---not a claim that semantically different pairs share one
+identical invariant. The companion checker
+(\texttt{pair\_soundness.confirm\_pair\_soundness}) makes the pair statements
+machine-readable by checking the oracle registry, expected confirmation mode,
+target-pack class resolution, symbolic positive/negative controls, and live
+confirmation whenever the compiler/runtime is installed.
 The Rust$\to$C pair reverses the usual polarity: the source is defined (a Rust
 panic) while the C target is UBSan-confirmed UB. The Go$\to$Rust pair is
 qualitatively new in a different direction: \emph{neither} source nor target has
@@ -1248,6 +1266,22 @@ Relaxed atomics ordering   & D & D & -- & -- & -- & -- & -- & -- & -- \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\paragraph{Generalization v2 and per-pair soundness.}
+The matrix counts registered cells; the V2 generalization study asks whether the
+new pair mechanisms transfer under live execution. It selects one representative
+case for each new direction---C$\to$Zig, C$\to$C++20, Rust$\to$C,
+C$\to$WebAssembly, Go$\to$Rust, and C$\to$OCaml---and runs the pair's own
+registered oracle and confirmation discipline rather than a bespoke benchmark
+path. On hosts with the corresponding tools, the positive witness must confirm
+against real compilers/runtimes and the safe control must not confirm; on hosts
+without Zig or \texttt{wasmtime}, those rows are reported as unavailable rather
+than simulated. The paired soundness checker then verifies that each new pair has
+a registry entry, expected confirmation mode (\textsc{trap},
+\textsc{source-defined-target-UB}, or \textsc{defined-divergence}), target-pack
+resolution where applicable, a symbolic positive witness, and a symbolic negative
+control. Thus the paper's pair-level claims are executable artifacts, not prose
+beside the implementation.
 
 \paragraph{Labelled precision/recall.} Independently of the matrix, a labelled
 divergence study (\texttt{experiments/ub\_divergence}) scores the oracle on

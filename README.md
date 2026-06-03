@@ -386,6 +386,9 @@ python3 -m src.cli.main discover \
   (**60 registered matrix cells across 9 pairs**, including real C checked-
   contract `memcpy`-overlap, `longjmp`/VLA, Zig safety-panic, and wasm trap
   cells).
+  The Step-122 V2 generalization study replays the registry over the newly added
+  pairs/directions with live positive witnesses and safe controls, while
+  `pair_soundness.py` machine-checks each new pair's soundness statement.
   An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.
   Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a

@@ -76,3 +76,22 @@ end-to-end against clang+UBSan and the target compiler/runtime
 (`test_completeness_witnesses_confirm_against_real_compilers`). The shared
 integer search transfers to every registered pair that implements these classes,
 including C→Rust/Go/Swift/OCaml/Zig/WebAssembly.
+
+## Per-pair soundness statements for the newer pairs
+
+`src/ub_oracle/pair_soundness.py` makes the step-116–121 pair claims executable.
+For C→Zig, C→C++20, Rust→C, C→WebAssembly, Go→Rust, and C→OCaml it checks that
+the registered oracle exists, uses the expected confirmation mode, has a target
+semantics pack where applicable, finds the positive witness, rejects the negative
+control, and live-confirms the witness when the host has the real compiler or
+runtime. `src/ub_oracle/generalization.py::run_generalization_v2()` then replays
+those registered pairs as a cross-pair breadth study: every available positive
+case must confirm and every safe control must remain unflagged.
+
+```python
+from src.ub_oracle import generalization, pair_soundness
+
+g = generalization.confirm_generalization_v2()
+assert g.ok or not g.available       # unavailable means no new-pair toolchains
+assert pair_soundness.confirm_pair_soundness().ok
+```
