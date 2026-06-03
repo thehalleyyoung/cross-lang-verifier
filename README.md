@@ -400,8 +400,10 @@ python3 -m src.cli.main discover \
   **target-pack conformance suite** (`pack_conformance.py`) mechanically holds
   every back end to the plugin SPI; and an **SMT-backed integer oracle**
   (`smt_integer.py`) whose encoding is **Z3-proved equivalent to its spec on
-  every 32/64-bit input** and finds the one-in-2⁶⁴ `INT_MIN/-1` witness in
-  milliseconds where enumeration never does
+  every 32/64-bit input**, whose decision path agrees with independent
+  enumeration on a deterministic **10k-case** differential harness, and which
+  finds the one-in-2⁶⁴ `INT_MIN/-1` witness in milliseconds where enumeration
+  never does
 - **pluggable transpiler-integration recipes** (`transpiler_recipes.py`,
   `docs/TRANSPILER_RECIPES.md`) that realise the tool's workflow —
   *translate your C with `$tool`, then verify with us*: a `Translator` protocol

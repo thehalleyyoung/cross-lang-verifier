@@ -77,6 +77,13 @@ end-to-end against clang+UBSan and the target compiler/runtime
 integer search transfers to every registered pair that implements these classes,
 including C→Rust/Go/Swift/OCaml/Zig/WebAssembly.
 
+Step 135 adds an orthogonal decision-procedure check in
+`src/ub_oracle/smt_integer.py`: `differential_test_smt_vs_enumeration()` generates
+10,000 deterministic concrete assignments across every shipped integer class and
+32/64-bit width, then asks Z3 whether the operational SMT encoding can disagree
+with the independent enumeration predicate on any sampled assignment. The test
+passes only when each class×width disagreement disjunction is UNSAT.
+
 ## Per-pair soundness statements for the newer pairs
 
 `src/ub_oracle/pair_soundness.py` makes the step-116–121 pair claims executable.

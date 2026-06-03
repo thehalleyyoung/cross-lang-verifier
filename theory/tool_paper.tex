@@ -129,9 +129,11 @@ targets at once and flags the minority target whose live output disagrees, and a
 target-pack conformance suite mechanically certifies that every back end
 satisfies the plugin SPI. For the integer-UB family we additionally ship an
 SMT-backed encoding whose equivalence to a human-readable specification is
-Z3-proved for \emph{every} 32/64-bit input, and which finds the rare overflow
-witnesses (e.g.\ \texttt{INT\_MIN/-1}, one input in $2^{64}$) in milliseconds
-where ordered enumeration exhausts its budget. For floating-point contraction,
+Z3-proved for \emph{every} 32/64-bit input, whose operational decision path
+agrees with an independent enumeration predicate on a deterministic 10{,}000-case
+differential harness, and which finds the rare overflow witnesses
+(e.g.\ \texttt{INT\_MIN/-1}, one input in $2^{64}$) in milliseconds where ordered
+enumeration exhausts its budget. For floating-point contraction,
 the artifact now retains the exact binary64 operand and result bit patterns and
 replays them through Z3's IEEE-754 FP theory before the real \texttt{clang}/
 \texttt{rustc} confirmation path runs. An optimization-level sweep
@@ -155,10 +157,11 @@ repairs compile and run clean. We give a mechanized-friendly soundness developme
 bounded-completeness boundary, Lean-checked class lemmas for strict-aliasing
 optimizer-exploitation and pointer-provenance trap-vs-defined witnesses, and an
 end-to-end theorem that counterexample packaging preserves the raw product-run
-witness), plus a Lake-built checker that re-validates each source-UB positive
-verdict's final inference from the raw re-execution facts, and an artifact in
-which every headline number is regenerated from content-hashed real-compiler
-runs.
+witness), plus an independent Coq cross-check of the same core
+recorded-observable/product-witness theorem, a Lake-built checker that
+re-validates each source-UB positive verdict's final inference from the raw
+re-execution facts, and an artifact in which every headline number is regenerated
+from content-hashed real-compiler runs.
 \end{abstract}
 
 
@@ -705,6 +708,18 @@ come from \texttt{clang}/\texttt{rustc}/runtime runs---and it is deliberately no
 applied to safe$\to$safe defined-divergence reports, but it prevents the final
 UB-rooted positive-claim inference from drifting away from the Lean theorem.
 
+Step~130 adds an independent proof-assistant cross-check rather than another
+test.  The Coq development \texttt{formal/CoreSoundness.v} deliberately imports
+neither the Lean file nor any generated artifact: it redefines the
+recorded-observable triple, the product assertion \(R=\neg(P\wedge T\wedge C)\),
+the target-pack observation function, and the product-run-to-counterexample
+constructor, then proves the same central facts (\texttt{oracle\_sound\_coq},
+\texttt{oracle\_decides\_coq}, \texttt{rust\_oracle\_sound\_coq}, and
+\texttt{product\_program\_preserves\_divergence\_witness\_coq}).  The Python
+driver runs \texttt{coqc} when available and otherwise reports an explicit
+source-contract-only status, so the artifact never labels an unrun Coq proof as
+kernel-checked.
+
 
 %% ======================================================================
 \section{Evaluation}\label{sec:eval}
@@ -733,7 +748,9 @@ All experiments run on a laptop
     the oracle flag the minority target on live output?
   \item[\textbf{RQ11}] Can SMT encodings of the integer-UB family and
     FP-contraction class be \emph{proved} against their specifications and
-    beat or complement enumeration at finding rare witnesses?
+    beat or complement enumeration at finding rare witnesses, while agreeing
+    with independent enumeration semantics on a large sampled differential
+    check?
   \item[\textbf{RQ12}] Does the artifact exercise actual c2rust machine output,
     rather than hand-written c2rust-style translations?
 \end{enumerate}
@@ -1458,9 +1475,14 @@ witness is vanishingly rare---signed overflow under an ordered scan, and
 \texttt{INT\_MIN/-1} (a single input pair in $2^{64}$)---enumeration exhausts a
 multi-million-probe budget and finds \emph{nothing}, while Z3 returns the
 witness in under a millisecond: a two-to-three-orders-of-magnitude speed-up that
-is the quantitative case for the symbolic encoding. A differential cross-check
+is the quantitative case for the symbolic encoding. Two independent agreement
+checks guard the decision procedure: an exhaustive differential cross-check
 confirms the two paths agree on \emph{existence} at every fully enumerable
-width, and the SMT witness for \texttt{INT\_MIN/-1} coincides exactly with the
+width, and the Step~135 harness generates 10{,}000 deterministic concrete
+assignments across every shipped class and 32/64-bit width, then asks Z3 whether
+the operational formula can disagree with the independent enumeration predicate
+on any sampled assignment. Each class$\times$width disagreement disjunction is
+UNSAT, and the SMT witness for \texttt{INT\_MIN/-1} coincides exactly with the
 pair the shipped operational oracle emits.
 
 \begin{table}[t]

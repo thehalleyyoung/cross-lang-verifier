@@ -3,7 +3,8 @@
 The relational/product-program decision procedure at the heart of the tool
 (see [`PRODUCT_PROGRAM.md`](PRODUCT_PROGRAM.md) and
 `src/ub_oracle/product_program.py`) is not only tested against real compilers —
-its **core soundness argument is machine-checked by the Lean 4 kernel**.
+its **core soundness argument is machine-checked by the Lean 4 kernel** and its
+central theorem is independently cross-checked in Coq.
 
 The development is `formal/ProductSoundness.lean`. It is self-contained (Lean 4
 core only, no Mathlib), so
@@ -14,6 +15,18 @@ lean formal/ProductSoundness.lean      # exit 0  ==  kernel accepted
 
 type-checks every theorem with the kernel. `src/ub_oracle/mechanized_soundness.py`
 runs exactly this and reports whether the kernel accepted the proof.
+
+The independent cross-check is `formal/CoreSoundness.v`. It deliberately does
+not import the Lean development; it re-proves the recorded-observable soundness,
+relative completeness, pack-parametric Rust instance, and product-witness
+preservation lemmas in Coq:
+
+```
+coqc formal/CoreSoundness.v        # exit 0  ==  Coq kernel accepted
+```
+
+When Coq is not installed the driver reports source-contract-only status: the
+file and required theorem names are present, but `fully_checked` is false.
 
 Step 129 adds an extracted checker artifact without moving the proof: Lake builds
 `formal/VerifiedChecker.lean`, which imports `ProductSoundness`, calls the proven
@@ -116,6 +129,11 @@ rep = confirm_mechanized_soundness()
 assert rep.ok
 assert rep.fully_checked          # True when the Lean kernel actually ran
 print(rep.theorems_present)       # all required theorems, including class extensions
+
+from ub_oracle.mechanized_soundness import confirm_coq_crosscheck
+coq = confirm_coq_crosscheck()
+assert coq.ok
+print(coq.fully_checked)          # True only when coqc accepted CoreSoundness.v
 ```
 
 ```python

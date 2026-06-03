@@ -30,6 +30,7 @@ clean, mechanized companion to the operational oracles.
 
 from __future__ import annotations
 
+import random
 import time
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple
@@ -229,6 +230,10 @@ def _signed(raw: int, width: int) -> int:
     return raw if raw <= hi else raw - (1 << width)
 
 
+def _unsigned(value: int, width: int) -> int:
+    return value & ((1 << width) - 1)
+
+
 @dataclass(frozen=True)
 class EnumResult:
     found: Optional[Dict[str, int]]
@@ -317,3 +322,129 @@ def smt_path_agrees_with_predicate(class_key: str, width: int) -> bool:
     if w is None:
         return False
     return _PREDICATES[class_key](width, w)
+
+
+@dataclass(frozen=True)
+class AgreementGroup:
+    class_key: str
+    width: int
+    cases: int
+    agreed: bool
+    detail: str
+
+
+@dataclass(frozen=True)
+class AgreementReport:
+    total_cases: int
+    seed: int
+    groups: Tuple[AgreementGroup, ...]
+
+    @property
+    def ok(self) -> bool:
+        return (
+            bool(self.groups)
+            and sum(g.cases for g in self.groups) == self.total_cases
+            and all(g.agreed for g in self.groups)
+        )
+
+    @property
+    def mismatches(self) -> Tuple[str, ...]:
+        return tuple(g.detail for g in self.groups if not g.agreed)
+
+
+def _interesting_values(width: int) -> Tuple[int, ...]:
+    lo, hi = _bounds(width)
+    raw = {
+        lo, lo + 1, -width - 1, -width, -1, 0, 1,
+        width - 1, width, width + 1, hi - 1, hi,
+    }
+    return tuple(sorted(v for v in raw if lo <= v <= hi))
+
+
+def _sample_assignment(
+    rng: random.Random,
+    class_key: str,
+    width: int,
+) -> Dict[str, int]:
+    vals: Dict[str, int] = {}
+    interesting = _interesting_values(width)
+    for name in _VARS[class_key]:
+        if rng.random() < 0.45:
+            vals[name] = rng.choice(interesting)
+        else:
+            vals[name] = _signed(rng.randrange(1 << width), width)
+    return vals
+
+
+def _agreement_group(
+    class_key: str,
+    width: int,
+    samples: List[Dict[str, int]],
+) -> AgreementGroup:
+    vars_, operational, _spec = _ENCODERS[class_key](width)
+    mismatch_terms = []
+    for sample in samples:
+        expected = _PREDICATES[class_key](width, sample)
+        constraints = [
+            v == z3.BitVecVal(_unsigned(sample[str(v)], width), width)
+            for v in vars_
+        ]
+        mismatch_terms.append(
+            z3.And(*(constraints + [operational != z3.BoolVal(expected)])))
+
+    solver = z3.Solver()
+    solver.add(z3.Or(*mismatch_terms) if mismatch_terms else z3.BoolVal(False))
+    result = solver.check()
+    if result == z3.unsat:
+        return AgreementGroup(class_key, width, len(samples), True, "all sampled cases agree")
+    if result == z3.unknown:
+        return AgreementGroup(class_key, width, len(samples), False, f"z3 returned {result}")
+
+    model = solver.model()
+    model_vals = {
+        str(v): _signed(model.eval(v, model_completion=True).as_long(), width)
+        for v in vars_
+    }
+    smt_value = z3.is_true(model.eval(operational, model_completion=True))
+    enum_value = _PREDICATES[class_key](width, model_vals)
+    return AgreementGroup(
+        class_key,
+        width,
+        len(samples),
+        False,
+        f"{class_key}@{width}: model={model_vals} smt={smt_value} enum={enum_value}",
+    )
+
+
+def differential_test_smt_vs_enumeration(
+    total_cases: int = 10_000,
+    seed: int = 0xC1055EED,
+    widths: Tuple[int, ...] = SHIPPED_WIDTHS,
+) -> AgreementReport:
+    """Differential-test the SMT decision path against enumeration semantics.
+
+    The independent Python predicates are the same concrete semantics used by
+    the brute-force enumeration path.  For each generated concrete assignment we
+    ask Z3 whether the operational encoding's truth value differs from that
+    predicate.  A group passes only when the disjunction of *all* sampled
+    disagreements is UNSAT, so the 10k-case check is one solver proof per
+    (class, width), not 10k uninspected booleans.
+    """
+    if total_cases <= 0:
+        raise ValueError("total_cases must be positive")
+    if not widths:
+        raise ValueError("at least one width is required")
+
+    rng = random.Random(seed)
+    grouped: Dict[Tuple[str, int], List[Dict[str, int]]] = {}
+    for i in range(total_cases):
+        class_key = CLASSES[i % len(CLASSES)]
+        width = widths[(i // len(CLASSES)) % len(widths)]
+        grouped.setdefault((class_key, width), []).append(
+            _sample_assignment(rng, class_key, width))
+
+    groups = tuple(
+        _agreement_group(class_key, width, samples)
+        for (class_key, width), samples in sorted(grouped.items())
+    )
+    return AgreementReport(total_cases=total_cases, seed=seed, groups=groups)

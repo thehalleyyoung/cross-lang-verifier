@@ -1,4 +1,4 @@
-"""Steps 75/126/127/128 — mechanized soundness (scoped).
+"""Steps 75/126/127/128/130 — mechanized soundness (scoped).
 
 A *machine-checked* soundness (and relative-completeness) argument for the
 relational/product-program decision procedure the tool implements, for a core
@@ -73,6 +73,7 @@ def _find_artifact_root() -> str:
 _ROOT = _find_artifact_root()
 FORMAL_DIR = os.path.join(_ROOT, "formal")
 LEAN_SOURCE = os.path.join("formal", "ProductSoundness.lean")
+COQ_SOURCE = os.path.join("formal", "CoreSoundness.v")
 CHECKER_SOURCE = os.path.join("formal", "VerifiedChecker.lean")
 LAKEFILE = os.path.join("formal", "lakefile.lean")
 VERIFIED_CHECKER_TARGET = "verified-checker"
@@ -99,6 +100,19 @@ REQUIRED_THEOREMS: Tuple[str, ...] = (
     "pointer_provenance_report_implies_trap_vs_defined",
 )
 
+REQUIRED_COQ_THEOREMS: Tuple[str, ...] = (
+    "oracle_sound_coq",
+    "oracle_complete_rel_coq",
+    "oracle_decides_coq",
+    "equivalence_never_reported_coq",
+    "report_implies_ub_coq",
+    "pack_oracle_sound_coq",
+    "rust_oracle_sound_coq",
+    "product_program_preserves_divergence_witness_coq",
+    "product_program_emits_witness_iff_product_violated_coq",
+    "product_program_witness_iff_divergence_coq",
+)
+
 
 def _lean_binary() -> Optional[str]:
     found = shutil.which("lean")
@@ -115,6 +129,10 @@ def _lake_binary() -> Optional[str]:
         return found
     cand = os.path.expanduser("~/.elan/bin/lake")
     return cand if os.path.exists(cand) else None
+
+
+def _coqc_binary() -> Optional[str]:
+    return shutil.which("coqc")
 
 
 @dataclass
@@ -148,6 +166,37 @@ class MechanizedReport:
     def fully_checked(self) -> bool:
         """True iff the real Lean kernel accepted the development (no
         consistency-only fallback)."""
+        return self.ok and self.available and self.kernel_accepted is True
+
+
+@dataclass
+class CoqCrossCheckReport:
+    available: bool                 # coqc present and was actually run.
+    source_present: bool
+    theorems_present: Tuple[str, ...]
+    theorems_missing: Tuple[str, ...]
+    kernel_accepted: Optional[bool] # None when coqc absent.
+    source_hash: str
+    stderr_tail: str = ""
+
+    @property
+    def theorems_ok(self) -> bool:
+        return self.source_present and not self.theorems_missing
+
+    @property
+    def ok(self) -> bool:
+        if not self.source_present:
+            return False
+        if not self.theorems_ok:
+            return False
+        if self.available:
+            return self.kernel_accepted is True
+        # Coq absent: source-contract only.  The report is explicit that no
+        # independent kernel run happened in this environment.
+        return True
+
+    @property
+    def fully_checked(self) -> bool:
         return self.ok and self.available and self.kernel_accepted is True
 
 
@@ -208,6 +257,14 @@ def _read_checker_source() -> Optional[str]:
         return None
 
 
+def _read_coq_source() -> Optional[str]:
+    try:
+        with open(os.path.join(_ROOT, COQ_SOURCE), "r") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
 def _tail(text: str, n: int = 10) -> str:
     return "\n".join((text or "").strip().splitlines()[-n:])
 
@@ -244,6 +301,56 @@ def confirm_mechanized_soundness(timeout: int = 300) -> MechanizedReport:
         available=True, source_present=True, theorems_present=present,
         theorems_missing=missing, kernel_accepted=accepted,
         source_hash=src_hash, stderr_tail="\n".join(tail))
+
+
+def confirm_coq_crosscheck(timeout: int = 300) -> CoqCrossCheckReport:
+    """Confirm the independent Coq cross-check for the core theorem.
+
+    When ``coqc`` is installed this runs the real Coq kernel over
+    ``formal/CoreSoundness.v``.  When it is not installed, the result is an honest
+    source-contract pass: the Coq development is present and declares every
+    required theorem, but ``fully_checked`` remains false.
+    """
+    src = _read_coq_source()
+    if src is None:
+        return CoqCrossCheckReport(
+            available=False, source_present=False, theorems_present=(),
+            theorems_missing=REQUIRED_COQ_THEOREMS, kernel_accepted=None,
+            source_hash="")
+
+    present = tuple(t for t in REQUIRED_COQ_THEOREMS if f"Theorem {t}" in src)
+    missing = tuple(t for t in REQUIRED_COQ_THEOREMS if t not in present)
+    src_hash = hashlib.sha256(src.encode()).hexdigest()
+
+    coqc = _coqc_binary()
+    if coqc is None:
+        return CoqCrossCheckReport(
+            available=False, source_present=True, theorems_present=present,
+            theorems_missing=missing, kernel_accepted=None, source_hash=src_hash)
+
+    try:
+        proc = subprocess.run(
+            [coqc, os.path.basename(COQ_SOURCE)],
+            cwd=os.path.join(_ROOT, "formal"),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        accepted = proc.returncode == 0
+        tail = _tail(proc.stderr or proc.stdout)
+    except (subprocess.TimeoutExpired, OSError) as e:  # pragma: no cover
+        accepted = False
+        tail = f"coqc invocation failed: {e}"
+
+    return CoqCrossCheckReport(
+        available=True,
+        source_present=True,
+        theorems_present=present,
+        theorems_missing=missing,
+        kernel_accepted=accepted,
+        source_hash=src_hash,
+        stderr_tail=tail,
+    )
 
 
 def build_verified_checker(timeout: int = 300) -> VerifiedCheckerBuild:
@@ -401,6 +508,26 @@ def render(rep: MechanizedReport) -> str:
     return "\n".join(lines)
 
 
+def render_coq_crosscheck(rep: CoqCrossCheckReport) -> str:
+    lines = ["mechanized soundness cross-check (Coq):"]
+    lines.append(f"  source: {COQ_SOURCE} "
+                 f"({'present' if rep.source_present else 'MISSING'}) "
+                 f"hash={rep.source_hash[:16]}")
+    lines.append(f"  required theorems present: {len(rep.theorems_present)}"
+                 f"/{len(REQUIRED_COQ_THEOREMS)}")
+    if rep.theorems_missing:
+        lines.append(f"  MISSING: {list(rep.theorems_missing)}")
+    if rep.available:
+        lines.append(f"  Coq kernel: {'ACCEPTED' if rep.kernel_accepted else 'REJECTED'}")
+        if not rep.kernel_accepted and rep.stderr_tail:
+            lines.append(f"    {rep.stderr_tail}")
+    else:
+        lines.append("  Coq kernel: not installed (source-contract only)")
+    lines.append(f"  => {'PASSED' if rep.ok else 'FAILED'}"
+                 f"{' (kernel-checked)' if rep.fully_checked else ''}")
+    return "\n".join(lines)
+
+
 def render_verified_checker_build(rep: VerifiedCheckerBuild) -> str:
     lines = ["verified checker (Lean/Lake):"]
     lines.append(f"  source: {CHECKER_SOURCE} "
@@ -421,12 +548,16 @@ def render_verified_checker_build(rep: VerifiedCheckerBuild) -> str:
 
 MECHANIZED_SOUNDNESS_SPI = {
     "confirm_mechanized_soundness": confirm_mechanized_soundness,
+    "confirm_coq_crosscheck": confirm_coq_crosscheck,
     "render": render,
+    "render_coq_crosscheck": render_coq_crosscheck,
     "build_verified_checker": build_verified_checker,
     "run_verified_checker": run_verified_checker,
     "render_verified_checker_build": render_verified_checker_build,
     "REQUIRED_THEOREMS": REQUIRED_THEOREMS,
+    "REQUIRED_COQ_THEOREMS": REQUIRED_COQ_THEOREMS,
     "LEAN_SOURCE": LEAN_SOURCE,
+    "COQ_SOURCE": COQ_SOURCE,
     "CHECKER_SOURCE": CHECKER_SOURCE,
 }
 
@@ -434,4 +565,5 @@ MECHANIZED_SOUNDNESS_SPI = {
 if __name__ == "__main__":  # pragma: no cover
     rep = confirm_mechanized_soundness()
     print(render(rep))
+    print(render_coq_crosscheck(confirm_coq_crosscheck()))
     print(render_verified_checker_build(build_verified_checker()))

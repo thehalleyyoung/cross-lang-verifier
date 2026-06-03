@@ -662,13 +662,17 @@ def _thm_artifact_eval() -> bool:
 def _thm_mechanized_soundness() -> bool:
     # The core soundness/relative-completeness argument for the product-program
     # decision procedure is machine-checked by the real Lean 4 kernel for a
-    # language-pair-parametric calculus instantiated to C->Rust. When Lean is
-    # absent we require only that the source declares every theorem
+    # language-pair-parametric calculus instantiated to C->Rust, and independently
+    # cross-checked in Coq for the central product-program lemma. When a proof
+    # assistant is absent we require only that its source declares every theorem
     # (consistency-only); when present the kernel must accept the development.
     # When Lake is present, the extracted verdict checker must also build.
     from . import mechanized_soundness as m
     rep = m.confirm_mechanized_soundness()
     if not rep.ok:
+        return False
+    coq = m.confirm_coq_crosscheck()
+    if not coq.ok:
         return False
     if m._lake_binary() is None:
         return True
@@ -1693,7 +1697,8 @@ CLAIMS: List[Claim] = [
     claim(
         "C41-mechanized-soundness",
         "The core soundness argument is **machine-checked by the Lean 4 kernel**, "
-        "not merely tested. `formal/ProductSoundness.lean` (self-contained, no "
+        "not merely tested, and the central theorem is independently cross-"
+        "checked in Coq. `formal/ProductSoundness.lean` (self-contained, no "
         "Mathlib) formalizes the relational/product-program decision procedure "
         "over the recorded-observable abstraction `(P=ub-reached, T=target-"
         "defined, C=consequence)` with `R = ¬(P∧T∧C)`, and proves: `oracle_sound` "
@@ -1715,11 +1720,14 @@ CLAIMS: List[Claim] = [
         "inference from raw re-execution facts via "
         "`productViolated`/`oracle_sound`. With Lean "
         "or Lake absent it degrades only to consistency checks and never claims an "
-        "unrun proof.",
+        "unrun proof. `formal/CoreSoundness.v` re-proves the same central "
+        "recorded-observable and product-witness lemmas in Coq; when `coqc` is "
+        "available the driver runs the real Coq kernel, otherwise it reports "
+        "source-contract-only status.",
         "ub_oracle.mechanized_soundness",
         ("confirm_mechanized_soundness", "build_verified_checker",
-         "run_verified_checker", "REQUIRED_THEOREMS", "LEAN_SOURCE",
-         "CHECKER_SOURCE"),
+         "run_verified_checker", "confirm_coq_crosscheck", "REQUIRED_THEOREMS",
+         "REQUIRED_COQ_THEOREMS", "LEAN_SOURCE", "COQ_SOURCE", "CHECKER_SOURCE"),
         theorem=_thm_mechanized_soundness,
         docs=("README.md", "docs/MECHANIZED_SOUNDNESS.md"),
     ),

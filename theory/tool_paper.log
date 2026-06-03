@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  2 JUN 2026 23:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  2 JUN 2026 23:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -622,45 +622,45 @@ LaTeX Font Info:    Trying to load font information for U+stmry on input line 6
 [2]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 274.
+(hyperref)                removing `math shift' on input line 277.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 274.
+(hyperref)                removing `\sigma' on input line 277.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 274.
+(hyperref)                removing `math shift' on input line 277.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 283.
+(Font)              using `T1/cmr/m/scsl' instead on input line 286.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 283.
+(Font)              using `T1/cmr/m/scsl' instead on input line 286.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 283.
+(Font)              using `T1/cmr/m/scsl' instead on input line 286.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 283.
+(Font)              using `T1/cmr/m/scsl' instead on input line 286.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 284.
+(Font)              using `T1/cmr/m/scsl' instead on input line 287.
 
 
-Overfull \hbox (25.21313pt too wide) in paragraph at lines 297--299
+Overfull \hbox (25.21313pt too wide) in paragraph at lines 300--302
 []\T1/cmr/m/sc/10 UB\T1/cmr/m/n/10 : bitvec-tor op-er-a-tion plus a well-define
 dness guard added to the as-sump-tion set (\T1/cmtt/m/n/10 ctx.assert_assume\T1
 /cmr/m/n/10 ). 
  []
 
 
-Overfull \hbox (10.10947pt too wide) in paragraph at lines 308--315
+Overfull \hbox (10.10947pt too wide) in paragraph at lines 311--318
 [][]\T1/cmr/bx/n/10 Definition 2 \T1/cmr/m/n/10 ($\OML/cmm/m/it/10 ^^[$\T1/cmr/
 m/n/10 -Bridge Co-er-cion)\T1/cmr/bx/n/10 . []\T1/cmr/m/it/10 A $\OML/cmm/m/it/
 10 ^^[$\T1/cmr/m/it/10 -bridge co-er-cion at pro-gram point $\OML/cmm/m/it/10 i
@@ -669,25 +669,25 @@ ML/cmm/m/it/10 ; [][]; [][]\OT1/cmr/m/n/10 )$
  []
 
 
-Overfull \hbox (77.59837pt too wide) in paragraph at lines 327--329
+Overfull \hbox (77.59837pt too wide) in paragraph at lines 330--332
  []\T1/cmr/bx/n/10 Product pro-gram con-struc-tion.[] \T1/cmr/m/n/10 Al-go-rith
 m []1[] sum-ma-rizes the con-struc-tion, im-ple-mented in \T1/cmtt/m/n/10 Produ
 ctBuilder.build()
  []
 
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 331.
+put line 334.
 
 
 [3]
-Overfull \hbox (89.38931pt too wide) in paragraph at lines 466--505
+Overfull \hbox (89.38931pt too wide) in paragraph at lines 469--508
 \T1/cmr/m/n/10 con-di-tions UB-San does not cover. A sec-ond registry-backed ge
 n-er-al-iza-tion study (\T1/cmtt/m/n/10 generalization.run_generalization_v2\T1
 /cmr/m/n/10 )
  []
 
 
-Overfull \hbox (29.37729pt too wide) in paragraph at lines 466--505
+Overfull \hbox (29.37729pt too wide) in paragraph at lines 469--508
 \T1/cmr/m/n/10 fer-ent pairs share one iden-ti-cal in-vari-ant. The com-pan-ion
  checker (\T1/cmtt/m/n/10 pair_soundness.confirm_pair_soundness\T1/cmr/m/n/10 )
 
@@ -698,7 +698,7 @@ Overfull \hbox (29.37729pt too wide) in paragraph at lines 466--505
 [4]
 
 [5]
-Overfull \hbox (117.75385pt too wide) in paragraph at lines 529--532
+Overfull \hbox (117.75385pt too wide) in paragraph at lines 532--535
 \T1/cmr/m/n/10 We state the main sound-ness the-o-rem, cor-re-spond-ing to \T1/
 cmtt/m/n/10 verify_soundness_theorem_1() \T1/cmr/m/n/10 in \T1/cmtt/m/n/10 src/
 product_program/soundness.py\T1/cmr/m/n/10 . 
@@ -706,29 +706,29 @@ product_program/soundness.py\T1/cmr/m/n/10 .
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 584.
+(Font)              using `T1/cmr/m/scsl' instead on input line 587.
 
 
 LaTeX Font Warning: Font shape `T1/cmr/m/scit' undefined
-(Font)              using `T1/cmr/m/scsl' instead on input line 585.
+(Font)              using `T1/cmr/m/scsl' instead on input line 588.
 
 
 
 [6]
-Overfull \hbox (13.40016pt too wide) in paragraph at lines 622--627
+Overfull \hbox (13.40016pt too wide) in paragraph at lines 625--630
  []\T1/cmr/bx/n/10 Parser fron-tends.[] \T1/cmr/m/n/10 Each lan-guage has two p
 ars-ing back-ends: tree-sitter-c 0.24 and tree-sitter-rust 0.24 [[]]
  []
 
 
-Overfull \hbox (1.0379pt too wide) in paragraph at lines 661--671
+Overfull \hbox (1.0379pt too wide) in paragraph at lines 664--674
  []\T1/cmr/bx/n/10 Memory model.[] \T1/cmr/m/n/10 For pointer-manipulating code
 , \T1/cmr/m/sc/10 Sem-Rec \T1/cmr/m/n/10 in-cor-po-rates Andersen-style flow-in
 sensitive
  []
 
 
-Overfull \hbox (52.95486pt too wide) in paragraph at lines 695--707
+Overfull \hbox (52.95486pt too wide) in paragraph at lines 698--710
 \T1/cmtt/m/n/10 cross-lang-verify --verified-check\T1/cmr/m/n/10 . The checker 
 im-ports \T1/cmtt/m/n/10 ProductSoundness\T1/cmr/m/n/10 , calls the proved \T1/
 cmtt/m/n/10 productViolated
@@ -737,29 +737,37 @@ cmtt/m/n/10 productViolated
 
 
 [7]
+Overfull \hbox (132.19476pt too wide) in paragraph at lines 711--722
+\T1/cmr/m/n/10 (\T1/cmtt/m/n/10 oracle_sound_coq\T1/cmr/m/n/10 , \T1/cmtt/m/n/1
+0 oracle_decides_coq\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 rust_oracle_sound_coq\T1/c
+mr/m/n/10 , and \T1/cmtt/m/n/10 product_program_preserves_divergence_witness_co
+q\T1/cmr/m/n/10 ).
+ []
+
+
 
 [8]
 
 [9]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 974.
+(hyperref)                removing `math shift' on input line 991.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 974.
+(hyperref)                removing `math shift' on input line 991.
 
 
-Overfull \hbox (2.70706pt too wide) in paragraph at lines 1001--1007
+
+[10]
+Overfull \hbox (2.70706pt too wide) in paragraph at lines 1018--1024
 \T1/cmr/m/n/10 val-ues that trig-ger the di-ver-gence. For ex-am-ple, on an \T1
 /cmtt/m/n/10 add \T1/cmr/m/n/10 pair, the coun-terex-am-ple $\OML/cmm/m/it/10 a
  \OT1/cmr/m/n/10 = 2[]147[]483[]647\OML/cmm/m/it/10 ; b \OT1/cmr/m/n/10 =
  []
 
 
-
-[10]
-Overfull \hbox (8.56442pt too wide) in paragraph at lines 1054--1060
+Overfull \hbox (8.56442pt too wide) in paragraph at lines 1071--1077
 []\T1/cmr/bx/n/10 Memory model\T1/cmr/m/n/10 : value-level or-a-cles cover stri
 ct-aliasing (with a Lean-checked optimizer-exploitation
  []
@@ -769,35 +777,35 @@ ct-aliasing (with a Lean-checked optimizer-exploitation
 [11]
 
 [12]
-Overfull \hbox (16.77573pt too wide) in paragraph at lines 1231--1251
+Overfull \hbox (16.77573pt too wide) in paragraph at lines 1248--1268
  []\T1/cmr/bx/n/10 Implementation-defined ports: bit-fields and out-of-range en
 ums.[] \T1/cmr/m/n/10 The same \T1/cmtt/m/n/10 defined_divergence
  []
 
 
-Overfull \hbox (18.16705pt too wide) in paragraph at lines 1253--1269
+
+[13]
+Overfull \hbox (18.16705pt too wide) in paragraph at lines 1270--1286
 \T1/cmr/m/n/10 ar-ti-fact's arm64 Dar-win host the same source is con-firmed by
  real \T1/cmtt/m/n/10 clang -ftrivial-auto-var-init=pattern
  []
 
 
-
-[13]
-Overfull \hbox (31.04395pt too wide) in paragraph at lines 1291--1320
+Overfull \hbox (31.04395pt too wide) in paragraph at lines 1308--1337
  [][] 
  []
 
 
-Overfull \hbox (64.19193pt too wide) in paragraph at lines 1338--1349
+
+[14]
+Overfull \hbox (64.19193pt too wide) in paragraph at lines 1355--1366
  []\T1/cmr/bx/n/10 Labelled pre-ci-sion/re-call.[] \T1/cmr/m/n/10 In-de-pen-den
 tly of the ma-trix, a la-belled di-ver-gence study (\T1/cmtt/m/n/10 experiments
 /ub_divergence\T1/cmr/m/n/10 )
  []
 
 
-
-[14]
-Overfull \hbox (14.13248pt too wide) in paragraph at lines 1353--1369
+Overfull \hbox (14.13248pt too wide) in paragraph at lines 1370--1386
 \T1/cmr/m/n/10 The three \T1/cmr/m/sc/10 opt\T1/cmr/m/n/10 -mode classes that \
 T1/cmr/m/it/10 no san-i-tizer can trap\T1/cmr/m/n/10 ---strict alias-ing, \T1/c
 mtt/m/n/10 restrict \T1/cmr/m/n/10 vi-o-la-tion, and \T1/cmtt/m/n/10 -ffast-mat
@@ -806,36 +814,36 @@ h
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1390.
+(hyperref)                removing `math shift' on input line 1407.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1390.
+(hyperref)                removing `math shift' on input line 1407.
 
 
-Overfull \hbox (33.18387pt too wide) in paragraph at lines 1392--1403
+Overfull \hbox (33.18387pt too wide) in paragraph at lines 1409--1420
 \T1/cmr/m/n/10 gets, \T1/cmr/m/it/10 is any sin-gle tar-get the odd one out? \T
 1/cmr/m/n/10 The $\OML/cmm/m/it/10 N$\T1/cmr/m/n/10 -language con-sis-tency or-
 a-cle (\T1/cmtt/m/n/10 src/ub_oracle/consistency.py\T1/cmr/m/n/10 )
  []
 
 
-Overfull \hbox (7.05756pt too wide) in paragraph at lines 1437--1452
+
+[15]
+Overfull \hbox (7.05756pt too wide) in paragraph at lines 1454--1469
 \T1/cmr/m/n/10 For the integer-UB family---signed over-flow, out-of-range shift
 , di-vi-sion by zero, and the unique \T1/cmtt/m/n/10 INT_MIN/-1
  []
 
 
-Overfull \hbox (10.29941pt too wide) in paragraph at lines 1437--1452
+Overfull \hbox (10.29941pt too wide) in paragraph at lines 1454--1469
 \T1/cmr/m/n/10 overflow---we pro-mote the \T1/cmr/m/it/10 en-cod-ing it-self \T
 1/cmr/m/n/10 to a machine-checked ar-ti-fact (\T1/cmtt/m/n/10 src/ub_oracle/smt
 _integer.py\T1/cmr/m/n/10 ).
  []
 
 
-
-[15]
-Overfull \hbox (61.82306pt too wide) in paragraph at lines 1486--1504
+Overfull \hbox (61.82306pt too wide) in paragraph at lines 1508--1526
 \T1/cmtt/m/n/10 3ff79adacef6bb27\T1/cmr/m/n/10 , \T1/cmtt/m/n/10 4006376792d200
 d8 \T1/cmr/m/n/10 and re-sult bits \T1/cmtt/m/n/10 3d01fe159b5bd2ec \T1/cmr/m/n
 /10 (single-rounding) ver-sus \T1/cmtt/m/n/10 3d02000000000000
@@ -848,7 +856,9 @@ d8 \T1/cmr/m/n/10 and re-sult bits \T1/cmtt/m/n/10 3d01fe159b5bd2ec \T1/cmr/m/n
 [17]
 
 [18]
-Overfull \hbox (15.13892pt too wide) in paragraph at lines 1864--1868
+
+[19]
+Overfull \hbox (15.13892pt too wide) in paragraph at lines 1886--1890
 \T1/cmr/m/n/10 en-coder (\T1/cmtt/m/n/10 encode_binop \T1/cmr/m/n/10 with \T1/c
 mtt/m/n/10 OverflowBehavior.UNDEFINED\T1/cmr/m/n/10 ) gen-er-ates these guards 
 as \T1/cmtt/m/n/10 ctx.assert_assume
@@ -856,47 +866,47 @@ as \T1/cmtt/m/n/10 ctx.assert_assume
 
 
 
-[19
+[20
 
 ]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1915.
+(hyperref)                removing `math shift' on input line 1937.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 1915.
+(hyperref)                removing `\sigma' on input line 1937.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1915.
+(hyperref)                removing `math shift' on input line 1937.
 
 
-
-[20]
 
 [21]
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2242.
-
+[22]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\sigma' on input line 2242.
+(hyperref)                removing `math shift' on input line 2264.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2242.
+(hyperref)                removing `\sigma' on input line 2264.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2264.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 
-[22]
-
 [23]
-Underfull \hbox (badness 1308) in paragraph at lines 2456--2457
+
+[24]
+Underfull \hbox (badness 1308) in paragraph at lines 2478--2479
 []|\T1/cmr/m/n/9 Integer pro-mo-tion: C im-plic-itly
  []
 
@@ -904,7 +914,7 @@ Underfull \hbox (badness 1308) in paragraph at lines 2456--2457
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2477--2477
+Underfull \hbox (badness 10000) in paragraph at lines 2499--2499
 []|\T1/cmr/m/n/9 Truncation to-ward
  []
 
@@ -912,55 +922,55 @@ Underfull \hbox (badness 10000) in paragraph at lines 2477--2477
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Overfull \hbox (1.83661pt too wide) in paragraph at lines 2487--2497
+Overfull \hbox (1.83661pt too wide) in paragraph at lines 2509--2519
 \T1/cmr/m/n/10 Integer nar-row-ing (class 13) is implementation-defined in C bu
 t uni-ver-sally trun-cates on two's-complement
  []
 
 
 
-[24]
-Underfull \hbox (badness 1648) in paragraph at lines 2552--2556
+[25]
+Underfull \hbox (badness 1648) in paragraph at lines 2574--2578
 \T1/cmr/m/n/9 UREM, FADD, FSUB, FMUL, FDIV,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2552--2556
+Underfull \hbox (badness 10000) in paragraph at lines 2574--2578
 \T1/cmr/m/n/9 FREM, SHL, LSHR, ASHR, AND,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2552--2556
+Underfull \hbox (badness 10000) in paragraph at lines 2574--2578
 \T1/cmr/m/n/9 OR, XOR. Each an-no-tated with
  []
 
 
-Underfull \hbox (badness 1117) in paragraph at lines 2559--2563
+Underfull \hbox (badness 1117) in paragraph at lines 2581--2585
 []|\T1/cmr/m/n/9 Signed (SLT/S-GT/SLE/SGE), un-signed
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2559--2563
+Underfull \hbox (badness 10000) in paragraph at lines 2581--2585
 \T1/cmr/m/n/9 (ULT/UGT/ULE/UGE), or-dered float
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2559--2563
+Underfull \hbox (badness 10000) in paragraph at lines 2581--2585
 \T1/cmr/m/n/9 (OE-Q/ONE/OLT/OGT/OLE/OGE),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2564--2567
+Underfull \hbox (badness 10000) in paragraph at lines 2586--2589
 []|\T1/cmr/m/n/9 TRUNC, ZEXT, SEXT, FP-TRUNC,
  []
 
 
-Underfull \hbox (badness 2717) in paragraph at lines 2564--2567
+Underfull \hbox (badness 2717) in paragraph at lines 2586--2589
 \T1/cmr/m/n/9 FPEXT, FP-TOSI, FP-TOUI, SITOFP,
  []
 
 
-Underfull \hbox (badness 2828) in paragraph at lines 2572--2573
+Underfull \hbox (badness 2828) in paragraph at lines 2594--2595
 []|\T1/cmr/m/n/9 Phi for SSA con-struc-tion; Se-lect for
  []
 
@@ -969,31 +979,17 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 
-[25] (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
+[26] (/usr/local/texlive/2025basic/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
-Overfull \hbox (7.85013pt too wide) in paragraph at lines 2609--2612
+Overfull \hbox (7.85013pt too wide) in paragraph at lines 2631--2634
  []\T1/cmr/bx/n/10 Memory ar-ray model.[] \T1/cmr/m/n/10 Mem-ory is mod-eled as
  a Z3 \T1/cmtt/m/n/10 Array(BitVecSort(ptr_width), BitVecSort(8))
  []
 
 
 
-[26]
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-
 [27]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2797.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2797.
-
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
@@ -1001,7 +997,21 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 [28]
 
-[29] (./tool_paper.aux)
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2819.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2819.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+
+[29]
+
+[30] (./tool_paper.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
@@ -1010,9 +1020,9 @@ Package rerunfilecheck Info: File `tool_paper.out' has not changed.
 (rerunfilecheck)             Checksum: F032BE58A8BA64E839B3419750811361;11448.
  ) 
 Here is how much of TeX's memory you used:
- 16421 strings out of 474662
- 251897 string characters out of 5751110
- 938597 words of memory out of 5000000
+ 16422 strings out of 474662
+ 251904 string characters out of 5751110
+ 939598 words of memory out of 5000000
  38957 multiletter control sequences out of 15000+600000
  599886 words of font info for 143 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
@@ -1066,10 +1076,10 @@ ic/amsfonts/symbols/msam10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/t
 ype1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2025basic/texmf-dis
 t/fonts/type1/public/stmaryrd/stmary10.pfb></usr/local/texlive/2025basic/texmf-
 dist/fonts/type1/urw/zapfding/uzdr.pfb>
-Output written on tool_paper.pdf (29 pages, 563242 bytes).
+Output written on tool_paper.pdf (30 pages, 564758 bytes).
 PDF statistics:
- 1689 PDF objects out of 1728 (max. 8388607)
- 764 compressed objects within 8 object streams
- 243 named destinations out of 1000 (max. 500000)
+ 1693 PDF objects out of 1728 (max. 8388607)
+ 767 compressed objects within 8 object streams
+ 244 named destinations out of 1000 (max. 500000)
  425 words of extra memory for PDF output out of 10000 (max. 10000000)
 
