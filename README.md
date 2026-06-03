@@ -139,6 +139,9 @@ python3 -m src.cli.main discover \
   sample consumer repo
 - a fixture-tested **pre-commit hook** that resolves staged translated files to
   verifier manifests and blocks new symbolic divergence candidates before commit
+- a stdio **Language Server Protocol diagnostics adapter** (`cross-lang-verify-lsp`)
+  that turns the same manifest-backed verifier findings into inline editor
+  warnings/errors without fabricating source locations
 - an incremental cache (`--cache`) that re-verifies only changed units — keyed by
   unit-content hash **and** real toolchain version, with a cold-vs-hit proof that
   cached verdicts replay the same certificate-bearing verdict layer

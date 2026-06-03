@@ -41,6 +41,7 @@ docs = ["mkdocs>=1.6"]
 cross-lang-verify = "ub_oracle.cli:main"
 cross-lang-verifier = "ub_oracle.cli:main"
 cross-lang-verify-pre-commit = "ub_oracle.precommit:main"
+cross-lang-verify-lsp = "ub_oracle.lsp:main"
 
 [project.urls]
 Homepage = "https://github.com/thehalleyyoung/cross-lang-verifier"

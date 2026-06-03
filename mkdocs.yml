@@ -46,6 +46,7 @@ nav:
   - Integrations:
       - Transpiler recipes: TRANSPILER_RECIPES.md
       - Pre-commit hook: pre_commit.md
+      - LSP diagnostics: LSP.md
       - Web playground: PLAYGROUND.md
       - Plugin SDK: SDK.md
   - Reproducibility:

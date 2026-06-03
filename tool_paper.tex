@@ -726,8 +726,8 @@ real-compiler regression tests for every confirmation mode.
 The artifact is packaged as both a research harness and a usable guardrail:
 \texttt{cross-lang-verify} ingests pair-aware manifests, emits text/JSON/SARIF,
 supports triage, suppression baselines, caching and local dashboards, and is
-wrapped by a GitHub Action, pre-commit hook, VS Code diagnostics shim, playground
-and plugin SDK.
+wrapped by a GitHub Action, pre-commit hook, stdio Language Server Protocol
+diagnostics adapter, playground and plugin SDK.
 Even the launch surface is generated from the verifier rather than hand-written:
 \texttt{scripts/build\_readme\_demo.py} runs the real CLI on
 \texttt{examples/readme\_demo\_units.json} and renders the README animation only
@@ -766,6 +766,17 @@ overflow manifest blocks in deterministic \texttt{--no-confirm --fail-on
 candidate} mode, proves the safe-control manifest passes, proves unrelated files
 and ordinary JSON no-op, and proves explicit bad manifests fail operationally
 rather than being silently ignored.
+For editor feedback, \texttt{cross-lang-verify-lsp} is a dependency-free LSP
+server over the same verifier path: clients configure a units manifest through
+\texttt{initializationOptions}, opened \texttt{file://} documents are canonicalized
+against manifest-relative \texttt{source\_file}/\texttt{target\_file} entries, and
+only actionable \textsc{Candidate} or confirmed \textsc{Divergent} reports become
+inline diagnostics.  Clean files receive an empty diagnostic list to clear stale
+editor state, and files without manifest locations receive none, preserving the
+``no fabricated source locations'' SARIF invariant.  \texttt{make lsp-check}
+exercises both the diagnostic conversion and a real Content-Length-framed
+JSON-RPC session (\texttt{initialize}, \texttt{didOpen}, \texttt{shutdown},
+\texttt{exit}) against a subprocess server.
 
 \paragraph{Parser frontends.}
 Each language has two parsing backends: tree-sitter-c~0.24 and
