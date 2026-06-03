@@ -53,3 +53,6 @@ dist/
 # Step 54 replication kit manifest (regenerated, not tracked)
 reproduction_manifest.json
 site/
+
+# Ephemeral nightly corpus-drift reports; the deterministic plan is tracked.
+experiments/continuous_corpus_ci/run_reports/

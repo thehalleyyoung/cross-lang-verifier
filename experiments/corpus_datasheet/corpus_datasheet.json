@@ -14,7 +14,7 @@
     "regression corpus": 1,
     "weakness replay corpus": 1
   },
-  "content_hash": "af60ff7b132eb4ccb9978bfe8599b65a01eceb1f88c8749d3eb4ced3387d96df",
+  "content_hash": "1a0348fe24d9f08f95e00974bac8680d3c572dd8db1ef0ccf4845199eda1e851",
   "divergence_classes": [
     "array_oob",
     "div_by_zero",
@@ -409,7 +409,7 @@
       "title": "1M-LOC generated migration stress corpus",
       "unit": "generated translation pair",
       "validation_commands": [
-        "make large-scale"
+        "make large-scale-check"
       ]
     },
     {

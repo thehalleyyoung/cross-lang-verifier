@@ -176,6 +176,9 @@ python3 -m src.cli.main discover \
 - a generated **corpus datasheet** (`docs/corpus_datasheet.md`, `make
   corpus-datasheet-check`) covering 13 corpus and benchmark surfaces with
   provenance, balance, limitations, artifact hashes, and validation commands
+- a scheduled **continuous corpus CI** monitor (`make continuous-corpus-ci`) that
+  re-runs every datasheet validation command nightly, fails on drift/regression,
+  and uploads the untracked runtime evidence
 - a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against

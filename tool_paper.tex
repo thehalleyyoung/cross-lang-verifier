@@ -200,7 +200,12 @@ artifact now includes a generated corpus datasheet:
 corpus or corpus-backed benchmark surface, records provenance, pair/class/label
 balance, validation commands, limitations, and artifact hashes, and explicitly
 marks same-subject benchmark rows so they are not double-counted as independent
-populations. The same artifact also keeps
+populations.  A scheduled continuous-corpus CI plan
+(\texttt{docs/continuous\_corpus\_ci.md},
+\texttt{make continuous-corpus-ci}) then re-runs every one of those validation
+commands nightly, fails on any drift/regression alert, and uploads an untracked
+runtime report while keeping the committed verdict-layer plan byte-stable. The
+same artifact also keeps
 the tool honest at semantic frontiers: volatile/inline-assembly/FFI/general
 atomic units cause loud abstention justified by real \texttt{clang} IR, while
 the scoped atomics oracle uses a deterministic model-level proof; a
@@ -1477,7 +1482,7 @@ checks the live counts against the owning corpus modules.
 \centering
 \small
 \caption{Generated corpus datasheet summary. The manifest hash prefix is
-\texttt{af60ff7b132e}; \texttt{make corpus-datasheet-check} verifies all rows
+\texttt{1a0348fe24d9}; \texttt{make corpus-datasheet-check} verifies all rows
 against the live corpus modules and committed artifacts.}
 \label{tab:corpus-datasheet}
 \begin{tabularx}{\linewidth}{@{}lrlX@{}}
@@ -1499,6 +1504,16 @@ Corpus surface & Population & Unit & Role \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+The datasheet is also the source of truth for the continuous-corpus CI monitor:
+\texttt{src/ub\_oracle/continuous\_corpus\_ci.py} derives a deterministic
+13-command plan from the records above, hashes the expected corpus verdict layer
+(\texttt{013ff7f9bd90}), and the scheduled
+\texttt{corpus-drift.yml} workflow executes the real check targets under the same
+toolchain setup as CI.  Runtime reports are kept under an ignored
+\texttt{run\_reports/} directory and uploaded on success or failure, so reviewers
+get concrete stdout/stderr evidence without making wall-clock timing or local
+toolchain noise part of the committed artifact.
 
 \subsection{$K$-Sensitivity (RQ3)}\label{sec:eval-k}
 

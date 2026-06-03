@@ -595,7 +595,7 @@ def _large_scale_record() -> DatasheetRecord:
             "label balance, pair balance, and class balance; live runs execute "
             "a deterministic seeded sample."
         ),
-        validation_commands=("make large-scale",),
+        validation_commands=("make large-scale-check",),
         real_code_evidence=(
             "The live sample is labeled by real clang/UBSan plus rustc/go when "
             "available, with a reproducible verdict-layer hash for a fixed seed."
@@ -771,10 +771,10 @@ def markdown_document(doc: Optional[Mapping[str, object]] = None) -> str:
         "",
         DATASET_SCOPE,
         "",
-        f"**Schema:** `{doc['schema']}`  ",
-        f"**Content hash:** `{doc['content_hash']}`  ",
-        f"**Records:** {doc['n_records']}  ",
-        f"**Language pairs:** {len(doc['language_pairs'])}  ",
+        f"**Schema:** `{doc['schema']}`",
+        f"**Content hash:** `{doc['content_hash']}`",
+        f"**Records:** {doc['n_records']}",
+        f"**Language pairs:** {len(doc['language_pairs'])}",
         f"**Divergence classes/families:** {len(doc['divergence_classes'])}",
         "",
         "| corpus | kind | population | pairs | balance | validation |",

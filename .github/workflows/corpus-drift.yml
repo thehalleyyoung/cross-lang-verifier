@@ -1,0 +1,47 @@
+name: corpus-drift
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  corpus-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install z3-solver pytest pytest-cov pytest-xdist
+
+      - name: Ensure Rust toolchain
+        run: rustc --version && cargo --version
+
+      - name: Ensure clang + UBSan
+        run: clang --version
+
+      - name: Set up Lean/Lake
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:v4.14.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check committed corpus-CI plan freshness
+        run: make continuous-corpus-ci-check PYTHON=python
+
+      - name: Run nightly corpus drift monitor
+        run: make continuous-corpus-ci PYTHON=python
+
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: continuous-corpus-ci-report
+          path: experiments/continuous_corpus_ci/run_reports/latest_report.json
+          if-no-files-found: warn

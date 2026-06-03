@@ -1,0 +1,343 @@
+{
+  "commands": [
+    {
+      "command": "make adversarial-corpus-check",
+      "command_id": "cc51ab9e8bbfd090",
+      "corpus_ids": [
+        "adversarial-near-misses"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make bug-regression-check",
+      "command_id": "6afb02f5a6d2c9e9",
+      "corpus_ids": [
+        "bug-regressions"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make c2rust-corpus-check",
+      "command_id": "b564913dae9f461d",
+      "corpus_ids": [
+        "c2rust-output"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make existing-tools-check",
+      "command_id": "1b2d95e04597eee7",
+      "corpus_ids": [
+        "existing-tools-head-to-head"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make github-port-mining-check",
+      "command_id": "946e40a1cf3b2ff2",
+      "corpus_ids": [
+        "github-mined-ports"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make historical-cve-check",
+      "command_id": "14d34d82d7c90a02",
+      "corpus_ids": [
+        "historical-cve-replays"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make idiomatic-port-check",
+      "command_id": "5ce7c55bf3c42df2",
+      "corpus_ids": [
+        "idiomatic-ports"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make large-scale-check",
+      "command_id": "3b7be6a50b91c523",
+      "corpus_ids": [
+        "large-scale-generated"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make llm-scale-check",
+      "command_id": "0fb30fa7062258be",
+      "corpus_ids": [
+        "llm-translations"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make negative-corpus-check",
+      "command_id": "195700626710c8cb",
+      "corpus_ids": [
+        "negative-true-equivalence"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "make real-bug-check",
+      "command_id": "04ed7cd4751d5061",
+      "corpus_ids": [
+        "github-mined-ports",
+        "responsible-findings"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "python3 -m src.ub_oracle.divergence_zoo",
+      "command_id": "e53826fa1ed4dc6b",
+      "corpus_ids": [
+        "divergence-zoo"
+      ],
+      "timeout_seconds": 900
+    },
+    {
+      "command": "python3 -m src.ub_oracle.multipair_corpus",
+      "command_id": "efd6ed240f6d3ed7",
+      "corpus_ids": [
+        "multi-pair-translations"
+      ],
+      "timeout_seconds": 900
+    }
+  ],
+  "n_commands": 13,
+  "n_corpora": 13,
+  "purpose": "Nightly re-verification of every corpus surface in the generated datasheet. Each command is an existing corpus check whose nonzero exit is treated as a drift/regression alert and uploaded with an ephemeral runtime report.",
+  "records": [
+    {
+      "content_hash": "e79987d9d9c236e3f3bef1f7f1c423c612bc350d09b8b33d4e5a2c57c8029f72",
+      "corpus_id": "adversarial-near-misses",
+      "label_balance": {
+        "divergent_control": 10,
+        "loud_abstention": 4,
+        "safe_near_miss": 9
+      },
+      "language_pairs": [
+        "c->c",
+        "c->go",
+        "c->rust",
+        "rust->go"
+      ],
+      "population_size": 23,
+      "unit": "near-miss verifier case",
+      "validation_commands": [
+        "make adversarial-corpus-check"
+      ]
+    },
+    {
+      "content_hash": "99ea4ff4cd6bcfc9d1527f49519935c19be255f6282cc4016ac9618ffa17ca7b",
+      "corpus_id": "bug-regressions",
+      "label_balance": {
+        "regression": 1
+      },
+      "language_pairs": [
+        "c->rust"
+      ],
+      "population_size": 1,
+      "unit": "frozen finding regression",
+      "validation_commands": [
+        "make bug-regression-check"
+      ]
+    },
+    {
+      "content_hash": "982489dd8ce14b05b115533fa14c97f0cbe35b769856c463e3833314903f044e",
+      "corpus_id": "c2rust-output",
+      "label_balance": {
+        "candidate": 8,
+        "no_divergence_found": 4
+      },
+      "language_pairs": [
+        "c->rust"
+      ],
+      "population_size": 12,
+      "unit": "c2rust extraction unit",
+      "validation_commands": [
+        "make c2rust-corpus-check"
+      ]
+    },
+    {
+      "content_hash": "2eaea983dfa45403",
+      "corpus_id": "divergence-zoo",
+      "label_balance": {
+        "divergent": 22,
+        "equivalent": 14
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust",
+        "c->swift"
+      ],
+      "population_size": 36,
+      "unit": "zoo exhibit",
+      "validation_commands": [
+        "python3 -m src.ub_oracle.divergence_zoo"
+      ]
+    },
+    {
+      "content_hash": "dd3950d3b7dfcde1a4b01729",
+      "corpus_id": "existing-tools-head-to-head",
+      "label_balance": {
+        "expected_divergent": 8,
+        "safe_control": 4
+      },
+      "language_pairs": [
+        "c->rust"
+      ],
+      "population_size": 12,
+      "unit": "c2rust subject reused for baseline comparison",
+      "validation_commands": [
+        "make existing-tools-check"
+      ]
+    },
+    {
+      "content_hash": "6393600c4d6400d2d8ba95ee45c75ce869ababc45afd5d3b3ce37b50c4645f4a",
+      "corpus_id": "github-mined-ports",
+      "label_balance": {
+        "candidate": 2,
+        "no_divergence_found": 1
+      },
+      "language_pairs": [
+        "c->rust"
+      ],
+      "population_size": 3,
+      "unit": "mined port extraction sample",
+      "validation_commands": [
+        "make github-port-mining-check",
+        "make real-bug-check"
+      ]
+    },
+    {
+      "content_hash": "631d6e35b8e06a832b5270bc",
+      "corpus_id": "historical-cve-replays",
+      "label_balance": {
+        "CWE-125": 8,
+        "CWE-190": 8,
+        "CWE-191": 8,
+        "CWE-369": 8,
+        "CWE-476": 8,
+        "CWE-682": 6,
+        "CWE-758": 6,
+        "CWE-787": 8
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust"
+      ],
+      "population_size": 60,
+      "unit": "CVE-tagged weakness replay",
+      "validation_commands": [
+        "make historical-cve-check"
+      ]
+    },
+    {
+      "content_hash": "7b633e0eb673b1ed95f8befc",
+      "corpus_id": "idiomatic-ports",
+      "label_balance": {
+        "divergent": 13,
+        "equivalent": 8
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust"
+      ],
+      "population_size": 21,
+      "unit": "source function x target language",
+      "validation_commands": [
+        "make idiomatic-port-check"
+      ]
+    },
+    {
+      "content_hash": "6b45fc7a1743c73ec3604ae8",
+      "corpus_id": "large-scale-generated",
+      "label_balance": {
+        "divergent": 29600,
+        "equivalent": 30400
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust"
+      ],
+      "population_size": 60000,
+      "unit": "generated translation pair",
+      "validation_commands": [
+        "make large-scale-check"
+      ]
+    },
+    {
+      "content_hash": "9a37617cfea73cc059bb5277",
+      "corpus_id": "llm-translations",
+      "label_balance": {
+        "divergent": 120,
+        "equivalent": 96
+      },
+      "language_pairs": [
+        "c->rust"
+      ],
+      "population_size": 216,
+      "unit": "frozen C-to-Rust translation",
+      "validation_commands": [
+        "make llm-scale-check"
+      ]
+    },
+    {
+      "content_hash": "3b812cebe972e617e2c11e38",
+      "corpus_id": "multi-pair-translations",
+      "label_balance": {
+        "divergent": 9,
+        "equivalent": 6
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust",
+        "c->swift"
+      ],
+      "population_size": 15,
+      "unit": "source function x target language",
+      "validation_commands": [
+        "python3 -m src.ub_oracle.multipair_corpus"
+      ]
+    },
+    {
+      "content_hash": "218b7f573e1634b7dc43cab63a54e41ba94b904f4f6acd333b51fc6ce1b95f97",
+      "corpus_id": "negative-true-equivalence",
+      "label_balance": {
+        "go": 500,
+        "rust": 500
+      },
+      "language_pairs": [
+        "c->go",
+        "c->rust"
+      ],
+      "population_size": 1000,
+      "unit": "true-equivalence port",
+      "validation_commands": [
+        "make negative-corpus-check"
+      ]
+    },
+    {
+      "content_hash": "30227538c516d5a9a769b826",
+      "corpus_id": "responsible-findings",
+      "label_balance": {
+        "confirmed_extraction_unit": 1
+      },
+      "language_pairs": [
+        "c->rust"
+      ],
+      "population_size": 1,
+      "unit": "responsible disclosure finding",
+      "validation_commands": [
+        "make real-bug-check"
+      ]
+    }
+  ],
+  "schema": "continuous-corpus-ci/v1",
+  "source_datasheet_hash": "1a0348fe24d9f08f95e00974bac8680d3c572dd8db1ef0ccf4845199eda1e851",
+  "source_datasheet_schema": "corpus-datasheet/v1",
+  "verdict_layer_hash": "013ff7f9bd90a5628678a1ae37837aceccec43f23333b0892de9ff14d1333870"
+}

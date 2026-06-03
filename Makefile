@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check negative-corpus-check adversarial-corpus-check corpus-datasheet-check llm-scale-check idiomatic-port-check existing-tools-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check negative-corpus-check adversarial-corpus-check corpus-datasheet-check continuous-corpus-ci continuous-corpus-ci-check llm-scale-check idiomatic-port-check existing-tools-check large-scale large-scale-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -41,9 +41,11 @@ help:
 	@echo "  negative-corpus-check assert 1000 true-equivalence ports have zero false-positive flags"
 	@echo "  adversarial-corpus-check assert hand-crafted near-miss verdicts/abstentions reproduce"
 	@echo "  corpus-datasheet-check assert the generated corpus datasheet is fresh"
+	@echo "  continuous-corpus-ci run/check the nightly corpus drift monitor"
 	@echo "  llm-scale-check assert frozen 200+ LLM-transpiler study reproduces"
 	@echo "  idiomatic-port-check assert coreutils/sudo-rs/zlib-rs idiomatic ports reproduce"
 	@echo "  existing-tools-check assert c2rust/Miri/fuzzer same-corpus baseline"
+	@echo "  large-scale-check assert the 1M-LOC corpus census/live sample remains stable"
 	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
 	@echo "  demo-video        regenerate the README-linked c2rust CWE-class demo video"
 	@echo "  guard             run the credibility guard (no simulated results)"
@@ -158,6 +160,13 @@ corpus-datasheet-check:
 	$(PYTHON) -m pytest tests/test_corpus_datasheet.py -q
 	$(PYTHON) -m experiments.corpus_datasheet.run --check
 
+continuous-corpus-ci:
+	PYTHON=$(PYTHON) $(PYTHON) -m experiments.continuous_corpus_ci.run --run
+
+continuous-corpus-ci-check:
+	$(PYTHON) -m pytest tests/test_continuous_corpus_ci.py -q
+	$(PYTHON) -m experiments.continuous_corpus_ci.run --check
+
 llm-scale-check:
 	$(PYTHON) -m pytest tests/test_llm_scale_study.py -q
 
@@ -223,6 +232,9 @@ cold-start-ci:
 
 large-scale:
 	PYTHONPATH=src $(PYTHON) -m ub_oracle.large_scale_study
+
+large-scale-check:
+	$(PYTHON) -m pytest tests/test_large_scale_study.py -q
 
 ci: guard cold-start-ci reproduce-check matrix-check cex-quality-check perf-check repro-hardening-check redteam-check verified-check soundness-check test-ub
 	@echo "ci: PASSED"
