@@ -150,7 +150,12 @@ integer ports are all covered by registered oracles, all discharged by the
 range-aware pre-pass, and produce \textbf{0} \textsc{Divergent}/\textsc{Candidate}
 flags; \texttt{make negative-corpus-check} also checks 3{,}000 bounded proof
 inputs and live-labels a seeded sample with real \texttt{clang}/UBSan,
-\texttt{rustc}, and \texttt{go}. A Tier-1 c2rust-output corpus separately runs the real
+\texttt{rustc}, and \texttt{go}. A new adversarial near-miss corpus adds
+\textbf{23} hand-crafted boundary twins: \textbf{10} divergent controls stay
+\textsc{Candidate} on the deterministic no-toolchain path, \textbf{9} one-off
+safe ranges are pre-pass-pruned to \textsc{No-Divergence-Found}, and
+\textbf{4} wrong-probe/unsupported-pair units abstain as \textsc{Not-Covered},
+with zero soundness breaches. A Tier-1 c2rust-output corpus separately runs the real
 \texttt{c2rust 0.22.1} translator on 12 real-library extraction units,
 byte-compares the regenerated machine output with the checked-in Rust, compiles
 the source and generated artifacts with \texttt{clang}/\texttt{rustc}, and checks
@@ -970,7 +975,7 @@ failure, not a release-note convention.
 \section{Evaluation}\label{sec:eval}
 %% ======================================================================
 
-We evaluate \textsc{SemRec} around thirteen research questions.
+We evaluate \textsc{SemRec} around fourteen research questions.
 All experiments run on a laptop
 (Apple M-series, 16\,GB RAM) using Python~3 and Z3.
 
@@ -1004,6 +1009,9 @@ All experiments run on a laptop
   \item[\textbf{RQ13}] On the same c2rust corpus, what do c2rust-style
     regression tests, Rust-only Miri, and equal-budget fuzzing miss that SemRec
     catches?
+  \item[\textbf{RQ14}] Do hand-crafted adversarial near misses at oracle routing,
+    range, and unsupported-pair boundaries receive the exact loud verdict
+    promised by the soundness policy?
 \end{enumerate}
 
 \subsection{UB-Invisible Benchmark (RQ1)}\label{sec:eval-ub}
@@ -1408,6 +1416,42 @@ defined and its observable output matches the target.  This is deliberately stil
 a false-positive \emph{divergence} bound, not an arbitrary equivalence theorem;
 it complements the sound-for-divergence contract by showing that the registered
 oracles stay silent on a large known-equivalent population.
+
+\paragraph{Adversarial near-miss corpus.}
+Large negative corpora bound ordinary false positives; they do not stress the
+decision seams an adversary would choose.  Step~165 therefore adds
+\texttt{src/ub\_oracle/adversarial\_corpus.py}, a persistent boundary corpus with
+paired tests around the range pre-pass, probe routing, target-pair dispatch, and
+non-sanitizer UB.  The manifest
+(\texttt{experiments/adversarial\_corpus/adversarial\_corpus.json}) is generated
+only on the deterministic no-toolchain path: divergent controls are accepted as
+\textsc{Candidate}, safe one-off twins must carry the named pre-pass proof, and
+mis-probed or unsupported units must abstain as \textsc{Not-Covered}.  Optional
+live replay separately checks that divergent controls never fall to the dangerous
+``no divergence'' or ``not covered'' outcomes when compilers are present.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Step-165 adversarial near-miss corpus.  The focused gate is
+\texttt{make adversarial-corpus-check}.}
+\label{tab:adversarial-corpus}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Property & Value \\
+\midrule
+Hand-crafted boundary cases & 23 \\
+Families / language pairs & 8 / 4 \\
+Divergent controls & 10 \textsc{Candidate} \\
+Safe near-miss twins & 9 \textsc{No-Divergence-Found} \\
+Wrong-probe / unsupported-pair abstentions & 4 \textsc{Not-Covered} \\
+Required pre-pass proofs present & 9 / 9 \\
+Static verdict mismatches & 0 \\
+Soundness breaches & \textbf{0} \\
+Manifest hash prefix & \texttt{e79987d9d9c2} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{$K$-Sensitivity (RQ3)}\label{sec:eval-k}
 
@@ -2070,8 +2114,10 @@ into live compiler-confirmed, maintainer-ready bundles while preserving the
 boundary between a confirmed semantic pattern and an upstream defect claim.  It
 also ships a 1{,}000-port negative true-equivalence corpus with zero
 \textsc{Divergent}/\textsc{Candidate} flags, zero \textsc{Not-Covered} cases, and
-real-compiler equivalence labels on a seeded sample, making the empirical
-false-positive story as reproducible as the bug-finding story.
+real-compiler equivalence labels on a seeded sample, plus a 23-case adversarial
+near-miss corpus that proves boundary controls receive the exact loud verdict
+(\textsc{Candidate}, pre-pass-pruned \textsc{No-Divergence-Found}, or
+\textsc{Not-Covered}) rather than a silent success-shaped fallback.
 Future work includes interprocedural verification, deeper struct/enum lowering,
 and automated upstream-source audits for the findings queue.
 

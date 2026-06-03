@@ -1,0 +1,1008 @@
+{
+  "acceptance_policy": {
+    "divergent_control": "deterministic no-toolchain path must return CANDIDATE, and the optional live path may not return NO_DIVERGENCE_FOUND or NOT_COVERED",
+    "loud_abstention": "unsupported pairs or mismatched probes must return NOT_COVERED rather than silently routing to an unrelated oracle",
+    "safe_near_miss": "safe near-miss cases must return NO_DIVERGENCE_FOUND and carry the named abstract-interpretation pre-pass proof"
+  },
+  "cases": [
+    {
+      "case_id": "signed-overflow-upper-boundary",
+      "content_hash": "05d0e84075e519692ec79d61",
+      "expected_static_verdict": "candidate",
+      "family": "signed_overflow",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "The range contains exactly INT_MAX, so x+1 is reachable C signed-overflow UB.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "add",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32,
+        "x_range": [
+          2147483647,
+          2147483647
+        ]
+      },
+      "unit_hash": "b56e9c646879f3a7acb03966"
+    },
+    {
+      "case_id": "signed-overflow-safe-one-below",
+      "content_hash": "57abe32c8eb37bd2403e4e33",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "pair": "c->rust",
+      "policy": "safe_near_miss",
+      "rationale": "One-off safe twin: the declared range ends below the overflowing value.",
+      "required_prepass_pruned": [
+        "signed_overflow"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "add",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32,
+        "x_range": [
+          2147483645,
+          2147483646
+        ]
+      },
+      "unit_hash": "fd2874c1f38bb35a380cec5b"
+    },
+    {
+      "case_id": "signed-underflow-lower-boundary",
+      "content_hash": "300db7d0999f572aa44ac875",
+      "expected_static_verdict": "candidate",
+      "family": "signed_overflow",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "The lower boundary reaches INT_MIN-1 under subtraction, the signed-underflow twin of overflow.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "sub",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32,
+        "x_range": [
+          -2147483648,
+          -2147483648
+        ]
+      },
+      "unit_hash": "d068daa19499e46154299826"
+    },
+    {
+      "case_id": "signed-underflow-safe-one-above",
+      "content_hash": "29ccd8b58ab12b3a050ee594",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "pair": "c->rust",
+      "policy": "safe_near_miss",
+      "rationale": "A near miss just above INT_MIN must be pruned rather than flagged.",
+      "required_prepass_pruned": [
+        "signed_overflow"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "sub",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32,
+        "x_range": [
+          -2147483647,
+          -2147483646
+        ]
+      },
+      "unit_hash": "1fca99937513c2e76e560923"
+    },
+    {
+      "case_id": "signed-overflow-zero-constant-probe",
+      "content_hash": "6c07899f56e60cb057f432ca",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "pair": "c->rust",
+      "policy": "safe_near_miss",
+      "rationale": "An explicit signed-overflow probe with a zero constant should discharge across the full type.",
+      "required_prepass_pruned": [
+        "signed_overflow"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "const": 0,
+        "kind": "binop_const",
+        "op": "add",
+        "probe": "signed_overflow",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "unit_hash": "833243c4f79f65ae44d5d9f8"
+    },
+    {
+      "case_id": "overflow-unit-wrong-probe-abstains",
+      "content_hash": "119cbf630f9b03e3190db328",
+      "expected_static_verdict": "not_covered",
+      "family": "probe_routing",
+      "pair": "c->rust",
+      "policy": "loud_abstention",
+      "rationale": "A mismatched explicit probe must not silently route to the signed-overflow oracle.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "add",
+        "probe": "div_by_zero",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32,
+        "x_range": [
+          2147483647,
+          2147483647
+        ]
+      },
+      "unit_hash": "ef578d391fbcddaeeaeb33f5"
+    },
+    {
+      "case_id": "go-overflow-upper-boundary",
+      "content_hash": "54d1ed15508e3d7b2ff7ff2a",
+      "expected_static_verdict": "candidate",
+      "family": "signed_overflow",
+      "pair": "c->go",
+      "policy": "divergent_control",
+      "rationale": "The same UB boundary should transfer to a non-Rust target pack.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "go",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "add",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "go",
+        "width": 32,
+        "x_range": [
+          2147483647,
+          2147483647
+        ]
+      },
+      "unit_hash": "965c89f79c81530358927ded"
+    },
+    {
+      "case_id": "go-overflow-safe-one-below",
+      "content_hash": "f2d9b4241e2c96e4a6a95150",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "pair": "c->go",
+      "policy": "safe_near_miss",
+      "rationale": "The range pre-pass must prune the safe twin independently of target language.",
+      "required_prepass_pruned": [
+        "signed_overflow"
+      ],
+      "source_lang": "c",
+      "target_lang": "go",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "add",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "go",
+        "width": 32,
+        "x_range": [
+          2147483645,
+          2147483646
+        ]
+      },
+      "unit_hash": "3c6872e2af833f5c9b9d9263"
+    },
+    {
+      "case_id": "division-zero-window",
+      "content_hash": "ec66a7f3968d051387372c9a",
+      "expected_static_verdict": "candidate",
+      "family": "division_by_zero",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "The divisor interval includes zero but the dividend excludes INT_MIN, isolating div-by-zero.",
+      "required_prepass_pruned": [
+        "intmin_div_neg1"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "a_range": [
+          0,
+          1000
+        ],
+        "b_range": [
+          -1,
+          1
+        ],
+        "kind": "div",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "unit_hash": "91324787d571826ba5c1c843"
+    },
+    {
+      "case_id": "division-nonzero-safe-window",
+      "content_hash": "2220c67bebb4bb705bd0b819",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "division_by_zero",
+      "pair": "c->rust",
+      "policy": "safe_near_miss",
+      "rationale": "The safe twin excludes both zero and the INT_MIN/-1 pair.",
+      "required_prepass_pruned": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "a_range": [
+          0,
+          1000
+        ],
+        "b_range": [
+          1,
+          3
+        ],
+        "kind": "div",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "unit_hash": "bcdf9b52a11ef54b30f5acd5"
+    },
+    {
+      "case_id": "remainder-zero-window",
+      "content_hash": "b912cfa9fde8ff14c84fa45b",
+      "expected_static_verdict": "candidate",
+      "family": "division_by_zero",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "Remainder by zero shares the same divisor precondition as division.",
+      "required_prepass_pruned": [
+        "intmin_div_neg1"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "a_range": [
+          0,
+          1000
+        ],
+        "b_range": [
+          -1,
+          1
+        ],
+        "kind": "rem",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "unit_hash": "96aee418b61517df408e2799"
+    },
+    {
+      "case_id": "intmin-div-neg1-boundary",
+      "content_hash": "ea35fa958bf614a9fc44bd7e",
+      "expected_static_verdict": "candidate",
+      "family": "intmin_div_neg1",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "The unique signed-division overflow pair is reachable while zero is excluded.",
+      "required_prepass_pruned": [
+        "div_by_zero"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "a_range": [
+          -2147483648,
+          -2147483648
+        ],
+        "b_range": [
+          -1,
+          -1
+        ],
+        "kind": "div",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "unit_hash": "dafd8743b5971c505a06919d"
+    },
+    {
+      "case_id": "intmin-div-neg1-safe-positive-divisor",
+      "content_hash": "d59749dd1831cc0492867dcc",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "intmin_div_neg1",
+      "pair": "c->rust",
+      "policy": "safe_near_miss",
+      "rationale": "The most-negative dividend is safe when the divisor cannot be -1 or zero.",
+      "required_prepass_pruned": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "a_range": [
+          -2147483648,
+          -2147483648
+        ],
+        "b_range": [
+          1,
+          1
+        ],
+        "kind": "div",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "unit_hash": "0af34b80556cdbe45cc56766"
+    },
+    {
+      "case_id": "unsigned-intmin-neg1-near-miss",
+      "content_hash": "9588075eaa4f11dff3869203",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "intmin_div_neg1",
+      "pair": "c->rust",
+      "policy": "safe_near_miss",
+      "rationale": "The signed-overflow division oracle must not apply when the unit declares unsigned arithmetic.",
+      "required_prepass_pruned": [
+        "div_by_zero"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "a_range": [
+          -2147483648,
+          -2147483648
+        ],
+        "b_range": [
+          -1,
+          -1
+        ],
+        "kind": "div",
+        "signed": false,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "unit_hash": "68b9441c3eb79f0acb9587a2"
+    },
+    {
+      "case_id": "shift-width-boundary",
+      "content_hash": "54721f72e0835005da3afbf0",
+      "expected_static_verdict": "candidate",
+      "family": "shift_oob",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "The shift amount is exactly the bit width, the smallest out-of-range count.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "kind": "shift",
+        "shift_range": [
+          32,
+          32
+        ],
+        "source_lang": "c",
+        "target_lang": "rust",
+        "value": 1,
+        "width": 32
+      },
+      "unit_hash": "8ff0f91521ec7d5298feea20"
+    },
+    {
+      "case_id": "shift-safe-max-count",
+      "content_hash": "27f0b163aef35ec06d49a52f",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "shift_oob",
+      "pair": "c->rust",
+      "policy": "safe_near_miss",
+      "rationale": "The safe twin reaches 31 but never the C UB threshold of 32.",
+      "required_prepass_pruned": [
+        "shift_oob"
+      ],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "kind": "shift",
+        "shift_range": [
+          0,
+          31
+        ],
+        "source_lang": "c",
+        "target_lang": "rust",
+        "value": 1,
+        "width": 32
+      },
+      "unit_hash": "b11bae0c3d06cf8795a23505"
+    },
+    {
+      "case_id": "shift-negative-count",
+      "content_hash": "ddaaf0553d2e79f7445b4873",
+      "expected_static_verdict": "candidate",
+      "family": "shift_oob",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "A negative count is also C shift UB and must not be pruned as safe.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "kind": "shift",
+        "shift_range": [
+          -1,
+          -1
+        ],
+        "source_lang": "c",
+        "target_lang": "rust",
+        "value": 1,
+        "width": 32
+      },
+      "unit_hash": "113c820ae45958fd61ab1e6e"
+    },
+    {
+      "case_id": "go-shift-safe-max-count",
+      "content_hash": "105e2e0a4dd193b81fd7fbfa",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "shift_oob",
+      "pair": "c->go",
+      "policy": "safe_near_miss",
+      "rationale": "The target-pack-generated Go shift oracle must respect the same pre-pass proof.",
+      "required_prepass_pruned": [
+        "shift_oob"
+      ],
+      "source_lang": "c",
+      "target_lang": "go",
+      "unit": {
+        "kind": "shift",
+        "shift_range": [
+          0,
+          31
+        ],
+        "source_lang": "c",
+        "target_lang": "go",
+        "value": 1,
+        "width": 32
+      },
+      "unit_hash": "4974dadadc211a79cffaafd6"
+    },
+    {
+      "case_id": "array-oob-control",
+      "content_hash": "b435364daa413b68cb22caaa",
+      "expected_static_verdict": "candidate",
+      "family": "array_oob",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "A memory-shape divergent control keeps the corpus from being only arithmetic.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "kind": "array_index",
+        "length": 4,
+        "source_lang": "c",
+        "target_lang": "rust"
+      },
+      "unit_hash": "72af169c581ae228186a2c40"
+    },
+    {
+      "case_id": "array-oob-wrong-probe-abstains",
+      "content_hash": "8de6fe7aeb44c51cecf7a2af",
+      "expected_static_verdict": "not_covered",
+      "family": "probe_routing",
+      "pair": "c->rust",
+      "policy": "loud_abstention",
+      "rationale": "A wrong probe on an otherwise covered memory unit must abstain loudly.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "kind": "array_index",
+        "length": 4,
+        "probe": "signed_overflow",
+        "source_lang": "c",
+        "target_lang": "rust"
+      },
+      "unit_hash": "a2d00e6204f07ebb835167f9"
+    },
+    {
+      "case_id": "strict-aliasing-control",
+      "content_hash": "cfdbfc39ca9968ef18dd9a77",
+      "expected_static_verdict": "candidate",
+      "family": "strict_aliasing",
+      "pair": "c->rust",
+      "policy": "divergent_control",
+      "rationale": "Optimizer-exploited type-punning gives the corpus a non-sanitizer UB control.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "rust",
+      "unit": {
+        "kind": "type_pun",
+        "source_lang": "c",
+        "target_lang": "rust"
+      },
+      "unit_hash": "d5fa2c02ddfea150d14c014d"
+    },
+    {
+      "case_id": "c-to-c-overflow-unsupported-pair",
+      "content_hash": "de7aab51e32d626fe5f86d88",
+      "expected_static_verdict": "not_covered",
+      "family": "unsupported_pair",
+      "pair": "c->c",
+      "policy": "loud_abstention",
+      "rationale": "A well-formed but unsupported C-to-C pair must not be silently treated as C-to-Rust.",
+      "required_prepass_pruned": [],
+      "source_lang": "c",
+      "target_lang": "c",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "add",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "c",
+        "width": 32,
+        "x_range": [
+          2147483647,
+          2147483647
+        ]
+      },
+      "unit_hash": "2eb3a19b2d4e76634b16bb02"
+    },
+    {
+      "case_id": "rust-to-go-unsupported-pair",
+      "content_hash": "2cf13f300a82ff0002eb2a68",
+      "expected_static_verdict": "not_covered",
+      "family": "unsupported_pair",
+      "pair": "rust->go",
+      "policy": "loud_abstention",
+      "rationale": "A known-language but unsupported direction should abstain rather than guess.",
+      "required_prepass_pruned": [],
+      "source_lang": "rust",
+      "target_lang": "go",
+      "unit": {
+        "const": 1,
+        "kind": "binop_const",
+        "op": "add",
+        "signed": true,
+        "source_lang": "rust",
+        "target_lang": "go",
+        "width": 32,
+        "x_range": [
+          2147483647,
+          2147483647
+        ]
+      },
+      "unit_hash": "d3681bb816a70c1397b805ed"
+    }
+  ],
+  "census": {
+    "by_family": {
+      "array_oob": 1,
+      "division_by_zero": 3,
+      "intmin_div_neg1": 3,
+      "probe_routing": 2,
+      "shift_oob": 4,
+      "signed_overflow": 7,
+      "strict_aliasing": 1,
+      "unsupported_pair": 2
+    },
+    "by_pair": {
+      "c->c": 1,
+      "c->go": 3,
+      "c->rust": 18,
+      "rust->go": 1
+    },
+    "by_policy": {
+      "divergent_control": 10,
+      "loud_abstention": 4,
+      "safe_near_miss": 9
+    },
+    "n_cases": 23,
+    "n_families": 8,
+    "n_pairs": 4,
+    "schema": "adversarial-corpus/v1"
+  },
+  "content_hash": "e79987d9d9c236e3f3bef1f7f1c423c612bc350d09b8b33d4e5a2c57c8029f72",
+  "outcomes": [
+    {
+      "applicable_classes": [
+        "signed_overflow"
+      ],
+      "breach": false,
+      "case_id": "signed-overflow-upper-boundary",
+      "detail": "symbolic witness(es) for [signed_overflow] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "signed_overflow",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "signed_overflow"
+      ],
+      "breach": false,
+      "case_id": "signed-overflow-safe-one-below",
+      "detail": "checked classes: [signed_overflow]; 1 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "signed_overflow"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "signed_overflow"
+      ],
+      "breach": false,
+      "case_id": "signed-underflow-lower-boundary",
+      "detail": "symbolic witness(es) for [signed_overflow] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "signed_overflow",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "signed_overflow"
+      ],
+      "breach": false,
+      "case_id": "signed-underflow-safe-one-above",
+      "detail": "checked classes: [signed_overflow]; 1 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "signed_overflow"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "signed_overflow"
+      ],
+      "breach": false,
+      "case_id": "signed-overflow-zero-constant-probe",
+      "detail": "checked classes: [signed_overflow]; 1 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "signed_overflow"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [],
+      "breach": false,
+      "case_id": "overflow-unit-wrong-probe-abstains",
+      "detail": "no registered oracle applies",
+      "expected_static_verdict": "not_covered",
+      "family": "probe_routing",
+      "passed": true,
+      "policy": "loud_abstention",
+      "prepass_pruned": [],
+      "verdict": "not_covered"
+    },
+    {
+      "applicable_classes": [
+        "signed_overflow"
+      ],
+      "breach": false,
+      "case_id": "go-overflow-upper-boundary",
+      "detail": "symbolic witness(es) for [signed_overflow] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "signed_overflow",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "signed_overflow"
+      ],
+      "breach": false,
+      "case_id": "go-overflow-safe-one-below",
+      "detail": "checked classes: [signed_overflow]; 1 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "signed_overflow",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "signed_overflow"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "breach": false,
+      "case_id": "division-zero-window",
+      "detail": "symbolic witness(es) for [div_by_zero] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "division_by_zero",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [
+        "intmin_div_neg1"
+      ],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "breach": false,
+      "case_id": "division-nonzero-safe-window",
+      "detail": "checked classes: [div_by_zero, intmin_div_neg1]; 2 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "division_by_zero",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "breach": false,
+      "case_id": "remainder-zero-window",
+      "detail": "symbolic witness(es) for [div_by_zero] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "division_by_zero",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [
+        "intmin_div_neg1"
+      ],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "breach": false,
+      "case_id": "intmin-div-neg1-boundary",
+      "detail": "symbolic witness(es) for [intmin_div_neg1] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "intmin_div_neg1",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [
+        "div_by_zero"
+      ],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "breach": false,
+      "case_id": "intmin-div-neg1-safe-positive-divisor",
+      "detail": "checked classes: [div_by_zero, intmin_div_neg1]; 2 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "intmin_div_neg1",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "div_by_zero",
+        "intmin_div_neg1"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "div_by_zero"
+      ],
+      "breach": false,
+      "case_id": "unsigned-intmin-neg1-near-miss",
+      "detail": "checked classes: [div_by_zero]; 1 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "intmin_div_neg1",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "div_by_zero"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "shift_oob"
+      ],
+      "breach": false,
+      "case_id": "shift-width-boundary",
+      "detail": "symbolic witness(es) for [shift_oob] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "shift_oob",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "shift_oob"
+      ],
+      "breach": false,
+      "case_id": "shift-safe-max-count",
+      "detail": "checked classes: [shift_oob]; 1 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "shift_oob",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "shift_oob"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "shift_oob"
+      ],
+      "breach": false,
+      "case_id": "shift-negative-count",
+      "detail": "symbolic witness(es) for [shift_oob] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "shift_oob",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [
+        "shift_oob"
+      ],
+      "breach": false,
+      "case_id": "go-shift-safe-max-count",
+      "detail": "checked classes: [shift_oob]; 1 class(es) discharged by abstract-interpretation pre-pass without SMT",
+      "expected_static_verdict": "no_divergence_found",
+      "family": "shift_oob",
+      "passed": true,
+      "policy": "safe_near_miss",
+      "prepass_pruned": [
+        "shift_oob"
+      ],
+      "verdict": "no_divergence_found"
+    },
+    {
+      "applicable_classes": [
+        "array_oob"
+      ],
+      "breach": false,
+      "case_id": "array-oob-control",
+      "detail": "symbolic witness(es) for [array_oob] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "array_oob",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [],
+      "breach": false,
+      "case_id": "array-oob-wrong-probe-abstains",
+      "detail": "no registered oracle applies",
+      "expected_static_verdict": "not_covered",
+      "family": "probe_routing",
+      "passed": true,
+      "policy": "loud_abstention",
+      "prepass_pruned": [],
+      "verdict": "not_covered"
+    },
+    {
+      "applicable_classes": [
+        "strict_aliasing"
+      ],
+      "breach": false,
+      "case_id": "strict-aliasing-control",
+      "detail": "symbolic witness(es) for [strict_aliasing] not re-executed (toolchain_available=False, confirm=False)",
+      "expected_static_verdict": "candidate",
+      "family": "strict_aliasing",
+      "passed": true,
+      "policy": "divergent_control",
+      "prepass_pruned": [],
+      "verdict": "candidate"
+    },
+    {
+      "applicable_classes": [],
+      "breach": false,
+      "case_id": "c-to-c-overflow-unsupported-pair",
+      "detail": "no registered oracle applies",
+      "expected_static_verdict": "not_covered",
+      "family": "unsupported_pair",
+      "passed": true,
+      "policy": "loud_abstention",
+      "prepass_pruned": [],
+      "verdict": "not_covered"
+    },
+    {
+      "applicable_classes": [],
+      "breach": false,
+      "case_id": "rust-to-go-unsupported-pair",
+      "detail": "no registered oracle applies",
+      "expected_static_verdict": "not_covered",
+      "family": "unsupported_pair",
+      "passed": true,
+      "policy": "loud_abstention",
+      "prepass_pruned": [],
+      "verdict": "not_covered"
+    }
+  ],
+  "schema": "adversarial-corpus/v1",
+  "static_verdicts": {
+    "by_policy": {
+      "divergent_control": 10,
+      "loud_abstention": 4,
+      "safe_near_miss": 9
+    },
+    "by_verdict": {
+      "candidate": 10,
+      "no_divergence_found": 9,
+      "not_covered": 4
+    },
+    "n_breaches": 0,
+    "n_cases": 23,
+    "n_failures": 0,
+    "ok": true
+  },
+  "valid_cases": true,
+  "validation_detail": "OK"
+}

@@ -102,34 +102,43 @@ class ShiftOutOfRangeOracle(DivergenceOracle):
         svar = unit.get("shift_var", "s")
         x_val = int(unit.get("value", 1))
 
-        # Find the *smallest* out-of-range shift amount: s >= width.
-        s = z3.BitVec(svar, 32)
-        opt = z3.Optimize()
-        opt.add(z3.UGE(s, width))
-        opt.add(z3.ULT(s, 1 << 16))  # keep it a sane, printable amount
-        # Honor a declared shift-amount range (keeps AI pre-pass consistent).
+        # Prefer the classic "too large" witness (s >= width), but also cover
+        # the other C shift-count UB boundary (s < 0) when the declared range
+        # admits only negative counts.  This mirrors the interval pre-pass.
         sr = unit.get("shift_range")
-        if sr is not None:
-            opt.add(s >= z3.BitVecVal(int(sr[0]), 32),
-                    s <= z3.BitVecVal(int(sr[1]), 32))
-        opt.minimize(s)
-        if opt.check() != z3.sat:
+        lo, hi = (int(sr[0]), int(sr[1])) if sr is not None else (-(1 << 15), 1 << 16)
+        s = z3.Int(svar)
+
+        def _solve(extra, *, maximize: bool = False):
+            opt = z3.Optimize()
+            opt.add(s >= lo, s <= hi, extra)
+            if maximize:
+                opt.maximize(s)
+            else:
+                opt.minimize(s)
+            if opt.check() != z3.sat:
+                return None
+            return opt.model()[s].as_long()
+
+        shift_amt = _solve(s >= width)
+        if shift_amt is None:
+            shift_amt = _solve(s < 0, maximize=True)
+        if shift_amt is None:
             return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class,
                                 detail="no out-of-range shift amount found")
-        shift_amt = opt.model()[s].as_long()
 
         ce = self._build(width, var, svar, x_val, shift_amt)
         return OracleResult(OracleVerdict.DIVERGENT, self.divergence_class,
                             counterexample=ce,
-                            detail=f"Z3 witness {svar}={shift_amt} (>= width {width})")
+                            detail=f"Z3 witness {svar}={shift_amt} (outside [0, {width - 1}])")
 
     def _build(self, width, var, svar, x_val, shift_amt) -> Counterexample:
         ctype, rtype, fmt, scan = _TYPE_MAP[width]
         c_decl = f"{ctype} f({ctype} {var}, int {svar}){{ return {var} << {svar}; }}"
         c_src = _c_two_arg_main(ctype, scan, fmt, c_decl, var, svar, btype="int")
-        r_decl = (f"fn f({var}: {rtype}, {svar}: u32) -> {rtype} "
-                  f"{{ {var}.wrapping_shl({svar}) }}")
-        rust_src = _rust_two_arg_main(rtype, r_decl, var, svar, btype="u32")
+        r_decl = (f"fn f({var}: {rtype}, {svar}: i32) -> {rtype} "
+                  f"{{ {var}.wrapping_shl({svar} as u32) }}")
+        rust_src = _rust_two_arg_main(rtype, r_decl, var, svar, btype="i32")
         return Counterexample(
             divergence_class=self.divergence_class,
             source_lang="c", target_lang="rust",

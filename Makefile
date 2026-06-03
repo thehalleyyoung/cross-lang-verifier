@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check negative-corpus-check llm-scale-check idiomatic-port-check existing-tools-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check negative-corpus-check adversarial-corpus-check llm-scale-check idiomatic-port-check existing-tools-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -39,6 +39,7 @@ help:
 	@echo "  real-bug-check assert responsible divergence findings reproduce"
 	@echo "  bug-regression-check assert frozen bug-finding regressions reproduce"
 	@echo "  negative-corpus-check assert 1000 true-equivalence ports have zero false-positive flags"
+	@echo "  adversarial-corpus-check assert hand-crafted near-miss verdicts/abstentions reproduce"
 	@echo "  llm-scale-check assert frozen 200+ LLM-transpiler study reproduces"
 	@echo "  idiomatic-port-check assert coreutils/sudo-rs/zlib-rs idiomatic ports reproduce"
 	@echo "  existing-tools-check assert c2rust/Miri/fuzzer same-corpus baseline"
@@ -148,6 +149,9 @@ bug-regression-check:
 
 negative-corpus-check:
 	$(PYTHON) -m pytest tests/test_negative_corpus.py -q
+
+adversarial-corpus-check:
+	$(PYTHON) -m pytest tests/test_adversarial_corpus.py -q
 
 llm-scale-check:
 	$(PYTHON) -m pytest tests/test_llm_scale_study.py -q

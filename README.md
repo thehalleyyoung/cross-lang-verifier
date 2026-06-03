@@ -360,6 +360,11 @@ python3 -m src.cli.main discover \
   registered oracles, all range-pruned, and yielding **zero** `DIVERGENT` or
   `CANDIDATE` flags; a seeded sample is labeled equivalent by real
   clang/UBSan+rustc/go
+- a hand-crafted **adversarial near-miss corpus** (`adversarial_corpus.py`, `make
+  adversarial-corpus-check`) whose boundary twins prove the verifier returns the
+  right loud verdict: divergent controls stay `CANDIDATE`/live-confirmed,
+  one-off safe ranges are pre-pass-pruned to `NO_DIVERGENCE_FOUND`, and wrong
+  probes or unsupported pairs abstain as `NOT_COVERED`
 - a **scale-measurement harness** (`scale_measure.py`): drives the labeled corpus
   through the real decision procedure recording **time/memory/verdict/abstention
   per item** and emits a **canonical results JSON** whose *verdict layer* is
