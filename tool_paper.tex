@@ -148,7 +148,14 @@ the UB-invisible classes. A Tier-1 c2rust-output corpus separately runs the real
 \texttt{c2rust 0.22.1} translator on 12 real-library extraction units and checks
 the generated Rust artifacts against the verifier; a GitHub-mined C$\to$Rust port
 sample ranks public port/rewrite repositories and byte-checks verifier-backed
-extraction units from three project families. The same artifact also keeps
+extraction units from three project families. A historical-CVE replay corpus
+indexes \textbf{60} NVD CVE ids across \textbf{8} CWE families and emits
+\textbf{120} C$\to$\{Rust,Go\} minimized reproduction bundles: each bundle
+compiles a from-scratch weakness-class witness, proves the C/UBSan side traps on
+the CVE-class input, checks a safe negative input, and verifies that the target
+has one language-defined outcome. The corpus is explicitly scoped as
+weakness-class replay rather than vendored third-party vulnerable source. The
+same artifact also keeps
 the tool honest at semantic frontiers: volatile/inline-assembly/FFI/general
 atomic units cause loud abstention justified by real \texttt{clang} IR, while
 the scoped atomics oracle uses a deterministic model-level proof; a
@@ -908,7 +915,7 @@ All experiments run on a laptop
   \item[\textbf{RQ4}] Counterexample quality.
   \item[\textbf{RQ5}] Verification performance.
   \item[\textbf{RQ6}] Comparison to differential testing.
-  \item[\textbf{RQ7}] Real-world CVE-inspired C/Rust divergences.
+  \item[\textbf{RQ7}] Historical-CVE weakness replays across C$\to$Rust/Go.
   \item[\textbf{RQ8}] Does every divergence class transfer across
     \emph{multiple} target languages and confirm against \emph{real}
     compilers (\texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/%
@@ -1287,59 +1294,62 @@ the tools are complementary.
     propagation remains approximated.
 \end{itemize}
 
-\subsection{Real-World CVE-Inspired Benchmarks (RQ7)}\label{sec:eval-cve}
+\subsection{Historical-CVE Weakness Replays (RQ7)}\label{sec:eval-cve}
 
-To evaluate \textsc{SemRec} on realistic vulnerability patterns, we
-constructed 10 C/Rust pairs inspired by real CVEs covering the most
-critical categories of undefined behavior encountered during
-cross-language migration.  Each pair isolates a single UB class where
-the C source exhibits undefined behavior that Rust's type system or
-runtime semantics eliminates through wrapping, bounds checking, or
-safe abstractions.  Unlike the synthetic benchmarks, these pairs
-exercise new pipeline capabilities: struct layout analysis, integer
-promotion tracking, and preprocessor macro handling.
+To evaluate \textsc{SemRec} on vulnerability patterns with public
+provenance, we extend the original CWE-tagged corpus into a
+\textbf{60-entry historical-CVE replay set}.  Each row is an NVD-indexed
+CVE id whose primary weakness is one of eight CWE families that matter
+for C migration: signed overflow, signed underflow, divide-by-zero,
+out-of-bounds read, out-of-bounds write, null dereference, reliance on
+undefined behaviour, and incorrect-calculation boundary cases.  We do
+not vendor third-party vulnerable source.  Instead, each CVE id is tied
+to a from-scratch minimized witness for its CWE family and to generated
+C$\to$Rust and C$\to$Go reproduction bundles.  A bundle succeeds only
+when the C/UBSan build traps on the witnessing input, the target run has
+a language-defined outcome, and a safe negative input runs cleanly.
 
 \begin{table}[t]
 \centering
 \small
-\caption{CVE-inspired benchmark results.  \textsc{SemRec} achieves
-100\% classification accuracy across all 10 UB categories.
-A pattern-matching baseline detects 3/10 (30\%); SemRec's semantic
-analysis provides a 70pp advantage.}
+\caption{Historical-CVE weakness replay corpus.  The artifact indexes
+60 public NVD CVE ids, generates 120 per-CVE C$\to$\{Rust,Go\}
+bundles, lint-checks every bundle, and live-confirms every distinct
+replay template against real compilers.}
 \label{tab:cve-benchmark}
-\begin{tabular}{@{}llccc@{}}
+\begin{tabular}{@{}llcc@{}}
 \toprule
-Test Case & UB Category & Expected & Detected & Time (ms) \\
+CWE family & Replay template & CVE ids & Targets \\
 \midrule
-\texttt{integer\_overflow}      & Signed overflow     & Div & Div & 5.1 \\
-\texttt{null\_pointer}          & Null dereference    & Div & Div & 3.3 \\
-\texttt{buffer\_access}         & Buffer OOB          & Div & Div & 2.9 \\
-\texttt{string\_handling}       & String handling     & Div & Div & 4.1 \\
-\texttt{union\_type\_punning}   & Union type punning  & Div & Div & 3.5 \\
-\texttt{bitshift\_overflow}     & Bitshift UB         & Div & Div & 2.8 \\
-\texttt{uninitialized\_memory}  & Uninitialized mem   & Div & Div & 4.2 \\
-\texttt{aliasing\_violation}    & Strict aliasing     & Div & Div & 3.9 \\
-\texttt{floating\_point}        & Float-to-int UB     & Div & Div & 3.2 \\
-\texttt{varargs\_handling}      & Varargs             & Div & Div & 2.2 \\
+\texttt{CWE-190} & signed overflow & 8 & Rust, Go \\
+\texttt{CWE-191} & signed underflow & 8 & Rust, Go \\
+\texttt{CWE-369} & divide by zero & 8 & Rust, Go \\
+\texttt{CWE-125} & out-of-bounds read & 8 & Rust, Go \\
+\texttt{CWE-787} & out-of-bounds write & 8 & Rust, Go \\
+\texttt{CWE-476} & null dereference & 8 & Rust, Go \\
+\texttt{CWE-758} & oversized shift / C UB reliance & 6 & Rust, Go \\
+\texttt{CWE-682} & \texttt{INT\_MIN/-1} boundary & 6 & Rust, Go \\
 \midrule
-\multicolumn{2}{@{}l}{\textbf{Aggregate}} & \textbf{10/10} & \textbf{10/10} & 3.5 \\
+\multicolumn{2}{@{}l}{\textbf{Aggregate}} & \textbf{60} & \textbf{120 bundles} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:cve-benchmark} reports per-pair results.
-\textsc{SemRec} achieves 100\% true positive rate (TPR) across all 10 categories, with a mean
-verification time of 3.5\,ms.  A pattern-matching baseline detects
-3 of the 10 divergences (30\%); the remaining 7 divergences are
-invisible to approaches that do not model source-level UB semantics.
+Table~\ref{tab:cve-benchmark} reports the deployed corpus.  The
+important check is not string matching on CVE ids: for each family,
+\textsc{SemRec}'s ordinary real-compiler re-execution path confirms the
+unique witness template, and the bundle generator can materialize the
+per-CVE C/Rust or C/Go script that a reviewer can run outside the
+Python harness.  This gives the paper a public-vulnerability index
+without claiming that the artifact redistributes or recreates proprietary
+vendor bug code.
 
-\paragraph{Limitation: one-sided benchmark.}
-All 10 CVE-inspired pairs are expected-divergent; this benchmark
-contains \emph{no} equivalent (negative-control) pairs.  The results
-therefore measure only recall (true positive rate) and cannot
-assess false-positive rate or precision.  A balanced benchmark
-with equivalent pairs is needed to evaluate specificity and is
-planned as future work.
+\paragraph{Limitation: replay scope.}
+The historical table is a positive, weakness-class replay benchmark.
+It is not a claim that the repository contains original vulnerable
+vendor sources for those CVEs.  Specificity is instead measured by the
+balanced labelled corpus and by the safe inputs embedded in every
+generated reproduction bundle.
 
 \paragraph{Advantage over baseline.}
 The 70pp advantage (100\% vs.\ 30\% on UB-dependent divergences)

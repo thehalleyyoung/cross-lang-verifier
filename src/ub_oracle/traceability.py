@@ -498,12 +498,23 @@ def _thm_cve_corpus_catches() -> bool:
     # The curated CWE-tagged corpus must be well-formed, and on any full toolchain
     # every applicable (case, target) pair must confirm a real definedness
     # divergence end-to-end. Absent a full toolchain, only the corpus shape is
-    # checkable (consistency-only).
+    # checkable (consistency-only). The Step-157 historical extension is scoped as
+    # NVD-indexed weakness-class replays, not original vendor-source CVE bundles.
     from . import cve_corpus as cc
     if len(cc.CORPUS) < 5:
         return False
     for c in cc.CORPUS:
         if not c.cwe.startswith("CWE-") or not c.targets or not c.inputs:
+            return False
+    hist = cc.historical_cve_cases()
+    if len(hist) < 50 or len({c.cve_id for c in hist}) != len(hist):
+        return False
+    templates = {t.template_id: t for t in cc.HISTORICAL_TEMPLATES}
+    for c in hist:
+        t = templates.get(c.replay_template)
+        if t is None or t.cwe != c.nvd_cwe:
+            return False
+        if "not original vendor source" not in c.replay_scope:
             return False
     conf = cc.confirm_corpus()
     if not conf.available:

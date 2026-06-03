@@ -4,6 +4,7 @@ target/
 # LaTeX artifacts
 *.aux
 *.out
+*.log
 # Compiled binaries
 *.rlib
 *.rmeta

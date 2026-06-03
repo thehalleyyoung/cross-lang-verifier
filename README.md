@@ -111,6 +111,10 @@ python3 -m src.cli.main discover \
   translation is defined and deterministic)
 - source-string and source-file verification flows
 - project discovery and benchmark runners in `src/cli/`
+- a **60-entry historical-CVE weakness replay corpus** spanning 8 NVD CWE
+  families; each CVE id gets C→Rust/Go minimized reproduction bundles that
+  compile, make the C/UBSan side trap on the witness, and prove the target has a
+  defined outcome (explicitly not vendored third-party vulnerable source)
 - a faithful counterexample minimizer (`src/ub_oracle/minimizer.py`) that shrinks
   each confirmed witness to a locally-minimal canonical form while preserving the
   exact UBSan diagnostic category — see the `make cex-quality` study
