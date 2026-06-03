@@ -296,6 +296,26 @@
       "witness": {}
     },
     {
+      "confirmation_mode": "uninit_padding",
+      "divergence_class": "uninit_padding",
+      "divergence_witness": "C serializes `sizeof(struct P)` bytes after assigning all 2 field(s).  The compiler-validated layout has padding byte(s) [1, 2, 3], whose values are unspecified; MSan or the pattern-vs-zero auto-init delta observes them in the digest.  The go translation writes fields into a zero-initialized byte buffer, so padding is deterministic.",
+      "source_definedness": "unspecified",
+      "source_lang": "c",
+      "source_sha16": "76acdc2fdb677cd0",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "d7d1878e9f818593",
+      "verdict": "divergent",
+      "witness": {
+        "expose_padding": 1,
+        "tag": 7,
+        "value": 16909060
+      }
+    },
+    {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "uninit_read",
       "divergence_witness": "C reads slot 'b' of struct storage while its definedness is 'uninit' (uninitialized): UB. Its value is indeterminate, and the -O0 and -O2 builds of the *same* C source disagree on the printed value. Go zero-initializes all storage, so the read is defined and deterministic.",
@@ -721,6 +741,26 @@
       "witness": {}
     },
     {
+      "confirmation_mode": "uninit_padding",
+      "divergence_class": "uninit_padding",
+      "divergence_witness": "C serializes `sizeof(struct P)` bytes after assigning all 2 field(s).  The compiler-validated layout has padding byte(s) [1, 2, 3], whose values are unspecified; MSan or the pattern-vs-zero auto-init delta observes them in the digest.  The rust translation writes fields into a zero-initialized byte buffer, so padding is deterministic.",
+      "source_definedness": "unspecified",
+      "source_lang": "c",
+      "source_sha16": "76acdc2fdb677cd0",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "494ad9fe47ceb101",
+      "verdict": "divergent",
+      "witness": {
+        "expose_padding": 1,
+        "tag": 7,
+        "value": 16909060
+      }
+    },
+    {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "uninit_read",
       "divergence_witness": "C reads slot 'b' of struct storage while its definedness is 'uninit' (uninitialized): UB. Its value is indeterminate, and the -O0 and -O2 builds of the *same* C source disagree on the printed value. Rust's type system forbids reading a possibly-uninitialized binding; the idiomatic translation zero-initializes, giving a single defined value.",
@@ -914,11 +954,12 @@
         "shift_oob",
         "signed_overflow",
         "strict_aliasing",
+        "uninit_padding",
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 17,
-      "n_divergent": 17,
+      "n_classes": 18,
+      "n_divergent": 18,
       "source_lang": "c",
       "target_lang": "go"
     },
@@ -953,11 +994,12 @@
         "shift_oob",
         "signed_overflow",
         "strict_aliasing",
+        "uninit_padding",
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 19,
-      "n_divergent": 19,
+      "n_classes": 20,
+      "n_divergent": 20,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -1004,6 +1046,7 @@
     "signed_overflow",
     "signed_shift_sign_bit",
     "strict_aliasing",
+    "uninit_padding",
     "uninit_read",
     "vla_bound"
   ],
@@ -1015,5 +1058,5 @@
     "c->swift",
     "go->rust"
   ],
-  "n_cells": 48
+  "n_cells": 50
 }

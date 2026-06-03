@@ -209,6 +209,8 @@ def confirm_zoo() -> ZooReport:
     def _available(e: ZooExhibit) -> bool:
         if e.divergence_class == "memcpy_overlap":
             return status.full_libc_contract_for(e.target_lang)
+        if e.divergence_class == "uninit_padding":
+            return status.full_uninit_padding_for(e.target_lang)
         return status.full_for(e.target_lang)
 
     if not any(_available(e) for e in divergent):
@@ -228,6 +230,11 @@ def confirm_zoo() -> ZooReport:
             ub = h.confirm_libc_contract_trap_vs_defined(
                 e.c_src, e.target_src, w, e.divergence_class, e.target_lang)
             safe = h.confirm_libc_contract_trap_vs_defined(
+                e.c_src, e.target_src, s, e.divergence_class, e.target_lang)
+        elif e.divergence_class == "uninit_padding":
+            ub = h.confirm_uninit_padding_vs_defined(
+                e.c_src, e.target_src, w, e.divergence_class, e.target_lang)
+            safe = h.confirm_uninit_padding_vs_defined(
                 e.c_src, e.target_src, s, e.divergence_class, e.target_lang)
         else:
             ub = h.confirm_trap_vs_defined(e.c_src, e.target_src, w,

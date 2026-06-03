@@ -49,6 +49,7 @@ KNOWN_KINDS = frozenset({
     "type_pun",      # reinterpret bytes              (strict_aliasing)
     "fp_fma",        # a*b + c contraction            (fp_contraction)
     "uninit_read",   # read of uninitialized storage  (uninit_read)
+    "uninit_padding", # read/serialize struct padding (uninit_padding)
     "atomic_litmus", # bounded atomics litmus test     (atomic_ordering)
 })
 
@@ -230,6 +231,32 @@ def validate_unit(unit: Dict, *, require_known_kind: bool = False) -> List[IRErr
             elif valid_slots is not None and unit["read"] not in valid_slots:
                 errors.append(IRError("read",
                                       f"read slot {unit['read']!r} not in storage"))
+    elif kind == "uninit_padding":
+        fields = unit.get("fields")
+        if fields is not None:
+            if not isinstance(fields, list) or not fields:
+                errors.append(IRError("fields", "must be a non-empty list when present"))
+            else:
+                seen = set()
+                for i, f in enumerate(fields):
+                    if not isinstance(f, dict):
+                        errors.append(IRError(f"fields[{i}]", "must be a field mapping"))
+                        continue
+                    name = f.get("name")
+                    typ = f.get("type", "u32")
+                    if not isinstance(name, str) or not name:
+                        errors.append(IRError(f"fields[{i}].name",
+                                              "must be a non-empty string"))
+                    elif name in seen:
+                        errors.append(IRError(f"fields[{i}].name",
+                                              f"duplicate field name {name!r}"))
+                    else:
+                        seen.add(name)
+                    if typ not in ("u8", "u16", "u32", "u64"):
+                        errors.append(IRError(f"fields[{i}].type",
+                                              "expected one of u8/u16/u32/u64"))
+        if "packed" in unit and not isinstance(unit["packed"], bool):
+            errors.append(IRError("packed", "must be a boolean"))
 
     # operating ranges are always optional but must be well-formed if present.
     for rk in _RANGE_KEYS:

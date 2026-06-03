@@ -81,6 +81,7 @@ INT_MIN_DIV_NEG1 = DivergenceClass("intmin_div_neg1", "INT_MIN / -1 overflow")
 NULL_DEREF = DivergenceClass("null_deref", "Null pointer dereference")
 ARRAY_OOB = DivergenceClass("array_oob", "Out-of-bounds array/pointer access")
 UNINIT_READ = DivergenceClass("uninit_read", "Read of uninitialized storage")
+UNINIT_PADDING = DivergenceClass("uninit_padding", "Read of uninitialized struct padding")
 STRICT_ALIASING = DivergenceClass("strict_aliasing", "Type-based (strict) aliasing violation")
 USE_AFTER_FREE = DivergenceClass("use_after_free", "Use of freed / dangling storage")
 EVAL_ORDER = DivergenceClass("eval_order", "Unspecified evaluation order / sequencing")
@@ -200,6 +201,27 @@ _ENTRIES: List[DivergenceEntry] = [
         target_rule="The type system forbids reading uninitialized bindings.",
         severity=Severity.MODERATE,
         witness_recipe="Read a local before any store on some path.",
+    ),
+    DivergenceEntry(
+        cls=UNINIT_PADDING,
+        source_definedness=Definedness.UNSPECIFIED,
+        source_rule="When a value is stored into a struct, bytes that correspond "
+                    "to padding take unspecified values. Copying those bytes into "
+                    "a hash/serialization makes the observable representation "
+                    "depend on indeterminate padding rather than fields.",
+        c_standard_ref="C17 6.2.6.1p6",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="A safe translation serializes fields into an explicitly "
+                    "zero-initialized byte buffer (or otherwise omits padding), "
+                    "so padding bytes are deterministic and do not leak prior "
+                    "stack contents.",
+        severity=Severity.MODERATE,
+        witness_recipe="Use a naturally padded struct such as `{ uint8_t tag; "
+                       "uint32_t value; }`, assign both fields, copy all "
+                       "`sizeof(struct)` bytes into a digest, and observe that "
+                       "MSan reports uninitialized padding or clang pattern-vs-"
+                       "zero auto-init changes the digest while explicit "
+                       "padding zeroing removes the delta.",
     ),
     DivergenceEntry(
         cls=STRICT_ALIASING,

@@ -22,9 +22,10 @@ from . import memcpy_overlap  # noqa: F401  (registers memcpy-overlap C->Rust an
 from . import sequence_point  # noqa: F401  (registers unsequenced-modification C->Rust, step 105)
 from . import longjmp_vla  # noqa: F401  (registers longjmp-over-exited-VLA, step 111)
 from . import atomic_ordering  # noqa: F401  (registers relaxed-atomics ordering gap, step 113)
+from . import uninit_padding  # noqa: F401  (registers uninitialized-padding read, step 114)
 from . import c_to_go  # noqa: F401  (back-compat shim exposing the Go oracles)
 
 __all__ = ["signed_overflow", "integer_ub", "memory_shape", "uninit_read",
            "floating_point", "vla_bound", "target_pairs", "c_to_go", "c_to_cpp",
            "go_to_rust", "bitfield_layout", "enum_repr", "memcpy_overlap",
-           "sequence_point", "longjmp_vla", "atomic_ordering"]
+           "sequence_point", "longjmp_vla", "atomic_ordering", "uninit_padding"]

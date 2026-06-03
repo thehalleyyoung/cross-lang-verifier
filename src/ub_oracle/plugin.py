@@ -131,6 +131,10 @@ class DivergenceOracle(abc.ABC):
             rr = harness.confirm_model_level_divergence(
                 ce.source_snippet, ce.target_snippet, argv,
                 ce.divergence_class, target_lang=self.target_lang)
+        elif self.confirmation_mode == "uninit_padding":
+            rr = harness.confirm_uninit_padding_vs_defined(
+                ce.source_snippet, ce.target_snippet, argv,
+                ce.divergence_class, target_lang=self.target_lang)
         else:
             rr = harness.confirm_ub_divergence(
                 ce.source_snippet, ce.target_snippet, argv, ce.divergence_class,

@@ -4,7 +4,7 @@
 
 A machine-readable, indexed catalogue of the cross-language divergence patterns this tool catches, **indexed by class and language pair**. Every divergent exhibit carries a concrete **witnessing input** and is **re-confirmed live** by `confirm_zoo()` (the oracle must still flag the divergence on the witness and stay silent on the safe input).
 
-*content hash: `89fa293729640760` — 16 divergent exhibits across 4 classes.*
+*content hash: `29a67003bcb5a9c3` — 18 divergent exhibits across 5 classes.*
 
 ## Index — class × pair
 
@@ -21,6 +21,8 @@ A machine-readable, indexed catalogue of the cross-language divergence patterns 
 | `signed_overflow` | `c->go` | `idio:midpoint-overflow:go`, `multi:midpoint:go` |
 | `signed_overflow` | `c->rust` | `idio:midpoint-overflow:rust`, `multi:midpoint:rust` |
 | `signed_overflow` | `c->swift` | `multi:midpoint:swift` |
+| `uninit_padding` | `c->go` | `idio:uninit-padding:go` |
+| `uninit_padding` | `c->rust` | `idio:uninit-padding:rust` |
 
 ## Exhibits
 
@@ -169,6 +171,124 @@ fn main(){
   let t: i32 = std::env::args().nth(1).unwrap().parse().unwrap();
   let c: i32 = std::env::args().nth(2).unwrap().parse().unwrap();
   println!("{}", rate(t,c));
+}
+```
+
+### `idio:uninit-padding:go` — uninit_padding (c->go)
+
+*Mirrors:* whole-struct byte serialization after assigning fields; C padding bytes are indeterminate, while safe Rust/Go serializers start from zeroed bytes and write only fields.. *Witness:* `['7', '16909060', '1']` (safe: `['7', '16909060', '0']`).
+
+```c
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+struct P {
+    uint8_t tag;
+    uint32_t value;
+};
+_Static_assert(sizeof(struct P) == 8, "struct size drift");
+_Static_assert(sizeof(struct P) > 5, "no padding in struct P");
+_Static_assert(offsetof(struct P, tag) == 0, "tag offset drift");
+_Static_assert(offsetof(struct P, value) == 4, "value offset drift");
+__attribute__((noinline)) static uint32_t digest(unsigned long long v0, unsigned long long v1, int expose_padding){
+    struct P p;
+    if (!expose_padding) memset(&p, 0, sizeof p);
+#ifdef CLV_ZERO_PADDING
+    memset(&p, 0, sizeof p);
+#endif
+    p.tag = (uint8_t)v0;
+    p.value = (uint32_t)v1;
+    unsigned char bytes[sizeof p];
+    memcpy(bytes, &p, sizeof p);
+    uint32_t acc = 0;
+    for (size_t i = 0; i < sizeof bytes; ++i) acc = acc * 131u + bytes[i];
+    return acc;
+}
+int main(int argc, char **argv){
+    unsigned long long v0 = argc > 1 ? strtoull(argv[1], 0, 10) : 7ull;
+    unsigned long long v1 = argc > 2 ? strtoull(argv[2], 0, 10) : 16909060ull;
+    int expose_padding = argc > 3 ? atoi(argv[3]) : 1;
+    printf("%u\n", digest(v0, v1, expose_padding));
+    return 0;
+}
+```
+
+```go
+package main
+import (
+	"encoding/binary"
+	"fmt"
+	"os"
+	"strconv"
+)
+func main() {
+	bytes := make([]byte, 8)
+	v0 := uint64(7)
+	if len(os.Args) > 1 { parsed, _ := strconv.ParseUint(os.Args[1], 10, 64); v0 = parsed }
+	bytes[0] = byte(v0)
+	v1 := uint64(16909060)
+	if len(os.Args) > 2 { parsed, _ := strconv.ParseUint(os.Args[2], 10, 64); v1 = parsed }
+	binary.LittleEndian.PutUint32(bytes[4:8], uint32(v1))
+	var acc uint32
+	for _, b := range bytes { acc = acc*131 + uint32(b) }
+	fmt.Println(acc)
+}
+```
+
+### `idio:uninit-padding:rust` — uninit_padding (c->rust)
+
+*Mirrors:* whole-struct byte serialization after assigning fields; C padding bytes are indeterminate, while safe Rust/Go serializers start from zeroed bytes and write only fields.. *Witness:* `['7', '16909060', '1']` (safe: `['7', '16909060', '0']`).
+
+```c
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+struct P {
+    uint8_t tag;
+    uint32_t value;
+};
+_Static_assert(sizeof(struct P) == 8, "struct size drift");
+_Static_assert(sizeof(struct P) > 5, "no padding in struct P");
+_Static_assert(offsetof(struct P, tag) == 0, "tag offset drift");
+_Static_assert(offsetof(struct P, value) == 4, "value offset drift");
+__attribute__((noinline)) static uint32_t digest(unsigned long long v0, unsigned long long v1, int expose_padding){
+    struct P p;
+    if (!expose_padding) memset(&p, 0, sizeof p);
+#ifdef CLV_ZERO_PADDING
+    memset(&p, 0, sizeof p);
+#endif
+    p.tag = (uint8_t)v0;
+    p.value = (uint32_t)v1;
+    unsigned char bytes[sizeof p];
+    memcpy(bytes, &p, sizeof p);
+    uint32_t acc = 0;
+    for (size_t i = 0; i < sizeof bytes; ++i) acc = acc * 131u + bytes[i];
+    return acc;
+}
+int main(int argc, char **argv){
+    unsigned long long v0 = argc > 1 ? strtoull(argv[1], 0, 10) : 7ull;
+    unsigned long long v1 = argc > 2 ? strtoull(argv[2], 0, 10) : 16909060ull;
+    int expose_padding = argc > 3 ? atoi(argv[3]) : 1;
+    printf("%u\n", digest(v0, v1, expose_padding));
+    return 0;
+}
+```
+
+```rust
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let mut bytes = [0u8; 8];
+    let v0: u64 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(7);
+    bytes[0] = v0 as u8;
+    let v1: u64 = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(16909060);
+    bytes[4..8].copy_from_slice(&((v1 as u32).to_le_bytes()));
+    let mut acc: u32 = 0;
+    for b in bytes { acc = acc.wrapping_mul(131).wrapping_add(b as u32); }
+    println!("{}", acc);
 }
 ```
 

@@ -52,6 +52,8 @@ class ToolchainStatus:
     cc: Optional[str]
     ubsan: bool
     asan: bool = False
+    msan: bool = False
+    auto_var_init: bool = False
     targets: Tuple[Tuple[str, Optional[str]], ...] = ()
 
     def target_path(self, name: str = "rust") -> Optional[str]:
@@ -107,6 +109,21 @@ class ToolchainStatus:
         """Whether the C-libc-contract + target confirmation path is available."""
         return self.c_available and self.target_available(name)
 
+    def full_uninit_padding_for(self, name: str = "rust") -> bool:
+        """Whether uninitialized-padding confirmation can run for ``name``.
+
+        MemorySanitizer is the strongest proof object for this class, but it is
+        unavailable on common host targets (notably arm64 Darwin).  The fallback
+        uses clang's real automatic-variable-initialization modes to prove that
+        the same C source's observable hash depends specifically on padding
+        bytes while the target serialization is deterministic.
+        """
+        return (
+            self.c_available
+            and self.target_available(name)
+            and (self.msan or self.auto_var_init)
+        )
+
     @property
     def full(self) -> bool:
         return self.full_for("rust")
@@ -156,6 +173,57 @@ def _check_asan(cc: str) -> bool:
             return False
 
 
+def _check_msan(cc: str) -> bool:
+    """Verify MemorySanitizer both links and traps on a real uninitialized read."""
+    src = (
+        "#include <stdio.h>\n"
+        "__attribute__((noinline)) static int f(void){ int x; return x; }\n"
+        "int main(void){ volatile int y = f(); printf(\"%d\\n\", y); return 0; }\n"
+    )
+    with tempfile.TemporaryDirectory() as d:
+        cpath = os.path.join(d, "t.c")
+        opath = os.path.join(d, "t.out")
+        with open(cpath, "w") as f:
+            f.write(src)
+        try:
+            c = subprocess.run(
+                [cc, "-O1", "-g", "-fsanitize=memory",
+                 "-fno-sanitize-recover=all", "-o", opath, cpath],
+                capture_output=True, text=True, timeout=60,
+            )
+            if c.returncode != 0:
+                return False
+            r = subprocess.run([opath], capture_output=True, text=True, timeout=60)
+            return (
+                r.returncode != 0
+                and "MemorySanitizer:" in r.stderr
+                and "use-of-uninitialized-value" in r.stderr
+            )
+        except (subprocess.SubprocessError, OSError):
+            return False
+
+
+def _check_auto_var_init(cc: str) -> bool:
+    """Whether clang accepts both automatic-variable-initialization modes."""
+    src = "int main(void){return 0;}\n"
+    with tempfile.TemporaryDirectory() as d:
+        cpath = os.path.join(d, "t.c")
+        with open(cpath, "w") as f:
+            f.write(src)
+        try:
+            for mode in ("pattern", "zero"):
+                opath = os.path.join(d, f"t_{mode}.out")
+                r = subprocess.run(
+                    [cc, "-ftrivial-auto-var-init=" + mode, "-o", opath, cpath],
+                    capture_output=True, timeout=60,
+                )
+                if r.returncode != 0:
+                    return False
+            return True
+        except (subprocess.SubprocessError, OSError):
+            return False
+
+
 def _resolve_compiler(pack) -> Optional[str]:
     for cand in pack.compiler_candidates:
         path = shutil.which(cand)
@@ -168,8 +236,17 @@ def toolchain_available() -> ToolchainStatus:
     cc = _find_cc()
     ubsan = _check_ubsan(cc) if cc else False
     asan = _check_asan(cc) if cc else False
+    msan = _check_msan(cc) if cc else False
+    auto_var_init = _check_auto_var_init(cc) if cc else False
     targets = tuple((name, _resolve_compiler(pack)) for name, pack in PACKS.items())
-    return ToolchainStatus(cc=cc, ubsan=ubsan, asan=asan, targets=targets)
+    return ToolchainStatus(
+        cc=cc,
+        ubsan=ubsan,
+        asan=asan,
+        msan=msan,
+        auto_var_init=auto_var_init,
+        targets=targets,
+    )
 
 
 @dataclass
@@ -196,6 +273,14 @@ class RunOutcome:
         if "memcpy-param-overlap" in self.stderr:
             return True
         return False
+
+    @property
+    def msan_trapped(self) -> bool:
+        """A MemorySanitizer run that aborted on an uninitialized-value use."""
+        return (
+            "MemorySanitizer:" in self.stderr
+            and "use-of-uninitialized-value" in self.stderr
+        )
 
     @property
     def libc_contract_trapped(self) -> bool:
@@ -385,6 +470,18 @@ class ReexecHarness:
         missing = []
         if not status.c_available:
             missing.append("C compiler")
+        if not status.target_available(target_lang):
+            pack = PACKS.get(target_lang)
+            missing.append(pack.compiler_candidates[0] if pack else target_lang)
+        return missing
+
+    @staticmethod
+    def _missing_for_uninit_padding(status: "ToolchainStatus", target_lang: str) -> List[str]:
+        missing = []
+        if not status.c_available:
+            missing.append("C compiler")
+        if not (status.msan or status.auto_var_init):
+            missing.append("MemorySanitizer or clang -ftrivial-auto-var-init")
         if not status.target_available(target_lang):
             pack = PACKS.get(target_lang)
             missing.append(pack.compiler_candidates[0] if pack else target_lang)
@@ -648,6 +745,146 @@ class ReexecHarness:
         """Backward-compatible alias for the libc-contract memory-UB path."""
         return self.confirm_libc_contract_trap_vs_defined(
             c_src, rust_src, argv_inputs, divergence_class, target_lang)
+
+    # ── padding-definedness confirmation: indeterminate C padding vs target ──
+    def confirm_uninit_padding_vs_defined(
+        self,
+        c_src: str,
+        target_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "uninit_padding",
+        target_lang: str = "rust",
+    ) -> ReexecResult:
+        """Confirm a struct-padding read/serialization divergence.
+
+        The preferred proof object is MemorySanitizer: a field-assigned C struct
+        whose padding is copied into a hash must report
+        ``use-of-uninitialized-value``, while the same source with explicit
+        padding zeroing must not.  On hosts where MSan is unavailable, a real
+        clang fallback compiles the same source twice with
+        ``-ftrivial-auto-var-init=pattern`` and ``=zero``; a value delta, plus a
+        zero-padding control that matches the zero build, proves the observable
+        depends specifically on indeterminate padding bytes.  In both cases the
+        target program must compile, run twice, and produce one defined,
+        deterministic outcome.
+        """
+        res = ReexecResult(
+            available=self.status.full_uninit_padding_for(target_lang),
+            divergence_class=divergence_class,
+            mode="uninit_padding",
+            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)},
+        )
+        if not self.status.full_uninit_padding_for(target_lang):
+            res.reason = "toolchain unavailable: " + ", ".join(
+                self._missing_for_uninit_padding(self.status, target_lang))
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            tgt = self._compile_target(target_src, target_lang, d, "tgt")
+            if tgt is None:
+                res.available = False
+                res.reason = "compilation failed (target=False)"
+                return res
+
+            msan_signal = False
+            auto_signal = False
+            if self.status.msan:
+                msan = self._compile_c(
+                    c_src,
+                    ["-O1", "-g", "-fsanitize=memory",
+                     "-fno-sanitize-recover=all"],
+                    d,
+                    "c_msan",
+                )
+                msan_clean = self._compile_c(
+                    c_src,
+                    ["-O1", "-g", "-fsanitize=memory",
+                     "-fno-sanitize-recover=all", "-DCLV_ZERO_PADDING"],
+                    d,
+                    "c_msan_clean",
+                )
+                if msan is not None and msan_clean is not None:
+                    res.c_runs["msan"] = self._run([msan, *argv_inputs])
+                    res.c_runs["msan_clean"] = self._run([msan_clean, *argv_inputs])
+                    msan_signal = (
+                        res.c_runs["msan"].msan_trapped
+                        and not res.c_runs["msan_clean"].msan_trapped
+                        and res.c_runs["msan_clean"].returncode == 0
+                    )
+
+            if self.status.auto_var_init:
+                pattern = self._compile_c(
+                    c_src,
+                    ["-O1", "-ftrivial-auto-var-init=pattern"],
+                    d,
+                    "c_pattern",
+                )
+                zero = self._compile_c(
+                    c_src,
+                    ["-O1", "-ftrivial-auto-var-init=zero"],
+                    d,
+                    "c_zero",
+                )
+                clean = self._compile_c(
+                    c_src,
+                    ["-O1", "-ftrivial-auto-var-init=pattern",
+                     "-DCLV_ZERO_PADDING"],
+                    d,
+                    "c_clean",
+                )
+                if pattern is not None and zero is not None and clean is not None:
+                    res.c_runs["pattern"] = self._run([pattern, *argv_inputs])
+                    res.c_runs["zero"] = self._run([zero, *argv_inputs])
+                    res.c_runs["zero_padding"] = self._run([clean, *argv_inputs])
+                    p = res.c_runs["pattern"]
+                    z = res.c_runs["zero"]
+                    c = res.c_runs["zero_padding"]
+                    auto_signal = (
+                        p.returncode == 0
+                        and z.returncode == 0
+                        and c.returncode == 0
+                        and p.stdout != z.stdout
+                        and z.stdout == c.stdout
+                    )
+
+            target_a = self._run([tgt, *argv_inputs])
+            target_b = self._run([tgt, *argv_inputs])
+            res.rust_run = target_a
+
+        target_deterministic = (
+            target_a.returncode == target_b.returncode
+            and target_a.stdout == target_b.stdout
+        )
+        res.rust_defined = (
+            target_a.target_outcome_defined(target_lang)
+            and target_b.target_outcome_defined(target_lang)
+            and target_deterministic
+        )
+        res.ub_reachable = msan_signal or auto_signal
+        res.ub_consequential = res.ub_reachable and res.rust_defined
+        res.confirmed = res.ub_reachable and res.rust_defined
+        if res.confirmed:
+            signals = []
+            if msan_signal:
+                signals.append("MSan use-of-uninitialized-value")
+            if auto_signal:
+                p = res.c_runs["pattern"].stdout
+                z = res.c_runs["zero"].stdout
+                signals.append(f"auto-init delta pattern={p!r} zero={z!r}")
+            res.reason = (
+                "uninitialized padding confirmed ("
+                + "; ".join(signals)
+                + f"); {target_lang} defined & deterministic "
+                f"(rc={target_a.returncode}, out={target_a.stdout!r})"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: padding_signal={res.ub_reachable} "
+                f"(msan={msan_signal}, auto_init={auto_signal}), "
+                f"target_defined={res.rust_defined} "
+                f"(deterministic={target_deterministic})"
+            )
+        return res
 
     # ── exploited-without-trap: O0 != O2 vs defined Rust ─────────────────
     def confirm_optimizer_exploited(

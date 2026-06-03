@@ -44,6 +44,7 @@ CANONICAL_UNITS: Dict[str, Dict[str, Any]] = {
     "uninit_read": {"kind": "uninit_read",
                     "storage": {"kind": "struct", "fields": ["a", "b"]},
                     "writes": [{"slot": "a"}], "read": "b"},
+    "uninit_padding": {"kind": "uninit_padding"},
     "vla_bound": {"kind": "vla", "width": 32, "var": "n"},
     "float_cast_overflow": {"kind": "float_cast", "width": 32, "var": "x"},
     "fast_math_reassoc": {"kind": "fp_reassoc"},
@@ -174,6 +175,9 @@ def confirm_matrix(harness) -> Dict[str, Any]:
                 target_available = getattr(status, "target_available", lambda _t: False)
                 ok = bool(getattr(status, "c_available", False)
                           and target_available(tgt))
+            elif oracle.confirmation_mode == "uninit_padding":
+                checker = getattr(status, "full_uninit_padding_for", None)
+                ok = bool(checker(tgt)) if checker is not None else False
             else:
                 ok = status.full_for(tgt)
         else:

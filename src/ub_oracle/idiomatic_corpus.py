@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from .reexec import ReexecHarness, toolchain_available
+from .oracles.uninit_padding import demo_sources as _padding_demo_sources
 
 # --------------------------------------------------------------------------- #
 # Source fragments. Operands are always read from argv so nothing is
@@ -131,6 +132,9 @@ _MEMCPY_GO = (
     "n,_:=strconv.Atoi(os.Args[3]);buf:=[]byte(\"ABCDEFGHIJKLMNOP\");"
     "copy(buf[dst:dst+n],buf[src:src+n]);fmt.Println(string(buf))}\n")
 
+_PADDING_C, _PADDING_RUST, _PADDING_UB, _PADDING_SAFE = _padding_demo_sources("rust")
+_, _PADDING_GO, _, _ = _padding_demo_sources("go")
+
 # ---- equivalent items ------------------------------------------------------- #
 _AVG_C = _c(
     "static int avg(int a,int b){long s=(long)a+(long)b;return (int)(s/2);}",
@@ -212,6 +216,14 @@ CORPUS: Tuple[IdiomaticItem, ...] = (
         "memcpy_overlap", "divergent",
         _MEMCPY_C, {"rust": _MEMCPY_RUST, "go": _MEMCPY_GO},
         ("1", "0", "4"), ("8", "0", "4")),
+    IdiomaticItem(
+        "uninit-padding",
+        "whole-struct byte serialization after assigning fields; C padding bytes "
+        "are indeterminate, while safe Rust/Go serializers start from zeroed bytes "
+        "and write only fields.",
+        "uninit_padding", "divergent",
+        _PADDING_C, {"rust": _PADDING_RUST, "go": _PADDING_GO},
+        _PADDING_UB, _PADDING_SAFE),
     IdiomaticItem(
         "safe-average",
         "overflow-safe average widening to 64 bits before halving; well-defined "
@@ -302,6 +314,9 @@ def _confirm_item(h: ReexecHarness, item: IdiomaticItem, target_src: str,
     if item.klass == "memcpy_overlap":
         return h.confirm_libc_contract_trap_vs_defined(item.c_src, target_src, args,
                                                        item.klass, lang)
+    if item.klass == "uninit_padding":
+        return h.confirm_uninit_padding_vs_defined(item.c_src, target_src, args,
+                                                   item.klass, lang)
     return h.confirm_trap_vs_defined(item.c_src, target_src, args,
                                      item.klass, lang)
 
@@ -309,7 +324,8 @@ def _confirm_item(h: ReexecHarness, item: IdiomaticItem, target_src: str,
 def run_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
     status = toolchain_available()
     avail = tuple(l for l in langs if status.full_for(l)
-                  or status.full_libc_contract_for(l))
+                  or status.full_libc_contract_for(l)
+                  or status.full_uninit_padding_for(l))
     if not avail:
         return CorpusReport(available=False, langs=())
     h = ReexecHarness(status)
@@ -364,7 +380,8 @@ def confirm_idiomatic_corpus(
     input, and every **equivalent** item is never flagged. Run twice to confirm
     the verdict layer is content-hash-stable."""
     status = toolchain_available()
-    if not any(status.full_for(l) for l in langs):
+    if not any(status.full_for(l) or status.full_libc_contract_for(l)
+               or status.full_uninit_padding_for(l) for l in langs):
         return CorpusConfirmation(
             available=False, ok=True, n_items=0, n_divergent=0, n_equivalent=0,
             n_langs=0, hash_stable=True, content_hash="", report=None,

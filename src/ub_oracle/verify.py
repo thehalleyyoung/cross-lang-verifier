@@ -163,6 +163,9 @@ def verify_unit(
                 return status.c_available and status.target_available(tgt_lang)
             if oracle.confirmation_mode == "model_level_divergence":
                 return status.c_available and status.target_available(tgt_lang)
+            if oracle.confirmation_mode == "uninit_padding":
+                checker = getattr(status, "full_uninit_padding_for", None)
+                return bool(checker(tgt_lang)) if checker is not None else False
             return status.full_for(tgt_lang)
 
         tool_ok = any(_c_oracle_available(o) for o in applicable)

@@ -91,9 +91,10 @@ python3 -m src.cli.main discover \
   (UB in C, *defined* in C++20)** — the last proving the C/C++ boundary is itself a
   divergence surface (each confirmed against real
   `clang`/`rustc`/`go`/`clang++`/`ocamlopt`:
-  the same input is C UB — UBSan-trapping, or a value that flips across two
-  conforming compilations no sanitizer can trap, or executable libc-contract
-  UB checks, or a real `clang -Wunsequenced` diagnostic, with a sweep pinning the
+  the same input is C UB / under-defined — UBSan-trapping, MSan-checkable
+  padding leakage, a value that flips across two conforming compilations no
+  sanitizer can trap, executable libc-contract UB checks, or a real
+  `clang -Wunsequenced` diagnostic, with a sweep pinning the
   exact `-O` level the UB first surfaces —
   while the safe Rust *and* Go *and* C++ *and* OCaml ports
   are defined and deterministic), plus an

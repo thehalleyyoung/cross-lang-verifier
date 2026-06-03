@@ -77,17 +77,19 @@ defined value. A single dynamic run cannot expose this gap. We present
 semantics separately through a \emph{$\sigma$-bridge product program}, finds a
 witnessing input or bounded execution with Z3, dataflow, or enumeration,
 and---crucially---\emph{confirms every witness
-against real compilers} (\texttt{clang} under UndefinedBehaviorSanitizer or
-\texttt{-Wunsequenced}, \texttt{rustc}, and \texttt{go}) so that no verdict ships
+against real compilers} (\texttt{clang} under UndefinedBehaviorSanitizer,
+MemorySanitizer where available, \texttt{-Wunsequenced}, or a checked
+compiler-mode delta; \texttt{rustc}; and \texttt{go}) so that no verdict ships
 unless an independent ground-truth harness confirms it. The oracle framework is a uniform plugin
 interface: each divergence class is an additive plugin, and a class
 automatically transfers across language pairs. The checked-in artifact
-implements a catalogue of 23 divergence classes---signed overflow,
+implements a catalogue of 24 divergence classes---signed overflow,
 shift/division UB, \texttt{INT\_MIN/-1}, out-of-bounds access, strict-aliasing
 (type-punning), sequence-point/unsequenced read-write UB, floating-point contraction and \texttt{-ffast-math}
 reassociation, VLA-bound, float$\to$int overflow, pointer-provenance /
 address-space-overflow arithmetic, \texttt{restrict}-aliasing, overlapping
-\texttt{memcpy} vs.\ memmove-like slice copy, \texttt{longjmp} to an exited
+\texttt{memcpy} vs.\ memmove-like slice copy, uninitialized struct-padding
+serialization vs.\ zero-padded safe serialization, \texttt{longjmp} to an exited
 VLA scope vs.\ structured unwinding, a scoped relaxed-atomics
 store-buffering ordering gap, an
 uninitialized-read/definedness analysis, two implementation-defined classes
@@ -99,13 +101,15 @@ by a deterministic, byte-reproducible
 cross-pair regression matrix whose toolchain-backed cells are \emph{all}
 confirmed against real compilers (\texttt{clang}, \texttt{rustc}, \texttt{go},
 \texttt{clang++}, \texttt{ocamlopt}) plus an executable checked-libc contract
-build for preconditions UBSan does not cover. The framework is not limited to
+build for preconditions UBSan does not cover and an MSan/auto-init padding
+confirmation for indeterminate object bytes. The framework is not limited to
 \mbox{C-rooted} undefined behaviour: a first \emph{safe$\to$safe} pair,
 Go$\to$Rust---in which \emph{neither} side has any undefined behaviour---catches
 the \emph{defined-but-different} hazard where \texttt{INT\_MIN/-1} is a defined
 modular value in Go yet a guaranteed panic in Rust, raising the matrix to
-\textbf{48 cells over 6 pairs}, with confirmation delegated to the real
-compiler/toolchain for every available cell.
+\textbf{50 cells over 6 pairs}, with confirmation delegated to the real
+compiler/toolchain for every available cell. With the padding cells included,
+the pair matrix contains \textbf{50 cells over 6 pairs}.
 Beyond pairwise checks, an
 \emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
 targets at once and flags the minority target whose live output disagrees, and a
@@ -375,12 +379,12 @@ divergence query $\mathit{ret}_C \neq \mathit{ret}_R$.
 
 \subsection{Divergence Class Taxonomy}\label{sec:divergence-taxonomy}
 
-\textsc{SemRec} ships a catalogue of \textbf{23 divergence classes}
-(Table~\ref{tab:divergences})---16 rooted in C undefined behaviour, three in C
-unspecified behaviour, three implementation-defined layout/representation
+\textsc{SemRec} ships a catalogue of \textbf{24 divergence classes}
+(Table~\ref{tab:divergences})---16 rooted in C undefined behaviour, four in C
+unspecified or indeterminate behaviour, three implementation-defined layout/representation
 or conversion classes, and one defined allowed-execution-set atomics class.
-Twenty of those catalogue entries are executable oracle rows today, and the
-C$\to$Rust anchor exposes 19 registered oracle
+Twenty-one of those catalogue entries are executable oracle rows today, and the
+C$\to$Rust anchor exposes 20 registered oracle
 classes behind a single plugin contract (\S\ref{sec:implementation}).  The
 classification emerges from a systematic comparison of C17~\cite{iso9899} and
 target-language (Rust/Go/Swift/C++) semantics and is validated, class by class,
@@ -404,7 +408,10 @@ real \texttt{clang -Wunsequenced} proves source UB while the target is defined;
 the C and target programs are language-defined and deterministic, yet their
 observable output differs (an implementation-defined choice the port silently
 changes); \textsc{model} = real compiled model checkers confirm a bounded
-allowed-execution-set gap.}
+allowed-execution-set gap; \textsc{pad} = MSan (when available) or clang
+\texttt{-ftrivial-auto-var-init=\{pattern,zero\}} proves a whole-struct digest
+depends specifically on padding bytes, while a zero-padding control and target
+serialization are deterministic.}
 \label{tab:divergences}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -422,6 +429,7 @@ Pointer provenance / ovf.  & UB & checked index       & \textsc{trap} \\
 Overlapping \texttt{memcpy} & UB & memmove-like slice copy & \textsc{contract} \\
 Stale \texttt{longjmp}/VLA target & UB & structured unwind cleanup & \textsc{contract} \\
 Uninitialized read         & UB & zero/default-init   & \textsc{opt} \\
+Uninitialized padding bytes & unspec. & zero-padded serialization & \textsc{pad} \\
 Strict aliasing (pun)      & UB & defined value       & \textsc{opt} \\
 \texttt{restrict} violation & UB & unique-borrow / GC  & \textsc{opt} \\
 FP contraction (FMA)       & unspec. & IEEE-strict     & \textsc{opt} \\
@@ -439,8 +447,8 @@ Relaxed atomics store-buffering & defined & SeqCst forbids all-zero & \textsc{mo
 the class against \emph{every} target that implements it. The deterministic
 cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{6 language pairs}
 (C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++, and the
-\emph{safe$\to$safe} Go$\to$Rust) with 19, 17, 6, 4, 1, and 1 classes
-respectively---\textbf{48 cells in total}---and is byte-reproducible per fresh
+\emph{safe$\to$safe} Go$\to$Rust) with 20, 18, 6, 4, 1, and 1 classes
+respectively---\textbf{50 cells in total}---and is byte-reproducible per fresh
 process. When the corresponding host toolchain is present, each attempted cell
 must confirm against real
 \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}
@@ -1074,21 +1082,22 @@ regression matrix (\texttt{src/ub\_oracle/regression\_matrix.py}):
     artifact is regenerated in a fresh interpreter and asserted byte-identical
     in CI (\texttt{make matrix-check}).
   \item \textbf{Ground-truth layer.} Each cell's solver/dataflow/model witness is compiled and run
-    against real \texttt{clang} (under \texttt{-fsanitize=undefined}, or a
-    checked C contract/model-level build where sanitizer evidence is the wrong
+    against real \texttt{clang} (under \texttt{-fsanitize=undefined},
+    MemorySanitizer/auto-init padding checks, or a checked C
+    contract/model-level build where sanitizer evidence is the wrong
     proof object), real \texttt{rustc}, real \texttt{go}, real \texttt{clang++},
     and real \texttt{ocamlopt}; a cell is \emph{confirmed} only when the
     appropriate mode's evidence holds: sanitizer/contract trap, optimization
-    disagreement, defined-vs-defined output difference, static compiler
-    diagnostic, or bounded allowed-execution-set gap.
+    disagreement, padding-byte initialization delta, defined-vs-defined output
+    difference, static compiler diagnostic, or bounded allowed-execution-set gap.
 \end{enumerate}
 
 Table~\ref{tab:matrix} reports the matrix. Its C-rooted core spans \textbf{5
-target languages} and \textbf{47 cells} (C$\to$Rust: 19 classes; C$\to$Go: 17;
+target languages} and \textbf{49 cells} (C$\to$Rust: 20 classes; C$\to$Go: 18;
 C$\to$Swift: 6, the argv-driven integer/memory core; C$\to$OCaml: 4, a GC'd
 exception-based target; C$\to$C++: 1, the C/C++-boundary shift class). A
 \textbf{6th pair, the safe$\to$safe Go$\to$Rust} cell described below, raises the
-total to \textbf{48 cells over 6 pairs}. On a host with the corresponding
+total to \textbf{50 cells over 6 pairs}. On a host with the corresponding
 toolchains, every attempted cell must confirm against real compilers or checked C
 contract builds---no verdict is taken on
 faith. Crucially, the matrix file contains \emph{no per-language branches}: it
@@ -1141,15 +1150,33 @@ classes are implementation-defined rather than UB-rooted, extending the
 catalogue's reach to the ``legal-but-divergent'' band that ordinary
 sanitizers and UB checkers cannot see.
 
+\paragraph{Indeterminate object bytes: uninitialized struct padding.}
+The newest C-rooted row covers a class that is neither a scalar UB trap nor a
+normal value mismatch: whole-struct byte serialization after assigning fields.
+For a compiler-asserted layout such as
+\texttt{struct P \{ uint8\_t tag; uint32\_t value; \}}, the three bytes between
+\texttt{tag} and \texttt{value} are padding.  The C witness assigns both fields,
+copies all \texttt{sizeof(struct P)} bytes into a digest, and lets a runtime
+switch zero padding for the safe control.  On MSan-capable hosts the source side
+is confirmed by a real \texttt{use-of-uninitialized-value} report; on this
+artifact's arm64 Darwin host the same source is confirmed by real \texttt{clang}
+\texttt{-ftrivial-auto-var-init=pattern} vs.\ \texttt{=zero}: the digest changes,
+while the explicit-zeroing control matches the zero build.  The Rust and Go ports
+serialize fields into zero-initialized byte arrays at the compiler-validated C
+offsets, so their padding is deterministic.  The divergence zoo now includes two
+live-confirmed exhibits for this class (C$\to$Rust and C$\to$Go), and the
+content-hashed zoo index is regenerated as
+\texttt{29a67003bcb5a9c3}.
+
 \begin{table}[t]
 \centering
 \small
 \caption{Cross-pair regression matrix coverage. ``D'' = a symbolic divergence
 witness is found and (with toolchain) confirmed against real compilers; ``--'' =
-class not implemented for that pair. The C-rooted matrix now contains 47 cells; a
-\textbf{48th cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
+class not implemented for that pair. The C-rooted matrix now contains 49 cells; a
+\textbf{50th cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
 \texttt{INT\_MIN/-1}: a value in Go, a panic in Rust)---is described in the text
-and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{48 cells over 6
+and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{50 cells over 6
 pairs}. The
 C$\to$C++ column carries the single C/C++-boundary class whose witness
 (\texttt{1 << 31}) is UB in C but defined in C++20; the C$\to$OCaml column
@@ -1168,6 +1195,7 @@ Division by zero           & D & D & D & D & -- \\
 Array out-of-bounds        & D & D & D & D & -- \\
 Unsequenced read/write     & D & -- & -- & -- & -- \\
 Uninitialized read         & D & D & D & -- & -- \\
+Uninitialized padding      & D & D & -- & -- & -- \\
 Strict aliasing            & D & D & -- & -- & -- \\
 VLA bound                  & D & D & -- & -- & -- \\
 Float$\to$int overflow     & D & D & -- & -- & -- \\
@@ -1182,7 +1210,7 @@ FP contraction             & D & -- & -- & -- & -- \\
 Relaxed atomics ordering   & D & D & -- & -- & -- \\
 \texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D \\
 \midrule
-\textbf{Matrix cells}      & \textbf{19} & \textbf{17} & \textbf{6} & \textbf{4} & \textbf{1} \\
+\textbf{Matrix cells}      & \textbf{20} & \textbf{18} & \textbf{6} & \textbf{4} & \textbf{1} \\
 \bottomrule
 \end{tabular}
 \end{table}
