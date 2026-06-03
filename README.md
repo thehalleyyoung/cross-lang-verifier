@@ -90,13 +90,13 @@ python3 -m src.cli.main discover \
   VLA scope**, and **`1 << 31`
   (UB in C, *defined* in C++20)** — the last proving the C/C++ boundary is itself a
   divergence surface (each confirmed against real
-  `clang`/`rustc`/`go`/`clang++`/`ocamlopt`:
+  `clang`/`rustc`/`go`/`clang++`/`ocamlopt`/`zig`:
   the same input is C UB / under-defined — UBSan-trapping, MSan-checkable
   padding leakage, a value that flips across two conforming compilations no
   sanitizer can trap, executable libc-contract UB checks, or a real
   `clang -Wunsequenced` diagnostic, with a sweep pinning the
   exact `-O` level the UB first surfaces —
-  while the safe Rust *and* Go *and* C++ *and* OCaml ports
+  while the safe Rust *and* Go *and* C++ *and* OCaml *and* Zig `ReleaseSafe` ports
   are defined and deterministic), plus an
   **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on
   a real three-point definedness-lattice dataflow analysis that flags reads of
@@ -375,14 +375,15 @@ python3 -m src.cli.main discover \
   proving **cross-pair invariance** — a UB-rooted divergence is flagged on every
   pair (it's a property of the source UB, not one target's quirks) and an
   equivalent function on none (15 function×pair verdicts, all correct)
-- a **5th target pair and multi-language oracles**: C→**OCaml** (a GC'd,
-  exception-based port, witnessed live on real `ocamlopt`) joins
-  Rust/Go/Swift/C++ in the byte-reproducible matrix; and a first
+- **more target pairs and multi-language oracles**: C→**OCaml** (a GC'd,
+  exception-based port, witnessed live on real `ocamlopt`) and C→**Zig**
+  (`ReleaseSafe`, witnessed live on real `zig`) join Rust/Go/Swift/C++ in the
+  byte-reproducible matrix; and a first
   **safe→safe pair, Go→Rust** — *neither side has any UB* — catches the
   **defined-but-different** hazard where `INT_MIN/-1` wraps to a value in Go
   yet panics in Rust, confirmed by re-executing both real binaries
-  (**46 registered matrix cells across 6 pairs**, including real C checked-
-  contract `memcpy`-overlap and `longjmp`/VLA cells).
+  (**55 registered matrix cells across 7 pairs**, including real C checked-
+  contract `memcpy`-overlap, `longjmp`/VLA, and Zig safety-panic cells).
   An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.
   Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a

@@ -55,7 +55,7 @@
 }
 \lstset{style=codestyle}
 
-\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++/OCaml) via $\sigma$-Bridge Product Programs}}
+\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++/OCaml/Zig) via $\sigma$-Bridge Product Programs}}
 \date{}
 
 \author{halley-labs}
@@ -66,7 +66,7 @@
 %% ABSTRACT
 %% ======================================================================
 \begin{abstract}
-Migrating C to a memory-safe language (Rust, Go, Swift) demands tooling that
+Migrating C to a safety-checked language (Rust, Go, Swift, Zig) demands tooling that
 compares \emph{source-language} semantics rather than relying on runtime
 agreement or LLVM-level normalization. The central hazard is
 \emph{undefined-behavior (UB) divergence}: a C input on which the program's
@@ -79,7 +79,7 @@ witnessing input or bounded execution with Z3, dataflow, or enumeration,
 and---crucially---\emph{confirms every witness
 against real compilers} (\texttt{clang} under UndefinedBehaviorSanitizer,
 MemorySanitizer where available, \texttt{-Wunsequenced}, or a checked
-compiler-mode delta; \texttt{rustc}; and \texttt{go}) so that no verdict ships
+compiler-mode delta; \texttt{rustc}; \texttt{go}; and \texttt{zig}) so that no verdict ships
 unless an independent ground-truth harness confirms it. The oracle framework is a uniform plugin
 interface: each divergence class is an additive plugin, and a class
 automatically transfers across language pairs. The checked-in artifact
@@ -95,21 +95,23 @@ store-buffering ordering gap, an
 uninitialized-read/definedness analysis, two implementation-defined classes
 (bit-field packing and out-of-range \texttt{enum} representation), and a
 C/C++-boundary class
-(\texttt{1 << 31}, undefined in C yet defined in C++20)---driven across five
-target languages (Rust, Go, Swift, C++, and a GC'd, exception-based OCaml port)
+(\texttt{1 << 31}, undefined in C yet defined in C++20)---driven across six
+target languages (Rust, Go, Swift, C++, a GC'd, exception-based OCaml port, and
+Zig \texttt{ReleaseSafe})
 by a deterministic, byte-reproducible
 cross-pair regression matrix whose toolchain-backed cells are \emph{all}
 confirmed against real compilers (\texttt{clang}, \texttt{rustc}, \texttt{go},
-\texttt{clang++}, \texttt{ocamlopt}) plus an executable checked-libc contract
+\texttt{clang++}, \texttt{ocamlopt}, \texttt{zig}) plus an executable checked-libc contract
 build for preconditions UBSan does not cover and an MSan/auto-init padding
 confirmation for indeterminate object bytes. The framework is not limited to
 \mbox{C-rooted} undefined behaviour: a first \emph{safe$\to$safe} pair,
 Go$\to$Rust---in which \emph{neither} side has any undefined behaviour---catches
 the \emph{defined-but-different} hazard where \texttt{INT\_MIN/-1} is a defined
 modular value in Go yet a guaranteed panic in Rust, raising the matrix to
-\textbf{50 cells over 6 pairs}, with confirmation delegated to the real
-compiler/toolchain for every available cell. With the padding cells included,
-the pair matrix contains \textbf{50 cells over 6 pairs}.
+\textbf{55 cells over 7 pairs}, with confirmation delegated to the real
+compiler/toolchain for every available cell. The new C$\to$Zig column contributes
+five real-compiler-backed integer/memory cells: C UB vs.\ Zig wrapping,
+shift-mask, division-safety, and bounds-safety semantics.
 Beyond pairwise checks, an
 \emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
 targets at once and flags the minority target whose live output disagrees, and a
@@ -445,13 +447,13 @@ Relaxed atomics store-buffering & defined & SeqCst forbids all-zero & \textsc{mo
 \paragraph{Cross-pair generality.} Because each class shares one
 \texttt{divergence\_class} key across language pairs, a single solver/dataflow/model witness drives
 the class against \emph{every} target that implements it. The deterministic
-cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{6 language pairs}
-(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++, and the
-\emph{safe$\to$safe} Go$\to$Rust) with 20, 18, 6, 4, 1, and 1 classes
-respectively---\textbf{50 cells in total}---and is byte-reproducible per fresh
+cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{7 language pairs}
+(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++, C$\to$Zig, and the
+\emph{safe$\to$safe} Go$\to$Rust) with 20, 18, 6, 4, 1, 5, and 1 classes
+respectively---\textbf{55 cells in total}---and is byte-reproducible per fresh
 process. When the corresponding host toolchain is present, each attempted cell
 must confirm against real
-\texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}
+\texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}/\texttt{zig}
 or the checked C contract build for preconditions UBSan does not cover.
 The Go$\to$Rust pair is qualitatively new: \emph{neither} source nor target has
 any undefined behaviour, so the framework's reach extends past C-UB to the
@@ -1086,18 +1088,19 @@ regression matrix (\texttt{src/ub\_oracle/regression\_matrix.py}):
     MemorySanitizer/auto-init padding checks, or a checked C
     contract/model-level build where sanitizer evidence is the wrong
     proof object), real \texttt{rustc}, real \texttt{go}, real \texttt{clang++},
-    and real \texttt{ocamlopt}; a cell is \emph{confirmed} only when the
+    real \texttt{ocamlopt}, and real \texttt{zig}; a cell is \emph{confirmed} only when the
     appropriate mode's evidence holds: sanitizer/contract trap, optimization
     disagreement, padding-byte initialization delta, defined-vs-defined output
     difference, static compiler diagnostic, or bounded allowed-execution-set gap.
 \end{enumerate}
 
-Table~\ref{tab:matrix} reports the matrix. Its C-rooted core spans \textbf{5
-target languages} and \textbf{49 cells} (C$\to$Rust: 20 classes; C$\to$Go: 18;
+Table~\ref{tab:matrix} reports the matrix. Its C-rooted core spans \textbf{6
+target languages} and \textbf{54 cells} (C$\to$Rust: 20 classes; C$\to$Go: 18;
 C$\to$Swift: 6, the argv-driven integer/memory core; C$\to$OCaml: 4, a GC'd
-exception-based target; C$\to$C++: 1, the C/C++-boundary shift class). A
-\textbf{6th pair, the safe$\to$safe Go$\to$Rust} cell described below, raises the
-total to \textbf{50 cells over 6 pairs}. On a host with the corresponding
+exception-based target; C$\to$C++: 1, the C/C++-boundary shift class; C$\to$Zig:
+5, Zig \texttt{ReleaseSafe} wrapping/trap/bounds semantics). A
+\textbf{7th pair, the safe$\to$safe Go$\to$Rust} cell described below, raises the
+total to \textbf{55 cells over 7 pairs}. On a host with the corresponding
 toolchains, every attempted cell must confirm against real compilers or checked C
 contract builds---no verdict is taken on
 faith. Crucially, the matrix file contains \emph{no per-language branches}: it
@@ -1173,44 +1176,47 @@ content-hashed zoo index is regenerated as
 \small
 \caption{Cross-pair regression matrix coverage. ``D'' = a symbolic divergence
 witness is found and (with toolchain) confirmed against real compilers; ``--'' =
-class not implemented for that pair. The C-rooted matrix now contains 49 cells; a
-\textbf{50th cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
+class not implemented for that pair. The C-rooted matrix now contains 54 cells,
+including five C$\to$Zig \texttt{ReleaseSafe} cells; a
+\textbf{55th cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
 \texttt{INT\_MIN/-1}: a value in Go, a panic in Rust)---is described in the text
-and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{50 cells over 6
+and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{55 cells over 7
 pairs}. The
 C$\to$C++ column carries the single C/C++-boundary class whose witness
 (\texttt{1 << 31}) is UB in C but defined in C++20; the C$\to$OCaml column
 carries the integer/memory core, witnessed against real \texttt{ocamlopt}
 (division-by-zero and out-of-bounds raise \texttt{Division\_by\_zero} /
-\texttt{Invalid\_argument}; \texttt{Int32} arithmetic is exactly modular).}
+\texttt{Invalid\_argument}; \texttt{Int32} arithmetic is exactly modular), and
+the C$\to$Zig column is witnessed against real \texttt{zig build-exe -O
+ReleaseSafe}.}
 \label{tab:matrix}
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lcccccc@{}}
 \toprule
-Divergence class & C$\to$Rust & C$\to$Go & C$\to$Swift & C$\to$OCaml & C$\to$C++ \\
+Divergence class & C$\to$Rust & C$\to$Go & C$\to$Swift & C$\to$OCaml & C$\to$C++ & C$\to$Zig \\
 \midrule
-Signed overflow            & D & D & D & D & -- \\
-Shift $\geq$ width          & D & D & D & -- & -- \\
-Division by zero           & D & D & D & D & -- \\
-\texttt{INT\_MIN / -1}     & D & D & D & D & -- \\
-Array out-of-bounds        & D & D & D & D & -- \\
-Unsequenced read/write     & D & -- & -- & -- & -- \\
-Uninitialized read         & D & D & D & -- & -- \\
-Uninitialized padding      & D & D & -- & -- & -- \\
-Strict aliasing            & D & D & -- & -- & -- \\
-VLA bound                  & D & D & -- & -- & -- \\
-Float$\to$int overflow     & D & D & -- & -- & -- \\
-\texttt{-ffast-math} reassoc.& D & D & -- & -- & -- \\
-\texttt{restrict} violation & D & D & -- & -- & -- \\
-Pointer provenance         & D & D & -- & -- & -- \\
-Overlapping \texttt{memcpy} & D & D & -- & -- & -- \\
-\texttt{longjmp} to exited VLA & D & D & -- & -- & -- \\
-Bit-field layout           & D & D & -- & -- & -- \\
-Out-of-range \texttt{enum} & D & D & -- & -- & -- \\
-FP contraction             & D & -- & -- & -- & -- \\
-Relaxed atomics ordering   & D & D & -- & -- & -- \\
-\texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D \\
+Signed overflow            & D & D & D & D & -- & D \\
+Shift $\geq$ width          & D & D & D & -- & -- & D \\
+Division by zero           & D & D & D & D & -- & D \\
+\texttt{INT\_MIN / -1}     & D & D & D & D & -- & D \\
+Array out-of-bounds        & D & D & D & D & -- & D \\
+Unsequenced read/write     & D & -- & -- & -- & -- & -- \\
+Uninitialized read         & D & D & D & -- & -- & -- \\
+Uninitialized padding      & D & D & -- & -- & -- & -- \\
+Strict aliasing            & D & D & -- & -- & -- & -- \\
+VLA bound                  & D & D & -- & -- & -- & -- \\
+Float$\to$int overflow     & D & D & -- & -- & -- & -- \\
+\texttt{-ffast-math} reassoc.& D & D & -- & -- & -- & -- \\
+\texttt{restrict} violation & D & D & -- & -- & -- & -- \\
+Pointer provenance         & D & D & -- & -- & -- & -- \\
+Overlapping \texttt{memcpy} & D & D & -- & -- & -- & -- \\
+\texttt{longjmp} to exited VLA & D & D & -- & -- & -- & -- \\
+Bit-field layout           & D & D & -- & -- & -- & -- \\
+Out-of-range \texttt{enum} & D & D & -- & -- & -- & -- \\
+FP contraction             & D & -- & -- & -- & -- & -- \\
+Relaxed atomics ordering   & D & D & -- & -- & -- & -- \\
+\texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D & -- \\
 \midrule
-\textbf{Matrix cells}      & \textbf{20} & \textbf{18} & \textbf{6} & \textbf{4} & \textbf{1} \\
+\textbf{Matrix cells}      & \textbf{20} & \textbf{18} & \textbf{6} & \textbf{4} & \textbf{1} & \textbf{5} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1274,7 +1280,7 @@ however, often maintains \emph{several} candidate ports at once and wants a
 sharper question: given one C source compiled to $\geq 3$ safe targets, \emph{is
 any single target the odd one out?} The $N$-language consistency oracle
 (\texttt{src/ub\_oracle/consistency.py}) answers exactly this. It builds the C
-program and each available target (Rust, Go, Swift, OCaml), runs them all on the
+program and each available target (Rust, Go, Swift, OCaml, Zig), runs them all on the
 oracle's witness input, canonicalizes each observable outcome (a printed value,
 or an \texttt{ABORT} bucket for any trap/panic/uncaught exception), and applies
 majority voting: a target is \emph{flagged} when it disagrees with the modal
@@ -1301,7 +1307,7 @@ defined return codes, a compile-argv builder, and a class-resolution map) plus a
 table of per-class source emitters---no new harness or oracle logic. To keep
 that promise sound as packs proliferate, the conformance suite
 (\texttt{src/ub\_oracle/pack\_conformance.py}) discharges nine SPI obligations
-against \emph{every} registered pack (Rust, Go, Swift, C++, OCaml): the
+against \emph{every} registered pack (Rust, Go, Swift, C++, OCaml, Zig): the
 defined-outcome predicate is total and includes the success code; compiler
 candidates are non-empty and well-typed; the source suffix is a dotted
 extension; the compile-argv builder is deterministic and mentions both source

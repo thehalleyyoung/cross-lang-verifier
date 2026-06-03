@@ -933,8 +933,10 @@ def test_target_packs_encode_defined_returncodes_as_data():
     assert PACKS["go"].defined_returncodes == (0, 2)
     # Swift fatal traps are SIGTRAP, which Python's subprocess reports as -5.
     assert PACKS["swift"].defined_returncodes == (0, -5)
+    # Zig ReleaseSafe safety panics abort with SIGABRT, reported as -6.
+    assert PACKS["zig"].defined_returncodes == (0, -6)
     # every pack documents how it resolves each core UB class (data-driven).
-    for name in ("rust", "go", "swift"):
+    for name in ("rust", "go", "swift", "zig"):
         res = PACKS[name].class_resolution
         assert {"signed_overflow", "div_by_zero", "array_oob"} <= set(res)
 
@@ -1146,7 +1148,7 @@ def test_matrix_covers_every_registered_pair_and_class():
     assert m["n_cells"] == len(_plugin.ALL_ORACLES)
     pairs = {(c["source_lang"], c["target_lang"]) for c in m["cells"]}
     assert pairs == set(_plugin.language_pairs())
-    assert {"c->rust", "c->go", "c->swift"} <= set(m["language_pairs"])
+    assert {"c->rust", "c->go", "c->swift", "c->zig"} <= set(m["language_pairs"])
 
 
 def test_matrix_every_cell_is_divergent_symbolically():
@@ -1171,10 +1173,14 @@ def test_matrix_pair_coverage_is_honest_about_class_breadth():
             "array_oob", "uninit_read", "strict_aliasing", "vla_bound",
             "float_cast_overflow", "fast_math_reassoc", "restrict_violation",
             "pointer_provenance", "bitfield_layout", "enum_out_of_range",
-            "memcpy_overlap", "longjmp_vla", "atomic_ordering"} == go_covered
+            "memcpy_overlap", "longjmp_vla", "atomic_ordering",
+            "uninit_padding"} == go_covered
     swift_covered = set(cov[("c", "swift")]["classes_covered"])
     assert {"signed_overflow", "shift_oob", "div_by_zero",
             "intmin_div_neg1", "array_oob", "uninit_read"} == swift_covered
+    zig_covered = set(cov[("c", "zig")]["classes_covered"])
+    assert {"signed_overflow", "shift_oob", "div_by_zero",
+            "intmin_div_neg1", "array_oob"} == zig_covered
 
 
 def test_matrix_is_byte_reproducible_in_a_fresh_process():
@@ -1201,11 +1207,13 @@ def test_matrix_records_pack_defined_returncodes_per_cell():
     assert by_tgt["rust"] == {(0, 101)}
     assert by_tgt["go"] == {(0, 2)}
     assert by_tgt["swift"] == {(0, -5)}
+    assert by_tgt["zig"] == {(0, -6)}
 
 
 def test_matrix_render_table_is_a_grid_over_pairs_and_classes():
     table = _matrix.render_table()
     assert "c->rust" in table and "c->go" in table and "c->swift" in table
+    assert "c->zig" in table
     assert "signed_overflow" in table and "fp_contraction" in table
     # a class not implemented for a pair is shown as '-', not a false 'D'.
     assert "-" in table and "D" in table
@@ -1226,9 +1234,16 @@ def test_matrix_confirm_marks_unavailable_pairs_skipped_not_dropped():
     assert all(c["skipped"] for c in conf["cells"])
 
 
-@_requires_swift
+_requires_all_matrix_targets = pytest.mark.skipif(
+    not (_TC.c_available and _TC.ubsan
+         and all(_TC.target_available(t) for t in PACKS)),
+    reason=f"needs C+UBSan and every registered target toolchain ({_TC})")
+
+
+@_requires_all_matrix_targets
 def test_matrix_confirm_runs_every_cell_against_real_compilers():
-    # the full matrix, end-to-end, against real clang+UBSan + rustc + go + swiftc.
+    # the full matrix, end-to-end, against real clang+UBSan plus every registered
+    # target compiler (rustc/go/swiftc/clang++/ocamlopt/zig).
     conf = _matrix.confirm_matrix(ReexecHarness(_TC))
     assert conf["n_attempted"] == len(_plugin.ALL_ORACLES)
     assert conf["all_attempted_confirmed"], \
@@ -5965,6 +5980,123 @@ def test_equivalent_ocaml_translation_is_not_confirmed():
               "  Printf.printf \"%ld\\n\" (f a b)\n")
     rr = harness.confirm_trap_vs_defined(c_src, ml_src, ["2", "3"],
                                          "division_by_zero", target_lang="ocaml")
+    assert rr.available
+    assert not rr.ub_reachable
+    assert not rr.confirmed
+
+
+# ── Step 116: C->Zig pair (ReleaseSafe target, real zig compiler) ─────────────
+# Zig is the sixth C target and the first post-100-step language-pair extension.
+# Its TargetPack compiles single-file witnesses with `zig build-exe -O ReleaseSafe`
+# so target-side overflow/division/bounds checks are deterministic language
+# panics, while explicit wrapping and shift-mask lowerings are defined values.
+
+_requires_zig = pytest.mark.skipif(
+    not _TC.full_for("zig"),
+    reason=f"needs C+UBSan+zig toolchain ({_TC})")
+
+_ZIG_UNITS = {
+    "signed_overflow": {"kind": "binop_const", "op": "add", "const": 2147483647,
+                        "width": 32, "var": "x", "signed": True},
+    "shift_oob": {"kind": "shift", "width": 32, "value": 1},
+    "div_by_zero": {"kind": "div", "width": 32, "a": "a", "b": "b"},
+    "intmin_div_neg1": {"kind": "div", "width": 32, "signed": True,
+                        "a": "a", "b": "b"},
+    "array_oob": {"kind": "array_index", "length": 4},
+}
+
+
+def _zig_unit(class_key):
+    u = dict(_ZIG_UNITS[class_key])
+    u["source_lang"], u["target_lang"] = "c", "zig"
+    return u
+
+
+def test_zig_pack_is_a_registered_release_safe_target_pair():
+    pairs = _plugin.language_pairs()
+    assert ("c", "zig") in pairs
+    pack = PACKS["zig"]
+    assert pack.defined_returncodes == (0, -6)
+    assert pack.source_suffix == ".zig"
+    argv = pack.compile_argv("zig", "w.zig", "w.out")
+    assert argv[:4] == ["zig", "build-exe", "-O", "ReleaseSafe"]
+    assert "-femit-bin=w.out" in argv
+    res = pack.class_resolution
+    assert {"signed_overflow", "shift_oob", "div_by_zero",
+            "intmin_div_neg1", "array_oob"} <= set(res)
+
+
+def test_zig_pair_registers_release_safe_core_classes_only():
+    zig = _plugin.oracles_for(source_lang="c", target_lang="zig")
+    classes = {o.divergence_class for o in zig}
+    assert classes == {"signed_overflow", "shift_oob", "div_by_zero",
+                       "intmin_div_neg1", "array_oob"}
+
+
+def test_zig_oracles_reuse_anchor_search_not_new_code():
+    assert isinstance(_plugin.get_oracle_for("signed_overflow", "c", "zig"),
+                      SignedOverflowOracle)
+    assert isinstance(_plugin.get_oracle_for("div_by_zero", "c", "zig"),
+                      DivisionByZeroOracle)
+    assert isinstance(_plugin.get_oracle_for("array_oob", "c", "zig"),
+                      ArrayOutOfBoundsOracle)
+
+
+@pytest.mark.parametrize("class_key", list(_ZIG_UNITS))
+def test_zig_oracle_emits_zig_source_symbolically(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "zig")
+    res = orc.find_divergence(_zig_unit(class_key))
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert ce.target_lang == "zig"
+    assert ce.target_snippet.startswith("const std = @import(\"std\");")
+    assert "pub fn main() !void" in ce.target_snippet
+    if class_key == "shift_oob":
+        assert "@intCast" in ce.target_snippet and " & 31" in ce.target_snippet
+    anchor = _plugin.get_oracle_for(class_key, "c", "rust")
+    anchor_ce = anchor.find_divergence(dict(_ZIG_UNITS[class_key])).counterexample
+    assert ce.source_snippet == anchor_ce.source_snippet
+
+
+def test_run_outcome_definedness_for_zig_is_pack_driven():
+    assert RunOutcome(0, "v", "").target_outcome_defined("zig")       # value
+    assert RunOutcome(-6, "", "panic").target_outcome_defined("zig")  # SIGABRT panic
+    assert not RunOutcome(101, "", "").target_outcome_defined("zig")
+    assert not RunOutcome(-5, "", "").target_outcome_defined("zig")
+
+
+@_requires_zig
+@pytest.mark.parametrize("class_key", list(_ZIG_UNITS))
+def test_zig_divergence_confirmed_against_real_clang_and_zig(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "zig")
+    res = orc.confirm(orc.find_divergence(_zig_unit(class_key)), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available, rr.reason
+    assert rr.ub_reachable, "UBSan must trap on the witness (C is UB)"
+    assert rr.rust_defined, "Zig must produce a defined ReleaseSafe outcome"
+    assert rr.confirmed, rr.reason
+    assert res.counterexample.confirmed
+    assert res.counterexample.target_observed is not None
+
+
+@_requires_zig
+def test_equivalent_zig_translation_is_not_confirmed():
+    harness = ReexecHarness(_TC)
+    c_src = ("#include <stdio.h>\n#include <stdlib.h>\n"
+             "int f(int a,int b){ return a + b; }\n"
+             "int main(int c,char**v){ if(c<3)return 2;"
+             " printf(\"%d\\n\", f(atoi(v[1]),atoi(v[2]))); return 0; }\n")
+    zig_src = ("const std = @import(\"std\");\n"
+               "fn f(a: i32, b: i32) i32 { return a +% b; }\n"
+               "pub fn main() !void {\n"
+               "    var args = std.process.args();\n"
+               "    _ = args.next();\n"
+               "    const a = try std.fmt.parseInt(i32, args.next().?, 10);\n"
+               "    const b = try std.fmt.parseInt(i32, args.next().?, 10);\n"
+               "    try std.io.getStdOut().writer().print(\"{}\\n\", .{f(a, b)});\n"
+               "}\n")
+    rr = harness.confirm_trap_vs_defined(c_src, zig_src, ["2", "3"],
+                                         "division_by_zero", target_lang="zig")
     assert rr.available
     assert not rr.ub_reachable
     assert not rr.confirmed

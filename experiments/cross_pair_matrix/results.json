@@ -908,6 +908,99 @@
       }
     },
     {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "array_oob",
+      "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Zig ReleaseSafe bounds-checks and panics deterministically.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "37d6391e15b84210",
+      "target_defined_returncodes": [
+        0,
+        -6
+      ],
+      "target_lang": "zig",
+      "target_sha16": "d1bd5f69418cee68",
+      "verdict": "divergent",
+      "witness": {
+        "i": 4
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "div_by_zero",
+      "divergence_witness": "C `a / b` with b=0 is UB; Zig ReleaseSafe panics deterministically on division by zero (a defined abort).",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        -6
+      ],
+      "target_lang": "zig",
+      "target_sha16": "2f8a74c3e10ab053",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 0
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "C `a / b` with a=-2147483648, b=-1 overflows signed division/remainder (UB); Zig ReleaseSafe traps deterministically on the overflowing division.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0,
+        -6
+      ],
+      "target_lang": "zig",
+      "target_sha16": "2f8a74c3e10ab053",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "shift_oob",
+      "divergence_witness": "C `x << s` with s=32 >= width 32 is UB; the Zig lowering masks the shift count to u5, so it produces a defined value under ReleaseSafe.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "684eb86382df63ff",
+      "target_defined_returncodes": [
+        0,
+        -6
+      ],
+      "target_lang": "zig",
+      "target_sha16": "598daa82b0f5125d",
+      "verdict": "divergent",
+      "witness": {
+        "s": 32,
+        "x": 1
+      }
+    },
+    {
+      "confirmation_mode": "exploited",
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=1073741824 (UB; optimiser may assume `x + 2147483647 > x` always holds), whereas Zig's `+%` operator wraps deterministically to a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "731ca036bd1ff713",
+      "target_defined_returncodes": [
+        0,
+        -6
+      ],
+      "target_lang": "zig",
+      "target_sha16": "8b3187f9cbf09f5d",
+      "verdict": "divergent",
+      "witness": {
+        "x": 1073741824
+      }
+    },
+    {
       "confirmation_mode": "defined_divergence",
       "divergence_class": "intmin_div_neg1",
       "divergence_witness": "Go `a / b` with a=-2147483648, b=-1 is the signed two's-complement overflow pair: Go defines it by modular wraparound to -2147483648 (a defined value, exit 0), while the faithful Rust port `a / b` panics deterministically (a defined abort, exit 101). Both languages are fully defined here, yet the observable behaviour differs \u2014 a Go->Rust port silently changes meaning on this input.",
@@ -1019,6 +1112,19 @@
     },
     {
       "classes_covered": [
+        "array_oob",
+        "div_by_zero",
+        "intmin_div_neg1",
+        "shift_oob",
+        "signed_overflow"
+      ],
+      "n_classes": 5,
+      "n_divergent": 5,
+      "source_lang": "c",
+      "target_lang": "zig"
+    },
+    {
+      "classes_covered": [
         "intmin_div_neg1"
       ],
       "n_classes": 1,
@@ -1056,7 +1162,8 @@
     "c->ocaml",
     "c->rust",
     "c->swift",
+    "c->zig",
     "go->rust"
   ],
-  "n_cells": 50
+  "n_cells": 55
 }

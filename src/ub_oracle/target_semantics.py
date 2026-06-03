@@ -26,6 +26,7 @@ process killed by signal *N* as the *negative* code ``-N`` (not the shell's
   rust         ``rustc -O``            0 (value), 101 (clean unwinding panic)
   go           ``go build``            0 (value), 2 (runtime panic, os.Exit(2))
   swift        ``swiftc -O``           0 (value), -5 (SIGTRAP runtime trap)
+  zig          ``zig build-exe``       0 (value), -6 (ReleaseSafe panic abort)
   ===========  ======================  ===========================================
 
 This module deliberately imports nothing from the rest of the package, so the
@@ -92,6 +93,16 @@ def _ocaml_argv(cc: str, src: str, out: str) -> List[str]:
     # is *modular* (defined) and the array/division operations raise defined
     # exceptions, so the optimiser never has C-style UB latitude on the target.
     return [cc, "-O3", "-o", out, src]
+
+
+def _zig_argv(cc: str, src: str, out: str) -> List[str]:
+    workdir = os.path.dirname(out) or "."
+    return [
+        cc, "build-exe", "-O", "ReleaseSafe", "--color", "off",
+        "--cache-dir", os.path.join(workdir, ".zig-cache"),
+        "--global-cache-dir", os.path.join(workdir, ".zig-global-cache"),
+        "-femit-bin=" + out, src,
+    ]
 
 
 def _ocaml_env(workdir: str) -> Dict[str, str]:
@@ -202,8 +213,27 @@ _OCAML = TargetPack(
     },
 )
 
+# Zig is a safety-checked systems-language target (100_STEPS step 116).  We build
+# witnesses in ReleaseSafe so target-side overflow/division/bounds failures are
+# deterministic language safety panics rather than optimizer latitude.  Python
+# observes Zig's aborting panic as signal 6 -> return code -6.
+_ZIG = TargetPack(
+    name="zig",
+    compiler_candidates=("zig",),
+    source_suffix=".zig",
+    defined_returncodes=(0, -6),
+    compile_argv=_zig_argv,
+    class_resolution={
+        "signed_overflow": "wrapping +%/-% operators give a defined modular value",
+        "shift_oob": "the translated shift count is masked to the target bit width before shifting",
+        "div_by_zero": "ReleaseSafe safety check panics deterministically (SIGABRT)",
+        "intmin_div_neg1": "ReleaseSafe signed division/remainder resolves deterministically (panic or value)",
+        "array_oob": "bounds-checked array index panics deterministically",
+    },
+)
+
 PACKS: Dict[str, TargetPack] = {p.name: p for p in
-                                (_RUST, _GO, _SWIFT, _CPP, _OCAML)}
+                                (_RUST, _GO, _SWIFT, _CPP, _OCAML, _ZIG)}
 
 
 def get_pack(name: str) -> TargetPack:

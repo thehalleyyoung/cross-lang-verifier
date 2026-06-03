@@ -36,6 +36,8 @@ from .memory_shape import ArrayOutOfBoundsOracle
 _INT = {32: 32, 64: 64}
 _GO_TYPE = {32: "int32", 64: "int64"}
 _SWIFT_TYPE = {32: "Int32", 64: "Int64"}
+_ZIG_TYPE = {32: "i32", 64: "i64"}
+_ZIG_SHIFT_TYPE = {32: "u5", 64: "u6"}
 
 
 # ── the factory ──────────────────────────────────────────────────────────────
@@ -291,6 +293,115 @@ def _ocaml_oob(length, var, idx):
     return src, note
 
 
+# ── Zig source emitters (one per divergence class) ────────────────────────────
+# Zig is the Step-116 systems-language target.  The target snippets are compiled
+# by the Zig TargetPack in ReleaseSafe mode, so safety failures are deterministic
+# language panics (return code -6 under Python subprocess), while +%/-% and the
+# explicit shift-mask path are defined value computations.
+
+def _zig_parse(typ: str, name: str, arg_index: int) -> str:
+    return f"    const {name} = try std.fmt.parseInt({typ}, args.next().?, 10);\n"
+
+
+def _zig_main(parse_lines: str, call: str) -> str:
+    return (
+        "pub fn main() !void {\n"
+        "    var args = std.process.args();\n"
+        "    _ = args.next();\n"
+        f"{parse_lines}"
+        f"    try std.io.getStdOut().writer().print(\"{{}}\\n\", .{{{call}}});\n"
+        "}\n"
+    )
+
+
+def _zig_signed(op, c, width, var, witness):
+    ztype = _ZIG_TYPE[width]
+    z_op = "+%" if op == "add" else "-%"
+    c_op = "+" if op == "add" else "-"
+    cmp = ">" if op == "add" else "<"
+    src = (
+        "const std = @import(\"std\");\n"
+        f"fn f({var}: {ztype}) {ztype} {{\n"
+        f"    return if ({var} {z_op} {c} {cmp} {var}) 1 else 0;\n"
+        "}\n"
+        + _zig_main(_zig_parse(ztype, var, 1), f"f({var})")
+    )
+    note = (f"C signed {op} overflow at {var}={witness} (UB; optimiser may assume "
+            f"`{var} {c_op} {c} {cmp} {var}` always holds), whereas Zig's "
+            f"`{z_op}` operator wraps deterministically to a defined value.")
+    return src, note
+
+
+def _zig_two_arg(width, expr, a, b, atype=None, btype=None):
+    ztype = _ZIG_TYPE[width]
+    atype = atype or ztype
+    btype = btype or ztype
+    parses = _zig_parse(atype, a, 1) + _zig_parse(btype, b, 2)
+    return (
+        "const std = @import(\"std\");\n"
+        f"fn f({a}: {atype}, {b}: {btype}) {ztype} {{\n"
+        f"    return {expr};\n"
+        "}\n"
+        + _zig_main(parses, f"f({a}, {b})")
+    )
+
+
+def _zig_shift(width, var, svar, x_val, shift_amt):
+    ztype = _ZIG_TYPE[width]
+    stype = _ZIG_SHIFT_TYPE[width]
+    mask = width - 1
+    parses = _zig_parse(ztype, var, 1) + _zig_parse("u32", svar, 2)
+    src = (
+        "const std = @import(\"std\");\n"
+        f"fn f({var}: {ztype}, {svar}_raw: u32) {ztype} {{\n"
+        f"    const {svar}: {stype} = @intCast({svar}_raw & {mask});\n"
+        f"    return {var} << {svar};\n"
+        "}\n"
+        + _zig_main(parses, f"f({var}, {svar})")
+    )
+    note = (f"C `{var} << {svar}` with {svar}={shift_amt} >= width {width} is UB; "
+            f"the Zig lowering masks the shift count to {stype}, so it produces a "
+            f"defined value under ReleaseSafe.")
+    return src, note
+
+
+def _zig_div(width, op, avar, bvar, a_val, b_val):
+    zig_op = "@divTrunc" if op == "div" else "@rem"
+    glyph = "/" if op == "div" else "%"
+    src = _zig_two_arg(width, f"{zig_op}({avar}, {bvar})", avar, bvar)
+    note = (f"C `{avar} {glyph} {bvar}` with {bvar}=0 is UB; Zig ReleaseSafe "
+            f"panics deterministically on division by zero (a defined abort).")
+    return src, note
+
+
+def _zig_intmin(width, op, avar, bvar, a_val, b_val):
+    zig_op = "@divTrunc" if op == "div" else "@rem"
+    glyph = "/" if op == "div" else "%"
+    src = _zig_two_arg(width, f"{zig_op}({avar}, {bvar})", avar, bvar)
+    if op == "div":
+        target_note = "traps deterministically on the overflowing division"
+    else:
+        target_note = "returns the deterministic remainder value 0"
+    note = (f"C `{avar} {glyph} {bvar}` with {avar}={a_val}, {bvar}={b_val} overflows "
+            f"signed division/remainder (UB); Zig ReleaseSafe {target_note}.")
+    return src, note
+
+
+def _zig_oob(length, var, idx):
+    elems = ", ".join(str(10 + k) for k in range(length))
+    src = (
+        "const std = @import(\"std\");\n"
+        f"fn f({var}: usize) i32 {{\n"
+        f"    const a = [_]i32{{{elems}}};\n"
+        f"    return a[{var}];\n"
+        "}\n"
+        + _zig_main(_zig_parse("usize", var, 1), f"f({var})")
+    )
+    note = (f"C `a[{var}]` with {var}={idx} on a length-{length} array is UB; "
+            f"Zig ReleaseSafe bounds-checks and panics deterministically.")
+    return src, note
+
+
 # ── the declarative table: (anchor class, build method, class key) ───────────
 
 _SPECS = [
@@ -326,6 +437,13 @@ _EMITTERS: Dict[str, Dict[str, Callable]] = {
         "div_by_zero": _ocaml_div,
         "intmin_div_neg1": _ocaml_intmin,
         "array_oob": _ocaml_oob,
+    },
+    "zig": {
+        "signed_overflow": _zig_signed,
+        "shift_oob": _zig_shift,
+        "div_by_zero": _zig_div,
+        "intmin_div_neg1": _zig_intmin,
+        "array_oob": _zig_oob,
     },
 }
 
