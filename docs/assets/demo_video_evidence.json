@@ -1,0 +1,112 @@
+{
+  "duration_seconds": 180.0,
+  "generated_by": "scripts/build_demo_video.py",
+  "primary": {
+    "c2rust_hallmarks": true,
+    "c_file": "experiments/c2rust_corpus/sources/nginx_rate.c",
+    "confirmation": {
+      "available": true,
+      "c_runs": {
+        "O0": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "0",
+          "timed_out": false,
+          "ub_category": ""
+        },
+        "san": {
+          "returncode": -6,
+          "stderr": "<tmp>:6:18: runtime error: division by zero\nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior <tmp>:6:18",
+          "stdout": "",
+          "timed_out": false,
+          "ub_category": "division by zero"
+        }
+      },
+      "confirmed": true,
+      "divergence_class": "div_by_zero",
+      "inputs": {
+        "arg0": "7",
+        "arg1": "0"
+      },
+      "mode": "c2rust_ffi_trap_vs_rust_abort",
+      "reason": "UB reachable in C (UBSan trapped: division by zero); c2rust Rust runtime outcome deterministic (rc=-6)",
+      "target_defined": true,
+      "target_lang": "rust",
+      "target_run": {
+        "returncode": -6,
+        "stderr": "thread 'main' (<tid>) panicked at <tmp>:14:12:\nattempt to divide by zero\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\nthread 'main' (<tid>) panicked at library/core/src/panicking.rs:225:5:\npanic in a function that cannot unwind\nstack backtrace:\n   0:        0xADDR - <std::sys::backtrace::BacktraceLock::print::DisplayBacktrace as core::fmt::Display>::fmt::hace9c8f0bf02b28d\n   1:        0xADDR - core::fmt::write::haff06c4d5dadd744\n   2:        0xADDR - std::io::default_write_fmt::h34...",
+        "stdout": "",
+        "timed_out": false,
+        "ub_category": ""
+      },
+      "ub_consequential": true,
+      "ub_reachable": true
+    },
+    "cve_claim": "CVE-class weakness only; no assigned nginx CVE is claimed",
+    "cwe": "CWE-369",
+    "item_id": "nginx-rate",
+    "provenance": "single-function extraction unit for throughput bytes/seconds arithmetic",
+    "rust_file": "experiments/c2rust_corpus/generated/nginx_rate.rs",
+    "rust_sha256": "a5fa8db062fbb2debc6688c4cfde1578d355aa984652b1be93ac227261253b0f",
+    "source_function": "nginx_rate",
+    "source_library": "nginx",
+    "source_sha256": "6b5c8c02d1239f71e079841d5fa1bb96006db9a5b7474baf8e46daa7801e2ba2",
+    "symbolic_detail": "symbolic witness(es) for [div_by_zero] not re-executed (toolchain_available=True, confirm=False)",
+    "symbolic_verdict": "candidate",
+    "translator": "c2rust",
+    "translator_version": "C2Rust 0.22.1"
+  },
+  "schema": "cross-lang-verifier-demo-video/v1",
+  "teaser": {
+    "available": true,
+    "case_id": "div-by-zero",
+    "confirmation": {
+      "available": true,
+      "c_runs": {
+        "O0": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "0",
+          "timed_out": false,
+          "ub_category": ""
+        },
+        "san": {
+          "returncode": -6,
+          "stderr": "<tmp>:6:20: runtime error: division by zero\nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior <tmp>:6:20",
+          "stdout": "",
+          "timed_out": false,
+          "ub_category": "division by zero"
+        }
+      },
+      "confirmed": true,
+      "divergence_class": "division_by_zero",
+      "inputs": {
+        "arg0": "7",
+        "arg1": "0"
+      },
+      "mode": "trap_vs_defined",
+      "reason": "UB reachable (sanitizer trapped: '<tmp>:6:20: runtime error: division by zero'); go defined & deterministic (panic, rc=2, out='')",
+      "target_defined": true,
+      "target_lang": "go",
+      "target_run": {
+        "returncode": 2,
+        "stderr": "panic: runtime error: integer divide by zero\ngoroutine 1 [running]:\nmain.main()\n\t<tmp>:12 +0xADDR",
+        "stdout": "",
+        "timed_out": false,
+        "ub_category": "integer divide by zero"
+      },
+      "ub_consequential": true,
+      "ub_reachable": true
+    },
+    "cwe": "CWE-369",
+    "pair": "c->go",
+    "title": "Division by zero"
+  },
+  "title": "Three-minute c2rust CWE-class divergence demo",
+  "toolchain": {
+    "c_compiler": true,
+    "go": true,
+    "rustc": true,
+    "ubsan": true
+  }
+}

@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check demo-video
 
 help:
 	@echo "Targets:"
@@ -27,6 +27,7 @@ help:
 	@echo "  c2rust-corpus     regenerate the Tier-1 c2rust-output corpus artifacts"
 	@echo "  c2rust-corpus-check assert c2rust corpus results and generated Rust reproduce"
 	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
+	@echo "  demo-video        regenerate the README-linked c2rust CWE-class demo video"
 	@echo "  guard             run the credibility guard (no simulated results)"
 	@echo "  test-ub           run the ub_oracle test suite only"
 	@echo "  coverage          print the core-module branch-coverage table"
@@ -87,6 +88,9 @@ c2rust-corpus-check:
 
 package-check:
 	bash scripts/verify_packaging.sh
+
+demo-video:
+	$(PYTHON) scripts/build_demo_video.py
 
 coverage:
 	$(PYTHON) scripts/coverage_gate.py --report

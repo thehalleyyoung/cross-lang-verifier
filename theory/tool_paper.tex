@@ -608,7 +608,12 @@ Even the launch surface is generated from the verifier rather than hand-written:
 when the C$\to$Rust signed-overflow witness is confirmed by
 \texttt{clang}/UBSan and \texttt{rustc}, while the safe control is discharged by
 the interval pre-pass.  Thus the public demo is a checked artifact, not a
-marketing mock-up.
+marketing mock-up.  The longer README-linked video is generated the same way:
+\texttt{scripts/build\_demo\_video.py} first replays the checked-in
+\texttt{c2rust} \texttt{nginx\_rate} extraction unit on a CWE-369-class witness
+with \texttt{clang}/UBSan and \texttt{rustc}, then confirms the C$\to$Go teaser
+case through the same harness; if either replay fails, the MP4 and poster are not
+rendered.
 
 \paragraph{Parser frontends.}
 Each language has two parsing backends: tree-sitter-c~0.24 and
