@@ -119,6 +119,17 @@ product_violated( i )  ==  is_divergence( obs(i) )  ==  harness.confirmed( i ).
 So the relational product is provably the *same decision* as the operational
 oracle on real code, parameterized over the target semantics pack.
 
+The Lean development also mechanizes the final witness-construction boundary.
+A `ProductRun` stores raw run facts — source/target/input payload, target pack,
+UB-reached flag, target return code, and consequence flag — and derives its
+`Observation` via the pack-parametric `observe` function. The theorem
+`product_program_preserves_divergence_witness` proves that if this construction
+emits a counterexample, it copies the payload unchanged, carries exactly the
+derived observation, and that observation is a genuine UB-rooted divergence.
+Thus the product-program layer cannot manufacture a different witness while
+packaging the counterexample; the compiler faithfulness of the raw facts remains
+established by the real re-execution harness.
+
 ## Why this framing earns its keep
 
 * It connects the tool to **cross-language translation validation**: the oracle

@@ -8,6 +8,7 @@ import pytest
 
 from src.ub_oracle import Definedness, ReexecHarness, toolchain_available
 from src.ub_oracle import mechanized_soundness as ms
+from src.ub_oracle import product_program as pp
 from src.ub_oracle import oracles as _oracles  # noqa: F401  (register plugins)
 from src.ub_oracle.plugin import OracleVerdict, get_oracle_for
 
@@ -36,6 +37,20 @@ def test_lean_contract_requires_pointer_provenance_soundness_theorems():
         "pointer_provenance_report_implies_out_of_provenance",
         "pointer_provenance_report_implies_checked_target",
         "pointer_provenance_report_implies_trap_vs_defined",
+    }
+    assert required <= set(ms.REQUIRED_THEOREMS)
+    assert required <= set(report.theorems_present)
+    assert not report.theorems_missing, report.theorems_missing
+    assert report.ok, report.stderr_tail
+
+
+def test_lean_contract_requires_end_to_end_product_program_theorems():
+    report = ms.confirm_mechanized_soundness()
+
+    required = {
+        "product_program_preserves_divergence_witness",
+        "product_program_emits_witness_iff_product_violated",
+        "product_program_witness_iff_divergence",
     }
     assert required <= set(ms.REQUIRED_THEOREMS)
     assert required <= set(report.theorems_present)
@@ -95,6 +110,29 @@ def test_strict_aliasing_real_confirmation_supplies_optimizer_signal():
     assert reexec.ub_reachable and reexec.ub_consequential
     assert reexec.rust_defined and reexec.confirmed
     assert result.counterexample is not None and result.counterexample.confirmed
+
+
+@pytest.mark.skipif(
+    not (_STATUS.full_for("rust") or _STATUS.full_for("go")),
+    reason="needs C+UBSan and at least one target toolchain",
+)
+def test_product_program_real_corpus_exercises_witness_boundary():
+    langs = tuple(
+        lang for lang in ("rust", "go")
+        if _STATUS.full_for(lang)
+    )
+    confirmation = pp.confirm_product_program(langs=langs, per_class=1)
+
+    assert confirmation.available and confirmation.ok, confirmation.detail
+    assert confirmation.n_checked > 0
+    assert confirmation.n_divergent > 0
+    assert confirmation.n_equivalent > 0
+    for check in confirmation.checks:
+        assert check.agree, check
+        if check.declared_label == "divergent" and check.harness_confirmed:
+            assert check.product_violated
+        if check.declared_label == "equivalent":
+            assert not check.product_violated
 
 
 def test_pointer_provenance_oracle_witness_matches_mechanized_contract():

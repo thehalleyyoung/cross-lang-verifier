@@ -149,10 +149,11 @@ that the same unsynchronized counter is C data-race UB, Go racy-but-defined, and
 rejected by Rust's safe \texttt{Send}/\texttt{Sync} discipline while synchronized
 repairs compile and run clean. We give a mechanized-friendly soundness development
 ($\sigma$-bridge coercion correctness, product-program isolation, a
-bounded-completeness boundary, and Lean-checked class lemmas for strict-aliasing
-optimizer-exploitation and pointer-provenance trap-vs-defined witnesses) and an
-artifact in which every headline number is regenerated from content-hashed
-real-compiler runs.
+bounded-completeness boundary, Lean-checked class lemmas for strict-aliasing
+optimizer-exploitation and pointer-provenance trap-vs-defined witnesses, and an
+end-to-end theorem that counterexample packaging preserves the raw product-run
+witness) and an artifact in which every headline number is regenerated from
+content-hashed real-compiler runs.
 \end{abstract}
 
 
@@ -657,7 +658,15 @@ Memory operations include alignment checks ($\mathit{addr}
 \;\&\; (\mathit{align} - 1) = 0$), bounds checks against
 known allocations, and use-after-free detection.
 
-\paragraph{Mechanized class-specific evidence.}
+\paragraph{Mechanized product and class-specific evidence.}
+The Lean development now covers the product-program witness boundary itself:
+raw product-run facts (payload, UB-reached flag, target return code, and
+consequence flag) are converted to the pack-parametric observation, and any
+emitted counterexample is proved to preserve that payload and observation while
+being a genuine UB-rooted divergence. This keeps the checked theorem at the same
+abstraction boundary as the executable verifier rather than merely testing the
+packaging code.
+
 The strict-aliasing class is confirmed by optimization exploitation rather than
 a sanitizer: the same generated C type-pun source is compiled at \texttt{-O0}
 and \texttt{-O2 -fstrict-aliasing}; if both runs are clean but print different

@@ -1,4 +1,4 @@
-"""Steps 75/126/127 — mechanized soundness (scoped).
+"""Steps 75/126/127/128 — mechanized soundness (scoped).
 
 A *machine-checked* soundness (and relative-completeness) argument for the
 relational/product-program decision procedure the tool implements, for a core
@@ -22,6 +22,14 @@ compiles, so the proof cannot be silently gutted):
 * ``report_implies_ub``          — every report is rooted in source UB;
 * ``pack_oracle_sound``          — soundness is language-pair-parametric;
 * ``rust_oracle_sound``          — the concrete C -> Rust instantiation;
+* ``product_program_preserves_divergence_witness`` — the end-to-end
+  product-program construction copies source/target/input payloads unchanged,
+  derives the emitted observation from raw run facts, and emits only a genuine
+  UB-rooted divergence witness;
+* ``product_program_emits_witness_iff_product_violated`` — witness emission is
+  exactly product-assertion violation;
+* ``product_program_witness_iff_divergence`` — witness emission is equivalent to
+  a UB-rooted divergence in the recorded-observable abstraction;
 * ``strict_aliasing_oracle_sound`` — strict-aliasing optimizer-exploitation
   witnesses are UB-rooted divergences;
 * ``strict_aliasing_report_implies_type_pun`` — the strict-aliasing report
@@ -58,6 +66,9 @@ REQUIRED_THEOREMS: Tuple[str, ...] = (
     "report_implies_ub",
     "pack_oracle_sound",
     "rust_oracle_sound",
+    "product_program_preserves_divergence_witness",
+    "product_program_emits_witness_iff_product_violated",
+    "product_program_witness_iff_divergence",
     "strict_aliasing_oracle_sound",
     "strict_aliasing_report_implies_type_pun",
     "strict_aliasing_report_implies_optimizer_exploited",

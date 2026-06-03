@@ -35,6 +35,9 @@ with the relational assertion `R = ¬(P ∧ T ∧ C)` and `productViolated = ¬R
 | `report_implies_ub` | every counterexample is rooted in source-level UB, not a target quirk. |
 | `pack_oracle_sound` | soundness is **language-pair-parametric** (holds for any target-semantics pack). |
 | `rust_oracle_sound` | the concrete **C → Rust** instantiation (`RustPack`, defined codes `{0, 101}`). |
+| `product_program_preserves_divergence_witness` | the end-to-end product-program construction emits a counterexample only by copying the source/target/input payload unchanged and carrying the observation derived from raw run facts; that observation is a genuine UB-rooted divergence. |
+| `product_program_emits_witness_iff_product_violated` | witness emission is exactly product-assertion violation. |
+| `product_program_witness_iff_divergence` | witness emission is equivalent to a UB-rooted divergence in the recorded-observable abstraction. |
 | `strict_aliasing_oracle_sound` | a strict-aliasing report confirmed by optimizer exploitation is a genuine UB-rooted divergence. |
 | `strict_aliasing_report_implies_type_pun` | the strict-aliasing report carries the generated incompatible-access/same-storage type-pun shape. |
 | `strict_aliasing_report_implies_optimizer_exploited` | the report carries the exact `optimizer_exploited` confirmation signal: two clean C builds disagree while the target is defined and deterministic. |
@@ -43,10 +46,19 @@ with the relational assertion `R = ¬(P ∧ T ∧ C)` and `productViolated = ¬R
 | `pointer_provenance_report_implies_checked_target` | the report carries the safe target shape: checked index, defined result, deterministic run. |
 | `pointer_provenance_report_implies_trap_vs_defined` | the report carries the exact `trap_vs_defined` signal: source UBSan trap plus defined target outcome. |
 
-The file also contains two fully-evaluated `example`s — the canonical
-div-by-zero witness (C traps, Rust panics with `101`, behaviours differ ⇒
-reported and certified UB-rooted) and a safe-input witness (agree ⇒ silent),
-plus strict-aliasing and pointer-provenance positive/negative examples.
+The file also contains fully-evaluated `example`s: the canonical div-by-zero
+witness (C traps, Rust panics with `101`, behaviours differ ⇒ reported and
+certified UB-rooted), a safe-input witness (agree ⇒ silent), strict-aliasing and
+pointer-provenance positive/negative examples, and an end-to-end product-run
+example where raw run facts emit a preserved counterexample.
+
+For the end-to-end product-program theorem, the Lean model deliberately stores
+only raw run facts in `ProductRun`: source/target/input payload, target semantics
+pack, whether source UB was reached, the target return code, and whether
+behaviours differ. The `Observation` is derived through `observe`, then copied
+into the emitted `ProductCounterexample`. The preservation theorem proves that
+any emitted counterexample carries the payload unchanged and the exact derived
+observation, and that this observation satisfies `isUBDivergence`.
 
 For strict aliasing, the mechanized class-specific lemma mirrors the real
 `confirm_optimizer_exploited` harness rather than pretending a sanitizer exists:
@@ -65,15 +77,18 @@ the behavioural difference consumed by the product-program theorem.
 ## Scope (honest)
 
 This is a *scoped* mechanization: we formalize the decision procedure over the
-recorded-observable abstraction, not a full denotational C semantics. Within
-that abstraction the theorems are exactly the guarantees the Python oracle
-relies on, and the soundness theorem is pack-independent — instantiating any
-target pack (Rust shown; Go/Swift identical) cannot weaken it. The class-specific
-extensions mechanize the evidence consumed by the implementation: strict aliasing
-treats the generated `int*`/`long*` same-storage type pun as a construction
-invariant and pointer provenance treats the generated out-of-provenance pointer
-arithmetic plus UBSan trap as the source-side confirmation. They are not full
-formal C11 aliasing/provenance semantics. Extending the abstraction toward a full
+recorded-observable abstraction, not a full denotational C semantics. "End to
+end" here means raw run facts → product construction → emitted counterexample;
+the source and target payload strings are opaque provenance carried unchanged,
+not parsed or given denotational semantics in Lean. Within that abstraction the
+theorems are exactly the guarantees the Python oracle relies on, and the
+soundness theorem is pack-independent — instantiating any target pack (Rust
+shown; Go/Swift identical) cannot weaken it. The class-specific extensions
+mechanize the evidence consumed by the implementation: strict aliasing treats
+the generated `int*`/`long*` same-storage type pun as a construction invariant
+and pointer provenance treats the generated out-of-provenance pointer arithmetic
+plus UBSan trap as the source-side confirmation. They are not full formal C11
+aliasing/provenance semantics. Extending the abstraction toward a full
 operational C semantics is future work (step 75's "even partial mechanization is
 a strong differentiator").
 

@@ -1,6 +1,6 @@
 /-
   Scoped mechanized soundness for the cross-language UB-divergence oracle
-  (100_STEPS steps 75, 126, and 127).
+  (100_STEPS steps 75, 126, 127, and 128).
 
   This file gives a *machine-checked* soundness (and relative-completeness)
   argument for the relational/product-program decision procedure the tool
@@ -28,6 +28,12 @@
     * `equivalence_never_reported` : the safety corollary the tool advertises
                               (observationally-equivalent pairs are never
                               flagged).
+    * `product_program_preserves_divergence_witness` : the end-to-end
+                              product-program construction emits a
+                              counterexample only by copying the concrete run
+                              payload and the observation derived from raw
+                              run facts, and that observation is a genuine
+                              UB-rooted divergence.
 
   The development is parametric in a `TargetPack` (the C->target semantics
   pack); `RustPack` instantiates it and `rust_oracle_sound` discharges the
@@ -514,5 +520,153 @@ example :
         targetDefined := true
         targetDeterministic := true } = false := by
   decide
+
+/-! ### End-to-end product-program witness construction
+
+    Step 128 asks for the product-program theorem itself to be mechanized:
+    constructing a counterexample from a product run must preserve the concrete
+    divergence witness, not reinterpret it.  The source/target/input fields
+    below are opaque provenance payloads; the mechanized content remains the
+    recorded-observable abstraction.  Crucially, a `ProductRun` stores the raw
+    run facts (`ubReached`, target return code, and whether behaviours differ),
+    and the `Observation` is *derived* through the same `observe` function used by
+    the pack-parametric theorem above.  This makes the preservation theorem a
+    check on the construction boundary, not a tautology over a pre-stored
+    observation.
+-/
+
+/-- Raw facts recorded by one completed product-program run.  The payload fields
+    identify the source, target and concrete input carried into the emitted
+    counterexample; the Boolean/int fields are the measured facts from which the
+    product observation is derived. -/
+structure ProductRun where
+  sourceId         : String
+  targetId         : String
+  input            : String
+  targetPack       : TargetPack
+  sourceUBReached  : Bool
+  targetReturn     : Int
+  behavioursDiffer : Bool
+
+/-- The product observation derived from raw run facts and the target pack. -/
+def productRunObservation (r : ProductRun) : Observation :=
+  observe r.targetPack r.sourceUBReached r.targetReturn r.behavioursDiffer
+
+/-- The language-agnostic counterexample emitted by the product-program layer.
+    It carries the payload unchanged plus the derived observation that violated
+    the product assertion. -/
+structure ProductCounterexample where
+  sourceId    : String
+  targetId    : String
+  input       : String
+  observation : Observation
+deriving DecidableEq, Repr
+
+/-- Emit a counterexample exactly when the derived product observation violates
+    `R`; otherwise the product program is silent. -/
+def productRunToCounterexample (r : ProductRun) : Option ProductCounterexample :=
+  if _h : productViolated (productRunObservation r) = true then
+    some
+      { sourceId    := r.sourceId
+        targetId    := r.targetId
+        input       := r.input
+        observation := productRunObservation r }
+  else
+    none
+
+/-- **End-to-end witness preservation.**  If the product-program construction
+    emits a counterexample, it has copied the product run's source/target/input
+    payload unchanged, its observation is exactly the observation derived from
+    the raw run facts, and that observation is a genuine UB-rooted divergence. -/
+theorem product_program_preserves_divergence_witness
+    (r : ProductRun) (cex : ProductCounterexample) :
+    productRunToCounterexample r = some cex →
+      cex.sourceId = r.sourceId ∧
+      cex.targetId = r.targetId ∧
+      cex.input = r.input ∧
+      cex.observation = productRunObservation r ∧
+      isUBDivergence cex.observation := by
+  intro h
+  unfold productRunToCounterexample at h
+  by_cases hv : productViolated (productRunObservation r) = true
+  · simp [hv] at h
+    cases h
+    exact ⟨rfl, rfl, rfl, rfl, oracle_sound (productRunObservation r) hv⟩
+  · simp [hv] at h
+
+/-- The construction emits some counterexample exactly for product-assertion
+    violations. -/
+theorem product_program_emits_witness_iff_product_violated (r : ProductRun) :
+    (∃ cex, productRunToCounterexample r = some cex) ↔
+      productViolated (productRunObservation r) = true := by
+  constructor
+  · intro h
+    obtain ⟨cex, hcex⟩ := h
+    have hp := product_program_preserves_divergence_witness r cex hcex
+    have hdiv : isUBDivergence (productRunObservation r) := by
+      rw [← hp.2.2.2.1]
+      exact hp.2.2.2.2
+    exact oracle_complete_rel (productRunObservation r) hdiv
+  · intro hv
+    refine ⟨
+      { sourceId    := r.sourceId
+        targetId    := r.targetId
+        input       := r.input
+        observation := productRunObservation r }, ?_⟩
+    unfold productRunToCounterexample
+    simp [hv]
+
+/-- Combining emission with `oracle_decides`: the end-to-end construction emits a
+    counterexample iff the derived product observation is a UB-rooted divergence. -/
+theorem product_program_witness_iff_divergence (r : ProductRun) :
+    (∃ cex, productRunToCounterexample r = some cex) ↔
+      isUBDivergence (productRunObservation r) := by
+  constructor
+  · intro h
+    have hv := (product_program_emits_witness_iff_product_violated r).1 h
+    exact oracle_sound (productRunObservation r) hv
+  · intro h
+    have hv := oracle_complete_rel (productRunObservation r) h
+    exact (product_program_emits_witness_iff_product_violated r).2 hv
+
+/-- Concrete end-to-end positive witness: raw run facts for a C source that
+    reached UB and a Rust target that returned a defined panic code emit a
+    preserved UB-rooted counterexample. -/
+def productPositiveRun : ProductRun :=
+  { sourceId := "c/div-by-zero.c"
+    targetId := "rust/div-by-zero.rs"
+    input := "a=5,b=0"
+    targetPack := RustPack
+    sourceUBReached := true
+    targetReturn := 101
+    behavioursDiffer := true }
+
+example :
+    ∃ cex, productRunToCounterexample productPositiveRun = some cex ∧
+      cex.sourceId = "c/div-by-zero.c" ∧
+      cex.targetId = "rust/div-by-zero.rs" ∧
+      cex.input = "a=5,b=0" ∧
+      isUBDivergence cex.observation := by
+  have hdiv : isUBDivergence (productRunObservation productPositiveRun) := by
+    simp [productRunObservation, productPositiveRun, observe, RustPack,
+      isUBDivergence]
+  have hemits := (product_program_witness_iff_divergence productPositiveRun).2
+    hdiv
+  obtain ⟨cex, hcex⟩ := hemits
+  have hp := product_program_preserves_divergence_witness productPositiveRun cex hcex
+  exact ⟨cex, hcex, hp.1, hp.2.1, hp.2.2.1, hp.2.2.2.2⟩
+
+/-- Negative control: when the raw facts do not violate `R`, no witness is
+    emitted. -/
+example :
+    productRunToCounterexample
+      { sourceId := "c/safe.c"
+        targetId := "rust/safe.rs"
+        input := "a=5,b=1"
+        targetPack := RustPack
+        sourceUBReached := false
+        targetReturn := 0
+        behavioursDiffer := false } = none := by
+  rfl
 
 end CrossLangVerifier
