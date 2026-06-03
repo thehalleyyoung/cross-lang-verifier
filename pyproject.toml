@@ -40,6 +40,7 @@ docs = ["mkdocs>=1.6"]
 # at the pair-aware CLI entry, fixing the historical name/script mismatch.
 cross-lang-verify = "ub_oracle.cli:main"
 cross-lang-verifier = "ub_oracle.cli:main"
+cross-lang-verify-pre-commit = "ub_oracle.precommit:main"
 
 [project.urls]
 Homepage = "https://github.com/thehalleyyoung/cross-lang-verifier"

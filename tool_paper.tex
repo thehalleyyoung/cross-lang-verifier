@@ -726,7 +726,8 @@ real-compiler regression tests for every confirmation mode.
 The artifact is packaged as both a research harness and a usable guardrail:
 \texttt{cross-lang-verify} ingests pair-aware manifests, emits text/JSON/SARIF,
 supports triage, suppression baselines, caching and local dashboards, and is
-wrapped by a GitHub Action, VS Code diagnostics shim, playground and plugin SDK.
+wrapped by a GitHub Action, pre-commit hook, VS Code diagnostics shim, playground
+and plugin SDK.
 Even the launch surface is generated from the verifier rather than hand-written:
 \texttt{scripts/build\_readme\_demo.py} runs the real CLI on
 \texttt{examples/readme\_demo\_units.json} and renders the README animation only
@@ -756,6 +757,15 @@ and a workflow filtered to translated-code paths; \texttt{make
 github-action-check} runs the same runner against that fixture, proves the
 symbolic signed-overflow candidate trips the fail gate, checks the source location
 in SARIF, and separately exercises the missing-manifest failure path.
+The local-commit path is now checked the same way: \texttt{.pre-commit-hooks.yaml}
+installs \texttt{cross-lang-verify-pre-commit}, whose adapter resolves staged
+translated files to the nearest manifest and delegates to the exact same CLI.
+\texttt{make precommit-check} copies \texttt{examples/pre\_commit\_sample} into a
+temporary git repository, stages real C/Rust translation files, proves the
+overflow manifest blocks in deterministic \texttt{--no-confirm --fail-on
+candidate} mode, proves the safe-control manifest passes, proves unrelated files
+and ordinary JSON no-op, and proves explicit bad manifests fail operationally
+rather than being silently ignored.
 
 \paragraph{Parser frontends.}
 Each language has two parsing backends: tree-sitter-c~0.24 and

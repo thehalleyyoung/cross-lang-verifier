@@ -45,6 +45,7 @@ nav:
       - Large-scale study (>130k LOC): large_scale_study.md
   - Integrations:
       - Transpiler recipes: TRANSPILER_RECIPES.md
+      - Pre-commit hook: pre_commit.md
       - Web playground: PLAYGROUND.md
       - Plugin SDK: SDK.md
   - Reproducibility:

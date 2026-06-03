@@ -20,8 +20,8 @@ witnessing input.
   and a [claim→proof traceability](TRACEABILITY.md) matrix where every published
   claim is tied to a live, machine-checked theorem.
 - **Built to integrate.** [Transpiler recipes](TRANSPILER_RECIPES.md)
-  (*translate with `$tool`, then verify with us*), an interactive
-  [web playground](PLAYGROUND.md), and a [plugin SDK](SDK.md).
+  (*translate with `$tool`, then verify with us*), a [pre-commit hook](pre_commit.md),
+  an interactive [web playground](PLAYGROUND.md), and a [plugin SDK](SDK.md).
 
 ## Start here
 

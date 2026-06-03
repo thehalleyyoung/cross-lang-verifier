@@ -1,0 +1,36 @@
+{
+  "units": [
+    {
+      "name": "precommit_signed_overflow",
+      "kind": "binop_const",
+      "op": "add",
+      "const": 1,
+      "width": 32,
+      "var": "x",
+      "signed": true,
+      "probe": "signed_overflow",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "source_file": "c/overflow.c",
+      "line": 6
+    },
+    {
+      "name": "precommit_safe_control",
+      "kind": "binop_const",
+      "op": "add",
+      "const": 0,
+      "width": 32,
+      "var": "x",
+      "signed": true,
+      "probe": "signed_overflow",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "source_file": "c/safe.c",
+      "line": 6,
+      "x_range": [
+        -1024,
+        1024
+      ]
+    }
+  ]
+}

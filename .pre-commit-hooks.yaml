@@ -1,0 +1,7 @@
+- id: cross-lang-verify
+  name: cross-lang-verify
+  description: Verify staged cross-language translation manifests before commit
+  entry: cross-lang-verify-pre-commit
+  language: python
+  pass_filenames: true
+  files: '(^|/)(units_manifest\.json|cross-lang-verify\.json|\.cross-lang-verify\.json|.*\.(c|h|cc|cpp|cxx|hpp|rs|go|zig|ml|wasm))$'

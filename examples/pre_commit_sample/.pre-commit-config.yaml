@@ -1,0 +1,10 @@
+repos:
+  - repo: local
+    hooks:
+      - id: cross-lang-verify
+        name: cross-lang-verify
+        entry: cross-lang-verify-pre-commit
+        language: system
+        pass_filenames: true
+        files: '(^|/)(units_manifest\.json|cross-lang-verify\.json|\.cross-lang-verify\.json|.*\.(c|h|cc|cpp|cxx|hpp|rs|go|zig|ml|wasm))$'
+        args: [--no-confirm, --fail-on, candidate]
