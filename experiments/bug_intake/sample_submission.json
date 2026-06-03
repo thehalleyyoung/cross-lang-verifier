@@ -1,0 +1,49 @@
+{
+  "candidate_repo": "uutils/coreutils",
+  "candidate_url": "https://github.com/uutils/coreutils",
+  "claim_scope": "trusted checked-in sample for the intake harness; ordinary intake submissions remain candidates until promoted through the responsible findings lane",
+  "divergence": {
+    "claim": "The source-side C addition is undefined on the witness under UBSan, while the Rust target has a deterministic wrapping value.",
+    "class": "signed_overflow"
+  },
+  "function": {
+    "arguments": [
+      {
+        "name": "bytes",
+        "type": "i32"
+      }
+    ],
+    "name": "coreutils_size_accumulate",
+    "return_type": "i32"
+  },
+  "notes": [
+    "This sample mirrors CLV-DIV-0001 so the intake path is proven on real code.",
+    "Do not run arbitrary third-party submissions outside a sandbox."
+  ],
+  "safe_input": [
+    "0"
+  ],
+  "schema": "bug-intake/v1",
+  "source": {
+    "code": "#include <stdint.h>\n\nint32_t coreutils_size_accumulate(int32_t bytes) {\n    return bytes + 4096;\n}\n",
+    "language": "c",
+    "path": "experiments/github_ports/samples/coreutils_size_accumulate.c",
+    "sha256": "300fb32daa3d1c8996c2e16ce6bee5ded4719141e16b00100179213698a194fd"
+  },
+  "source_family": "GNU coreutils size/accounting arithmetic",
+  "submission_id": "INTAKE-CLV-DIV-0001",
+  "submitter": {
+    "contact": "redacted@example.invalid",
+    "permission_to_contact": false
+  },
+  "target": {
+    "code": "#[no_mangle]\npub extern \"C\" fn coreutils_size_accumulate(bytes: i32) -> i32 {\n    bytes.wrapping_add(4096)\n}\n",
+    "language": "rust",
+    "path": "experiments/github_ports/samples/coreutils_size_accumulate.rs",
+    "sha256": "c6ceb0fa4fa7087b5f90f706aba9a64feb7548ccf5dec1eb3dca1514248d560a"
+  },
+  "title": "Signed-overflow divergence in a checked extraction unit",
+  "witness_input": [
+    "2147479552"
+  ]
+}

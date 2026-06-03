@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check negative-corpus-check adversarial-corpus-check corpus-datasheet-check continuous-corpus-ci continuous-corpus-ci-check leaderboard-check llm-scale-check idiomatic-port-check existing-tools-check large-scale large-scale-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check bug-intake-check real-bugs-table-check negative-corpus-check adversarial-corpus-check corpus-datasheet-check continuous-corpus-ci continuous-corpus-ci-check leaderboard-check llm-scale-check idiomatic-port-check existing-tools-check large-scale large-scale-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -38,6 +38,8 @@ help:
 	@echo "  github-port-mining-check assert GitHub-mined port samples reproduce"
 	@echo "  real-bug-check assert responsible divergence findings reproduce"
 	@echo "  bug-regression-check assert frozen bug-finding regressions reproduce"
+	@echo "  bug-intake-check assert bug-bounty intake template/harness reproduce"
+	@echo "  real-bugs-table-check assert real-bugs table regenerates from frozen corpus"
 	@echo "  negative-corpus-check assert 1000 true-equivalence ports have zero false-positive flags"
 	@echo "  adversarial-corpus-check assert hand-crafted near-miss verdicts/abstentions reproduce"
 	@echo "  corpus-datasheet-check assert the generated corpus datasheet is fresh"
@@ -150,6 +152,12 @@ real-bug-check:
 
 bug-regression-check:
 	$(PYTHON) -m pytest tests/test_bug_regression_corpus.py -q
+
+bug-intake-check:
+	$(PYTHON) -m pytest tests/test_bug_intake.py -q
+
+real-bugs-table-check:
+	$(PYTHON) -m pytest tests/test_real_bugs_table.py -q
 
 negative-corpus-check:
 	$(PYTHON) -m pytest tests/test_negative_corpus.py -q

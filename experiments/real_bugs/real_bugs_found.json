@@ -1,0 +1,46 @@
+{
+  "by_divergence_class": {
+    "signed_overflow": 1
+  },
+  "by_evidence_tier": {
+    "confirmed extraction-unit finding": 1
+  },
+  "content_hash": "893f41d5851ec952ffe0d00f54537368a69bbe0c8d06d1bd44cb90703b690ec3",
+  "evidence_policy": "Rows are verified extraction-unit divergences from the frozen bug-regression corpus. They are reviewer-ready real-bug evidence with live reproduction links, but not upstream CVEs or repository defect claims unless upstream_status says so.",
+  "n_rows": 1,
+  "n_upstream_defect_claims": 0,
+  "rows": [
+    {
+      "c_file": "experiments/github_ports/samples/coreutils_size_accumulate.c",
+      "c_sha256": "300fb32daa3d1c8996c2e16ce6bee5ded4719141e16b00100179213698a194fd",
+      "candidate_repo": "uutils/coreutils",
+      "candidate_url": "https://github.com/uutils/coreutils",
+      "divergence_class": "signed_overflow",
+      "evidence_tier": "confirmed extraction-unit finding",
+      "finding_id": "CLV-DIV-0001",
+      "live_reproduction_command": [
+        "bash",
+        "docs/repro/CLV-DIV-0001.sh"
+      ],
+      "live_reproduction_link": "docs/repro/CLV-DIV-0001.sh",
+      "pair": "C -> rust",
+      "regression_id": "BUG-REG-CLV-DIV-0001",
+      "remediation": "Accumulate byte counts in an unsigned or widened type, or guard the maximum representable value before translating to wrapping target arithmetic.",
+      "rust_file": "experiments/github_ports/samples/coreutils_size_accumulate.rs",
+      "rust_sha256": "c6ceb0fa4fa7087b5f90f706aba9a64feb7548ccf5dec1eb3dca1514248d560a",
+      "safe_input": [
+        "0"
+      ],
+      "source_family": "GNU coreutils size/accounting arithmetic",
+      "table_id": "REAL-BUG-CLV-DIV-0001",
+      "upstream_defect_claim": false,
+      "upstream_status": "upstream-instance source audit pending; this record must not be cited as an upstream uutils/coreutils CVE or confirmed repository defect",
+      "witness_input": [
+        "2147479552"
+      ]
+    }
+  ],
+  "schema": "real-bugs-table/v1",
+  "source_manifest": "experiments/bug_regressions/bug_regression_corpus.json",
+  "source_manifest_hash": "99ea4ff4cd6bcfc9d1527f49519935c19be255f6282cc4016ac9618ffa17ca7b"
+}

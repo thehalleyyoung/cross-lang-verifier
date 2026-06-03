@@ -1,0 +1,75 @@
+{
+  "description": "Template for suspected cross-language divergence reports.",
+  "intake_contract": [
+    "submission is a candidate, not a promoted finding",
+    "source and target code are included inline and hash-checked",
+    "witness and safe-control argv values are supplied explicitly",
+    "auto-reproduction runs only in a sandboxed environment because submissions are untrusted code",
+    "live compiler replay is never serialized into committed artifacts"
+  ],
+  "promotion_policy": "A valid intake submission is only a candidate. It becomes a finding after source audit, source-hash pinning, maintainer-ready disclosure review, and live compiler replay in the responsible findings lane.",
+  "required_fields": [
+    "schema",
+    "submission_id",
+    "title",
+    "source.language",
+    "source.code",
+    "source.sha256",
+    "target.language",
+    "target.code",
+    "target.sha256",
+    "function.name",
+    "function.arguments",
+    "function.return_type",
+    "divergence.class",
+    "divergence.claim",
+    "witness_input",
+    "safe_input",
+    "claim_scope"
+  ],
+  "sandbox_warning": "The auto-reproduction harness compiles and runs submitted code. Treat submissions as untrusted and run them only in a sandboxed CI/container.",
+  "schema": "bug-intake/v1",
+  "submission_template": {
+    "candidate_repo": "",
+    "candidate_url": "",
+    "claim_scope": "candidate only; not yet a confirmed upstream defect",
+    "divergence": {
+      "claim": "",
+      "class": ""
+    },
+    "function": {
+      "arguments": [
+        {
+          "name": "x",
+          "type": "i32"
+        }
+      ],
+      "name": "",
+      "return_type": "i32"
+    },
+    "notes": [],
+    "safe_input": [],
+    "schema": "bug-intake/v1",
+    "source": {
+      "code": "",
+      "language": "c",
+      "path": "",
+      "sha256": ""
+    },
+    "source_family": "",
+    "submission_id": "INTAKE-YYYY-NNNN",
+    "submitter": {
+      "contact": "",
+      "permission_to_contact": false
+    },
+    "target": {
+      "code": "",
+      "language": "rust",
+      "path": "",
+      "sha256": ""
+    },
+    "title": "Short suspected-divergence summary",
+    "witness_input": []
+  },
+  "supported_auto_reproduction": "C -> Rust single-function submissions whose arguments are signed 32-bit integers and whose source side can be checked with clang/UBSan."
+}

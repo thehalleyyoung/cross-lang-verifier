@@ -1,0 +1,28 @@
+{
+  "content_hash": "449b9d8dc6f846b573ff89869e70dd1152329f7e7b07cb6d348438a81a2388c8",
+  "evidence_policy": "Intake submissions are untrusted candidates. They are not counted as findings or upstream defects until separately promoted through the responsible findings and frozen bug-regression corpus.",
+  "intake_contract": [
+    "submission is a candidate, not a promoted finding",
+    "source and target code are included inline and hash-checked",
+    "witness and safe-control argv values are supplied explicitly",
+    "auto-reproduction runs only in a sandboxed environment because submissions are untrusted code",
+    "live compiler replay is never serialized into committed artifacts"
+  ],
+  "n_sample_submissions": 1,
+  "sample_submission_path": "experiments/bug_intake/sample_submission.json",
+  "sample_submissions": [
+    {
+      "bundle_path": "docs/repro/INTAKE-CLV-DIV-0001.sh",
+      "c_sha256": "300fb32daa3d1c8996c2e16ce6bee5ded4719141e16b00100179213698a194fd",
+      "errors": [],
+      "submission_id": "INTAKE-CLV-DIV-0001",
+      "target_sha256": "c6ceb0fa4fa7087b5f90f706aba9a64feb7548ccf5dec1eb3dca1514248d560a",
+      "valid": true
+    }
+  ],
+  "sandbox_warning": "The auto-reproduction harness compiles and runs submitted code. Treat submissions as untrusted and run them only in a sandboxed CI/container.",
+  "schema": "bug-intake/v1",
+  "supported_auto_reproduction": "C -> Rust single-function submissions whose arguments are signed 32-bit integers and whose source side can be checked with clang/UBSan.",
+  "template_path": "experiments/bug_intake/intake_template.json",
+  "valid_sample_submissions": 1
+}

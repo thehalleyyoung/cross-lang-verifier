@@ -169,10 +169,11 @@ python3 -m src.cli.main discover \
   are not designed to relate
 - a **GitHub-mined C→Rust port sample** (`make github-port-mining-check`) that
   ranks public port/rewrite repos, verifies extraction units from three mined
-  project families, byte-checks the symbolic verdict layer, and now feeds a
-  responsible, compiler-confirmed extraction-unit findings lane
-  (`make real-bug-check`) plus a frozen bug-regression corpus
-  (`make bug-regression-check`) that keeps upstream-defect claims gated on source audit
+  project families, byte-checks the symbolic verdict layer, and feeds a
+  compiler-confirmed findings lane (`make real-bug-check`), a frozen
+  bug-regression corpus (`make bug-regression-check`), a sandboxed intake
+  harness (`make bug-intake-check`), and an evidence-tiered real-bugs table
+  (`make real-bugs-table-check`) without promoting unaudited upstream-defect claims
 - a generated **corpus datasheet** plus a **120-case public leaderboard**
   (`docs/corpus_datasheet.md`, `docs/leaderboard.md`, `make leaderboard-check`)
   with source/target programs, label-omitted submission scoring, provenance,

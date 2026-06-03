@@ -177,7 +177,14 @@ inputs, C/Rust source hashes, and the existing reproduction bundle, and
 \texttt{make bug-regression-check} proves the finding is still registered, the
 source bytes have not drifted, the bundle remains valid, and---when toolchains are
 available---the witness still traps under real \texttt{clang}/UBSan while the
-Rust extraction remains defined. The idiomatic-port corpus now separately adds explicit
+Rust extraction remains defined. The same evidence lane now has a bug-bounty-style
+intake harness and reviewer-facing real-bugs table: \texttt{make
+bug-intake-check} validates a sandbox-warning submission template, inline source
+hashes, witness/safe-control argv, and an auto-reproduction bundle without
+serializing host-dependent live results, while \texttt{make
+real-bugs-table-check} regenerates the evidence-tiered table solely from the
+frozen bug-regression corpus and preserves the ``not an unaudited upstream-defect
+claim'' boundary. The idiomatic-port corpus now separately adds explicit
 \texttt{uutils/coreutils}, \texttt{sudo-rs}, and \texttt{zlib-rs}-class pairs:
 checked block rounding and checked timeout division are real
 \texttt{clang}/UBSan-confirmed C-UB vs defined Rust/Go ports, while the
@@ -1282,6 +1289,21 @@ is intentionally phrased as a \emph{confirmed extraction-unit finding} and a
 coordinated-disclosure draft, not as an upstream CVE: the repository-defect claim
 is gated on auditing the live upstream source for the same pattern.
 
+Step~169 and Step~170 turn that one-off responsible lane into a public intake and
+reporting workflow.  \texttt{src/ub\_oracle/bug\_intake.py} generates a
+versioned JSON submission template, a checked sample submission derived from
+\texttt{CLV-DIV-0001}, a sandbox warning, and an intake reproduction bundle; the
+focused gate verifies the static schema, inline C/Rust source hashes, declared
+witness and safe-control argv, and shell syntax, then live-replays the sample only
+when the real \texttt{clang}/UBSan+\texttt{rustc} toolchain is present.  Its
+committed JSON intentionally records no live booleans, so CI remains
+byte-deterministic across hosts with and without compilers.  The companion
+\texttt{src/ub\_oracle/real\_bugs\_table.py} reads the frozen
+bug-regression corpus, not ad hoc finding state, and regenerates
+\texttt{docs/real\_bugs\_found.md}: every row has a checked
+\texttt{docs/repro/} command, source hashes, witness/safe inputs, remediation, and
+the conservative evidence tier, with zero unaudited upstream-defect claims.
+
 \paragraph{Frozen current-LLM transpiler study.}
 Because LLM-translated ports are the fastest-growing migration path, the artifact
 also includes \texttt{src/ub\_oracle/llm\_scale\_study.py}: a frozen
@@ -1517,6 +1539,7 @@ Corpus surface & Population & Unit & Role \\
 \texttt{adversarial-near-misses} & 23 & cases & routing/range/abstention boundary tests \\
 \texttt{github-mined-ports} & 3 & samples & public-port extraction evidence \\
 \texttt{responsible-findings} / \texttt{bug-regressions} & 1 / 1 & finding / regression & disclosure and frozen replay lane \\
+\texttt{bug-intake} / \texttt{real-bugs-table} & 1 / 1 & sample / row & sandboxed intake and evidence-tiered reporting \\
 \bottomrule
 \end{tabularx}
 \end{table}
