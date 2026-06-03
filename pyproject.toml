@@ -61,6 +61,7 @@ include = ["ub_oracle*"]
     "formal/CompletenessBoundary.lean",
     "formal/CoreSoundness.v",
     "formal/VerifiedChecker.lean",
+    "formal/SPIContract.lean",
     "formal/lakefile.lean",
     "formal/lean-toolchain",
     "formal/lake-manifest.json",

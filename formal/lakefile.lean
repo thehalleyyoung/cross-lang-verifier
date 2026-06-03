@@ -9,5 +9,8 @@ lean_lib ProductSoundness where
 lean_lib CompletenessBoundary where
   roots := #[`CompletenessBoundary]
 
+lean_lib SPIContract where
+  roots := #[`SPIContract]
+
 lean_exe «verified-checker» where
   root := `VerifiedChecker

@@ -126,8 +126,9 @@ Go$\to$Rust, and C$\to$OCaml.
 Beyond pairwise checks, an
 \emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
 targets at once and flags the minority target whose live output disagrees, and a
-target-pack conformance suite mechanically certifies that every back end
-satisfies the plugin SPI. For the integer-UB family we additionally ship an
+Lean typeclass SPI contract plus a target-pack conformance suite mechanically
+certify that every back end satisfies the plugin/pack obligations. For the
+integer-UB family we additionally ship an
 SMT-backed encoding whose equivalence to a human-readable specification is
 Z3-proved for \emph{every} 32/64-bit input, whose operational decision path
 agrees with an independent enumeration predicate on a deterministic 10{,}000-case
@@ -715,6 +716,19 @@ the Python driver builds it through Lake so imports and stale proof artifacts
 cannot hide a broken theorem.  The result deliberately does not overclaim:
 finite-range no-false-negative evidence still comes from the independent
 brute-force/Z3 agreement check in \texttt{completeness.py}.
+
+Step~136 makes the extension surface a checked object too.
+\texttt{formal/SPIContract.lean} states the target-pack and divergence-oracle
+SPI as Lean typeclasses: a conforming pack must prove that its ProductSoundness
+defined-return predicate agrees with its declared finite data, that
+canonicalization accepts only declared defined outcomes, and that product-level
+positive claims route through the pack-parametric \texttt{pack\_oracle\_sound}
+theorem; a conforming plugin must expose the real Python method surface
+(\texttt{applies\_to}, \texttt{find\_divergence}, \texttt{confirm}) and prove
+that found/confirmed witnesses are product-program violations.  The companion
+Python checker then ties the Lean source to the live registry and executable
+pack-conformance suite, so adding a target pack requires both a Lean instance and
+the concrete harness obligations.
 
 Step~129 turns this mechanization into an executable artifact, and Step~132
 makes it durable in the counterexample format.  The repository pins Lean 4.14,
@@ -1479,6 +1493,16 @@ right artifacts; and the class-resolution map only names known divergence
 classes. A pack that violates any obligation fails CI before it can contribute a
 single unsound cell to the matrix---turning ``add a language or runtime'' into a
 checklist the machine, not the reviewer, enforces.
+
+The formal side now mirrors this executable gate.  \texttt{SPIContract.lean}
+declares \texttt{TargetPackSPI} and \texttt{OraclePluginSPI} typeclasses and
+provides discharged instances for the seven registered target packs
+(Rust/Go/Swift/C++/OCaml/Zig/Wasm).  The bridge checker
+(\texttt{src/ub\_oracle/spi\_contract.py}) verifies that every registered Python
+pack has a Lean instance, every executable obligation key appears in the Lean
+contract, and the formal plugin method list matches the actual
+\texttt{DivergenceOracle} interface; when Lake is available, CI builds
+\texttt{lake build SPIContract} and rejects stale or vacuous formal claims.
 
 \subsection{SMT-Backed Decision Procedures: Proved Encodings and Bit-Precise
 Witnesses (RQ11)}\label{sec:eval-smt}

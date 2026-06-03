@@ -138,7 +138,8 @@ python3 -m src.cli.main discover \
 - a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against
-  real `clang`+`rustc` — without forking the engine
+  real `clang`+`rustc` — without forking the engine; `formal/SPIContract.lean`
+  also Lake-checks the plugin/target-pack obligations as Lean typeclasses
 - an internal **red-team** (`make redteam`) that, for every oracle on every
   supported language pair, throws a battery of semantics-preserving adversarial
   mutations of a genuinely-divergent unit at the verifier and proves it never
