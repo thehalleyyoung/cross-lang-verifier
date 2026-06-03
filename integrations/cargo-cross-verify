@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# cargo-cross-lang-verify -- a `cargo` subcommand wrapper for the cross-language divergence
+# cargo-cross-verify -- a `cargo` subcommand wrapper for the cross-language divergence
 # oracle.  Cargo discovers any executable named `cargo-<name>` on PATH and exposes
 # it as `cargo <name>`, so installing this shim (chmod +x and place on PATH)
 # enables:
 #
-#     cargo cross-lang-verify --units units_manifest.json --format json
+#     cargo cross-verify --units units_manifest.json --format json
 #
 # It is a thin forwarder to the proven CLI; it adds no semantics of its own and
 # therefore cannot drift from the oracle.
@@ -12,7 +12,7 @@ set -euo pipefail
 
 # Cargo invokes `cargo-<name> <name> <args...>`; drop the leading subcommand
 # token so the CLI sees only its real flags.
-if [[ "${1:-}" == "cross-lang-verify" ]]; then
+if [[ "${1:-}" == "cross-verify" ]]; then
   shift
 fi
 

@@ -5190,7 +5190,10 @@ def test_ecosystem_v1_api_surface_intact():
 def test_ecosystem_generates_cargo_shim_and_snapshot(tmp_path):
     shim, snap = _eco.generate_artifacts(tmp_path)
     assert shim.exists() and (shim.stat().st_mode & 0o111)
+    short = tmp_path / "cargo-cross-verify"
+    assert short.exists() and (short.stat().st_mode & 0o111)
     assert shim.read_text().startswith("#!/usr/bin/env bash")
+    assert "cargo cross-verify --units" in short.read_text()
     import json as _json
     data = _json.loads(snap.read_text())
     assert data["semver"] == _eco.SEMVER
@@ -5214,6 +5217,16 @@ def test_ecosystem_cargo_subcommand_matches_library():
     rep = _eco.confirm_ecosystem()
     assert rep.api_ok and rep.api_snapshot_ok and rep.shim_syntax_ok, rep.checks
     assert rep.shim_ran and rep.shim_matches_library, rep.checks
+    assert set(rep.shim_results) == {"cross-lang-verify", "cross-verify"}
+    cargo_available = shutil.which("cargo") is not None
+    for result in rep.shim_results.values():
+        assert result["syntax_ok"]
+        assert result["ran"]
+        assert result["matches_library"]
+        assert result["cargo_available"] == cargo_available
+        if cargo_available:
+            assert result["cargo_ran"]
+            assert result["cargo_matches_library"]
     assert rep.ok
 
 

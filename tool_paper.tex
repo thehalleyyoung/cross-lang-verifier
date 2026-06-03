@@ -920,15 +920,18 @@ hash \texttt{59e1b040ffaf}; a dangling paper path, stale Make target, missing
 review lane, or unbacked release claim fails \texttt{make pre-review-check}
 before the PDF can be treated as ready for external red-team review.
 
-Step~199 freezes the ecosystem contract rather than leaving it as social
+Steps~171 and~199 freeze the ecosystem contract rather than leaving it as social
 policy.  \texttt{ub\_oracle.ecosystem} defines \texttt{PUBLIC\_API\_V1}, writes
 \texttt{integrations/api\_surface\_v1.json}, and \texttt{make ecosystem-check}
 now enforces three compatibility obligations: every promised v1 symbol remains
 exported and live, the committed API snapshot is byte-fresh without a
-side-effecting regeneration step, and the shipped
-\texttt{cargo cross-lang-verify} shim produces the same JSON as the in-process
-library CLI.  A SemVer-breaking removal is therefore a test failure, not a
-release-note convention.
+side-effecting regeneration step, and both cargo-discovered shims
+(\texttt{cargo cross-lang-verify} and the shorter
+\texttt{cargo cross-verify}) produce the same JSON as the in-process library CLI
+when run on a checked manifest.  When \texttt{cargo} is present, the gate invokes
+Cargo's own subcommand discovery rather than just executing the shell scripts
+directly.  A SemVer-breaking removal or drifting integration is therefore a test
+failure, not a release-note convention.
 
 
 %% ======================================================================
