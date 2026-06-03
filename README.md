@@ -378,11 +378,12 @@ python3 -m src.cli.main discover \
 - **more target pairs and multi-language oracles**: C→**OCaml** (a GC'd,
   exception-based port, witnessed live on real `ocamlopt`) and C→**Zig**
   (`ReleaseSafe`, witnessed live on real `zig`) join Rust/Go/Swift/C++ in the
-  byte-reproducible matrix; and a first
+  byte-reproducible matrix; a **Rust→C reverse pair** proves a defined Rust
+  panic can become target-side C UB under FFI-style lowering; and a first
   **safe→safe pair, Go→Rust** — *neither side has any UB* — catches the
   **defined-but-different** hazard where `INT_MIN/-1` wraps to a value in Go
   yet panics in Rust, confirmed by re-executing both real binaries
-  (**55 registered matrix cells across 7 pairs**, including real C checked-
+  (**56 registered matrix cells across 8 pairs**, including real C checked-
   contract `memcpy`-overlap, `longjmp`/VLA, and Zig safety-panic cells).
   An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.

@@ -1059,6 +1059,92 @@ class ReexecHarness:
             )
         return res
 
+    # ── reverse direction: defined source vs UB-introducing C target ─────────
+    def confirm_source_defined_target_ub(
+        self,
+        source_src: str,
+        source_lang: str,
+        target_c_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "intmin_div_neg1",
+    ) -> ReexecResult:
+        """Confirm a reverse-pair divergence where a defined source-language
+        behaviour becomes undefined behaviour in a C lowering.
+
+        Rust -> C is the motivating case: ``INT_MIN / -1`` is a guaranteed Rust
+        panic (a language-defined abort), but the same operation in C is UB. The
+        source program must therefore run deterministically to a defined outcome,
+        while the translated C target must trap under UBSan on the same input.
+        """
+        source_ok = self.status.can_compile(source_lang)
+        c_ubsan_ok = bool(self.status.c_available and self.status.ubsan)
+        res = ReexecResult(
+            available=source_ok and c_ubsan_ok,
+            divergence_class=divergence_class,
+            mode="source_defined_target_ub",
+            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)},
+        )
+        if not res.available:
+            missing = []
+            if not source_ok:
+                missing.append(source_lang)
+            if not self.status.c_available:
+                missing.append("C compiler")
+            if not self.status.ubsan:
+                missing.append("UBSan")
+            res.reason = "toolchain unavailable: " + ", ".join(missing)
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            source_exe = self._compile_lang(source_src, source_lang, d, "source")
+            target_san = self._compile_c(
+                target_c_src,
+                ["-O1", "-fsanitize=undefined", "-fno-sanitize-recover=all"],
+                d,
+                "target_san",
+            )
+            if not (source_exe and target_san):
+                res.available = False
+                res.reason = "compilation failed (source=%s target_san=%s)" % (
+                    bool(source_exe), bool(target_san))
+                return res
+            source_a = self._run([source_exe, *argv_inputs])
+            source_b = self._run([source_exe, *argv_inputs])
+            target = self._run([target_san, *argv_inputs])
+
+        res.c_runs["source"] = source_a
+        res.c_runs["target_san"] = target
+        # Legacy field name; here it records the target-side observed run.
+        res.rust_run = target
+
+        source_det = (
+            source_a.returncode == source_b.returncode
+            and source_a.stdout == source_b.stdout
+        )
+        source_defined = (
+            source_a.target_outcome_defined(source_lang)
+            and source_b.target_outcome_defined(source_lang)
+            and source_det
+        )
+        target_ub = target.ub_trapped
+        res.rust_defined = source_defined
+        res.ub_reachable = target_ub
+        res.ub_consequential = source_defined and target_ub
+        res.confirmed = source_defined and target_ub
+        if res.confirmed:
+            first = target.stderr.splitlines()[0] if target.stderr else "UBSan trap"
+            res.reason = (
+                f"{source_lang} source defined & deterministic "
+                f"(rc={source_a.returncode}, out={source_a.stdout!r}); "
+                f"C target UB reachable under UBSan ({first!r})"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: {source_lang}_defined={source_defined} "
+                f"target_ub={target_ub} (source_det={source_det})"
+            )
+        return res
+
     # ── static source-UB diagnostic vs defined target ─────────────────────
     def confirm_static_ub_vs_defined(
         self,

@@ -65,6 +65,49 @@ def _sha(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
 
 
+def _defined_returncodes_for(lang: str) -> Tuple[int, ...]:
+    """Defined outcome return codes for matrix metadata.
+
+    ``c`` is special: it is not a normal safe target pack in the Rust->C reverse
+    oracle, but a clean value return (0) is still the only defined C process
+    outcome the harness recognizes outside sanitizer-confirmed UB.
+    """
+    if lang == "c":
+        return (0,)
+    return get_pack(lang).defined_returncodes
+
+
+def _oracle_available(status, oracle) -> bool:
+    """Whether ``oracle`` should be attempted by the real-compiler matrix."""
+    src = oracle.source_lang
+    tgt = oracle.target_lang
+    if oracle.confirmation_mode == "source_defined_target_ub":
+        return bool(
+            status.can_compile(src)
+            and getattr(status, "c_available", False)
+            and getattr(status, "ubsan", False)
+        )
+    if src == "c":
+        if oracle.confirmation_mode in ("asan_trap_vs_defined",
+                                        "libc_contract_trap_vs_defined"):
+            checker = getattr(status, "full_libc_contract_for", None)
+            return bool(checker(tgt)) if checker is not None else False
+        if oracle.confirmation_mode == "static_ub_vs_defined":
+            target_available = getattr(status, "target_available", lambda _t: False)
+            return bool(getattr(status, "c_available", False)
+                        and target_available(tgt))
+        if oracle.confirmation_mode == "model_level_divergence":
+            target_available = getattr(status, "target_available", lambda _t: False)
+            return bool(getattr(status, "c_available", False)
+                        and target_available(tgt))
+        if oracle.confirmation_mode == "uninit_padding":
+            checker = getattr(status, "full_uninit_padding_for", None)
+            return bool(checker(tgt)) if checker is not None else False
+        full_for = getattr(status, "full_for", lambda _t: False)
+        return bool(full_for(tgt))
+    return bool(status.can_compile(src) and status.can_compile(tgt))
+
+
 def canonical_unit_for(oracle) -> Dict[str, Any]:
     """The canonical unit for ``oracle``'s class, tagged with its language pair."""
     cls = oracle.divergence_class
@@ -99,7 +142,7 @@ def build_matrix() -> Dict[str, Any]:
         unit = canonical_unit_for(oracle)
         res = oracle.find_divergence(unit)
         ce = res.counterexample
-        defined_codes = get_pack(oracle.target_lang).defined_returncodes
+        defined_codes = _defined_returncodes_for(oracle.target_lang)
         cells.append({
             "source_lang": oracle.source_lang,
             "target_lang": oracle.target_lang,
@@ -159,29 +202,7 @@ def confirm_matrix(harness) -> Dict[str, Any]:
             "target_lang": tgt,
             "divergence_class": oracle.divergence_class,
         }
-        # A C-source pair needs C+UBSan+target; a non-C source pair (e.g.
-        # Go->Rust, confirmed by re-executing two defined programs) needs only
-        # the two language compilers.
-        if src == "c":
-            if oracle.confirmation_mode in ("asan_trap_vs_defined",
-                                            "libc_contract_trap_vs_defined"):
-                checker = getattr(status, "full_libc_contract_for", None)
-                ok = bool(checker(tgt)) if checker is not None else False
-            elif oracle.confirmation_mode == "static_ub_vs_defined":
-                target_available = getattr(status, "target_available", lambda _t: False)
-                ok = bool(getattr(status, "c_available", False)
-                          and target_available(tgt))
-            elif oracle.confirmation_mode == "model_level_divergence":
-                target_available = getattr(status, "target_available", lambda _t: False)
-                ok = bool(getattr(status, "c_available", False)
-                          and target_available(tgt))
-            elif oracle.confirmation_mode == "uninit_padding":
-                checker = getattr(status, "full_uninit_padding_for", None)
-                ok = bool(checker(tgt)) if checker is not None else False
-            else:
-                ok = status.full_for(tgt)
-        else:
-            ok = status.can_compile(src) and status.can_compile(tgt)
+        ok = _oracle_available(status, oracle)
         if not ok:
             entry.update(skipped=True,
                          reason=f"toolchain not available for {src}->{tgt}")

@@ -1018,6 +1018,24 @@
         "a": -2147483648,
         "b": -1
       }
+    },
+    {
+      "confirmation_mode": "source_defined_target_ub",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "Rust `a / b` with a=-2147483648, b=-1 is the signed division-overflow pair and therefore panics deterministically (a defined observable abort). The C lowering performs the same int32_t operation, where the quotient is not representable and UBSan traps it as target-side undefined behavior.",
+      "source_definedness": "defined",
+      "source_lang": "rust",
+      "source_sha16": "8ab1244d6ef0006c",
+      "target_defined_returncodes": [
+        0
+      ],
+      "target_lang": "c",
+      "target_sha16": "7acf10e6c941860b",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
     }
   ],
   "coverage": [
@@ -1131,6 +1149,15 @@
       "n_divergent": 1,
       "source_lang": "go",
       "target_lang": "rust"
+    },
+    {
+      "classes_covered": [
+        "intmin_div_neg1"
+      ],
+      "n_classes": 1,
+      "n_divergent": 1,
+      "source_lang": "rust",
+      "target_lang": "c"
     }
   ],
   "divergence_classes": [
@@ -1163,7 +1190,8 @@
     "c->rust",
     "c->swift",
     "c->zig",
-    "go->rust"
+    "go->rust",
+    "rust->c"
   ],
-  "n_cells": 55
+  "n_cells": 56
 }

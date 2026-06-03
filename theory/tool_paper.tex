@@ -55,7 +55,7 @@
 }
 \lstset{style=codestyle}
 
-\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++/OCaml/Zig) via $\sigma$-Bridge Product Programs}}
+\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++/OCaml/Zig and Rust$\to$C) via $\sigma$-Bridge Product Programs}}
 \date{}
 
 \author{halley-labs}
@@ -104,11 +104,13 @@ confirmed against real compilers (\texttt{clang}, \texttt{rustc}, \texttt{go},
 \texttt{clang++}, \texttt{ocamlopt}, \texttt{zig}) plus an executable checked-libc contract
 build for preconditions UBSan does not cover and an MSan/auto-init padding
 confirmation for indeterminate object bytes. The framework is not limited to
-\mbox{C-rooted} undefined behaviour: a first \emph{safe$\to$safe} pair,
+\mbox{C-rooted} undefined behaviour in the forward direction: a
+\emph{Rust$\to$C reverse pair} proves that a Rust-defined panic can become
+target-side C UB under FFI-style lowering, and a first \emph{safe$\to$safe} pair,
 Go$\to$Rust---in which \emph{neither} side has any undefined behaviour---catches
 the \emph{defined-but-different} hazard where \texttt{INT\_MIN/-1} is a defined
 modular value in Go yet a guaranteed panic in Rust, raising the matrix to
-\textbf{55 cells over 7 pairs}, with confirmation delegated to the real
+\textbf{56 cells over 8 pairs}, with confirmation delegated to the real
 compiler/toolchain for every available cell. The new C$\to$Zig column contributes
 five real-compiler-backed integer/memory cells: C UB vs.\ Zig wrapping,
 shift-mask, division-safety, and bounds-safety semantics.
@@ -447,17 +449,20 @@ Relaxed atomics store-buffering & defined & SeqCst forbids all-zero & \textsc{mo
 \paragraph{Cross-pair generality.} Because each class shares one
 \texttt{divergence\_class} key across language pairs, a single solver/dataflow/model witness drives
 the class against \emph{every} target that implements it. The deterministic
-cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{7 language pairs}
+cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{8 language pairs}
 (C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++, C$\to$Zig, and the
-\emph{safe$\to$safe} Go$\to$Rust) with 20, 18, 6, 4, 1, 5, and 1 classes
-respectively---\textbf{55 cells in total}---and is byte-reproducible per fresh
+\emph{safe$\to$safe} Go$\to$Rust plus the reverse Rust$\to$C pair) with 20, 18,
+6, 4, 1, 5, 1, and 1 classes respectively---\textbf{56 cells in total}---and is
+byte-reproducible per fresh
 process. When the corresponding host toolchain is present, each attempted cell
 must confirm against real
 \texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}/\texttt{zig}
 or the checked C contract build for preconditions UBSan does not cover.
-The Go$\to$Rust pair is qualitatively new: \emph{neither} source nor target has
-any undefined behaviour, so the framework's reach extends past C-UB to the
-broader \emph{defined-but-different} regime (\S\ref{sec:eval-matrix}).
+The Rust$\to$C pair reverses the usual polarity: the source is defined (a Rust
+panic) while the C target is UBSan-confirmed UB. The Go$\to$Rust pair is
+qualitatively new in a different direction: \emph{neither} source nor target has
+any undefined behaviour, so the framework's reach extends past C-UB to both
+reverse-UB and \emph{defined-but-different} regimes (\S\ref{sec:eval-matrix}).
 The C$\to$C++
 pair is qualitatively distinct: its witness, the byte-identical token
 \texttt{1 << 31}, is \emph{undefined} in C (C17~6.5.7p4) yet \emph{defined} in
@@ -1099,14 +1104,31 @@ target languages} and \textbf{54 cells} (C$\to$Rust: 20 classes; C$\to$Go: 18;
 C$\to$Swift: 6, the argv-driven integer/memory core; C$\to$OCaml: 4, a GC'd
 exception-based target; C$\to$C++: 1, the C/C++-boundary shift class; C$\to$Zig:
 5, Zig \texttt{ReleaseSafe} wrapping/trap/bounds semantics). A
-\textbf{7th pair, the safe$\to$safe Go$\to$Rust} cell described below, raises the
-total to \textbf{55 cells over 7 pairs}. On a host with the corresponding
+\textbf{7th pair, Go$\to$Rust}, and an \textbf{8th pair, Rust$\to$C}, add the two
+non-forward-C cells described below and raise the total to \textbf{56 cells over
+8 pairs}. On a host with the corresponding
 toolchains, every attempted cell must confirm against real compilers or checked C
 contract builds---no verdict is taken on
 faith. Crucially, the matrix file contains \emph{no per-language branches}: it
 discovers pairs and oracles from the plugin registry, so adding a target
 language or a divergence class makes the corresponding cells appear
 automatically, and the soundness obligation is discharged uniformly.
+
+\paragraph{A reverse pair: defined Rust panic vs.\ target-side C UB (Rust$\to$C).}
+The reverse pair exercises the FFI direction: an idiomatic Rust implementation may
+depend on a \emph{defined panic}, while a C lowering reintroduces undefined
+behaviour. The oracle Z3-finds the same unique signed division/remainder overflow
+input, \texttt{INT\_MIN} op \texttt{-1}. In Rust, both \texttt{/} and \texttt{\%}
+panic deterministically in every build profile; the source therefore has a
+language-defined observable abort. The generated C target performs the operation
+at the exact \texttt{int32\_t}/\texttt{int64\_t} width, where C17 leaves the
+non-representable quotient undefined and UBSan traps. A new confirmation mode,
+\texttt{source\_defined\_target\_ub}, compiles the Rust source through real
+\texttt{rustc}, runs it twice to prove deterministic definedness, then compiles
+the C target with \texttt{clang -fsanitize=undefined -fno-sanitize-recover=all}
+and requires a real sanitizer trap on the same input. This cell proves the
+framework is not merely ``C source bad, safe target good'': it can also detect a
+translation that \emph{loses} a source-language safety guarantee.
 
 \paragraph{A safe$\to$safe pair: defined-but-different (Go$\to$Rust).} Most
 C-rooted cells exploit an asymmetry in which \emph{one} side (C) is undefined.
@@ -1179,8 +1201,9 @@ witness is found and (with toolchain) confirmed against real compilers; ``--'' =
 class not implemented for that pair. The C-rooted matrix now contains 54 cells,
 including five C$\to$Zig \texttt{ReleaseSafe} cells; a
 \textbf{55th cell}---the safe$\to$safe Go$\to$Rust pair (defined-but-different
-\texttt{INT\_MIN/-1}: a value in Go, a panic in Rust)---is described in the text
-and confirmed live on \texttt{go}+\texttt{rustc}, for \textbf{55 cells over 7
+\texttt{INT\_MIN/-1}: a value in Go, a panic in Rust)---and a
+\textbf{56th cell}---the Rust$\to$C reverse pair (defined Rust panic vs. C
+UBSan-trapped UB)---are described in the text, for \textbf{56 cells over 8
 pairs}. The
 C$\to$C++ column carries the single C/C++-boundary class whose witness
 (\texttt{1 << 31}) is UB in C but defined in C++20; the C$\to$OCaml column
@@ -1190,33 +1213,33 @@ carries the integer/memory core, witnessed against real \texttt{ocamlopt}
 the C$\to$Zig column is witnessed against real \texttt{zig build-exe -O
 ReleaseSafe}.}
 \label{tab:matrix}
-\begin{tabular}{@{}lcccccc@{}}
+\begin{tabular}{@{}lcccccccc@{}}
 \toprule
-Divergence class & C$\to$Rust & C$\to$Go & C$\to$Swift & C$\to$OCaml & C$\to$C++ & C$\to$Zig \\
+Divergence class & C$\to$Rs & C$\to$Go & C$\to$Sw & C$\to$Ml & C$\to$C++ & C$\to$Zig & Go$\to$Rs & Rs$\to$C \\
 \midrule
-Signed overflow            & D & D & D & D & -- & D \\
-Shift $\geq$ width          & D & D & D & -- & -- & D \\
-Division by zero           & D & D & D & D & -- & D \\
-\texttt{INT\_MIN / -1}     & D & D & D & D & -- & D \\
-Array out-of-bounds        & D & D & D & D & -- & D \\
-Unsequenced read/write     & D & -- & -- & -- & -- & -- \\
-Uninitialized read         & D & D & D & -- & -- & -- \\
-Uninitialized padding      & D & D & -- & -- & -- & -- \\
-Strict aliasing            & D & D & -- & -- & -- & -- \\
-VLA bound                  & D & D & -- & -- & -- & -- \\
-Float$\to$int overflow     & D & D & -- & -- & -- & -- \\
-\texttt{-ffast-math} reassoc.& D & D & -- & -- & -- & -- \\
-\texttt{restrict} violation & D & D & -- & -- & -- & -- \\
-Pointer provenance         & D & D & -- & -- & -- & -- \\
-Overlapping \texttt{memcpy} & D & D & -- & -- & -- & -- \\
-\texttt{longjmp} to exited VLA & D & D & -- & -- & -- & -- \\
-Bit-field layout           & D & D & -- & -- & -- & -- \\
-Out-of-range \texttt{enum} & D & D & -- & -- & -- & -- \\
-FP contraction             & D & -- & -- & -- & -- & -- \\
-Relaxed atomics ordering   & D & D & -- & -- & -- & -- \\
-\texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D & -- \\
+Signed overflow            & D & D & D & D & -- & D & -- & -- \\
+Shift $\geq$ width          & D & D & D & -- & -- & D & -- & -- \\
+Division by zero           & D & D & D & D & -- & D & -- & -- \\
+\texttt{INT\_MIN / -1}     & D & D & D & D & -- & D & D & D \\
+Array out-of-bounds        & D & D & D & D & -- & D & -- & -- \\
+Unsequenced read/write     & D & -- & -- & -- & -- & -- & -- & -- \\
+Uninitialized read         & D & D & D & -- & -- & -- & -- & -- \\
+Uninitialized padding      & D & D & -- & -- & -- & -- & -- & -- \\
+Strict aliasing            & D & D & -- & -- & -- & -- & -- & -- \\
+VLA bound                  & D & D & -- & -- & -- & -- & -- & -- \\
+Float$\to$int overflow     & D & D & -- & -- & -- & -- & -- & -- \\
+\texttt{-ffast-math} reassoc.& D & D & -- & -- & -- & -- & -- & -- \\
+\texttt{restrict} violation & D & D & -- & -- & -- & -- & -- & -- \\
+Pointer provenance         & D & D & -- & -- & -- & -- & -- & -- \\
+Overlapping \texttt{memcpy} & D & D & -- & -- & -- & -- & -- & -- \\
+\texttt{longjmp} to exited VLA & D & D & -- & -- & -- & -- & -- & -- \\
+Bit-field layout           & D & D & -- & -- & -- & -- & -- & -- \\
+Out-of-range \texttt{enum} & D & D & -- & -- & -- & -- & -- & -- \\
+FP contraction             & D & -- & -- & -- & -- & -- & -- & -- \\
+Relaxed atomics ordering   & D & D & -- & -- & -- & -- & -- & -- \\
+\texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D & -- & -- & -- \\
 \midrule
-\textbf{Matrix cells}      & \textbf{20} & \textbf{18} & \textbf{6} & \textbf{4} & \textbf{1} & \textbf{5} \\
+\textbf{Matrix cells}      & \textbf{20} & \textbf{18} & \textbf{6} & \textbf{4} & \textbf{1} & \textbf{5} & \textbf{1} & \textbf{1} \\
 \bottomrule
 \end{tabular}
 \end{table}

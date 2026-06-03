@@ -150,27 +150,36 @@ def verify_unit(
     src_lang = unit.get("source_lang") or "c"
     tgt_lang = unit.get("target_lang") or "rust"
     applicable = applicable_oracles(unit)
-    # A C-source pair confirms via the sanitizer / optimiser path and needs the
-    # full C+UBSan+target toolchain. A non-C source pair (e.g. Go->Rust) confirms
-    # by re-executing two defined programs, so it needs only the two compilers.
-    if src_lang == "c":
-        def _c_oracle_available(oracle) -> bool:
+    def _oracle_available(oracle) -> bool:
+        """Whether ``oracle``'s confirmation mode is runnable on this host."""
+        if oracle.confirmation_mode == "source_defined_target_ub":
+            return (
+                status.can_compile(oracle.source_lang)
+                and bool(getattr(status, "c_available", False))
+                and bool(getattr(status, "ubsan", False))
+            )
+        if oracle.source_lang == "c":
             if oracle.confirmation_mode in ("asan_trap_vs_defined",
                                             "libc_contract_trap_vs_defined"):
                 checker = getattr(status, "full_libc_contract_for", None)
-                return bool(checker(tgt_lang)) if checker is not None else False
+                return bool(checker(oracle.target_lang)) if checker is not None else False
             if oracle.confirmation_mode == "static_ub_vs_defined":
-                return status.c_available and status.target_available(tgt_lang)
+                return (
+                    bool(getattr(status, "c_available", False))
+                    and status.target_available(oracle.target_lang)
+                )
             if oracle.confirmation_mode == "model_level_divergence":
-                return status.c_available and status.target_available(tgt_lang)
+                return (
+                    bool(getattr(status, "c_available", False))
+                    and status.target_available(oracle.target_lang)
+                )
             if oracle.confirmation_mode == "uninit_padding":
                 checker = getattr(status, "full_uninit_padding_for", None)
-                return bool(checker(tgt_lang)) if checker is not None else False
-            return status.full_for(tgt_lang)
+                return bool(checker(oracle.target_lang)) if checker is not None else False
+            return status.full_for(oracle.target_lang)
+        return status.can_compile(oracle.source_lang) and status.can_compile(oracle.target_lang)
 
-        tool_ok = any(_c_oracle_available(o) for o in applicable)
-    else:
-        tool_ok = status.can_compile(src_lang) and status.can_compile(tgt_lang)
+    tool_ok = any(_oracle_available(o) for o in applicable)
     if confirm and tool_ok and harness is None:
         harness = ReexecHarness(status)
 
