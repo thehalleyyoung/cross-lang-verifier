@@ -12,5 +12,8 @@ lean_lib CompletenessBoundary where
 lean_lib SPIContract where
   roots := #[`SPIContract]
 
+lean_lib HashStability where
+  roots := #[`HashStability]
+
 lean_exe «verified-checker» where
   root := `VerifiedChecker

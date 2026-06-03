@@ -1,4 +1,4 @@
-"""Steps 75/126/127/128/130/131 — mechanized soundness (scoped).
+"""Steps 75/126/127/128/130/131/138 — mechanized soundness (scoped).
 
 A *machine-checked* soundness (and relative-completeness) argument for the
 relational/product-program decision procedure the tool implements, for a core
@@ -50,6 +50,11 @@ the published divergence classes into (a) classes complete on their declared
 finite fragment and (b) classes that remain sound-but-may-abstain.  It reuses the
 recorded-observable decision theorem but deliberately leaves the concrete
 finite-range evidence in ``src/ub_oracle/completeness.py``.
+
+Step 138 adds ``formal/HashStability.lean``: a Lake-checked injectivity theorem
+for the typed, length-prefixed verdict-layer canonicalization used before
+certificate hashing.  It proves the canonical preimage cannot merge two distinct
+verdict payloads; it does not claim SHA-256 itself is collision-free.
 """
 
 from __future__ import annotations
@@ -82,9 +87,11 @@ LEAN_SOURCE = os.path.join("formal", "ProductSoundness.lean")
 COMPLETENESS_BOUNDARY_SOURCE = os.path.join("formal", "CompletenessBoundary.lean")
 COQ_SOURCE = os.path.join("formal", "CoreSoundness.v")
 CHECKER_SOURCE = os.path.join("formal", "VerifiedChecker.lean")
+HASH_STABILITY_SOURCE = os.path.join("formal", "HashStability.lean")
 LAKEFILE = os.path.join("formal", "lakefile.lean")
 VERIFIED_CHECKER_TARGET = "verified-checker"
 COMPLETENESS_BOUNDARY_TARGET = "CompletenessBoundary"
+HASH_STABILITY_TARGET = "HashStability"
 VERIFIED_CHECKER_BINARY = os.path.join(
     FORMAL_DIR, ".lake", "build", "bin", VERIFIED_CHECKER_TARGET)
 
@@ -140,6 +147,12 @@ REQUIRED_COMPLETENESS_BOUNDARY_THEOREMS: Tuple[str, ...] = (
     "out_of_fragment_abstains_only",
     "complete_fragment_decides_recorded_observation",
     "boundary_claim_matches_predicates",
+)
+
+REQUIRED_HASH_STABILITY_THEOREMS: Tuple[str, ...] = (
+    "verdict_canonicalization_injective",
+    "verdict_canonicalization_distinguishes_consequence",
+    "verdict_canonicalization_preserves_observation",
 )
 
 
@@ -225,6 +238,38 @@ class CompletenessBoundaryReport:
             return self.kernel_accepted is True
         # Lake absent: source-contract only.  The report explicitly remains not
         # fully_checked, so callers cannot mistake it for a kernel run.
+        return True
+
+    @property
+    def fully_checked(self) -> bool:
+        return self.ok and self.available and self.kernel_accepted is True
+
+
+@dataclass
+class HashStabilityReport:
+    available: bool                 # Lake present and was actually run.
+    source_present: bool
+    lakefile_present: bool
+    theorems_present: Tuple[str, ...]
+    theorems_missing: Tuple[str, ...]
+    kernel_accepted: Optional[bool] # None when Lake absent.
+    source_hash: str
+    exit_code: Optional[int] = None
+    stdout_tail: str = ""
+    stderr_tail: str = ""
+
+    @property
+    def theorems_ok(self) -> bool:
+        return self.source_present and not self.theorems_missing
+
+    @property
+    def ok(self) -> bool:
+        if not self.source_present or not self.lakefile_present:
+            return False
+        if not self.theorems_ok:
+            return False
+        if self.available:
+            return self.kernel_accepted is True
         return True
 
     @property
@@ -323,6 +368,14 @@ def _read_completeness_boundary_source() -> Optional[str]:
 def _read_checker_source() -> Optional[str]:
     try:
         with open(os.path.join(_ROOT, CHECKER_SOURCE), "r") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def _read_hash_stability_source() -> Optional[str]:
+    try:
+        with open(os.path.join(_ROOT, HASH_STABILITY_SOURCE), "r") as f:
             return f.read()
     except OSError:
         return None
@@ -441,6 +494,73 @@ def confirm_mechanized_completeness_boundary(
         )
     except (subprocess.TimeoutExpired, OSError) as e:  # pragma: no cover
         return CompletenessBoundaryReport(
+            available=True,
+            source_present=True,
+            lakefile_present=True,
+            theorems_present=present,
+            theorems_missing=missing,
+            kernel_accepted=False,
+            source_hash=src_hash,
+            stderr_tail=f"lake invocation failed: {e}",
+        )
+
+
+def confirm_hash_stability(timeout: int = 300) -> HashStabilityReport:
+    """Confirm the Lean mechanization of verdict-layer hash canonicalization."""
+
+    src = _read_hash_stability_source()
+    lakefile = os.path.join(_ROOT, LAKEFILE)
+    lakefile_present = os.path.exists(lakefile)
+    if src is None:
+        return HashStabilityReport(
+            available=False,
+            source_present=False,
+            lakefile_present=lakefile_present,
+            theorems_present=(),
+            theorems_missing=REQUIRED_HASH_STABILITY_THEOREMS,
+            kernel_accepted=None,
+            source_hash="",
+        )
+
+    present = tuple(
+        t for t in REQUIRED_HASH_STABILITY_THEOREMS if f"theorem {t}" in src
+    )
+    missing = tuple(t for t in REQUIRED_HASH_STABILITY_THEOREMS if t not in present)
+    src_hash = hashlib.sha256(src.encode()).hexdigest()
+    lake = _lake_binary()
+    if lake is None or not lakefile_present:
+        return HashStabilityReport(
+            available=lake is not None,
+            source_present=True,
+            lakefile_present=lakefile_present,
+            theorems_present=present,
+            theorems_missing=missing,
+            kernel_accepted=None,
+            source_hash=src_hash,
+        )
+
+    try:
+        proc = subprocess.run(
+            [lake, "build", HASH_STABILITY_TARGET],
+            cwd=FORMAL_DIR,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return HashStabilityReport(
+            available=True,
+            source_present=True,
+            lakefile_present=True,
+            theorems_present=present,
+            theorems_missing=missing,
+            kernel_accepted=proc.returncode == 0,
+            source_hash=src_hash,
+            exit_code=proc.returncode,
+            stdout_tail=_tail(proc.stdout),
+            stderr_tail=_tail(proc.stderr),
+        )
+    except (subprocess.TimeoutExpired, OSError) as e:  # pragma: no cover
+        return HashStabilityReport(
             available=True,
             source_present=True,
             lakefile_present=True,
@@ -680,6 +800,29 @@ def render_completeness_boundary(rep: CompletenessBoundaryReport) -> str:
     return "\n".join(lines)
 
 
+def render_hash_stability(rep: HashStabilityReport) -> str:
+    lines = ["mechanized hash stability (Lean/Lake):"]
+    lines.append(f"  source: {HASH_STABILITY_SOURCE} "
+                 f"({'present' if rep.source_present else 'MISSING'}) "
+                 f"hash={rep.source_hash[:16]}")
+    lines.append(f"  lakefile: {LAKEFILE} "
+                 f"({'present' if rep.lakefile_present else 'MISSING'})")
+    lines.append(f"  required theorems present: {len(rep.theorems_present)}"
+                 f"/{len(REQUIRED_HASH_STABILITY_THEOREMS)}")
+    if rep.theorems_missing:
+        lines.append(f"  MISSING: {list(rep.theorems_missing)}")
+    if rep.available:
+        lines.append(f"  lake build {HASH_STABILITY_TARGET}: "
+                     f"{'PASSED' if rep.kernel_accepted else 'FAILED'}")
+        if not rep.kernel_accepted and rep.stderr_tail:
+            lines.append(f"    {rep.stderr_tail}")
+    else:
+        lines.append("  Lake: not installed (source-contract only)")
+    lines.append(f"  => {'PASSED' if rep.ok else 'FAILED'}"
+                 f"{' (kernel-checked)' if rep.fully_checked else ''}")
+    return "\n".join(lines)
+
+
 def render_coq_crosscheck(rep: CoqCrossCheckReport) -> str:
     lines = ["mechanized soundness cross-check (Coq):"]
     lines.append(f"  source: {COQ_SOURCE} "
@@ -723,8 +866,10 @@ MECHANIZED_SOUNDNESS_SPI = {
     "confirm_mechanized_completeness_boundary":
         confirm_mechanized_completeness_boundary,
     "confirm_coq_crosscheck": confirm_coq_crosscheck,
+    "confirm_hash_stability": confirm_hash_stability,
     "render": render,
     "render_completeness_boundary": render_completeness_boundary,
+    "render_hash_stability": render_hash_stability,
     "render_coq_crosscheck": render_coq_crosscheck,
     "build_verified_checker": build_verified_checker,
     "run_verified_checker": run_verified_checker,
@@ -732,11 +877,13 @@ MECHANIZED_SOUNDNESS_SPI = {
     "REQUIRED_THEOREMS": REQUIRED_THEOREMS,
     "REQUIRED_COMPLETENESS_BOUNDARY_THEOREMS":
         REQUIRED_COMPLETENESS_BOUNDARY_THEOREMS,
+    "REQUIRED_HASH_STABILITY_THEOREMS": REQUIRED_HASH_STABILITY_THEOREMS,
     "REQUIRED_COQ_THEOREMS": REQUIRED_COQ_THEOREMS,
     "LEAN_SOURCE": LEAN_SOURCE,
     "COMPLETENESS_BOUNDARY_SOURCE": COMPLETENESS_BOUNDARY_SOURCE,
     "COQ_SOURCE": COQ_SOURCE,
     "CHECKER_SOURCE": CHECKER_SOURCE,
+    "HASH_STABILITY_SOURCE": HASH_STABILITY_SOURCE,
     "COMPLETENESS_GUARANTEED_KEYS": COMPLETENESS_GUARANTEED_KEYS,
     "COMPLETENESS_MAY_ABSTAIN_KEYS": COMPLETENESS_MAY_ABSTAIN_KEYS,
 }
@@ -746,5 +893,6 @@ if __name__ == "__main__":  # pragma: no cover
     rep = confirm_mechanized_soundness()
     print(render(rep))
     print(render_completeness_boundary(confirm_mechanized_completeness_boundary()))
+    print(render_hash_stability(confirm_hash_stability()))
     print(render_coq_crosscheck(confirm_coq_crosscheck()))
     print(render_verified_checker_build(build_verified_checker()))

@@ -116,8 +116,10 @@ python3 -m src.cli.main discover \
   exact UBSan diagnostic category — see the `make cex-quality` study
 - **proof-carrying counterexamples**: every confirmed source-UB witness now ships
   a canonical, hash-bound certificate over the recorded `P ∧ T ∧ C` facts; the
-  offline checker rejects rebinding/corruption before Lake re-validates the final
-  `oracle_sound` inference, and cached divergences preserve the certificate
+  verdict-layer canonicalization is length-prefixed and Lake-proved injective in
+  `formal/HashStability.lean`, so the offline checker rejects
+  rebinding/corruption before Lake re-validates the final `oracle_sound`
+  inference, and cached divergences preserve the certificate
 - a **soundness-regression CI gate** (`make soundness-check`) that enumerates all
   60 registered oracle instances across 9 pairs and rejects any new plugin lacking
   a per-pair soundness statement, matching confirmation mode, and live witness

@@ -50,6 +50,7 @@ from typing import Any, Dict, Optional
 
 REPLAY_SCHEMA_VERSION = 1
 PROOF_CERTIFICATE_SCHEMA_VERSION = 1
+VERDICT_CANONICALIZATION_VERSION = b"clv-verdict-v1;"
 CERTIFICATE_THEOREM = "oracle_sound"
 CERTIFICATE_SCOPE = "final source-UB positive-claim inference over trusted run facts"
 CERTIFICATE_ISSUER = "cross-lang-verifier"
@@ -67,6 +68,78 @@ def _canonical_json(value: Dict[str, Any]) -> str:
 
 def _sha256_json(value: Dict[str, Any]) -> str:
     return "sha256:" + hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def _canonical_string_atom(value: str) -> bytes:
+    raw = value.encode("utf-8")
+    return b"s:" + str(len(raw)).encode("ascii") + b":" + raw + b";"
+
+
+def _canonical_int_atom(value: int) -> bytes:
+    if type(value) is not int:
+        raise ValueError("verdict hash field must be a JSON integer")
+    return f"i:{value};".encode("ascii")
+
+
+def _canonical_bool_atom(value: bool) -> bytes:
+    if type(value) is not bool:
+        raise ValueError("verdict hash observation fields must be JSON booleans")
+    return b"b:1;" if value else b"b:0;"
+
+
+def _canonical_field(name: str, value: bytes) -> bytes:
+    return _canonical_string_atom(name) + value
+
+
+def canonical_verdict_preimage(value: Dict[str, Any]) -> bytes:
+    """Return the typed, length-prefixed preimage for a verdict certificate hash.
+
+    This deliberately covers only the fixed verdict layer modeled in
+    ``formal/HashStability.lean``. The richer counterexample transcript can
+    contain arbitrary JSON values and remains hashed as canonical JSON; the
+    proof-backed part is the certificate's scalar verdict/observation binding.
+    """
+
+    observation = value.get("observation")
+    if not isinstance(observation, dict):
+        raise ValueError("verdict hash observation must be an object")
+
+    def _string_value(key: str) -> bytes:
+        field = value.get(key)
+        if not isinstance(field, str):
+            raise ValueError(f"verdict hash field {key!r} must be a JSON string")
+        return _canonical_string_atom(field)
+
+    return VERDICT_CANONICALIZATION_VERSION + b"".join([
+        _canonical_field(
+            "schema_version",
+            _canonical_int_atom(value.get("schema_version")),
+        ),
+        _canonical_field("verdict", _string_value("verdict")),
+        _canonical_field(
+            "observation.ub_reached",
+            _canonical_bool_atom(observation.get("ub_reached")),
+        ),
+        _canonical_field(
+            "observation.target_defined",
+            _canonical_bool_atom(observation.get("target_defined")),
+        ),
+        _canonical_field(
+            "observation.consequence",
+            _canonical_bool_atom(observation.get("consequence")),
+        ),
+        _canonical_field("kernel_theorem", _string_value("kernel_theorem")),
+        _canonical_field("checker_scope", _string_value("checker_scope")),
+        _canonical_field("issuer", _string_value("issuer")),
+        _canonical_field(
+            "counterexample_hash",
+            _string_value("counterexample_hash"),
+        ),
+    ])
+
+
+def _sha256_verdict_payload(value: Dict[str, Any]) -> str:
+    return "sha256:" + hashlib.sha256(canonical_verdict_preimage(value)).hexdigest()
 
 
 def _required_bool(mapping: Dict[str, Any], key: str) -> bool:
@@ -118,7 +191,7 @@ class ProofCertificate:
         }
 
     def recompute_hash(self) -> str:
-        return _sha256_json(self._hash_payload())
+        return _sha256_verdict_payload(self._hash_payload())
 
     def to_dict(self) -> Dict[str, Any]:
         return {

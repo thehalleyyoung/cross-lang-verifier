@@ -102,6 +102,7 @@ coverage-check:
 verified-check:
 	cd formal && lake build CompletenessBoundary
 	cd formal && lake build SPIContract
+	cd formal && lake build HashStability
 	cd formal && lake build verified-checker
 	cd formal && .lake/build/bin/verified-checker --verdict divergent --ub true --target-defined true --consequence true
 	cd formal && ! .lake/build/bin/verified-checker --verdict divergent --ub false --target-defined true --consequence true
