@@ -170,10 +170,12 @@ certificate before a Lake-built checker re-validates the final
 real-compiler runs, with an incremental cache whose warm hits are proved
 verdict-layer identical to cold compiler runs, compiler-backed artifacts that pin
 the exact \texttt{clang}/\texttt{rustc}/\texttt{go} version fingerprint and reject
-replay under a drifted toolchain, and a deterministic process-pool harness whose
-merged hash is independent of worker scheduling, plus a supervised peak-RSS cap
-whose proof rejects resource exhaustion and requires the bounded verdict-layer
-hash to match the unbounded run.  This includes a
+replay under a drifted toolchain, a deterministic process-pool harness whose
+merged hash is independent of worker scheduling, and a sharded-reproducibility
+proof whose per-shard canonical bytes repeat and whose concatenated shard verdict
+hash equals the unsharded run, plus a supervised peak-RSS cap whose proof rejects
+resource exhaustion and requires the bounded verdict-layer hash to match the
+unbounded run.  This includes a
 migration-scale corpus of \textbf{60{,}000}
 all-distinct C$\to$\{Rust,Go\} programs totaling \textbf{1{,}044{,}000 LOC}:
 the census proves every program hash unique and the labels balanced within
@@ -1052,6 +1054,7 @@ C$\to$Rust / C$\to$Go programs & 32{,}000 / 28{,}000 \\
 Divergent / equivalent labels & 29{,}600 / 30{,}400 \\
 Seeded live sample & 12/12 labels agree \\
 Verdict-layer hash prefix & \texttt{5ec6c935c7b0} \\
+Shard proof & concatenated shard hash = whole-run hash \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1064,6 +1067,13 @@ missing.  The same ground-truth labeler can now run through
 merged output is restored to the input sequence and the paper hash is computed
 only over the deterministic verdict layer.  The proof harness replays the same
 real items at multiple worker counts and requires byte-identical verdict layers.
+The sharded-reproducibility harness
+(\texttt{src/ub\_oracle/sharded\_repro.py}) then splits the corpus into
+deterministic contiguous shards, hashes each shard's canonical verdict bytes,
+repeats the shards to prove byte stability, and globally re-canonicalizes the
+concatenated shard verdicts; \texttt{make sharded-repro-check} requires that hash
+to equal the unsharded content hash on schedule-adversarial tests and on a real
+C/Rust compiler sample.
 The memory-bounded proof uses the same discipline for resource control: the
 README demo's divergent signed-overflow witness and safe control replay under a
 4096\,MiB supervised RSS cap with the same verdict-layer hash as the unbounded

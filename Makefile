@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check demo-video
 
 help:
 	@echo "Targets:"
@@ -23,6 +23,7 @@ help:
 	@echo "  perf              measure the symbolic-search scalability curves (study)"
 	@echo "  perf-check        assert the perf grid reproduces and latency budgets hold"
 	@echo "  memory-bound-check prove bounded/unbounded verdict equivalence"
+	@echo "  sharded-repro-check prove shard hashes merge to the whole-run verdict hash"
 	@echo "  redteam           run the internal red-team against real compilers (study)"
 	@echo "  redteam-check     assert the red-team adversarial grid regenerates byte-identically"
 	@echo "  c2rust-corpus     regenerate the Tier-1 c2rust-output corpus artifacts"
@@ -79,6 +80,9 @@ perf-check:
 memory-bound-check:
 	$(PYTHON) -m pytest tests/test_memory_bounded_mode.py -q
 
+sharded-repro-check:
+	$(PYTHON) -m pytest tests/test_sharded_repro.py -q
+
 redteam:
 	$(PYTHON) -m experiments.redteam.run --attack --table
 
@@ -126,5 +130,5 @@ green-check:
 large-scale:
 	PYTHONPATH=src $(PYTHON) -m ub_oracle.large_scale_study
 
-ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check redteam-check verified-check soundness-check test-ub
+ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check sharded-repro-check redteam-check verified-check soundness-check test-ub
 	@echo "ci: PASSED"
