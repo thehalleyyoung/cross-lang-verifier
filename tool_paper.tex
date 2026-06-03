@@ -288,8 +288,10 @@ verification---scores 0\% recall on the same benchmark.
   \item The \textbf{UB-invisible benchmark}: 30 divergent + 10
     equivalent pairs with ground truth, demonstrating 100\% recall
     vs.\ 0\% for all baselines (Section~\ref{sec:eval}).
-  \item An \textbf{open-source tool} with a true-green test ratchet and
-    targeted real-compiler regression tests
+  \item An \textbf{open-source tool} with a true-green test ratchet,
+    targeted real-compiler regression tests, and a compiler-IR localizer that
+    maps a reported C/Rust semantic split back to the exact
+    \texttt{clang}-AST and \texttt{rustc}-MIR facts
     (Section~\ref{sec:implementation}).
 \end{enumerate}
 
@@ -676,6 +678,19 @@ hand-written Pratt-parsing recursive-descent
 parsers~\cite{pratt1973top} as fallback (\texttt{src/c\_parser.py},
 \texttt{src/rust\_parser.py}).  Failures concentrate on macro-heavy code and complex generics.
 
+\paragraph{Compiler-IR evidence and localization.}
+The implementation also ingests the compilers' own IRs for debugging and
+artifact evidence.  \texttt{ir\_ingest.py} recovers C signatures, storage
+classes, and parameter names from \texttt{clang -Xclang -ast-dump=json}, and
+recovers Rust signatures and move/drop ownership facts from \texttt{rustc
+--emit=mir}.  The new \texttt{ir\_diff.py} localizer compares normalized facts
+from those real IR dumps: for the signed-overflow witness it points to the C
+\texttt{BinaryOperator} whose \texttt{qualType} is signed \texttt{int} and the
+Rust MIR statement that is either a defined \texttt{wrapping\_add} or an
+\texttt{AddWithOverflow} plus overflow assertion.  \texttt{make ir-diff-check}
+replays this localization against live \texttt{clang} and \texttt{rustc}; if the
+toolchains are absent, no IR evidence is fabricated.
+
 \paragraph{Shared IR.}
 Both ASTs are lowered to a shared typed SSA IR~\cite{cytron1991ssa}
 (\texttt{src/ir/}) with 36 instruction types organized into
@@ -954,6 +969,10 @@ We implement three baselines:
 All three baselines achieve \textbf{0/30 recall}: they report all 30
 divergent pairs as equivalent.  This confirms that the divergences are
 genuinely invisible at the IR and execution levels.
+This negative result does not preclude using compiler IR as \emph{evidence}: the
+new IR localizer intentionally compares source-level compiler products
+(\texttt{clang} AST and \texttt{rustc} MIR), not erased LLVM equality, and uses
+them to explain where the already-found semantic split occurs.
 
 \paragraph{Results.}
 
@@ -1869,6 +1888,9 @@ distinctions that compilation erases or under-specifies.  The soundness theorem
 (Theorem~\ref{thm:soundness})
 guarantees that UNSAT certifies equivalence on all well-defined
 inputs within the loop bound.
+When a positive witness is found, the compiler-IR localizer now complements the
+proof by pointing maintainers at the exact \texttt{clang}-AST operation and
+\texttt{rustc}-MIR statement whose semantics differ.
 
 General-purpose accuracy (35.4\% on 511 pairs) reflects parser and IR
 coverage limitations, not verification unsoundness.  Where the

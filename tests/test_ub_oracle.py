@@ -3914,6 +3914,58 @@ def test_ir_clang_function_qualtype_param_split():
 
 
 # ---------------------------------------------------------------------------
+# Step 151 — compiler-output IR diffing/localization (clang AST vs rustc MIR).
+# ---------------------------------------------------------------------------
+
+from src.ub_oracle import ir_diff as _ird  # noqa: E402
+
+_clang_and_rustc_for_ir_diff = pytest.mark.skipif(
+    not (_os.path.exists(_iri.CLANG) and _os.path.exists(_iri.RUSTC)),
+    reason="clang and rustc not available")
+
+
+@_clang_and_rustc_for_ir_diff
+def test_compiler_ir_diff_localizes_signed_overflow_semantics_on_real_ir():
+    c = _ird.confirm_compiler_ir_diff()
+    assert c.available and c.ok
+    rep = c.report
+    assert rep.source_evidence.ir_kind == "clang-ast-json"
+    assert rep.target_evidence.ir_kind == "rustc-mir"
+    assert len(rep.source_evidence.normalized_hash) == 64
+    assert len(rep.target_evidence.normalized_hash) == 64
+
+    hunk = next(h for h in rep.hunks
+                if h.kind == "arithmetic_semantics_mismatch")
+    assert hunk.function == "f"
+    assert hunk.source_fact.semantic == "c.signed_add"
+    assert hunk.source_fact.ir_kind == "clang-ast-json"
+    assert "BinaryOperator" in hunk.source_fact.evidence
+    assert hunk.target_fact.semantic == "rust.wrapping_add"
+    assert hunk.target_fact.ir_kind == "rustc-mir"
+    assert "wrapping_add" in hunk.target_fact.evidence
+
+    # Public report output is deterministic and JSON-friendly for paper/CI use.
+    import json
+    encoded = json.dumps(rep.to_dict(), sort_keys=True)
+    assert "arithmetic_semantics_mismatch" in encoded
+
+
+@_clang_and_rustc_for_ir_diff
+def test_compiler_ir_diff_also_detects_plain_rust_overflow_assert_mir():
+    rep = _ird.localize_compiler_ir_divergence(
+        "int f(int x){ return x + 1 > x; }\n",
+        "pub fn f(x:i32)->i32 { ((x + 1 > x) as i32) }\n",
+        function="f",
+    )
+    assert rep.ok and rep.has_semantic_mismatch, rep.detail
+    hunk = next(h for h in rep.hunks
+                if h.kind == "arithmetic_semantics_mismatch")
+    assert hunk.source_fact.semantic == "c.signed_add"
+    assert hunk.target_fact.semantic == "rust.add_with_overflow_assert"
+    assert "AddWithOverflow" in hunk.target_fact.evidence
+
+
+# ---------------------------------------------------------------------------
 # Step 31 — whole-project ingestion (compile_commands.json + cargo workspace).
 # ---------------------------------------------------------------------------
 

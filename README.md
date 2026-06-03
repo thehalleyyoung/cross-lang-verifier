@@ -287,8 +287,10 @@ python3 -m src.cli.main discover \
   `static char *dup_first(const char *)`) and rustc's `--emit=mir` (a by-value
   non-`Copy` parameter such as `Vec<i32>` shows a `move`/`drop` of its local and is
   recorded as *consumed*; a `Copy` `i32` is not — ownership for free, from the
-  compiler itself), with builtins filtered by source-location provenance and the
-  ingesters self-confirming against the real clang/rustc on every run
+  compiler itself), with builtins filtered by source-location provenance; the
+  ingesters self-confirm against real clang/rustc, and `ir_diff.py` now pinpoints
+  the exact clang-AST vs rustc-MIR operation where signed-overflow semantics split
+  (`make ir-diff-check`)
 - **whole-project ingestion** (`project_ingest.py`): scales from a single file to
   a whole build tree on both sides — the source side reads a Clang
   `compile_commands.json` database (the CMake/Bear standard), recovers each unit's
