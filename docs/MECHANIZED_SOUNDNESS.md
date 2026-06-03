@@ -33,6 +33,17 @@ Step 129 adds an extracted checker artifact without moving the proof: Lake build
 `productViolated` definition directly, and has compile-time theorem guards tied to
 `oracle_sound`.
 
+Step 132 makes source-UB counterexamples proof-carrying. A confirmed source-UB
+witness now serializes a `proof_certificate` beside the replay payload. The
+certificate canonically binds to the counterexample text, inputs, observed
+transcript, and `confirmed` bit; `verify_certificate()` checks that binding and
+the carried `ubReached ∧ tgtDefined ∧ consequence` observation offline, without
+re-running compilers. `--verified-check` then sends the certificate-carried
+observation to the Lake-built checker. The binding hash is an integrity/rebinding
+guard, not a signature: the trusted facts are still the real compiler runs that
+minted the certificate, and Lean proves the final inference from those facts to a
+UB-rooted divergence.
+
 Step 131 adds `formal/CompletenessBoundary.lean`, also built through Lake because
 it imports `ProductSoundness`. It mechanizes the public boundary between classes
 that are complete on their declared finite fragment and classes that remain
@@ -73,6 +84,7 @@ with the relational assertion `R = ¬(P ∧ T ∧ C)` and `productViolated = ¬R
 | `product_program_preserves_divergence_witness` | the end-to-end product-program construction emits a counterexample only by copying the source/target/input payload unchanged and carrying the observation derived from raw run facts; that observation is a genuine UB-rooted divergence. |
 | `product_program_emits_witness_iff_product_violated` | witness emission is exactly product-assertion violation. |
 | `product_program_witness_iff_divergence` | witness emission is equivalent to a UB-rooted divergence in the recorded-observable abstraction. |
+| `proof_carrying_counterexample_sound` | a certificate whose payload binding, hash binding, source-UB scope, and carried positive claim all verify entails a genuine UB-rooted divergence in the recorded-observable abstraction. |
 | `strict_aliasing_oracle_sound` | a strict-aliasing report confirmed by optimizer exploitation is a genuine UB-rooted divergence. |
 | `strict_aliasing_report_implies_type_pun` | the strict-aliasing report carries the generated incompatible-access/same-storage type-pun shape. |
 | `strict_aliasing_report_implies_optimizer_exploited` | the report carries the exact `optimizer_exploited` confirmation signal: two clean C builds disagree while the target is defined and deterministic. |
@@ -156,8 +168,11 @@ print(boundary.fully_checked)     # True only when Lake/Lean accepted the module
 
 ```python
 from ub_oracle.mechanized_soundness import build_verified_checker, run_verified_checker
+from ub_oracle.replay import Counterexample, verify_certificate
 build = build_verified_checker()
 assert build.ok
+ce = Counterexample.from_json(serialized_counterexample)
+cert = verify_certificate(ce)        # offline: schema/hash/scope/observation
 assert run_verified_checker("divergent", True, True, True, build=False).ok
 assert not run_verified_checker("divergent", False, True, True, build=False).accepted
 ```

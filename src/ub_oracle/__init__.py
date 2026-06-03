@@ -46,7 +46,13 @@ from .plugin import (
     language_pairs,
     list_oracles,
 )
-from .replay import Counterexample, REPLAY_SCHEMA_VERSION
+from .replay import (
+    Counterexample,
+    ProofCertificate,
+    REPLAY_SCHEMA_VERSION,
+    PROOF_CERTIFICATE_SCHEMA_VERSION,
+    verify_certificate,
+)
 from .reexec import (
     ReexecResult,
     ReexecHarness,
@@ -128,7 +134,10 @@ __all__ = [
     "language_pairs",
     "list_oracles",
     "Counterexample",
+    "ProofCertificate",
     "REPLAY_SCHEMA_VERSION",
+    "PROOF_CERTIFICATE_SCHEMA_VERSION",
+    "verify_certificate",
     "ReexecResult",
     "ReexecHarness",
     "toolchain_available",

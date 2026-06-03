@@ -310,6 +310,18 @@ class _LongjmpVlaBase(DivergenceOracle):
             ce.confirmed = rr.confirmed
             ce.source_observed = {k: v.stdout for k, v in rr.c_runs.items()}
             ce.target_observed = rr.rust_run.stdout if rr.rust_run else None
+            if (
+                ce.confirmed
+                and ce.source_definedness == Definedness.UNDEFINED.value
+                and rr.ub_reachable
+                and rr.rust_defined
+                and rr.ub_consequential
+            ):
+                ce.attach_proof_certificate({
+                    "ub_reached": rr.ub_reachable,
+                    "target_defined": rr.rust_defined,
+                    "consequence": rr.ub_consequential,
+                })
         return result
 
 

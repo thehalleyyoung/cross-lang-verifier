@@ -53,6 +53,45 @@ theorem accepted_divergent_claim_sound
   simp [verifiesPositiveClaim, Claim.observation] at haccepted
   exact oracle_sound _ haccepted
 
+/-- The certificate-level predicate modeled by the executable boundary.
+
+    The Python replay layer checks the concrete JSON schema, canonical hash
+    binding, and source-UB scope.  The extracted checker then validates the
+    recorded-observable claim.  This predicate names that combined boundary in
+    Lean without pretending that SHA-256 or JSON parsing are mechanized here. -/
+structure ProofCertificate where
+  claim                : Claim
+  counterexampleBound  : Bool
+  certificateHashBound : Bool
+  sourceUBScope        : Bool
+deriving DecidableEq, Repr
+
+def ProofCertificate.observation (cert : ProofCertificate) : Observation :=
+  cert.claim.observation
+
+def verifiesProofCertificate (cert : ProofCertificate) : Bool :=
+  cert.counterexampleBound &&
+    cert.certificateHashBound &&
+    cert.sourceUBScope &&
+    match cert.claim.verdict with
+    | Verdict.divergent => verifiesPositiveClaim cert.claim
+    | _ => false
+
+theorem proof_carrying_counterexample_sound (cert : ProofCertificate) :
+    verifiesProofCertificate cert = true →
+      isUBDivergence cert.observation := by
+  cases cert with
+  | mk claim counterexampleBound certificateHashBound sourceUBScope =>
+    cases claim with
+    | mk verdict ubReached targetDefined consequence =>
+      cases verdict <;>
+        simp [verifiesProofCertificate, ProofCertificate.observation,
+          verifiesPositiveClaim, Claim.observation, productViolated, R,
+          isUBDivergence]
+      intro _counterexampleBound _certificateHashBound _sourceUBScope
+        hubReached htgtDefined hconsequence
+      exact ⟨hubReached, htgtDefined, hconsequence⟩
+
 def parseBool? (s : String) : Option Bool :=
   if s == "true" then some true
   else if s == "false" then some false

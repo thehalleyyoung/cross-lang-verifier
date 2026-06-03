@@ -45,6 +45,7 @@ from .suppress import (
 from .triage import render_triage, triage_reports
 from .verify import VerifyReport, VerifyVerdict, verify_unit
 from .ir import assert_valid, IRValidationError
+from .replay import CERTIFICATE_SCOPE, PROOF_CERTIFICATE_SCHEMA_VERSION, verify_certificate
 
 _VERDICT_STYLE = {
     VerifyVerdict.DIVERGENT: ("31;1", "DIVERGENT"),          # bold red
@@ -242,22 +243,28 @@ def _run_verified_checks(reports: List[VerifyReport]) -> tuple:
     for i, rep in enumerate(reports):
         if rep.verdict is VerifyVerdict.DIVERGENT:
             ce = rep.divergence.counterexample if rep.divergence else None
-            if ce is None or ce.source_definedness != "undefined":
-                skipped_non_ub += 1
-                continue
-            obs = _verified_observation(rep)
-            if obs is None:
+            if ce is None:
                 return None, (
                     f"verified-check failed: divergent report {i} has no "
-                    "available raw re-execution facts")
-            claims.append((i, rep, obs))
+                    "counterexample artifact")
+            if ce.source_definedness != "undefined":
+                skipped_non_ub += 1
+                continue
+            try:
+                cert = verify_certificate(ce)
+            except ValueError as exc:
+                return None, (
+                    f"verified-check failed: divergent report {i} has an invalid "
+                    f"proof certificate: {exc}")
+            claims.append((i, rep, cert.observation))
 
     summary = {
         "enabled": True,
         "checked": 0,
         "accepted": 0,
         "kernel_theorem": "oracle_sound",
-        "scope": "final source-UB positive-claim inference over trusted run facts",
+        "scope": CERTIFICATE_SCOPE,
+        "certificate_schema_version": PROOF_CERTIFICATE_SCHEMA_VERSION,
         "checker_hash": None,
         "skipped_non_ub_rooted": skipped_non_ub,
     }

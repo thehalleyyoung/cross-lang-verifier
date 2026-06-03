@@ -114,6 +114,10 @@ python3 -m src.cli.main discover \
 - a faithful counterexample minimizer (`src/ub_oracle/minimizer.py`) that shrinks
   each confirmed witness to a locally-minimal canonical form while preserving the
   exact UBSan diagnostic category — see the `make cex-quality` study
+- **proof-carrying counterexamples**: every confirmed source-UB witness now ships
+  a canonical, hash-bound certificate over the recorded `P ∧ T ∧ C` facts; the
+  offline checker rejects rebinding/corruption before Lake re-validates the final
+  `oracle_sound` inference, and cached divergences preserve the certificate
 - a severity-ranked triage view and linter-style baseline/suppression files
   (`cross-lang-verify --triage` / `--write-baseline` / `--suppress`) so teams can
   adopt the checker on a large existing migration and fail CI only on *new*
@@ -368,8 +372,8 @@ python3 -m src.cli.main discover \
   the product-program guarantees — no false alarms, UB-rooted counterexamples,
   equivalent pairs never flagged, witness-preserving packaging, and the
   completeness/may-abstain boundary — then Lake builds a tiny checker that
-  re-validates each source-UB positive verdict's final inference from the real
-  re-execution facts (see `docs/MECHANIZED_SOUNDNESS.md`)
+  re-validates each source-UB positive verdict's certificate-carried final
+  inference from the real re-execution facts (see `docs/MECHANIZED_SOUNDNESS.md`)
 - a **Tier-2 idiomatic anchor corpus** (`idiomatic_corpus.py`): realistic,
   value-carrying ported functions — the binary-search **midpoint `(lo+hi)/2`**
   overflow bug, a packed-struct bit-field shift, a coreutils-style rate divide,

@@ -225,6 +225,8 @@ def to_sarif(reports: Iterable[VerifyReport]) -> Dict:
         if ce is not None:
             props["inputs"] = {k: repr(v) for k, v in ce.inputs.items()}
             props["divergence_witness"] = ce.divergence_witness
+            if ce.proof_certificate is not None:
+                props["proof_certificate"] = ce.proof_certificate.to_dict()
         if r.detail:
             props["detail"] = r.detail
 

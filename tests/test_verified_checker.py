@@ -24,6 +24,7 @@ def test_verified_checker_source_binds_to_proven_symbols():
     assert "import ProductSoundness" in source
     assert "productViolated" in source
     assert "oracle_sound" in source
+    assert "proof_carrying_counterexample_sound" in source
     assert "confirmed" not in source
 
 

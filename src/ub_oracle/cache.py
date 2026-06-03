@@ -17,10 +17,11 @@ let a stale verdict outlive a change that could invalidate it:
     3. the **canonicalised unit** (JSON with sorted keys).
   Change any of these and the key changes, forcing a fresh real-compiler run.
 
-* The cache **value** records only the *verdict* (plus its detail / divergence
-  class / pair) — never a fabricated confirmation.  A cache hit reconstructs a
-  :class:`~ub_oracle.verify.VerifyReport` carrying exactly the verdict that a
-  real run produced earlier under an identical toolchain.
+* The cache **value** records the deterministic verdict and, for confirmed
+  divergences, the proof-carrying counterexample emitted by the real run.  A
+  cache hit reconstructs a :class:`~ub_oracle.verify.VerifyReport` carrying
+  exactly the verdict and certificate-bearing witness produced earlier under an
+  identical toolchain.
 
 * ``DIVERGENT`` / ``NO_DIVERGENCE_FOUND`` / ``NOT_COVERED`` are deterministic and
   safe to cache.  ``UNKNOWN`` (a solver abstained / timed out) and un-confirmable
@@ -38,15 +39,16 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from .reexec import ReexecHarness, ToolchainStatus, toolchain_available
+from .replay import Counterexample
 from .plugin import OracleResult, OracleVerdict
 from .verify import VerifyReport, VerifyVerdict, verify_unit
 from .report import pair_of, _class_of
 
 #: bump this whenever oracle/confirmation logic changes in a way that could
 #: change a verdict for an unchanged unit + unchanged toolchain.
-SEMANTICS_VERSION = "1"
+SEMANTICS_VERSION = "2"
 
-CACHE_FORMAT_VERSION = 1
+CACHE_FORMAT_VERSION = 2
 
 #: only these verdicts are deterministic enough to cache safely.
 _CACHEABLE = {
@@ -106,14 +108,18 @@ class CacheEntry:
     detail: str
     divergence_class: Optional[str]
     pair: str
+    counterexample: Optional[Dict] = None
 
     def to_dict(self) -> Dict:
-        return {
+        out = {
             "verdict": self.verdict,
             "detail": self.detail,
             "divergence_class": self.divergence_class,
             "pair": self.pair,
         }
+        if self.counterexample is not None:
+            out["counterexample"] = self.counterexample
+        return out
 
     @staticmethod
     def from_dict(d: Dict) -> "CacheEntry":
@@ -122,6 +128,7 @@ class CacheEntry:
             detail=d.get("detail", ""),
             divergence_class=d.get("divergence_class"),
             pair=d.get("pair", "unknown->unknown"),
+            counterexample=d.get("counterexample"),
         )
 
 
@@ -182,11 +189,15 @@ class VerificationCache:
             return False
         cls = (report.divergence.divergence_class
                if report.divergence is not None else None)
+        ce = None
+        if report.divergence is not None and report.divergence.counterexample is not None:
+            ce = report.divergence.counterexample.to_dict()
         self._entries[self.key_for(unit)] = CacheEntry(
             verdict=report.verdict.value,
             detail=report.detail,
             divergence_class=cls,
             pair=pair_of(report),
+            counterexample=ce,
         )
         return True
 
@@ -207,7 +218,14 @@ def _report_from_entry(unit: Dict, entry: CacheEntry) -> VerifyReport:
     verdict = VerifyVerdict(entry.verdict)
     divergence = None
     if verdict is VerifyVerdict.DIVERGENT and entry.divergence_class:
-        divergence = OracleResult(OracleVerdict.DIVERGENT, entry.divergence_class)
+        ce = None
+        if entry.counterexample is not None:
+            ce = Counterexample.from_dict(entry.counterexample)
+        divergence = OracleResult(
+            OracleVerdict.DIVERGENT,
+            entry.divergence_class,
+            counterexample=ce,
+        )
     return VerifyReport(
         verdict, unit,
         divergence=divergence,
