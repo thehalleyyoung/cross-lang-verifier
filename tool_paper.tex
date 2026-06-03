@@ -146,7 +146,9 @@ anchor classes) the oracle attains perfect precision and recall ($\mathrm{tp}=23
 \mathrm{tn}=528$) where a 200{,}000-trial differential fuzzer finds nothing on
 the UB-invisible classes. A Tier-1 c2rust-output corpus separately runs the real
 \texttt{c2rust 0.22.1} translator on 12 real-library extraction units and checks
-the generated Rust artifacts against the verifier. The same artifact also keeps
+the generated Rust artifacts against the verifier; a GitHub-mined C$\to$Rust port
+sample ranks public port/rewrite repositories and byte-checks verifier-backed
+extraction units from three project families. The same artifact also keeps
 the tool honest at semantic frontiers: volatile/inline-assembly/FFI/general
 atomic units cause loud abstention justified by real \texttt{clang} IR, while
 the scoped atomics oracle uses a deterministic model-level proof; a
@@ -921,7 +923,8 @@ All experiments run on a laptop
     with independent enumeration semantics on a large sampled differential
     check?
   \item[\textbf{RQ12}] Does the artifact exercise actual c2rust machine output,
-    rather than hand-written c2rust-style translations?
+    rather than hand-written c2rust-style translations, and can it connect that
+    pipeline to public GitHub C$\to$Rust port families?
 \end{enumerate}
 
 \subsection{UB-Invisible Benchmark (RQ1)}\label{sec:eval-ub}
@@ -1097,6 +1100,24 @@ extraction units rather than whole build systems, so whole-project c2rust
 ingestion remains an engineering frontier. The important credibility property is
 that every reported row is tied to exact generated Rust bytes and a verifier
 record in \texttt{experiments/c2rust\_corpus/results.json}.
+
+\paragraph{GitHub-mined C$\to$Rust port sample.}
+To keep the real-world funnel live beyond the fixed c2rust corpus, the artifact
+also includes a deterministic GitHub-port miner
+(\texttt{src/ub\_oracle/github\_port\_miner.py}). The miner parses GitHub
+repository-search JSON, scores repositories by Rust evidence, C-lineage evidence,
+port/rewrite language, and popularity, and seeds the current run with three
+public port/rewrite families: \texttt{uutils/coreutils},
+\texttt{trifectatechfoundation/sudo-rs}, and
+\texttt{trifectatechfoundation/zlib-rs}. For reproducibility and licensing, the
+checked-in source files are compact extraction units derived from those project
+families rather than copied upstream files. The resulting sample has two symbolic
+witnesses (signed overflow and division by zero) plus one interval-proved safe
+control; \texttt{make github-port-mining-check} byte-checks the candidate ranking,
+source hashes, verifier verdicts, and pre-pass result in
+\texttt{experiments/github\_ports/results.json}. A separate skip-gated test
+compiles every sample as real C/Rust code and confirms a divergent sample against
+live \texttt{clang}/UBSan+\texttt{rustc} when those toolchains are present.
 
 \subsection{General Accuracy (RQ2)}\label{sec:eval-accuracy}
 

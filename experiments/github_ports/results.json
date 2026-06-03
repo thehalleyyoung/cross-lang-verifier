@@ -1,0 +1,162 @@
+{
+  "all_verdicts_match_expectation": true,
+  "by_divergence_class": {
+    "div_by_zero": 1,
+    "signed_overflow": 2
+  },
+  "by_symbolic_verdict": {
+    "candidate": 2,
+    "no_divergence_found": 1
+  },
+  "candidates": [
+    {
+      "description": "Cross-platform Rust rewrite of the GNU coreutils",
+      "evidence": [
+        "Rust rewrite",
+        "GNU coreutils lineage",
+        "large public port"
+      ],
+      "owner_repo": "uutils/coreutils",
+      "score": 96,
+      "stars": 23373,
+      "topics": [
+        "rust",
+        "coreutils",
+        "gnu-coreutils",
+        "cross-platform"
+      ],
+      "url": "https://github.com/uutils/coreutils"
+    },
+    {
+      "description": "A memory safe implementation of sudo and su.",
+      "evidence": [
+        "memory-safe implementation",
+        "sudo lineage",
+        "security-critical port"
+      ],
+      "owner_repo": "trifectatechfoundation/sudo-rs",
+      "score": 80,
+      "stars": 4390,
+      "topics": [
+        "rust",
+        "sudo",
+        "memory-safety"
+      ],
+      "url": "https://github.com/trifectatechfoundation/sudo-rs"
+    },
+    {
+      "description": "A zlib implementation in rust available as a C dynamic library and as a rust crate",
+      "evidence": [
+        "zlib lineage",
+        "C dynamic library",
+        "Rust crate"
+      ],
+      "owner_repo": "trifectatechfoundation/zlib-rs",
+      "score": 76,
+      "stars": 643,
+      "topics": [
+        "rust",
+        "zlib",
+        "c-abi"
+      ],
+      "url": "https://github.com/trifectatechfoundation/zlib-rs"
+    }
+  ],
+  "content_hash": "6393600c4d6400d2d8ba95ee45c75ce869ababc45afd5d3b3ce37b50c4645f4a",
+  "discovery_query": "(\"rust rewrite\" OR \"rust implementation\" OR \"memory safe implementation\" OR \"C dynamic library\") (C OR \"GNU\" OR zlib OR sudo OR coreutils)",
+  "n_candidates": 3,
+  "n_source_families": 3,
+  "n_verified_samples": 3,
+  "samples": [
+    {
+      "c_file": "experiments/github_ports/samples/coreutils_size_accumulate.c",
+      "candidate_repo": "uutils/coreutils",
+      "divergence_class": "signed_overflow",
+      "expected_symbolic_verdict": "candidate",
+      "note": "Symbolic signed-overflow witness; real compiler confirmation is optional.",
+      "observed_symbolic_verdict": "candidate",
+      "prepass_pruned": [],
+      "provenance": "Mined from the uutils/coreutils Rust rewrite family; extraction unit models byte-count accumulation common in file-size utilities.",
+      "rust_file": "experiments/github_ports/samples/coreutils_size_accumulate.rs",
+      "rust_sha256": "c6ceb0fa4fa7087b5f90f706aba9a64feb7548ccf5dec1eb3dca1514248d560a",
+      "sample_id": "coreutils-size-accumulate",
+      "source_family": "GNU coreutils size/accounting arithmetic",
+      "source_sha256": "300fb32daa3d1c8996c2e16ce6bee5ded4719141e16b00100179213698a194fd",
+      "unit": {
+        "const": 4096,
+        "kind": "binop_const",
+        "name": "coreutils-size-accumulate",
+        "op": "add",
+        "probe": "signed_overflow",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "var": "bytes",
+        "width": 32
+      },
+      "verdict_matches_expectation": true
+    },
+    {
+      "c_file": "experiments/github_ports/samples/zlib_checksum_window.c",
+      "candidate_repo": "trifectatechfoundation/zlib-rs",
+      "divergence_class": "signed_overflow",
+      "expected_symbolic_verdict": "no_divergence_found",
+      "note": "Safe-range control discharged by the interval pre-pass.",
+      "observed_symbolic_verdict": "no_divergence_found",
+      "prepass_pruned": [
+        "signed_overflow"
+      ],
+      "provenance": "Mined from the zlib-rs C-ABI port family; extraction unit models a bounded checksum-window update.",
+      "rust_file": "experiments/github_ports/samples/zlib_checksum_window.rs",
+      "rust_sha256": "135a39296606a7a2e2b6cb8be86c368c2b544d3b4100e31bf52080a3cbc315ce",
+      "sample_id": "zlib-checksum-window",
+      "source_family": "zlib checksum window arithmetic",
+      "source_sha256": "54f249c76c94b9f5a84df07a415d1d84289d22b8d588b89b0ec808fb511bfd57",
+      "unit": {
+        "const": 65521,
+        "kind": "binop_const",
+        "name": "zlib-checksum-window",
+        "op": "add",
+        "probe": "signed_overflow",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "var": "sum",
+        "width": 32,
+        "x_range": [
+          0,
+          1000000
+        ]
+      },
+      "verdict_matches_expectation": true
+    },
+    {
+      "c_file": "experiments/github_ports/samples/sudo_tty_rate.c",
+      "candidate_repo": "trifectatechfoundation/sudo-rs",
+      "divergence_class": "div_by_zero",
+      "expected_symbolic_verdict": "candidate",
+      "note": "Symbolic zero-divisor witness; real compiler confirmation is optional.",
+      "observed_symbolic_verdict": "candidate",
+      "prepass_pruned": [],
+      "provenance": "Mined from the sudo-rs memory-safe sudo implementation family; extraction unit models rate computation with an elapsed-time divisor.",
+      "rust_file": "experiments/github_ports/samples/sudo_tty_rate.rs",
+      "rust_sha256": "b3249ba20000ac9998c5539b1256deead12e225f10e7084beb9279a7619c4440",
+      "sample_id": "sudo-tty-rate",
+      "source_family": "sudo terminal/accounting rate arithmetic",
+      "source_sha256": "f830b8ad0a92aac80b9957a7a0bd6041561b71097ac469350fd236c54a81b1af",
+      "unit": {
+        "a": "bytes",
+        "b": "elapsed",
+        "kind": "div",
+        "name": "sudo-tty-rate",
+        "probe": "div_by_zero",
+        "signed": true,
+        "source_lang": "c",
+        "target_lang": "rust",
+        "width": 32
+      },
+      "verdict_matches_expectation": true
+    }
+  ],
+  "schema": "github-port-mining/v1"
+}

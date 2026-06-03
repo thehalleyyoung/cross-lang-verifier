@@ -157,6 +157,9 @@ python3 -m src.cli.main discover \
   real-library extraction units are translated by the actual `c2rust 0.22.1`
   binary, the generated Rust artifacts are checked in, and the verifier-backed
   verdict layer is byte-reproducible
+- a **GitHub-mined C→Rust port sample** (`make github-port-mining-check`) that
+  ranks public port/rewrite repos, verifies extraction units from three mined
+  project families, and byte-checks the symbolic verdict layer
 - a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against

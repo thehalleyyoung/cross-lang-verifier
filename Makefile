@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check github-port-mining-check package-check coverage coverage-check verified-check soundness-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -34,6 +34,7 @@ help:
 	@echo "  redteam-check     assert the red-team adversarial grid regenerates byte-identically"
 	@echo "  c2rust-corpus     regenerate the Tier-1 c2rust-output corpus artifacts"
 	@echo "  c2rust-corpus-check assert c2rust corpus results and generated Rust reproduce"
+	@echo "  github-port-mining-check assert GitHub-mined port samples reproduce"
 	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
 	@echo "  demo-video        regenerate the README-linked c2rust CWE-class demo video"
 	@echo "  guard             run the credibility guard (no simulated results)"
@@ -122,6 +123,9 @@ c2rust-corpus:
 
 c2rust-corpus-check:
 	$(PYTHON) -m experiments.c2rust_corpus.run --check --check-generated
+
+github-port-mining-check:
+	$(PYTHON) -m experiments.github_ports.run --check
 
 package-check:
 	bash scripts/verify_packaging.sh
