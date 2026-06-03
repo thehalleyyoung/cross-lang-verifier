@@ -43,7 +43,14 @@ compiles, so the proof cannot be silently gutted):
 * ``pointer_provenance_report_implies_checked_target`` — the report carries the
   safe checked-index target shape;
 * ``pointer_provenance_report_implies_trap_vs_defined`` — the report carries the
-  exact ``trap_vs_defined`` confirmation signal.
+  exact ``trap_vs_defined`` confirmation signal;
+* ``minimizer_preserves_divergence`` — a real-harness-accepted minimizer
+  reduction preserves a UB-rooted divergence in the recorded-observable model;
+* ``minimizer_reduction_steps_preserve_divergence`` — a chain of accepted
+  reductions preserves divergence through to the final minimized observation;
+* ``minimizer_certificate_sound`` — an offline minimizer certificate whose final
+  witness was real-harness-confirmed entails that the minimized witness remains
+  a genuine UB-rooted divergence.
 
 Step 131 adds ``formal/CompletenessBoundary.lean``: a Lake-checked partition of
 the published divergence classes into (a) classes complete on their declared
@@ -125,6 +132,9 @@ REQUIRED_THEOREMS: Tuple[str, ...] = (
     "pointer_provenance_report_implies_out_of_provenance",
     "pointer_provenance_report_implies_checked_target",
     "pointer_provenance_report_implies_trap_vs_defined",
+    "minimizer_preserves_divergence",
+    "minimizer_reduction_steps_preserve_divergence",
+    "minimizer_certificate_sound",
 )
 
 REQUIRED_COQ_THEOREMS: Tuple[str, ...] = (

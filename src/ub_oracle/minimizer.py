@@ -69,6 +69,26 @@ def _reduction_ladder(v: int) -> List[int]:
 
 
 @dataclass
+class MinimizationStep:
+    """One accepted reduction in a real-harness-backed minimization trace."""
+
+    field: str
+    before_inputs: Dict[str, Any]
+    after_inputs: Dict[str, Any]
+    ub_category: str = ""
+    confirmed: bool = True
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "field": self.field,
+            "before_inputs": self.before_inputs,
+            "after_inputs": self.after_inputs,
+            "ub_category": self.ub_category,
+            "confirmed": self.confirmed,
+        }
+
+
+@dataclass
 class MinimizationResult:
     divergence_class: str
     source_lang: str
@@ -80,6 +100,8 @@ class MinimizationResult:
     confirmed: bool = False
     certified_locally_minimal: bool = False
     already_minimal: bool = False
+    ub_category: str = ""
+    accepted_reductions: List[MinimizationStep] = field(default_factory=list)
 
     @property
     def reduced(self) -> bool:
@@ -107,6 +129,102 @@ class MinimizationResult:
             "certified_locally_minimal": self.certified_locally_minimal,
             "already_minimal": self.already_minimal,
         }
+
+
+@dataclass
+class MinimizationCertificate:
+    """Offline certificate for the scoped minimizer guarantee.
+
+    The certificate does not replace compiler re-execution.  It records the
+    accepted reduction chain produced by :func:`minimize_counterexample`, whose
+    reductions were already admitted only after the real harness confirmed the
+    same divergence class (and the same UBSan category when one exists).
+    """
+
+    divergence_class: str
+    source_lang: str
+    target_lang: str
+    original_inputs: Dict[str, Any]
+    minimized_inputs: Dict[str, Any]
+    ub_category: str
+    reductions: List[MinimizationStep] = field(default_factory=list)
+    confirmed: bool = False
+    certified_locally_minimal: bool = False
+    theorem: str = "minimizer_certificate_sound"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "divergence_class": self.divergence_class,
+            "source_lang": self.source_lang,
+            "target_lang": self.target_lang,
+            "original_inputs": self.original_inputs,
+            "minimized_inputs": self.minimized_inputs,
+            "ub_category": self.ub_category,
+            "reductions": [r.to_dict() for r in self.reductions],
+            "confirmed": self.confirmed,
+            "certified_locally_minimal": self.certified_locally_minimal,
+            "theorem": self.theorem,
+        }
+
+
+def minimization_certificate(result: MinimizationResult) -> MinimizationCertificate:
+    """Build the deterministic offline certificate for ``result``."""
+
+    return MinimizationCertificate(
+        divergence_class=result.divergence_class,
+        source_lang=result.source_lang,
+        target_lang=result.target_lang,
+        original_inputs=dict(result.original_inputs),
+        minimized_inputs=dict(result.minimized_inputs),
+        ub_category=result.ub_category,
+        reductions=list(result.accepted_reductions),
+        confirmed=result.confirmed,
+        certified_locally_minimal=result.certified_locally_minimal,
+    )
+
+
+def _step_decreases_cost(step: MinimizationStep) -> bool:
+    before = step.before_inputs.get(step.field)
+    after = step.after_inputs.get(step.field)
+    if not isinstance(before, int) or not isinstance(after, int):
+        return False
+    return _is_simpler(after, before)
+
+
+def verify_minimization_certificate(cert: MinimizationCertificate) -> Tuple[bool, str]:
+    """Check the offline shape of a minimization certificate.
+
+    This is intentionally deterministic and toolchain-free: the expensive fact
+    that each step was real-harness-confirmed is recorded as ``confirmed=True``
+    by the minimizer at the point the compiler-backed probe accepted the step.
+    """
+
+    if cert.theorem != "minimizer_certificate_sound":
+        return False, "unexpected minimizer theorem"
+    if not cert.divergence_class or not cert.source_lang or not cert.target_lang:
+        return False, "missing class or language pair"
+    if not cert.confirmed:
+        return False, "minimized witness was not confirmed"
+    if not cert.certified_locally_minimal:
+        return False, "local minimality was not certified"
+
+    current = dict(cert.original_inputs)
+    for step in cert.reductions:
+        if not step.confirmed:
+            return False, f"unconfirmed reduction for field {step.field!r}"
+        if step.before_inputs != current:
+            return False, f"reduction for {step.field!r} is not chained"
+        if cert.ub_category and step.ub_category != cert.ub_category:
+            return False, f"UB category drifted at field {step.field!r}"
+        if not _step_decreases_cost(step):
+            return False, f"reduction for {step.field!r} does not simplify"
+        current = dict(step.after_inputs)
+
+    if current != cert.minimized_inputs:
+        return False, "reduction chain does not end at minimized inputs"
+    if not cert.reductions and cert.original_inputs != cert.minimized_inputs:
+        return False, "changed inputs without recorded reductions"
+    return True, "ok"
 
 
 class _Probe:
@@ -169,7 +287,9 @@ def minimize_counterexample(oracle: DivergenceOracle, result: OracleResult,
             original_inputs=orig, minimized_inputs=current,
             probes=probe.count, confirmed=False)
 
-    def _accepts(inputs: Dict[str, Any]) -> bool:
+    accepted_reductions: List[MinimizationStep] = []
+
+    def _accepts(inputs: Dict[str, Any]) -> Tuple[bool, str]:
         """A trial is acceptable only if it still confirms AND triggers the
         SAME undefined behavior category as the original witness.  This is what
         keeps minimization *faithful*: without it, magnitude reduction silently
@@ -180,8 +300,10 @@ def minimize_counterexample(oracle: DivergenceOracle, result: OracleResult,
         """
         ok, cat = probe.evaluate(inputs)
         if not ok:
-            return False
-        return orig_category == "" or cat == orig_category
+            return False, cat
+        if orig_category != "" and cat != orig_category:
+            return False, cat
+        return True, cat
 
     # Greedy 1-minimization to a fixpoint: repeatedly try to reduce each field to
     # the simplest confirming value, accepting the first (simplest) that holds.
@@ -195,7 +317,14 @@ def minimize_counterexample(oracle: DivergenceOracle, result: OracleResult,
                     break
                 trial = dict(current)
                 trial[fld] = cand
-                if _accepts(trial):
+                ok, cat = _accepts(trial)
+                if ok:
+                    accepted_reductions.append(MinimizationStep(
+                        field=fld,
+                        before_inputs=dict(current),
+                        after_inputs=dict(trial),
+                        ub_category=cat,
+                    ))
                     current[fld] = cand
                     changed = True
                     break  # restart this field from the newly-simpler value
@@ -213,7 +342,8 @@ def minimize_counterexample(oracle: DivergenceOracle, result: OracleResult,
                 break
             trial = dict(current)
             trial[fld] = cand
-            if _accepts(trial):
+            ok, _cat = _accepts(trial)
+            if ok:
                 locally_minimal = False
                 break
         if not locally_minimal:
@@ -225,4 +355,6 @@ def minimize_counterexample(oracle: DivergenceOracle, result: OracleResult,
         original_inputs=orig, minimized_inputs=current,
         fields_reduced=fields_reduced, probes=probe.count, confirmed=True,
         certified_locally_minimal=locally_minimal,
-        already_minimal=(not fields_reduced) and locally_minimal)
+        already_minimal=(not fields_reduced) and locally_minimal,
+        ub_category=orig_category,
+        accepted_reductions=accepted_reductions)

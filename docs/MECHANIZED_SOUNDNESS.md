@@ -61,6 +61,14 @@ UB-rooted divergence. It does not replace compiler re-execution and it is not
 applied to safe→safe defined-divergence claims; it prevents the last UB-rooted
 verdict step from drifting away from the Lean theorem.
 
+Step 139 verifies the counterexample minimizer at the same abstraction boundary.
+The Python minimizer still does the hard empirical work — every accepted
+reduction is re-confirmed by the real compiler-backed harness and preserves the
+same UBSan category when one exists — while Lean proves that any accepted
+reduction chain, and the offline minimization certificate built from it, preserves
+a genuine UB-rooted divergence. The theorem is intentionally scoped to
+preservation, not global optimality.
+
 ## What is proven
 
 The proof works over the **recorded-observable abstraction** the oracle actually
@@ -92,6 +100,9 @@ with the relational assertion `R = ¬(P ∧ T ∧ C)` and `productViolated = ¬R
 | `pointer_provenance_report_implies_out_of_provenance` | the report carries the generated source shape: valid integer input, out-of-provenance pointer arithmetic. |
 | `pointer_provenance_report_implies_checked_target` | the report carries the safe target shape: checked index, defined result, deterministic run. |
 | `pointer_provenance_report_implies_trap_vs_defined` | the report carries the exact `trap_vs_defined` signal: source UBSan trap plus defined target outcome. |
+| `minimizer_preserves_divergence` | a real-harness-accepted minimizer reduction preserves a UB-rooted divergence in the recorded-observable model. |
+| `minimizer_reduction_steps_preserve_divergence` | a chain of accepted reductions preserves divergence through to the final minimized observation. |
+| `minimizer_certificate_sound` | a valid offline minimizer certificate entails that the minimized witness remains a genuine UB-rooted divergence. |
 | `mechanized_completeness_boundary` | every published completeness-boundary class is classified as exactly one of complete-on-declared-fragment or sound-but-may-abstain. |
 | `completeness_boundary_total` / `completeness_boundary_disjoint` | the completeness-boundary partition is exhaustive and non-overlapping. |
 | `complete_fragment_decides_recorded_observation` | in-fragment classes reuse the recorded-observable decision theorem (`oracle_decides`); concrete finite-range completeness is still checked by `completeness.py`. |

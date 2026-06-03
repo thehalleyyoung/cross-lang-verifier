@@ -159,7 +159,8 @@ bounded-completeness boundary, Lean-checked class lemmas for strict-aliasing
 optimizer-exploitation and pointer-provenance trap-vs-defined witnesses, and an
 end-to-end theorem that counterexample packaging preserves the raw product-run
 witness), plus an independent Coq cross-check of the same core
-recorded-observable/product-witness theorem, and proof-carrying counterexamples:
+recorded-observable/product-witness theorem, a Lean-checked preservation theorem
+for the counterexample minimizer, and proof-carrying counterexamples:
 each confirmed source-UB witness serializes a canonical, hash-bound certificate
 over the recorded \(P\wedge T\wedge C\) observation; the verdict-layer preimage is
 length-prefixed and Lean-proved injective, so canonicalization itself cannot merge
@@ -169,7 +170,9 @@ certificate before a Lake-built checker re-validates the final
 real-compiler runs, and a new soundness-regression gate enumerates all 60
 registered oracle instances across 9 pairs, rejecting any plugin that lacks a
 per-pair soundness statement, matching confirmation mode, source-definedness
-premise, theorem/claim reference, and live witness probe.
+premise, theorem/claim reference, and live witness probe; a generated soundness
+compendium maps every oracle instance to its theorem references and concrete
+witness unit.
 \end{abstract}
 
 
@@ -271,6 +274,12 @@ function pairs.  It excels at scalar UB verification (arithmetic,
 shift, division, casts).  Struct/enum/iterator-heavy code has lower
 coverage due to parser and IR limitations, and we are forthright
 about these boundaries throughout the paper.
+
+\paragraph{Venue framing.}
+We frame the submission as a PLDI/OOPSLA/CAV-style semantics-and-systems tool
+paper: the novelty is the cross-language product-program account and
+sound-for-divergence evidence pipeline, while the C$\to$Rust UB story remains the
+flagship empirical wedge that makes the general claim concrete.
 
 
 %% ======================================================================
@@ -782,6 +791,29 @@ rather than an adversarial signature---and it is deliberately not applied to
 safe$\to$safe defined-divergence reports. It does, however, make the shipped
 witness itself sufficient to re-check the final UB-rooted positive-claim
 inference offline.
+
+Step~139 verifies the minimizer at that same boundary.  The executable minimizer
+still shrinks only by trying simpler input values and accepting a step only after
+the real ground-truth harness re-confirms the reduced witness; for UBSan-backed
+classes it also requires the same normalized diagnostic category, preventing an
+\texttt{INT\_MIN/-1} witness from collapsing into a division-by-zero witness or a
+too-large shift into a negative shift.  The new certificate records the accepted
+reduction chain, the category, and the final local-minimality check.  Lean proves
+\texttt{minimizer\_preserves\_divergence},
+\texttt{minimizer\_reduction\_steps\_preserve\_divergence}, and
+\texttt{minimizer\_certificate\_sound}: any accepted step chain whose final
+observation was harness-confirmed still denotes a UB-rooted divergence.  This is
+a preservation theorem, not a global-optimality theorem; the latter would be the
+wrong claim for a deliberately local delta-debugging ladder.
+
+Finally, Step~140 turns the registry into a reviewable compendium.
+\texttt{ub\_oracle.soundness\_compendium} joins
+\texttt{SOUNDNESS\_STATEMENTS}, \texttt{traceability.CLAIMS}, and the
+\texttt{ProductSoundness} theorem contract to generate
+\texttt{docs/SOUNDNESS\_COMPENDIUM.md}: one row per oracle instance, with its
+confirmation mode, source-definedness premise, theorem/claim references, and the
+concrete witness unit that exercises the real \texttt{find\_divergence} path. A
+freshness check rejects stale prose or dangling theorem references.
 
 Step~130 adds an independent proof-assistant cross-check rather than another
 test.  The Coq development \texttt{formal/CoreSoundness.v} deliberately imports

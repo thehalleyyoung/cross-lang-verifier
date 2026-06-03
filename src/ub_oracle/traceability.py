@@ -1076,6 +1076,18 @@ def _thm_soundness_regression_gate() -> bool:
     return audit.ok and len(audit.probes) == len(audit.registered) == len(audit.statements)
 
 
+def _thm_soundness_compendium() -> bool:
+    # The compendium must be generated from live traceability + soundness-registry
+    # data, list every oracle instance, and be byte-fresh.  Witness probing is
+    # already covered by C63; keeping this theorem metadata-only avoids doing the
+    # same registry probe twice during traceability checks.
+    from . import soundness_compendium as sc
+    from . import soundness_gate as sg
+
+    check = sc.confirm_compendium(probe_witnesses=False)
+    return bool(check.ok and check.row_count == len(sg.SOUNDNESS_STATEMENTS))
+
+
 CLAIMS: List[Claim] = [
     claim(
         "C1-soundness",
@@ -2200,6 +2212,22 @@ CLAIMS: List[Claim] = [
          "audit_soundness_statements", "SoundnessStatement"),
         theorem=_thm_soundness_regression_gate,
         docs=("README.md", "docs/TRACEABILITY.md"),
+    ),
+    claim(
+        "C64-soundness-compendium",
+        "The **soundness compendium** (`ub_oracle.soundness_compendium`, generated "
+        "as `docs/SOUNDNESS_COMPENDIUM.md`) maps every registered "
+        "`(source,target,divergence_class)` oracle instance to its declared "
+        "confirmation mode, source-definedness premise, traceability/Lean theorem "
+        "references, and concrete witness unit. It is generated deterministically "
+        "from the live soundness registry plus `traceability.CLAIMS` and the "
+        "ProductSoundness theorem contract, so a stale document, a dangling claim "
+        "reference, or an unknown Lean theorem fails mechanically.",
+        "ub_oracle.soundness_compendium",
+        ("compendium_rows", "render_compendium", "confirm_compendium",
+         "SOUNDNESS_COMPENDIUM_DOC"),
+        theorem=_thm_soundness_compendium,
+        docs=("docs/SOUNDNESS_COMPENDIUM.md", "docs/TRACEABILITY.md"),
     ),
 ]
 
