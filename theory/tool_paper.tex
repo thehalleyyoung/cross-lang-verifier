@@ -131,7 +131,10 @@ satisfies the plugin SPI. For the integer-UB family we additionally ship an
 SMT-backed encoding whose equivalence to a human-readable specification is
 Z3-proved for \emph{every} 32/64-bit input, and which finds the rare overflow
 witnesses (e.g.\ \texttt{INT\_MIN/-1}, one input in $2^{64}$) in milliseconds
-where ordered enumeration exhausts its budget. An optimization-level sweep
+where ordered enumeration exhausts its budget. For floating-point contraction,
+the artifact now retains the exact binary64 operand and result bit patterns and
+replays them through Z3's IEEE-754 FP theory before the real \texttt{clang}/
+\texttt{rustc} confirmation path runs. An optimization-level sweep
 additionally pins the exact
 \texttt{-O} level at which each no-sanitizer-traps UB class first changes the
 program's observable output. On a labelled divergence study (29 cases over 19
@@ -649,7 +652,8 @@ are missed.  A $K$-sensitivity analysis
 \textsc{SemRec} targets Z3~\cite{demoura2008z3} via the Python
 bindings.  The primary theory is QF\_BV (quantifier-free bitvectors);
 for pointer-manipulating code, the solver extends to QF\_ABV (arrays
-of bitvectors) with byte-addressable memory.  The
+of bitvectors) with byte-addressable memory, and floating-point contraction
+uses Z3's IEEE-754 binary64 FP theory with explicit round-to-nearest-even.  The
 \texttt{to\_smt\_lib()} method on \texttt{ProductProgram} can
 emit SMT-LIB2 scripts for external solver use.
 
@@ -727,9 +731,9 @@ All experiments run on a laptop
     no-sanitizer-traps UB class first change observable output?
   \item[\textbf{RQ10}] Given one C source ported to $\geq 3$ safe targets, can
     the oracle flag the minority target on live output?
-  \item[\textbf{RQ11}] Can an SMT encoding of the integer-UB family be
-    \emph{proved} equivalent to its specification and beat enumeration at
-    finding rare witnesses?
+  \item[\textbf{RQ11}] Can SMT encodings of the integer-UB family and
+    FP-contraction class be \emph{proved} against their specifications and
+    beat or complement enumeration at finding rare witnesses?
   \item[\textbf{RQ12}] Does the artifact exercise actual c2rust machine output,
     rather than hand-written c2rust-style translations?
 \end{enumerate}
@@ -1427,8 +1431,8 @@ classes. A pack that violates any obligation fails CI before it can contribute a
 single unsound cell to the matrix---turning ``add a language or runtime'' into a
 checklist the machine, not the reviewer, enforces.
 
-\subsection{SMT-Backed Integer Oracle: Proved Encodings and a Witness-Search
-Speed-up (RQ11)}\label{sec:eval-smt}
+\subsection{SMT-Backed Decision Procedures: Proved Encodings and Bit-Precise
+Witnesses (RQ11)}\label{sec:eval-smt}
 
 For the integer-UB family---signed overflow, out-of-range shift, division by
 zero, and the unique \texttt{INT\_MIN/-1} overflow---we promote the
@@ -1478,6 +1482,25 @@ Signed overflow         & yes & \textbf{no} & $2^{20}$ & $\sim$100$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+The same section of the artifact now includes a bit-precise floating-point
+certificate for the FP-contraction class
+(\texttt{src/ub\_oracle/smt\_float.py}).  The solver asks Z3's IEEE-754 binary64
+theory for operands where
+$\mathit{fma}(a,b,c) \neq \mathit{round}(\mathit{round}(a\cdot b)+c)$ under
+round-to-nearest-even, while preserving the operational oracle's finite-normal,
+bounded-magnitude, and cancellation constraints.  The returned witness is not a
+decimal-only model: the artifact records operand bits
+\texttt{bffe1e223fe2d052}, \texttt{3ff79adacef6bb27},
+\texttt{4006376792d200d8} and result bits \texttt{3d01fe159b5bd2ec}
+(single-rounding) versus \texttt{3d02000000000000} (double-rounding).  A
+certificate replay reconstructs those IEEE bits as Z3 FP constants, recomputes
+the fused and unfused terms, and proves the negation of the bit-level
+contraction fact unsatisfiable.  The shipped oracle then feeds the same
+operands to the existing real-compiler harness, which compiles one C source with
+\texttt{-ffp-contract=off} and \texttt{-ffp-contract=fast} and compares it with
+the deterministic Rust translation.  Thus the FP row is simultaneously
+bit-precise at the solver boundary and grounded in live compiler output.
 
 %% ======================================================================
 \section{Related Work}\label{sec:related}

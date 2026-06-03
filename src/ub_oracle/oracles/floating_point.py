@@ -19,25 +19,16 @@ fast) and ``rustc`` to confirm the divergence (``optimizer_exploited`` mode).
 
 from __future__ import annotations
 
-import struct
-from typing import Dict, Optional, Tuple
-
-import z3
+from typing import Dict
 
 from ..catalogue import FP_CONTRACTION, Definedness
 from ..plugin import DivergenceOracle, OracleResult, OracleVerdict, register
 from ..replay import Counterexample
+from ..smt_float import prove_fp_contraction_witness, solve_fp_contraction
 
 # clang flag pair whose disagreement evidences the (unspecified) contraction.
 _OFF = ["-O2", "-ffp-contract=off"]
 _FAST = ["-O2", "-ffp-contract=fast"]
-
-
-def _fpnum_to_float(model, term) -> float:
-    """Convert a Z3 Float64 model value to a Python float via its IEEE bits."""
-    bv = model.eval(z3.fpToIEEEBV(term), model_completion=True)
-    return struct.unpack("<d", struct.pack("<Q", bv.as_long()))[0]
-
 
 class FpContractionOracle(DivergenceOracle):
     """``a*b + c`` fused (one rounding) vs unfused (two roundings)."""
@@ -58,36 +49,23 @@ class FpContractionOracle(DivergenceOracle):
             return OracleResult(OracleVerdict.NOT_APPLICABLE, self.divergence_class,
                                 detail="unit is not an fp multiply-add")
 
-        fp = z3.Float64()
-        rm = z3.RNE()
-        a, b, c = z3.FP("a", fp), z3.FP("b", fp), z3.FP("c", fp)
-        prod = z3.fpMul(rm, a, b)
-        fused = z3.fpFMA(rm, a, b, c)              # one rounding (contract=fast)
-        unfused = z3.fpAdd(rm, prod, c)            # two roundings (contract=off)
-
-        solver = z3.Solver()
-        solver.add(fused != unfused)
-        # keep operands well-scaled finite normals so the re-executed values are
-        # clean (no inf/overflow/denormal surprises).
-        for v in (a, b, c):
-            solver.add(z3.fpIsNormal(v))
-            solver.add(z3.fpLEQ(z3.fpAbs(v), z3.FPVal(1e3, fp)))
-            solver.add(z3.fpGEQ(z3.fpAbs(v), z3.FPVal(1.0, fp)))
-        # heavy cancellation: |a*b + c| is >= 2^40x smaller than |a*b|, so the
-        # rounding error of `a*b` dominates and is visible in the result.
-        solver.add(z3.fpLT(z3.fpMul(rm, z3.fpAbs(unfused), z3.FPVal(2.0 ** 40, fp)),
-                           z3.fpAbs(prod)))
-
-        if solver.check() != z3.sat:
+        witness = solve_fp_contraction()
+        if witness is None:
             return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class,
                                 detail="no contraction-sensitive witness found")
-        m = solver.model()
-        av, bv, cv = (_fpnum_to_float(m, a), _fpnum_to_float(m, b), _fpnum_to_float(m, c))
+        proof = prove_fp_contraction_witness(witness)
+        if not proof.proved:
+            return OracleResult(OracleVerdict.NO_DIVERGENCE_FOUND, self.divergence_class,
+                                detail=proof.detail)
 
-        ce = self._build(av, bv, cv)
+        ce = self._build(witness.a, witness.b, witness.c)
         return OracleResult(OracleVerdict.DIVERGENT, self.divergence_class,
                             counterexample=ce,
-                            detail=f"Z3 FP witness a={av!r}, b={bv!r}, c={cv!r}")
+                            detail=(
+                                f"Z3 FP witness a={witness.a!r}, b={witness.b!r}, "
+                                f"c={witness.c!r}; fused={witness.result_bits['fused']} "
+                                f"unfused={witness.result_bits['unfused']}"
+                            ))
 
     def _build(self, av: float, bv: float, cv: float) -> Counterexample:
         # str(float) in Python 3 is the shortest round-tripping decimal, parsed
