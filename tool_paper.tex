@@ -150,7 +150,12 @@ byte-compares the regenerated machine output with the checked-in Rust, compiles
 the source and generated artifacts with \texttt{clang}/\texttt{rustc}, and checks
 the generated Rust artifacts against the verifier; a GitHub-mined C$\to$Rust port
 sample ranks public port/rewrite repositories and byte-checks verifier-backed
-extraction units from three project families. A historical-CVE replay corpus
+extraction units from three project families. A frozen current-LLM transpiler
+study adds \textbf{216} GitHub-Copilot-CLI/GPT-5.5 C$\to$Rust translations over
+the same 12 real-library extraction families; its default live sample is labeled
+only by \texttt{clang}/UBSan+\texttt{rustc} and reports precision and recall
+$1.000$ (Wilson 95\% CI $[0.758,1.000]$) with false-positive rate $0.000$
+(CI $[0.000,0.242]$, hash \texttt{173f4d16ca44}). A historical-CVE replay corpus
 indexes \textbf{60} NVD CVE ids across \textbf{8} CWE families and emits
 \textbf{120} C$\to$\{Rust,Go\} minimized reproduction bundles: each bundle
 compiles a from-scratch weakness-class witness, proves the C/UBSan side traps on
@@ -1162,6 +1167,38 @@ source hashes, verifier verdicts, and pre-pass result in
 \texttt{experiments/github\_ports/results.json}. A separate skip-gated test
 compiles every sample as real C/Rust code and confirms a divergent sample against
 live \texttt{clang}/UBSan+\texttt{rustc} when those toolchains are present.
+
+\paragraph{Frozen current-LLM transpiler study.}
+Because LLM-translated ports are the fastest-growing migration path, the artifact
+also includes \texttt{src/ub\_oracle/llm\_scale\_study.py}: a frozen
+GitHub-Copilot-CLI/GPT-5.5 C$\to$Rust translation fixture over the same 12
+real-library extraction families used by the c2rust corpus. The fixture contains
+216 distinct translated functions: 120 declared divergent cases
+(signed overflow, signed underflow, division by zero, \texttt{INT\_MIN/-1},
+oversized shifts, and array bounds) and 96 safe controls. The provenance record is
+deliberately narrow: the translations are checked in for replay, and the
+measurement does not trust their labels. Every reported statistic is regenerated
+by compiling and running the C side under \texttt{clang}/UBSan and the target under
+\texttt{rustc}; the oracle prediction is computed independently by the
+trap-vs-defined confirmation path.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Frozen current-LLM C$\to$Rust study. \texttt{make llm-scale-check}
+checks corpus size, unique content hashes, Wilson intervals, and a live
+compiler-backed sample. The row below is the default live sample emitted by
+\texttt{python -m ub\_oracle.llm\_scale\_study}.}
+\label{tab:llm-scale}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Corpus & Live sample & Precision & Recall & False-positive rate \\
+\midrule
+216 translations / 12 families & 24 & $1.000$ [0.758, 1.000] &
+$1.000$ [0.758, 1.000] & $0.000$ [0.000, 0.242] \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{General Accuracy (RQ2)}\label{sec:eval-accuracy}
 

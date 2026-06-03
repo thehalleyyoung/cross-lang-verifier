@@ -375,6 +375,10 @@ python3 -m src.cli.main discover \
   positives on the equivalent population (the sound-for-divergence guarantee,
   measured), honest `out_of_scope` accounting of value divergences, and a
   content-hashed outcome layer that reproduces identically across runs
+- a **frozen current-LLM transpiler study** (`llm_scale_study.py`, `make
+  llm-scale-check`): **216** GitHub-Copilot-CLI/GPT-5.5 C→Rust translations across
+  the 12 real-library c2rust extraction families, with precision/recall Wilson
+  intervals computed only from live clang/UBSan + rustc labels
 - a **relational product-program formalization** (`product_program.py`, spec in
   `docs/PRODUCT_PROGRAM.md`): the oracle recast as **cross-language translation
   validation** — a product program `P_S × P_T` carrying a relational assertion
