@@ -107,7 +107,7 @@
       "fp": 0,
       "precision": 1.0,
       "recall": 1.0,
-      "tn": 528,
+      "tn": 557,
       "tp": 23
     },
     "per_class": {
@@ -263,6 +263,15 @@
         "recall": 1.0,
         "tn": 28,
         "tp": 1
+      },
+      "uninit_padding": {
+        "divergence_class": "uninit_padding",
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 29,
+        "tp": 0
       },
       "uninit_read": {
         "divergence_class": "uninit_read",

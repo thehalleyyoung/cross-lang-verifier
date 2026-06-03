@@ -22,6 +22,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 from .ir import assert_valid
 from .verify import VerifyVerdict, verify_unit
+from .cache import toolchain_provenance
 
 SCHEMA_VERSION = "c2rust-corpus/v1"
 TRANSLATOR = "c2rust"
@@ -307,11 +308,14 @@ def compare_generated_to_c2rust() -> Dict[str, object]:
             actual = _read(tmp_dir / item.rust_file)
             if actual != expected:
                 mismatches.append(item.item_id)
+        provenance = toolchain_provenance()
         return {
             "available": True,
             "ok": not mismatches,
             "mismatches": mismatches,
             "c2rust_version": c2rust_version(),
+            "toolchain_fingerprint": provenance["fingerprint"],
+            "toolchain_provenance": provenance,
             "regenerated_hashes": regen_hashes,
         }
 

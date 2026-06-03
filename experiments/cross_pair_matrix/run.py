@@ -30,6 +30,7 @@ if _ROOT not in sys.path:
 from src.ub_oracle import oracles  # noqa: F401  (registers all pairs)
 from src.ub_oracle import regression_matrix as M
 from src.ub_oracle.reexec import ReexecHarness, toolchain_available
+from src.ub_oracle.cache import ToolchainMismatch, validate_toolchain_file
 
 RESULTS_PATH = os.path.join(_HERE, "results.json")
 CONFIRMATIONS_PATH = os.path.join(_HERE, "confirmations.json")
@@ -50,6 +51,18 @@ def main(argv=None) -> int:
     ap.add_argument("--table", action="store_true",
                     help="print the human-readable pair x class grid")
     args = ap.parse_args(argv)
+
+    if args.check and args.confirm:
+        if not os.path.exists(CONFIRMATIONS_PATH):
+            print("confirmations.json missing; run --confirm first", file=sys.stderr)
+            return 1
+        try:
+            validation = validate_toolchain_file(CONFIRMATIONS_PATH)
+        except ToolchainMismatch as exc:
+            print(f"TOOLCHAIN MISMATCH: {exc}", file=sys.stderr)
+            return 1
+        print(f"OK: matrix confirmations replay under pinned toolchain ({validation.detail})")
+        return 0
 
     matrix = M.build_matrix()
 

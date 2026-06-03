@@ -33,6 +33,7 @@ if _ROOT not in sys.path:
 from src.ub_oracle import oracles  # noqa: F401  (registers all pairs)
 from src.ub_oracle import redteam as RT
 from src.ub_oracle.reexec import ReexecHarness, ToolchainStatus, toolchain_available
+from src.ub_oracle.cache import ToolchainMismatch, validate_toolchain_file
 
 CASES_PATH = os.path.join(_HERE, "cases.json")
 ATTACK_PATH = os.path.join(_HERE, "attack.json")
@@ -75,6 +76,18 @@ def main(argv=None) -> int:
     ap.add_argument("--table", action="store_true",
                     help="print the human-readable adversarial report")
     args = ap.parse_args(argv)
+
+    if args.check and args.attack:
+        if not os.path.exists(ATTACK_PATH):
+            print("attack.json missing; run --attack first", file=sys.stderr)
+            return 1
+        try:
+            validation = validate_toolchain_file(ATTACK_PATH)
+        except ToolchainMismatch as exc:
+            print(f"TOOLCHAIN MISMATCH: {exc}", file=sys.stderr)
+            return 1
+        print(f"OK: red-team attack replays under pinned toolchain ({validation.detail})")
+        return 0
 
     grid = _deterministic_grid()
 

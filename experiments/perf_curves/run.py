@@ -28,6 +28,11 @@ if _ROOT not in sys.path:
 
 from src.ub_oracle import oracles  # noqa: F401  (registers all pairs)
 from src.ub_oracle import perf
+from src.ub_oracle.cache import (
+    ToolchainMismatch,
+    toolchain_provenance,
+    validate_toolchain_file,
+)
 
 GRID_PATH = os.path.join(_HERE, "grid.json")
 TIMINGS_PATH = os.path.join(_HERE, "timings.json")
@@ -70,6 +75,18 @@ def main(argv=None) -> int:
                     help="timing repeats (median); default 5")
     args = ap.parse_args(argv)
 
+    if args.check and (args.measure or args.table):
+        if not os.path.exists(TIMINGS_PATH):
+            print("timings.json missing; run --measure first", file=sys.stderr)
+            return 1
+        try:
+            validation = validate_toolchain_file(TIMINGS_PATH)
+        except ToolchainMismatch as exc:
+            print(f"TOOLCHAIN MISMATCH: {exc}", file=sys.stderr)
+            return 1
+        print(f"OK: perf timings replay under pinned toolchain ({validation.detail})")
+        return 0
+
     grid = perf.deterministic_grid()
 
     if args.check:
@@ -92,7 +109,12 @@ def main(argv=None) -> int:
           f"{len(grid['smt_scaling'])} SMT sizes")
 
     if args.measure or args.table:
+        provenance = toolchain_provenance()
         timings = {
+            "schema": "perf-timings/v2",
+            "toolchain_fingerprint": provenance["fingerprint"],
+            "toolchain_provenance": provenance,
+            "z3_version": perf.z3_version(),
             "class_pair_profile": [r.to_dict() for r in
                                    perf.class_pair_profile(repeats=args.repeats)],
             "width_scaling": [r.to_dict() for r in

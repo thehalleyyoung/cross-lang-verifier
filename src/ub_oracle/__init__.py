@@ -115,9 +115,14 @@ from .traceability import (
 )
 from .cache import (
     CacheEquivalenceProof,
+    ToolchainMismatch,
     prove_cache_equivalence,
     report_signature_hash,
+    toolchain_fingerprint,
+    toolchain_provenance,
     unit_content_hash,
+    validate_toolchain_file,
+    validate_toolchain_provenance,
 )
 from .parallel_harness import (
     ParallelDeterminismProof,
@@ -201,9 +206,14 @@ __all__ = [
     "verify_traceability",
     "claim_ids",
     "CacheEquivalenceProof",
+    "ToolchainMismatch",
     "prove_cache_equivalence",
     "report_signature_hash",
+    "toolchain_fingerprint",
+    "toolchain_provenance",
     "unit_content_hash",
+    "validate_toolchain_file",
+    "validate_toolchain_provenance",
     "ParallelDeterminismProof",
     "ParallelRunReport",
     "run_parallel",

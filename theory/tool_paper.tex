@@ -168,8 +168,10 @@ distinct verdict payloads before SHA-256.  An offline checker validates the
 certificate before a Lake-built checker re-validates the final
 \texttt{oracle\_sound} inference.  The artifact regenerates every headline number from content-hashed
 real-compiler runs, with an incremental cache whose warm hits are proved
-verdict-layer identical to cold compiler runs and a deterministic process-pool
-harness whose merged hash is independent of worker scheduling.  This includes a
+verdict-layer identical to cold compiler runs, compiler-backed artifacts that pin
+the exact \texttt{clang}/\texttt{rustc}/\texttt{go} version fingerprint and reject
+replay under a drifted toolchain, and a deterministic process-pool harness whose
+merged hash is independent of worker scheduling.  This includes a
 migration-scale corpus of \textbf{60{,}000}
 all-distinct C$\to$\{Rust,Go\} programs totaling \textbf{1{,}044{,}000 LOC}:
 the census proves every program hash unique and the labels balanced within
@@ -786,6 +788,14 @@ fingerprint, and the semantics version; the executable
 \texttt{prove\_cache\_equivalence} check cold-runs a fresh cache, warm-runs the
 same units, and requires the normalized verdict/counterexample signature hashes
 to match exactly.
+The same version binding now extends beyond cache keys: every
+environment-dependent result artifact
+(\texttt{confirmations.json}, \texttt{minimized.json}, \texttt{attack.json}, and
+\texttt{timings.json}) records a \texttt{toolchain-provenance/v1} payload with
+compiler/runtime paths for audit and exact first-line version fingerprints for
+\texttt{clang}, \texttt{rustc}, \texttt{go}, and registered target runners.
+Replay-check modes compare only those version fingerprints (not machine-local
+paths) and fail fast on missing provenance, unknown probes, or any version drift.
 \texttt{formal/HashStability.lean} proves this verdict canonicalization
 injective: two distinct verdict payloads cannot produce the same canonical
 preimage, so equality of final certificate hashes is reduced to SHA-256 rather

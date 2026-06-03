@@ -58,7 +58,12 @@ _CACHEABLE = {
 }
 
 
-def _tool_version(path: Optional[str]) -> str:
+class ToolchainMismatch(RuntimeError):
+    """Raised when an environment-dependent artifact is replayed under a
+    different compiler/runtime version than the one that produced it."""
+
+
+def _tool_version(path: Optional[str], *, tool_name: Optional[str] = None) -> str:
     """The first line of ``<tool> --version``, or ``"absent"``.
 
     Failures degrade to a stable sentinel so fingerprinting never raises; the
@@ -66,25 +71,170 @@ def _tool_version(path: Optional[str]) -> str:
     """
     if not path:
         return "absent"
+    name = tool_name or os.path.basename(path)
+    if name == "wasm" and os.path.basename(path) == "cp":
+        return "lossless-copy-stager"
+    argv = [path, "version"] if name == "go" else [path, "--version"]
     try:
-        r = subprocess.run([path, "--version"], capture_output=True, text=True,
-                           timeout=30)
+        r = subprocess.run(argv, capture_output=True, text=True, timeout=30)
+        if r.returncode != 0:
+            return "unknown"
         out = (r.stdout or r.stderr or "").strip().splitlines()
         return out[0] if out else "unknown"
     except (subprocess.SubprocessError, OSError):
         return "unknown"
 
 
+def _version_is_known(version: str) -> bool:
+    return bool(version) and version != "unknown"
+
+
 def toolchain_fingerprint(status: Optional[ToolchainStatus] = None) -> Dict[str, str]:
     """A stable dict of the real compiler version strings in this environment."""
     status = status or toolchain_available()
     fp: Dict[str, str] = {
-        "cc": _tool_version(status.cc),
+        "cc": _tool_version(status.cc, tool_name="cc"),
         "ubsan": "yes" if status.ubsan else "no",
     }
     for name, path in status.targets:
-        fp[name] = _tool_version(path)
+        fp[name] = _tool_version(path, tool_name=name)
+    for name, path in getattr(status, "runners", ()):
+        if path:
+            fp[f"{name}_runner"] = _tool_version(path, tool_name=name)
     return fp
+
+
+def toolchain_provenance(status: Optional[ToolchainStatus] = None) -> Dict[str, object]:
+    """Full environment provenance for compiler-backed artifacts.
+
+    Paths are recorded for human auditability, but replay compatibility is based
+    only on the version fingerprint. Absolute paths differ across machines while
+    still naming the same toolchain build.
+    """
+    status = status or toolchain_available()
+    targets = {}
+    for name, path in status.targets:
+        targets[name] = {
+            "path": path,
+            "version": _tool_version(path, tool_name=name),
+        }
+    runners = {}
+    for name, path in getattr(status, "runners", ()):
+        if path:
+            runners[name] = {
+                "path": path,
+                "version": _tool_version(path, tool_name=name),
+            }
+    fingerprint = toolchain_fingerprint(status)
+    return {
+        "schema": "toolchain-provenance/v1",
+        "cc": {
+            "path": status.cc,
+            "version": fingerprint["cc"],
+        },
+        "features": {
+            "ubsan": bool(status.ubsan),
+            "asan": bool(getattr(status, "asan", False)),
+            "msan": bool(getattr(status, "msan", False)),
+            "auto_var_init": bool(getattr(status, "auto_var_init", False)),
+        },
+        "targets": targets,
+        "runners": runners,
+        "fingerprint": fingerprint,
+    }
+
+
+def current_toolchain_provenance() -> Dict[str, object]:
+    return toolchain_provenance(toolchain_available())
+
+
+@dataclass(frozen=True)
+class ToolchainValidation:
+    ok: bool
+    mismatches: Tuple[str, ...] = ()
+    missing: Tuple[str, ...] = ()
+    unknown: Tuple[str, ...] = ()
+
+    @property
+    def detail(self) -> str:
+        if self.ok:
+            return "toolchain provenance matches"
+        parts = []
+        if self.mismatches:
+            parts.append("version mismatch: " + ", ".join(self.mismatches))
+        if self.missing:
+            parts.append("missing recorded version: " + ", ".join(self.missing))
+        if self.unknown:
+            parts.append("unknown current/recorded version: " + ", ".join(self.unknown))
+        return "; ".join(parts)
+
+
+def _fingerprint_from_artifact(recorded: Dict[str, object]) -> Dict[str, str]:
+    prov = recorded.get("toolchain_provenance")
+    if isinstance(prov, dict):
+        fp = prov.get("fingerprint")
+        if isinstance(fp, dict):
+            return {str(k): str(v) for k, v in fp.items()}
+    fp = recorded.get("toolchain_fingerprint")
+    if isinstance(fp, dict):
+        return {str(k): str(v) for k, v in fp.items()}
+    return {}
+
+
+def validate_toolchain_provenance(
+    recorded_artifact: Dict[str, object],
+    current_status: Optional[ToolchainStatus] = None,
+    *,
+    strict: bool = True,
+) -> ToolchainValidation:
+    """Validate that a recorded artifact is replayed by the same tool versions.
+
+    The comparison deliberately ignores absolute paths and compares the stable
+    version fingerprint only. Under ``strict`` mode, absent provenance and
+    ``unknown`` probes are failures: a replay can only be trusted when versions
+    are actually known and equal.
+    """
+    recorded_fp = _fingerprint_from_artifact(recorded_artifact)
+    current_fp = toolchain_fingerprint(current_status)
+    missing: List[str] = []
+    mismatches: List[str] = []
+    unknown: List[str] = []
+    for key, recorded_value in sorted(recorded_fp.items()):
+        current_value = current_fp.get(key)
+        if current_value is None:
+            missing.append(key)
+            continue
+        if not _version_is_known(recorded_value) or not _version_is_known(current_value):
+            unknown.append(key)
+            continue
+        if recorded_value != current_value:
+            mismatches.append(
+                f"{key} recorded={recorded_value!r} current={current_value!r}")
+    if strict and not recorded_fp:
+        missing.append("toolchain_provenance")
+    ok = not (mismatches or missing or (strict and unknown))
+    validation = ToolchainValidation(
+        ok=ok,
+        mismatches=tuple(mismatches),
+        missing=tuple(missing),
+        unknown=tuple(unknown),
+    )
+    if strict and not validation.ok:
+        raise ToolchainMismatch(validation.detail)
+    return validation
+
+
+def validate_toolchain_file(
+    path: str,
+    current_status: Optional[ToolchainStatus] = None,
+    *,
+    strict: bool = True,
+) -> ToolchainValidation:
+    with open(path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+    if not isinstance(data, dict):
+        raise ToolchainMismatch(f"{path} is not a JSON object")
+    return validate_toolchain_provenance(data, current_status, strict=strict)
 
 
 def canonical_unit(unit: Dict) -> str:

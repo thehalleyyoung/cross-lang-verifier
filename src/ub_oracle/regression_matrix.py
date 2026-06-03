@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from . import plugin
 from .target_semantics import get_pack
 from .plugin import OracleVerdict
+from .cache import toolchain_provenance
 
 # One canonical, fixed unit per divergence class.  Because a generated pair
 # oracle shares its anchor's ``divergence_class`` key, a single unit per class
@@ -195,6 +196,7 @@ def confirm_matrix(harness) -> Dict[str, Any]:
     the host could actually prove.
     """
     status = harness.status
+    provenance = toolchain_provenance(status)
     cells: List[Dict[str, Any]] = []
     for oracle in _sorted_oracles():
         src = oracle.source_lang
@@ -229,6 +231,9 @@ def confirm_matrix(harness) -> Dict[str, Any]:
     attempted = [c for c in cells if not c.get("skipped")]
     return {
         "artifact": "cross_pair_regression_matrix_confirmations",
+        "schema": "cross-pair-confirmations/v2",
+        "toolchain_fingerprint": provenance["fingerprint"],
+        "toolchain_provenance": provenance,
         "n_cells": len(cells),
         "n_attempted": len(attempted),
         "n_confirmed": len(confirmed),

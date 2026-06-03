@@ -37,6 +37,7 @@ from .plugin import ALL_ORACLES, DivergenceOracle
 from .reexec import ReexecHarness, ToolchainStatus, toolchain_available
 from .regression_matrix import CANONICAL_UNITS, canonical_unit_for
 from .verify import verify_unit, VerifyVerdict
+from .cache import toolchain_provenance
 
 
 # Verdicts that make NO equivalence claim and are therefore sound for a
@@ -123,6 +124,7 @@ class RedTeamCase:
 class RedTeamReport:
     cases: List[RedTeamCase] = field(default_factory=list)
     toolchain_full: bool = False
+    toolchain_provenance: Dict[str, object] = field(default_factory=dict)
 
     @property
     def breaches(self) -> List[RedTeamCase]:
@@ -141,7 +143,8 @@ class RedTeamReport:
         return not self.breaches
 
     def to_dict(self) -> Dict:
-        return {
+        provenance = dict(self.toolchain_provenance)
+        out = {
             "n_cases": self.n_cases,
             "n_confirmed_divergent": self.n_confirmed_divergent,
             "n_breaches": len(self.breaches),
@@ -150,6 +153,13 @@ class RedTeamReport:
             "cases": [c.to_dict() for c in
                       sorted(self.cases, key=lambda c: c.label)],
         }
+        if provenance:
+            out.update({
+                "schema": "redteam-attack/v2",
+                "toolchain_fingerprint": provenance.get("fingerprint", {}),
+                "toolchain_provenance": provenance,
+            })
+        return out
 
 
 def build_cases() -> List[RedTeamCase]:
@@ -177,7 +187,9 @@ def run_redteam(harness: Optional[ReexecHarness] = None,
                 confirm: bool = True) -> RedTeamReport:
     """Run every adversarial case and flag any soundness breach."""
     status = status or toolchain_available()
-    report = RedTeamReport(toolchain_full=status.full)
+    provenance = toolchain_provenance(status) if confirm else {}
+    report = RedTeamReport(toolchain_full=status.full,
+                           toolchain_provenance=provenance)
     for case in build_cases():
         rep = verify_unit(case.unit, harness=harness, confirm=confirm,
                           status=status)

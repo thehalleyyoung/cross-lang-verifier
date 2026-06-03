@@ -133,6 +133,8 @@ python3 -m src.cli.main discover \
 - an incremental cache (`--cache`) that re-verifies only changed units — keyed by
   unit-content hash **and** real toolchain version, with a cold-vs-hit proof that
   cached verdicts replay the same certificate-bearing verdict layer
+- compiler-backed experiment artifacts pin exact `clang`/`rustc`/`go` version
+  fingerprints and their replay checks fail fast on any toolchain drift
 - a deterministic parallel ground-truth harness whose merged, content-hashed
   verdict layer is independent of worker scheduling
 - a self-contained, offline migration-risk HTML dashboard (`--dashboard`)

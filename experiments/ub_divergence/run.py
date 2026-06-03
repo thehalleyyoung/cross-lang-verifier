@@ -34,6 +34,11 @@ from src.ub_oracle.plugin import get_oracle
 from src.ub_oracle.diff_testing import measure_fuzzing_gap
 from src.ub_oracle.reexec import ReexecHarness, toolchain_available
 from src.ub_oracle.metrics import evaluate_symbolic
+from src.ub_oracle.cache import (
+    ToolchainMismatch,
+    toolchain_provenance,
+    validate_toolchain_file,
+)
 
 # A fixed, ordered set of anchor units.  Deterministic by construction.
 UNITS: List[Dict] = [
@@ -96,8 +101,18 @@ def build_confirmations() -> Dict:
     orc = get_oracle("signed_overflow")
     status = toolchain_available()
     harness = ReexecHarness(status)
-    out = {"toolchain": {"cc": status.cc, "rustc": status.rustc, "ubsan": status.ubsan},
-           "cases": []}
+    provenance = toolchain_provenance(status)
+    out = {
+        "schema": "ub-divergence-confirmations/v2",
+        "toolchain": {
+            "cc": status.cc,
+            "rustc": status.rustc,
+            "ubsan": status.ubsan,
+        },
+        "toolchain_fingerprint": provenance["fingerprint"],
+        "toolchain_provenance": provenance,
+        "cases": [],
+    }
     for unit in UNITS:
         res = orc.confirm(orc.find_divergence(unit), harness)
         rr = res.reexec
@@ -127,6 +142,18 @@ def main(argv=None) -> int:
     ap.add_argument("--check", action="store_true",
                     help="regenerate in-memory and assert it matches results.json")
     args = ap.parse_args(argv)
+
+    if args.check and args.confirm:
+        if not os.path.exists(CONFIRMATIONS_PATH):
+            print("confirmations.json missing; run --confirm first", file=sys.stderr)
+            return 1
+        try:
+            validation = validate_toolchain_file(CONFIRMATIONS_PATH)
+        except ToolchainMismatch as exc:
+            print(f"TOOLCHAIN MISMATCH: {exc}", file=sys.stderr)
+            return 1
+        print(f"OK: confirmations replay under pinned toolchain ({validation.detail})")
+        return 0
 
     results = build_results()
     if args.check:

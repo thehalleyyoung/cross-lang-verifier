@@ -40,6 +40,11 @@ from .plugin import ALL_ORACLES, OracleVerdict
 from .regression_matrix import CANONICAL_UNITS, canonical_unit_for, _sorted_oracles
 
 
+def z3_version() -> str:
+    """Human-readable Z3 version used by environment-dependent timing runs."""
+    return getattr(z3, "get_version_string", lambda: "unknown")()
+
+
 def _median_time(fn: Callable[[], object], repeats: int) -> Tuple[float, object]:
     """Median wall-clock seconds of ``fn`` over ``repeats`` runs (>=1).
 
