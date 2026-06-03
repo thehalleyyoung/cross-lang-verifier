@@ -149,9 +149,10 @@ that the same unsynchronized counter is C data-race UB, Go racy-but-defined, and
 rejected by Rust's safe \texttt{Send}/\texttt{Sync} discipline while synchronized
 repairs compile and run clean. We give a mechanized-friendly soundness development
 ($\sigma$-bridge coercion correctness, product-program isolation, a
-bounded-completeness boundary, and a Lean-checked strict-aliasing
-optimizer-exploitation lemma) and an artifact in which every headline number is
-regenerated from content-hashed real-compiler runs.
+bounded-completeness boundary, and Lean-checked class lemmas for strict-aliasing
+optimizer-exploitation and pointer-provenance trap-vs-defined witnesses) and an
+artifact in which every headline number is regenerated from content-hashed
+real-compiler runs.
 \end{abstract}
 
 
@@ -656,7 +657,7 @@ Memory operations include alignment checks ($\mathit{addr}
 \;\&\; (\mathit{align} - 1) = 0$), bounds checks against
 known allocations, and use-after-free detection.
 
-\paragraph{Mechanized strict-aliasing evidence.}
+\paragraph{Mechanized class-specific evidence.}
 The strict-aliasing class is confirmed by optimization exploitation rather than
 a sanitizer: the same generated C type-pun source is compiled at \texttt{-O0}
 and \texttt{-O2 -fstrict-aliasing}; if both runs are clean but print different
@@ -664,7 +665,12 @@ observables, the source behavior is under-determined. The Lean development
 mechanizes the class-specific pigeonhole step: two distinct C observables cannot
 both equal one deterministic, defined target observable, so at least one legal C
 build diverges from the target and the generic product-program soundness theorem
-applies.
+applies.  The same Lean file now also mechanizes the pointer-provenance
+\textsc{trap} confirmation shape: the generated C witness has valid data input
+but forms an out-of-provenance pointer, UBSan traps on that concrete run, and the
+target keeps a checked index and returns deterministically.  In the
+recorded-observable abstraction, that trap versus defined target outcome is
+exactly the product-program consequence.
 
 
 %% ======================================================================
@@ -1014,7 +1020,8 @@ the tools are complementary.
     call-chain verification.
   \item \textbf{Memory model}: value-level oracles cover strict-aliasing
     (with a Lean-checked optimizer-exploitation lemma), \texttt{restrict}, and
-    pointer-provenance UB; full lifetime/heap-shape divergences (use-after-free,
+    pointer-provenance UB (with a Lean-checked \textsc{trap} confirmation
+    lemma); full lifetime/heap-shape divergences (use-after-free,
     dangling) are reported via dedicated memory-shape detectors rather than a
     single value witness.
   \item \textbf{Floating point}: contraction and \texttt{-ffast-math}
@@ -1843,8 +1850,9 @@ so $\mathit{WellDefined}$ is true.
 
 \emph{Scope limitation.}
 The arithmetic predicate covers the five UB classes in~$\mathcal{U}$.
-Strict aliasing violations (\S6.5/7) are handled by a separate
-optimizer-exploitation oracle and Lean lemma, not by this arithmetic
+Strict aliasing violations (\S6.5/7) and pointer-provenance/address-overflow
+violations (\S6.5.6/8) are handled by separate optimizer-exploitation and
+\textsc{trap}-vs-defined oracles with Lean class lemmas, not by this arithmetic
 well-definedness predicate.  Other C11 UB sources---sequence-point violations
 (\S6.5/2), uninitialized reads (\S6.3.2.1/2), null pointer dereference
 (\S6.5.3.2/4)---are outside this predicate and covered only by their dedicated

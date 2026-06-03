@@ -1,4 +1,4 @@
-"""Step 75 — mechanized soundness (scoped).
+"""Steps 75/126/127 — mechanized soundness (scoped).
 
 A *machine-checked* soundness (and relative-completeness) argument for the
 relational/product-program decision procedure the tool implements, for a core
@@ -27,7 +27,15 @@ compiles, so the proof cannot be silently gutted):
 * ``strict_aliasing_report_implies_type_pun`` — the strict-aliasing report
   carries the generated type-pun shape;
 * ``strict_aliasing_report_implies_optimizer_exploited`` — the report carries
-  the exact ``optimizer_exploited`` confirmation signal.
+  the exact ``optimizer_exploited`` confirmation signal;
+* ``pointer_provenance_oracle_sound`` — pointer-provenance ``trap_vs_defined``
+  witnesses are UB-rooted divergences;
+* ``pointer_provenance_report_implies_out_of_provenance`` — the report carries
+  the generated out-of-provenance source shape;
+* ``pointer_provenance_report_implies_checked_target`` — the report carries the
+  safe checked-index target shape;
+* ``pointer_provenance_report_implies_trap_vs_defined`` — the report carries the
+  exact ``trap_vs_defined`` confirmation signal.
 """
 
 from __future__ import annotations
@@ -53,6 +61,10 @@ REQUIRED_THEOREMS: Tuple[str, ...] = (
     "strict_aliasing_oracle_sound",
     "strict_aliasing_report_implies_type_pun",
     "strict_aliasing_report_implies_optimizer_exploited",
+    "pointer_provenance_oracle_sound",
+    "pointer_provenance_report_implies_out_of_provenance",
+    "pointer_provenance_report_implies_checked_target",
+    "pointer_provenance_report_implies_trap_vs_defined",
 )
 
 

@@ -48,6 +48,10 @@ the C side is undefined while the target side is defined and deterministic.
 3. **Confirm** end-to-end through the real toolchain: the UBSan build must trap
    via `pointer-overflow` and the target binary must produce a defined,
    deterministic outcome.
+4. **Certify** the recorded evidence through the Lean product-program theorem:
+   `pointer_provenance_oracle_sound` proves that a compiler-confirmed
+   `trap_vs_defined` witness is a genuine UB-rooted divergence in the
+   recorded-observable abstraction.
 
 ```python
 from ub_oracle import oracles                      # registers plugins

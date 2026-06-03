@@ -1698,9 +1698,10 @@ CLAIMS: List[Claim] = [
         "counterexample is rooted in source UB), `pack_oracle_sound` (the "
         "argument is **language-pair-parametric**), and `rust_oracle_sound` (the "
         "concrete C→Rust instantiation, `RustPack` defined codes `{0,101}`), plus "
-        "fully-evaluated div-by-zero and safe-input witnesses. "
+        "class-specific theorem families for strict-aliasing optimizer-exploitation "
+        "and pointer-provenance `trap_vs_defined` witnesses. "
         "`ub_oracle.mechanized_soundness` runs the real `lean` binary and "
-        "confirms the kernel accepts all seven theorems; with Lean absent it "
+        "confirms the kernel accepts the required theorem set; with Lean absent it "
         "degrades to a consistency-only check that every theorem is still "
         "declared (never claiming an unrun proof).",
         "ub_oracle.mechanized_soundness",

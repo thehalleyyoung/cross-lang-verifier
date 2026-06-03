@@ -38,11 +38,15 @@ with the relational assertion `R = ¬(P ∧ T ∧ C)` and `productViolated = ¬R
 | `strict_aliasing_oracle_sound` | a strict-aliasing report confirmed by optimizer exploitation is a genuine UB-rooted divergence. |
 | `strict_aliasing_report_implies_type_pun` | the strict-aliasing report carries the generated incompatible-access/same-storage type-pun shape. |
 | `strict_aliasing_report_implies_optimizer_exploited` | the report carries the exact `optimizer_exploited` confirmation signal: two clean C builds disagree while the target is defined and deterministic. |
+| `pointer_provenance_oracle_sound` | a pointer-provenance report confirmed by `trap_vs_defined` is a genuine UB-rooted divergence. |
+| `pointer_provenance_report_implies_out_of_provenance` | the report carries the generated source shape: valid integer input, out-of-provenance pointer arithmetic. |
+| `pointer_provenance_report_implies_checked_target` | the report carries the safe target shape: checked index, defined result, deterministic run. |
+| `pointer_provenance_report_implies_trap_vs_defined` | the report carries the exact `trap_vs_defined` signal: source UBSan trap plus defined target outcome. |
 
 The file also contains two fully-evaluated `example`s — the canonical
 div-by-zero witness (C traps, Rust panics with `101`, behaviours differ ⇒
 reported and certified UB-rooted) and a safe-input witness (agree ⇒ silent),
-plus strict-aliasing positive/negative examples.
+plus strict-aliasing and pointer-provenance positive/negative examples.
 
 For strict aliasing, the mechanized class-specific lemma mirrors the real
 `confirm_optimizer_exploited` harness rather than pretending a sanitizer exists:
@@ -51,18 +55,27 @@ with different outputs, and the target has one defined deterministic output, the
 at least one C build must differ from that target output. That pigeonhole step is
 what lets the generic product-program theorem certify the report as UB-rooted.
 
+For pointer provenance, the mechanized class-specific lemma mirrors the real
+`trap_vs_defined` harness: the generated C witness has valid data input but
+forms an out-of-provenance pointer, UBSan traps on that concrete run, and the
+Rust/Go-style target keeps a checked index and returns deterministically. In the
+recorded-observable abstraction, the trap versus the defined target outcome is
+the behavioural difference consumed by the product-program theorem.
+
 ## Scope (honest)
 
 This is a *scoped* mechanization: we formalize the decision procedure over the
 recorded-observable abstraction, not a full denotational C semantics. Within
 that abstraction the theorems are exactly the guarantees the Python oracle
 relies on, and the soundness theorem is pack-independent — instantiating any
-target pack (Rust shown; Go/Swift identical) cannot weaken it. The strict-aliasing
-extension mechanizes the optimizer-exploitation evidence used by the implementation
-and treats the generated `int*`/`long*` same-storage type pun as a construction
-invariant, not as a full formal C11 aliasing semantics. Extending the abstraction
-toward a full operational C semantics is future work (step 75's "even partial
-mechanization is a strong differentiator").
+target pack (Rust shown; Go/Swift identical) cannot weaken it. The class-specific
+extensions mechanize the evidence consumed by the implementation: strict aliasing
+treats the generated `int*`/`long*` same-storage type pun as a construction
+invariant and pointer provenance treats the generated out-of-provenance pointer
+arithmetic plus UBSan trap as the source-side confirmation. They are not full
+formal C11 aliasing/provenance semantics. Extending the abstraction toward a full
+operational C semantics is future work (step 75's "even partial mechanization is
+a strong differentiator").
 
 ## Confirmation hook
 
@@ -71,5 +84,5 @@ from ub_oracle.mechanized_soundness import confirm_mechanized_soundness
 rep = confirm_mechanized_soundness()
 assert rep.ok
 assert rep.fully_checked          # True when the Lean kernel actually ran
-print(rep.theorems_present)       # all required theorems, including strict aliasing
+print(rep.theorems_present)       # all required theorems, including class extensions
 ```

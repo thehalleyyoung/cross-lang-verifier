@@ -1,6 +1,6 @@
 /-
   Scoped mechanized soundness for the cross-language UB-divergence oracle
-  (100_STEPS step 75).
+  (100_STEPS steps 75, 126, and 127).
 
   This file gives a *machine-checked* soundness (and relative-completeness)
   argument for the relational/product-program decision procedure the tool
@@ -344,6 +344,175 @@ example :
         cBuildAClean := true, cBuildBClean := true
         cBuildAOut := 7, cBuildBOut := 7
         targetDefined := true, targetDeterministic := true, targetOut := 7 } = false := by
+  decide
+
+/-! ### Pointer-provenance oracle: trap-vs-defined evidence
+
+    The pointer-provenance oracle (`src/ub_oracle/oracles/pointer_provenance.py`)
+    finds a concrete integer offset whose byte displacement leaves the source
+    array object's provenance and, in the address-overflow witness, triggers
+    UBSan's real `pointer-overflow` check.  The safe target translation uses a
+    checked index instead of forming a raw out-of-provenance pointer.  The real
+    harness confirms this class in `trap_vs_defined` mode: C traps on the source
+    UB, while the target has a defined deterministic outcome.  In the
+    recorded-observable abstraction, a trap and a defined target outcome are the
+    behavioural difference (`consequence`) the product program records.
+-/
+
+/-- The finite evidence tuple recorded for a pointer-provenance witness.
+
+    The first two flags are construction invariants of the generated C witness:
+    the input integer is ordinary data, but the induced pointer arithmetic leaves
+    the source object's permitted provenance.  The trap flag mirrors the
+    compiler-backed `trap_vs_defined` confirmation.  The target flags mirror the
+    safe Rust/Go translation: it uses a checked index and runs with a defined,
+    deterministic outcome. -/
+structure PointerProvenanceWitness where
+  sourceInputValid               : Bool
+  pointerArithmeticLeavesObject  : Bool
+  sanitizerPointerOverflowTrap   : Bool
+  targetUsesCheckedIndex         : Bool
+  targetDefined                  : Bool
+  targetDeterministic            : Bool
+deriving DecidableEq, Repr
+
+/-- The source-side C provenance premise: the input itself is valid, but the
+    generated pointer arithmetic leaves the array object's permitted provenance. -/
+def pointerProvenancePremise (w : PointerProvenanceWitness) : Bool :=
+  w.sourceInputValid && w.pointerArithmeticLeavesObject
+
+/-- The target side of `trap_vs_defined`: the translation keeps an index, uses a
+    checked operation, and returns deterministically with defined semantics. -/
+def pointerProvenanceTargetDefined (w : PointerProvenanceWitness) : Bool :=
+  w.targetUsesCheckedIndex && w.targetDefined && w.targetDeterministic
+
+/-- The exact confirmation signal for the pointer-provenance oracle: the real C
+    UBSan build traps, and the safe target run is defined. -/
+def pointerProvenanceConfirmed (w : PointerProvenanceWitness) : Bool :=
+  w.sanitizerPointerOverflowTrap && pointerProvenanceTargetDefined w
+
+/-- In `trap_vs_defined` mode, the observed behavioural difference is precisely:
+    the source traps on UB and the target produces a defined deterministic result. -/
+def trapVsDefinedConsequence (w : PointerProvenanceWitness) : Bool :=
+  w.sanitizerPointerOverflowTrap && pointerProvenanceTargetDefined w
+
+/-- Source UB is reached when the provenance premise is generated and UBSan traps
+    on that concrete input. -/
+def pointerProvenanceUBReached (w : PointerProvenanceWitness) : Bool :=
+  pointerProvenancePremise w && w.sanitizerPointerOverflowTrap
+
+/-- The product-program observation induced by a pointer-provenance confirmation. -/
+def pointerProvenanceObservation (w : PointerProvenanceWitness) : Observation :=
+  { ubReached   := pointerProvenanceUBReached w
+    tgtDefined  := pointerProvenanceTargetDefined w
+    consequence := trapVsDefinedConsequence w }
+
+/-- A pointer-provenance oracle report requires both the generated provenance
+    violation shape and the real compiler-backed `trap_vs_defined` confirmation. -/
+def pointerProvenanceReported (w : PointerProvenanceWitness) : Bool :=
+  pointerProvenancePremise w && pointerProvenanceConfirmed w
+
+/-- A pointer-provenance report carries the source-side shape the oracle
+    generated: a valid integer input whose induced pointer arithmetic leaves the
+    array object's permitted provenance. -/
+theorem pointer_provenance_report_implies_out_of_provenance
+    (w : PointerProvenanceWitness) :
+    pointerProvenanceReported w = true →
+      w.sourceInputValid = true ∧ w.pointerArithmeticLeavesObject = true := by
+  intro h
+  rw [pointerProvenanceReported, Bool.and_eq_true] at h
+  have hprem : pointerProvenancePremise w = true := h.1
+  rw [pointerProvenancePremise, Bool.and_eq_true] at hprem
+  exact hprem
+
+/-- A pointer-provenance report also carries the target-side safe-index shape:
+    the port did not form a raw pointer and its checked result was defined and
+    deterministic. -/
+theorem pointer_provenance_report_implies_checked_target
+    (w : PointerProvenanceWitness) :
+    pointerProvenanceReported w = true →
+      w.targetUsesCheckedIndex = true ∧
+      w.targetDefined = true ∧ w.targetDeterministic = true := by
+  intro h
+  rw [pointerProvenanceReported, Bool.and_eq_true] at h
+  have hconf : pointerProvenanceConfirmed w = true := h.2
+  rw [pointerProvenanceConfirmed, Bool.and_eq_true] at hconf
+  have htgt : pointerProvenanceTargetDefined w = true := hconf.2
+  rw [pointerProvenanceTargetDefined, Bool.and_eq_true] at htgt
+  have hchecked : (w.targetUsesCheckedIndex && w.targetDefined) = true := htgt.1
+  rw [Bool.and_eq_true] at hchecked
+  exact ⟨hchecked.1, hchecked.2, htgt.2⟩
+
+/-- A pointer-provenance report carries exactly the `trap_vs_defined` confirmation
+    facts consumed by the product program. -/
+theorem pointer_provenance_report_implies_trap_vs_defined
+    (w : PointerProvenanceWitness) :
+    pointerProvenanceReported w = true →
+      pointerProvenanceUBReached w = true ∧
+      pointerProvenanceTargetDefined w = true ∧
+      trapVsDefinedConsequence w = true := by
+  intro h
+  rw [pointerProvenanceReported, Bool.and_eq_true] at h
+  have hprem : pointerProvenancePremise w = true := h.1
+  have hconf : pointerProvenanceConfirmed w = true := h.2
+  rw [pointerProvenanceConfirmed, Bool.and_eq_true] at hconf
+  have htrap : w.sanitizerPointerOverflowTrap = true := hconf.1
+  have htgt : pointerProvenanceTargetDefined w = true := hconf.2
+  have hub : pointerProvenanceUBReached w = true := by
+    simp [pointerProvenanceUBReached, hprem, htrap]
+  have hcons : trapVsDefinedConsequence w = true := by
+    simp [trapVsDefinedConsequence, htrap, htgt]
+  exact ⟨hub, htgt, hcons⟩
+
+/-- The `trap_vs_defined` confirmation is strong enough to violate the product
+    assertion: source UB was reached, the target is defined, and the source trap
+    versus target outcome is the recorded consequence. -/
+theorem pointer_provenance_reported_product_violated
+    (w : PointerProvenanceWitness) :
+    pointerProvenanceReported w = true →
+      productViolated (pointerProvenanceObservation w) = true := by
+  intro h
+  have hfacts := pointer_provenance_report_implies_trap_vs_defined w h
+  obtain ⟨hub, htgt, hcons⟩ := hfacts
+  simp [productViolated, R, pointerProvenanceObservation, hub, htgt, hcons]
+
+/-- **Pointer-provenance soundness.**  If the real pointer-provenance oracle
+    reports a compiler-confirmed `trap_vs_defined` witness, the induced
+    product-program observation is a genuine UB-rooted divergence. -/
+theorem pointer_provenance_oracle_sound (w : PointerProvenanceWitness) :
+    pointerProvenanceReported w = true →
+      isUBDivergence (pointerProvenanceObservation w) := by
+  intro h
+  exact oracle_sound (pointerProvenanceObservation w)
+    (pointer_provenance_reported_product_violated w h)
+
+/-- Concrete positive witness shape: valid data input, out-of-provenance pointer
+    arithmetic, a real UBSan trap, and a checked deterministic target. -/
+def pointerProvenancePositive : PointerProvenanceWitness :=
+  { sourceInputValid := true
+    pointerArithmeticLeavesObject := true
+    sanitizerPointerOverflowTrap := true
+    targetUsesCheckedIndex := true
+    targetDefined := true
+    targetDeterministic := true }
+
+example :
+    pointerProvenanceReported pointerProvenancePositive = true
+      ∧ isUBDivergence
+        (pointerProvenanceObservation pointerProvenancePositive) := by
+  refine ⟨by decide, ?_⟩
+  exact pointer_provenance_oracle_sound pointerProvenancePositive (by decide)
+
+/-- Negative control: an in-provenance source operation is not a report even if
+    the target side is checked and defined. -/
+example :
+    pointerProvenanceReported
+      { sourceInputValid := true
+        pointerArithmeticLeavesObject := false
+        sanitizerPointerOverflowTrap := true
+        targetUsesCheckedIndex := true
+        targetDefined := true
+        targetDeterministic := true } = false := by
   decide
 
 end CrossLangVerifier
