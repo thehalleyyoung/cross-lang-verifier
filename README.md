@@ -107,7 +107,7 @@ python3 -m src.cli.main discover \
 - an internal **red-team** (`make redteam`) that, for every oracle on every
   supported language pair, throws a battery of semantics-preserving adversarial
   mutations of a genuinely-divergent unit at the verifier and proves it never
-  falsely returns "no divergence" — **132 adversarial cases**, **zero soundness
+  falsely returns "no divergence" — **144 adversarial cases**, **zero soundness
   breaches**, with the byte-reproducible adversarial grid CI-checked via
   `make redteam-check` and the real-compiler attack available via `make redteam`
 - a **branch-coverage ratchet** over the toolchain-independent brain of the tool
@@ -183,9 +183,9 @@ python3 -m src.cli.main discover \
 - a **soundness-frontier detector** (`foreign_effects.py`) that keeps the tool
   honest: the oracles reason about a *pure* C fragment, so this detector flags
   every construct that leaves it — `volatile` accesses, inline `__asm__`, calls
-  to undefined `extern` functions (true FFI), atomics, `setjmp`/`longjmp`, signal
+  to undefined `extern` functions (true FFI), general atomics, `setjmp`/`longjmp`, signal
   handlers — and makes the tool **abstain loudly** (a named reason per site)
-  instead of guessing, while ordinary libc-only code stays CLEAR. Each abstention
+  instead of guessing outside the scoped atomics litmus oracle, while ordinary libc-only code stays CLEAR. Each abstention
   is *justified against real clang IR*: a `volatile` loop keeps four separate
   `load volatile` where the pure version coalesces to one (so a value-folding
   model is provably unsound), inline asm is an opaque `call ... asm`, an `extern`
@@ -197,6 +197,11 @@ python3 -m src.cli.main discover \
   and accepts the `Mutex`/`Atomic`/read-only repairs — and every synchronized
   variant runs clean under both detectors. A pattern is only ever called a race
   when a real sanitizer actually fires on a real binary
+- a **relaxed-atomics ordering oracle** (`oracles/atomic_ordering.py`) for the
+  store-buffering litmus: bounded enumeration proves C `memory_order_relaxed`
+  permits `r0=0,r1=0` while Rust `SeqCst` and Go `sync/atomic` forbid it, and
+  real C/Rust/Go snippets compile and run deterministic model checkers for that
+  allowed-execution-set gap
 - an **indirect-call resolver** (`indirect_calls.py`) so real codebases that
   dispatch through function-pointer tables (syscall tables, plugin registries,
   hand-rolled vtables) don't lose their call-graph edges: the precise points-to

@@ -49,6 +49,7 @@ KNOWN_KINDS = frozenset({
     "type_pun",      # reinterpret bytes              (strict_aliasing)
     "fp_fma",        # a*b + c contraction            (fp_contraction)
     "uninit_read",   # read of uninitialized storage  (uninit_read)
+    "atomic_litmus", # bounded atomics litmus test     (atomic_ordering)
 })
 
 #: integer kinds carry a machine width and must use a supported one.

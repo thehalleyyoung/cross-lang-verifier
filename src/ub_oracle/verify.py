@@ -8,7 +8,8 @@ policy:
 * This tool is an **oracle for divergence**, not a proof of equivalence. It is
   *sound for divergence* (Step 5): it only ever returns
   :data:`VerifyVerdict.DIVERGENT` when an actual divergence has been **confirmed
-  by ground-truth re-execution** of real compiled C and Rust. A merely symbolic
+  by ground-truth re-execution** of real compiled C and Rust (or by an explicitly
+  model-level real-compiler check for allowed-execution-set classes). A merely symbolic
   witness that cannot be re-executed (no toolchain) is downgraded to
   ``CANDIDATE`` — never asserted as a divergence.
 
@@ -90,7 +91,7 @@ class VerifyReport:
         """A human-facing, *loud* one-line summary."""
         if self.verdict is VerifyVerdict.DIVERGENT:
             cls = self.divergence.divergence_class if self.divergence else "?"
-            return f"DIVERGENT [{cls}] — confirmed by re-execution. {self.detail}"
+            return f"DIVERGENT [{cls}] — confirmed by re-execution/model check. {self.detail}"
         if self.verdict is VerifyVerdict.CANDIDATE:
             return ("CANDIDATE — symbolic witness found but NOT re-executed; "
                     "this is not a confirmed divergence. " + self.detail)
@@ -159,6 +160,8 @@ def verify_unit(
                 checker = getattr(status, "full_libc_contract_for", None)
                 return bool(checker(tgt_lang)) if checker is not None else False
             if oracle.confirmation_mode == "static_ub_vs_defined":
+                return status.c_available and status.target_available(tgt_lang)
+            if oracle.confirmation_mode == "model_level_divergence":
                 return status.c_available and status.target_available(tgt_lang)
             return status.full_for(tgt_lang)
 

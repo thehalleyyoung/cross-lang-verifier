@@ -1171,7 +1171,7 @@ def test_matrix_pair_coverage_is_honest_about_class_breadth():
             "array_oob", "uninit_read", "strict_aliasing", "vla_bound",
             "float_cast_overflow", "fast_math_reassoc", "restrict_violation",
             "pointer_provenance", "bitfield_layout", "enum_out_of_range",
-            "memcpy_overlap", "longjmp_vla"} == go_covered
+            "memcpy_overlap", "longjmp_vla", "atomic_ordering"} == go_covered
     swift_covered = set(cov[("c", "swift")]["classes_covered"])
     assert {"signed_overflow", "shift_oob", "div_by_zero",
             "intmin_div_neg1", "array_oob", "uninit_read"} == swift_covered

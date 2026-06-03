@@ -15,6 +15,13 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "atomic_ordering",
+      "label": "c->go:atomic_ordering",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "bitfield_layout",
       "label": "c->go:bitfield_layout",
       "source_lang": "c",
@@ -52,6 +59,13 @@
     {
       "divergence_class": "intmin_div_neg1",
       "label": "c->go:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "longjmp_vla",
+      "label": "c->go:longjmp_vla",
       "source_lang": "c",
       "target_lang": "go",
       "verdict": "divergent"
@@ -148,6 +162,13 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "atomic_ordering",
+      "label": "c->rust:atomic_ordering",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "bitfield_layout",
       "label": "c->rust:bitfield_layout",
       "source_lang": "c",
@@ -164,6 +185,13 @@
     {
       "divergence_class": "enum_out_of_range",
       "label": "c->rust:enum_out_of_range",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "eval_order",
+      "label": "c->rust:eval_order",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "divergent"
@@ -192,6 +220,13 @@
     {
       "divergence_class": "intmin_div_neg1",
       "label": "c->rust:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "longjmp_vla",
+      "label": "c->rust:longjmp_vla",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "divergent"

@@ -96,6 +96,7 @@ BITFIELD_LAYOUT = DivergenceClass("bitfield_layout", "Implementation-defined bit
 ENUM_OUT_OF_RANGE = DivergenceClass("enum_out_of_range", "Out-of-range value stored in / read from an enum")
 MEMCPY_OVERLAP = DivergenceClass("memcpy_overlap", "Overlapping memcpy ranges")
 LONGJMP_VLA = DivergenceClass("longjmp_vla", "longjmp to an exited VLA scope")
+ATOMIC_ORDERING = DivergenceClass("atomic_ordering", "Relaxed atomic ordering allowed-execution gap")
 
 
 @dataclass(frozen=True)
@@ -456,6 +457,27 @@ _ENTRIES: List[DivergenceEntry] = [
                        "the checked-contract build reports `longjmp-vla`, while "
                        "the target's structured unwinding runs cleanup and returns "
                        "a deterministic value.",
+    ),
+    DivergenceEntry(
+        cls=ATOMIC_ORDERING,
+        source_definedness=Definedness.DEFINED,
+        source_rule="C relaxed atomics preserve each object's modification order "
+                    "but add no inter-thread synchronization edge. In the classic "
+                    "store-buffering litmus (T0: store x; load y, T1: store y; "
+                    "load x), the r0=0,r1=0 observation is therefore an allowed "
+                    "defined execution.",
+        c_standard_ref="C17 7.17.3 / 7.17.4 / 5.1.2.4p25",
+        rust_outcome=RustOutcomeKind.DEFINED_VALUE,
+        target_rule="Rust `Ordering::SeqCst` and Go `sync/atomic` operations are "
+                    "sequentially consistent. The same store-buffering program has "
+                    "one total order preserving per-thread order, which forbids "
+                    "the all-zero observation by cycle.",
+        severity=Severity.MODERATE,
+        witness_recipe="Bounded-enumerate the two-thread store-buffering litmus: "
+                       "C relaxed permits both loads to read the initial writes, "
+                       "while SeqCst Rust/Go has no total order that permits it. "
+                       "Confirmation is model-level plus real compilation of the "
+                       "atomics snippets, not a flaky runtime scheduling claim.",
     ),
 ]
 

@@ -70,6 +70,10 @@ class DivergenceOracle(abc.ABC):
     #:                       — a real C compiler diagnostic proves source-side UB
     #:                         that sanitizers do not trap, while the target is
     #:                         deterministic and defined.
+    #: "model_level_divergence"
+    #:                       — both real snippets compile/run, and a deterministic
+    #:                         bounded model checker confirms a defined allowed-
+    #:                         execution-set gap (used for atomics, not source UB).
     confirmation_mode: str = "exploited"
     #: for "optimizer_exploited" oracles, the pair of C flag-sets whose
     #: disagreement evidences the divergence (e.g. FP contraction off vs fast).
@@ -121,6 +125,10 @@ class DivergenceOracle(abc.ABC):
                 ce.divergence_class)
         elif self.confirmation_mode == "static_ub_vs_defined":
             rr = harness.confirm_static_ub_vs_defined(
+                ce.source_snippet, ce.target_snippet, argv,
+                ce.divergence_class, target_lang=self.target_lang)
+        elif self.confirmation_mode == "model_level_divergence":
+            rr = harness.confirm_model_level_divergence(
                 ce.source_snippet, ce.target_snippet, argv,
                 ce.divergence_class, target_lang=self.target_lang)
         else:

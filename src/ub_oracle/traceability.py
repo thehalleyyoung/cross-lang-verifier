@@ -1056,8 +1056,9 @@ def _thm_pointer_provenance_oracle() -> bool:
 CLAIMS: List[Claim] = [
     claim(
         "C1-soundness",
-        "A DIVERGENT verdict is only returned after ground-truth re-execution of "
-        "real compiled programs confirms a UB-rooted divergence.",
+        "A DIVERGENT verdict is only returned after real compiled programs "
+        "confirm either a UB-rooted divergence or an explicitly model-level "
+        "allowed-execution-set divergence.",
         "ub_oracle.verify",
         ("verify_unit", "VerifyVerdict", "VerifyReport"),
         docs=("README.md", "docs/SEMANTICS.md"),

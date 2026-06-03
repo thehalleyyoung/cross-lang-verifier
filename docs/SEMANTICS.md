@@ -79,3 +79,14 @@ semantics here say what it means for a candidate, once re-executed, to *count*
 as a confirmed divergence. Together: the search misses no fragment witness, and
 every reported witness satisfies the formal divergence definition against real
 compilers.
+
+## Scoped model-level divergences
+
+The executable predicate above is the UB-rooted re-execution semantics.  A small
+number of defined-but-looser classes need a different proof object.  In
+particular, `atomic_ordering` compares **sets of allowed executions** for a
+bounded store-buffering litmus: C `memory_order_relaxed` allows the all-zero
+observation, while Rust `SeqCst` / Go `sync/atomic` forbid it.  Its confirmation
+mode is therefore explicitly `model_level_divergence`: real C/Rust/Go snippets
+compile and run deterministic bounded model checkers.  This is not reported as a
+UB-sanitizer trap or as a flaky runtime interleaving observation.

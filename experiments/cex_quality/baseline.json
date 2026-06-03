@@ -1,11 +1,21 @@
 {
-  "n_oracles": 16,
+  "n_oracles": 19,
   "rows": [
     {
       "divergence_class": "array_oob",
       "raw_cost": 4,
       "raw_inputs": {
         "i": 4
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "atomic_ordering",
+      "raw_cost": 0,
+      "raw_inputs": {
+        "r0": 0,
+        "r1": 0
       },
       "source_lang": "c",
       "target_lang": "rust"
@@ -41,11 +51,20 @@
       "target_lang": "rust"
     },
     {
+      "divergence_class": "eval_order",
+      "raw_cost": 0,
+      "raw_inputs": {
+        "i": 0
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
       "divergence_class": "fast_math_reassoc",
       "raw_cost": 0,
       "raw_inputs": {
-        "x": 9810087568392704.0,
-        "y": 1.0
+        "x": -9484589240257024.0,
+        "y": -1.0
       },
       "source_lang": "c",
       "target_lang": "rust"
@@ -63,9 +82,9 @@
       "divergence_class": "fp_contraction",
       "raw_cost": 0,
       "raw_inputs": {
-        "a": -11.667212139869443,
-        "b": 8.000001831427221,
-        "c": 93.33771848660624
+        "a": 5.39776246119453,
+        "b": 2.9641912903396537,
+        "c": -16.000000474800835
       },
       "source_lang": "c",
       "target_lang": "rust"
@@ -76,6 +95,15 @@
       "raw_inputs": {
         "a": -2147483648,
         "b": -1
+      },
+      "source_lang": "c",
+      "target_lang": "rust"
+    },
+    {
+      "divergence_class": "longjmp_vla",
+      "raw_cost": 4,
+      "raw_inputs": {
+        "n": 4
       },
       "source_lang": "c",
       "target_lang": "rust"

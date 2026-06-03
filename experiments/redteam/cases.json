@@ -42,6 +42,22 @@
     },
     {
       "breach": false,
+      "divergence_class": "atomic_ordering",
+      "label": "c->go:atomic_ordering#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "atomic_ordering",
+      "label": "c->go:atomic_ordering#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "bitfield_layout",
       "label": "c->go:bitfield_layout#0",
       "source_lang": "c",
@@ -172,6 +188,30 @@
       "breach": false,
       "divergence_class": "intmin_div_neg1",
       "label": "c->go:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "longjmp_vla",
+      "label": "c->go:longjmp_vla#0",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "longjmp_vla",
+      "label": "c->go:longjmp_vla#1",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "longjmp_vla",
+      "label": "c->go:longjmp_vla#2",
       "source_lang": "c",
       "target_lang": "go",
       "verdict": "candidate"
@@ -514,6 +554,22 @@
     },
     {
       "breach": false,
+      "divergence_class": "atomic_ordering",
+      "label": "c->rust:atomic_ordering#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "atomic_ordering",
+      "label": "c->rust:atomic_ordering#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
       "divergence_class": "bitfield_layout",
       "label": "c->rust:bitfield_layout#0",
       "source_lang": "c",
@@ -572,6 +628,22 @@
       "breach": false,
       "divergence_class": "enum_out_of_range",
       "label": "c->rust:enum_out_of_range#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "eval_order",
+      "label": "c->rust:eval_order#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "eval_order",
+      "label": "c->rust:eval_order#1",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "candidate"
@@ -652,6 +724,30 @@
       "breach": false,
       "divergence_class": "intmin_div_neg1",
       "label": "c->rust:intmin_div_neg1#3",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "longjmp_vla",
+      "label": "c->rust:longjmp_vla#0",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "longjmp_vla",
+      "label": "c->rust:longjmp_vla#1",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "candidate"
+    },
+    {
+      "breach": false,
+      "divergence_class": "longjmp_vla",
+      "label": "c->rust:longjmp_vla#2",
       "source_lang": "c",
       "target_lang": "rust",
       "verdict": "candidate"
@@ -1058,7 +1154,7 @@
     }
   ],
   "n_breaches": 0,
-  "n_cases": 132,
+  "n_cases": 144,
   "n_confirmed_divergent": 0,
   "sound": true,
   "toolchain_full": false

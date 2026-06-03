@@ -114,6 +114,11 @@ POSITIVE_CASES: List[LabeledCase] = [
     LabeledCase("longjmp_to_exited_vla",
                 {"kind": "longjmp_vla", "var": "n", "probe": "longjmp_vla"},
                 "longjmp_vla"),
+    LabeledCase("atomic_store_buffering",
+                {"kind": "atomic_litmus", "pattern": "store_buffering",
+                 "source_order": "relaxed", "target_order": "seq_cst",
+                 "probe": "atomic_ordering"},
+                "atomic_ordering"),
 ]
 
 # Negatives: applicable-looking units with NO divergence of that class, plus
@@ -139,6 +144,10 @@ NEGATIVE_CASES: List[LabeledCase] = [
     LabeledCase("sequenced_not_eval_order",
                 {"kind": "unsequenced", "pattern": "sequenced_clean",
                  "probe": "eval_order"}, None),
+    LabeledCase("atomic_relaxed_to_relaxed_no_gap",
+                {"kind": "atomic_litmus", "pattern": "store_buffering",
+                 "source_order": "relaxed", "target_order": "relaxed",
+                 "probe": "atomic_ordering"}, None),
 ]
 
 ALL_CASES: List[LabeledCase] = POSITIVE_CASES + NEGATIVE_CASES

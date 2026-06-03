@@ -37,6 +37,25 @@
       }
     },
     {
+      "confirmation_mode": "model_level_divergence",
+      "divergence_class": "atomic_ordering",
+      "divergence_witness": "The C relaxed store-buffering execution allows r0=0,r1=0: Ly reads initial y=0; Lx reads initial x=0. The go SeqCst translation forbids the same observation: SeqCst would require Sx < Ly < Sy < Lx < Sx, a cycle in the single global order, so no bounded total-order interleaving admits r0=0,r1=0.",
+      "source_definedness": "defined",
+      "source_lang": "c",
+      "source_sha16": "70904186ce7334ab",
+      "target_defined_returncodes": [
+        0,
+        2
+      ],
+      "target_lang": "go",
+      "target_sha16": "43aebfbaf4f54e03",
+      "verdict": "divergent",
+      "witness": {
+        "r0": 0,
+        "r1": 0
+      }
+    },
+    {
       "confirmation_mode": "defined_divergence",
       "divergence_class": "bitfield_layout",
       "divergence_witness": "C packs a:3, b:5, c:8 into one 4-byte storage unit -> size=4 bytes=ffff0000, while the faithful go field-by-field port is unpacked -> size=3 bytes=071fff. Both programs are fully defined and deterministic, yet their ABI byte image differs: a struct serialised across a wire/FFI boundary changes meaning under the port.",
@@ -402,6 +421,25 @@
       "verdict": "divergent",
       "witness": {
         "i": 4
+      }
+    },
+    {
+      "confirmation_mode": "model_level_divergence",
+      "divergence_class": "atomic_ordering",
+      "divergence_witness": "The C relaxed store-buffering execution allows r0=0,r1=0: Ly reads initial y=0; Lx reads initial x=0. The rust SeqCst translation forbids the same observation: SeqCst would require Sx < Ly < Sy < Lx < Sx, a cycle in the single global order, so no bounded total-order interleaving admits r0=0,r1=0.",
+      "source_definedness": "defined",
+      "source_lang": "c",
+      "source_sha16": "70904186ce7334ab",
+      "target_defined_returncodes": [
+        0,
+        101
+      ],
+      "target_lang": "rust",
+      "target_sha16": "dc5b6be8e24d2cef",
+      "verdict": "divergent",
+      "witness": {
+        "r0": 0,
+        "r1": 0
       }
     },
     {
@@ -862,6 +900,7 @@
     {
       "classes_covered": [
         "array_oob",
+        "atomic_ordering",
         "bitfield_layout",
         "div_by_zero",
         "enum_out_of_range",
@@ -878,8 +917,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 16,
-      "n_divergent": 16,
+      "n_classes": 17,
+      "n_divergent": 17,
       "source_lang": "c",
       "target_lang": "go"
     },
@@ -898,6 +937,7 @@
     {
       "classes_covered": [
         "array_oob",
+        "atomic_ordering",
         "bitfield_layout",
         "div_by_zero",
         "enum_out_of_range",
@@ -916,8 +956,8 @@
         "uninit_read",
         "vla_bound"
       ],
-      "n_classes": 18,
-      "n_divergent": 18,
+      "n_classes": 19,
+      "n_divergent": 19,
       "source_lang": "c",
       "target_lang": "rust"
     },
@@ -947,6 +987,7 @@
   ],
   "divergence_classes": [
     "array_oob",
+    "atomic_ordering",
     "bitfield_layout",
     "div_by_zero",
     "enum_out_of_range",
@@ -974,5 +1015,5 @@
     "c->swift",
     "go->rust"
   ],
-  "n_cells": 46
+  "n_cells": 48
 }

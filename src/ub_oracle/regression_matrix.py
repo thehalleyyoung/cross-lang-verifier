@@ -55,6 +55,8 @@ CANONICAL_UNITS: Dict[str, Dict[str, Any]] = {
     "memcpy_overlap": {"kind": "memcpy_overlap", "buffer_len": 16},
     "eval_order": {"kind": "unsequenced", "pattern": "postinc_read_add"},
     "longjmp_vla": {"kind": "longjmp_vla", "var": "n"},
+    "atomic_ordering": {"kind": "atomic_litmus", "pattern": "store_buffering",
+                        "source_order": "relaxed", "target_order": "seq_cst"},
 }
 
 
@@ -165,6 +167,10 @@ def confirm_matrix(harness) -> Dict[str, Any]:
                 checker = getattr(status, "full_libc_contract_for", None)
                 ok = bool(checker(tgt)) if checker is not None else False
             elif oracle.confirmation_mode == "static_ub_vs_defined":
+                target_available = getattr(status, "target_available", lambda _t: False)
+                ok = bool(getattr(status, "c_available", False)
+                          and target_available(tgt))
+            elif oracle.confirmation_mode == "model_level_divergence":
                 target_available = getattr(status, "target_available", lambda _t: False)
                 ok = bool(getattr(status, "c_available", False)
                           and target_available(tgt))

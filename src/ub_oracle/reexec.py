@@ -901,6 +901,86 @@ class ReexecHarness:
             )
         return res
 
+    # ── model-level allowed-execution-set gap (atomics litmus tests) ──────
+    def confirm_model_level_divergence(
+        self,
+        c_src: str,
+        target_src: str,
+        argv_inputs: List[str],
+        divergence_class: str = "atomic_ordering",
+        target_lang: str = "rust",
+    ) -> ReexecResult:
+        """Confirm a divergence whose proof object is a bounded model check.
+
+        Some concurrency divergences are differences in *allowed execution sets*,
+        not deterministic single-run outputs.  A real relaxed-atomics runtime test
+        would be scheduler-dependent and unsuitable for the normal re-execution
+        harness.  This mode therefore compiles and runs deterministic model
+        checkers written in the source and target languages.  They must use the
+        real atomics APIs and agree with the expected tokens:
+
+        * C relaxed model: ``source_relaxed_all_zero=allowed``
+        * target SeqCst model: ``target_seq_cst_all_zero=forbidden``
+
+        The result is explicitly marked ``model_level_divergence``; callers must
+        not interpret it as a sanitizer trap or a runtime interleaving observed on
+        a particular hardware execution.
+        """
+        avail = self.status.c_available and self.status.target_available(target_lang)
+        res = ReexecResult(
+            available=avail,
+            divergence_class=divergence_class,
+            mode="model_level_divergence",
+            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)},
+        )
+        if not avail:
+            pack = PACKS.get(target_lang)
+            res.reason = ("toolchain unavailable: needs a C compiler and "
+                          + (pack.compiler_candidates[0] if pack else target_lang))
+            return res
+
+        with tempfile.TemporaryDirectory() as d:
+            c_exe = self._compile_c(c_src, ["-std=c11", "-O2"], d, "source_model")
+            tgt_exe = self._compile_target(target_src, target_lang, d, "target_model")
+            if not (c_exe and tgt_exe):
+                res.available = False
+                res.reason = "compilation failed (source=%s target=%s)" % (
+                    bool(c_exe), bool(tgt_exe))
+                return res
+            c_a = self._run([c_exe, *argv_inputs])
+            c_b = self._run([c_exe, *argv_inputs])
+            t_a = self._run([tgt_exe, *argv_inputs])
+            t_b = self._run([tgt_exe, *argv_inputs])
+            res.c_runs["source_model"] = c_a
+            res.rust_run = t_a
+
+        c_det = c_a.returncode == c_b.returncode and c_a.stdout == c_b.stdout
+        t_det = t_a.returncode == t_b.returncode and t_a.stdout == t_b.stdout
+        source_allowed = (
+            c_det and c_a.returncode == 0
+            and "source_relaxed_all_zero=allowed" in c_a.stdout
+        )
+        target_forbidden = (
+            t_det and t_a.returncode == 0
+            and "target_seq_cst_all_zero=forbidden" in t_a.stdout
+        )
+        res.ub_reachable = source_allowed
+        res.ub_consequential = source_allowed and target_forbidden
+        res.rust_defined = target_forbidden
+        res.confirmed = source_allowed and target_forbidden
+        if res.confirmed:
+            res.reason = (
+                "model-level allowed-set gap confirmed by real compiled snippets: "
+                f"C relaxed={c_a.stdout!r}; {target_lang} SeqCst={t_a.stdout!r}"
+            )
+        else:
+            res.reason = (
+                f"not confirmed: source_allowed={source_allowed} "
+                f"target_forbidden={target_forbidden} "
+                f"(source_det={c_det}, target_det={t_det})"
+            )
+        return res
+
     # ── public single-shot build+run helpers (used by the N-language
     #    consistency oracle, step 125) ─────────────────────────────────────
     def build_and_run_c(self, c_src: str, flags: List[str],
