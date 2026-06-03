@@ -417,10 +417,11 @@ python3 -m src.cli.main discover \
   inference from the real re-execution facts (see `docs/MECHANIZED_SOUNDNESS.md`)
 - a **Tier-2 idiomatic anchor corpus** (`idiomatic_corpus.py`): realistic,
   value-carrying ported functions — the binary-search **midpoint `(lo+hi)/2`**
-  overflow bug, a packed-struct bit-field shift, a coreutils-style rate divide,
-  and their equivalent idiomatic fixes (64-bit-widened average, byte clamp,
-  additive checksum) — on which the oracle is exactly right across rust and go:
-  every divergent port flagged, every equivalent port left silent
+  overflow bug, a packed-struct bit-field shift, explicit
+  **coreutils/sudo-rs/zlib-rs-class** idiomatic ports, and equivalent fixes
+  (64-bit average, byte clamp, modular checksum) — on which the oracle is exactly
+  right across rust and go: every divergent port flagged, every equivalent port
+  left silent
 - a **Tier-3 multi-pair corpus** (`multipair_corpus.py`): each real C function
   translated to **all three** targets (Rust/Go/Swift) in transpiler/LLM style,
   proving **cross-pair invariance** — a UB-rooted divergence is flagged on every

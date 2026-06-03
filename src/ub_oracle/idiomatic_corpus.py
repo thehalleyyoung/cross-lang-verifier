@@ -3,7 +3,10 @@
 The toy `a / b` pairs prove the *mechanism*; this module proves the oracle keeps
 its guarantees on **idiomatic, value-carrying functions** — the kind of code a
 human porting a C utility to Rust/Go actually writes (named helpers, clamping,
-checksums, a 64-bit-widened average, the infamous binary-search midpoint).
+checksums, checked arithmetic, a 64-bit-widened average, the infamous
+binary-search midpoint).  Step 161 extends that anchor with explicit
+coreutils/sudo-rs/zlib-rs-class ports that are intentionally not literal
+translations, while remaining compiler-confirmed extraction units.
 
 Each corpus item is a *real-world-shaped* function with provenance to a concrete
 algorithm, a declared label, and idiomatic ports per target language:
@@ -183,6 +186,71 @@ _CKSUM_GO = (
     "fmt.Println(cks(a,b))}\n")
 
 
+# ---- Step 161: idiomatic real-port-family expansion ------------------------- #
+_COREUTILS_BLOCKS_C = _c(
+    "static int blocks_from_bytes(int bytes){return (bytes+511)/512;}",
+    "int b=atoi(argv[1]);",
+    "blocks_from_bytes(b)")
+_COREUTILS_BLOCKS_RUST = (
+    "fn blocks_from_bytes(bytes:i32)->i32{\n"
+    "  bytes.checked_add(511).map(|rounded| rounded / 512).unwrap_or(i32::MAX)\n"
+    "}\n"
+    "fn main(){\n"
+    "  let b: i32 = std::env::args().nth(1).unwrap().parse().unwrap();\n"
+    "  println!(\"{}\", blocks_from_bytes(b));\n}\n")
+_COREUTILS_BLOCKS_GO = (
+    "package main\nimport (\"fmt\";\"os\";\"strconv\")\n"
+    "func blocksFromBytes(bytes int64)int64{if bytes>2147483136{return 2147483647};"
+    "return (bytes+511)/512}\n"
+    "func main(){b,_:=strconv.ParseInt(os.Args[1],10,32);"
+    "fmt.Println(blocksFromBytes(b))}\n")
+
+_SUDO_TIMEOUT_C = _c(
+    "static int timeout_slice(int remaining,int attempts){return remaining/attempts;}",
+    "int r=atoi(argv[1]);int a=atoi(argv[2]);",
+    "timeout_slice(r,a)")
+_SUDO_TIMEOUT_RUST = (
+    "fn timeout_slice(remaining:i32,attempts:i32)->i32{\n"
+    "  remaining.checked_div(attempts).unwrap_or(remaining)\n"
+    "}\n"
+    "fn main(){\n"
+    "  let r: i32 = std::env::args().nth(1).unwrap().parse().unwrap();\n"
+    "  let a: i32 = std::env::args().nth(2).unwrap().parse().unwrap();\n"
+    "  println!(\"{}\", timeout_slice(r,a));\n}\n")
+_SUDO_TIMEOUT_GO = (
+    "package main\nimport (\"fmt\";\"os\";\"strconv\")\n"
+    "func timeoutSlice(remaining,attempts int64)int64{if attempts==0{return remaining};"
+    "return remaining/attempts}\n"
+    "func main(){r,_:=strconv.ParseInt(os.Args[1],10,32);"
+    "a,_:=strconv.ParseInt(os.Args[2],10,32);fmt.Println(timeoutSlice(r,a))}\n")
+
+_ZLIB_ADLER_C = _c(
+    "static int adler_window_step(int s1,int byte){"
+    "unsigned acc=(unsigned)s1+(unsigned)(byte&0xff);return (int)(acc%65521u);}",
+    "int s=atoi(argv[1]);int b=atoi(argv[2]);",
+    "adler_window_step(s,b)")
+_ZLIB_ADLER_RUST = (
+    "fn adler_window_step(s1:i32,byte:i32)->i32{\n"
+    "  ((s1 as u32).wrapping_add((byte as u32) & 0xff) % 65521) as i32\n"
+    "}\n"
+    "fn main(){\n"
+    "  let s: i32 = std::env::args().nth(1).unwrap().parse().unwrap();\n"
+    "  let b: i32 = std::env::args().nth(2).unwrap().parse().unwrap();\n"
+    "  println!(\"{}\", adler_window_step(s,b));\n}\n")
+_ZLIB_ADLER_GO = (
+    "package main\nimport (\"fmt\";\"os\";\"strconv\")\n"
+    "func adlerWindowStep(s1, b int64)int64{acc:=uint32(s1)+uint32(b&0xff);"
+    "return int64(acc%65521)}\n"
+    "func main(){s,_:=strconv.ParseInt(os.Args[1],10,32);"
+    "b,_:=strconv.ParseInt(os.Args[2],10,32);fmt.Println(adlerWindowStep(s,b))}\n")
+
+STEP161_FAMILY_IDS = (
+    "coreutils-block-rounding",
+    "sudo-rs-timeout-slice",
+    "zlib-rs-adler-window",
+)
+
+
 CORPUS: Tuple[IdiomaticItem, ...] = (
     IdiomaticItem(
         "midpoint-overflow",
@@ -245,7 +313,38 @@ CORPUS: Tuple[IdiomaticItem, ...] = (
         "none", "equivalent",
         _CKSUM_C, {"rust": _CKSUM_RUST, "go": _CKSUM_GO},
         ("100", "200"), ("1", "2")),
+    IdiomaticItem(
+        "coreutils-block-rounding",
+        "uutils/coreutils-class block-count rounding: C `bytes+511` has a latent "
+        "signed-overflow precondition, while the idiomatic Rust/Go ports make the "
+        "overflow policy explicit with checked arithmetic and saturation.",
+        "signed_overflow", "divergent",
+        _COREUTILS_BLOCKS_C,
+        {"rust": _COREUTILS_BLOCKS_RUST, "go": _COREUTILS_BLOCKS_GO},
+        ("2147483400",), ("1024",)),
+    IdiomaticItem(
+        "sudo-rs-timeout-slice",
+        "sudo-rs-class timeout/backoff calculation: a zero attempt count is C "
+        "division UB, while the idiomatic ports route the precondition through "
+        "`checked_div` / an explicit zero guard.",
+        "div_by_zero", "divergent",
+        _SUDO_TIMEOUT_C, {"rust": _SUDO_TIMEOUT_RUST, "go": _SUDO_TIMEOUT_GO},
+        ("30", "0"), ("30", "3")),
+    IdiomaticItem(
+        "zlib-rs-adler-window",
+        "zlib-rs-class Adler/window checksum update: the port deliberately uses "
+        "unsigned modular arithmetic on both sides, serving as an idiomatic "
+        "true-equivalence control for the corpus expansion.",
+        "none", "equivalent",
+        _ZLIB_ADLER_C, {"rust": _ZLIB_ADLER_RUST, "go": _ZLIB_ADLER_GO},
+        ("65520", "255"), ("1", "2")),
 )
+
+
+def step161_items() -> Tuple[IdiomaticItem, ...]:
+    """The explicit coreutils/sudo-rs/zlib-rs-class Step-161 expansion."""
+    by_id = {it.item_id: it for it in CORPUS}
+    return tuple(by_id[item_id] for item_id in STEP161_FAMILY_IDS)
 
 
 # --------------------------------------------------------------------------- #
@@ -321,7 +420,8 @@ def _confirm_item(h: ReexecHarness, item: IdiomaticItem, target_src: str,
                                      item.klass, lang)
 
 
-def run_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
+def _run_items(items: Tuple[IdiomaticItem, ...],
+               langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
     status = toolchain_available()
     avail = tuple(l for l in langs if status.full_for(l)
                   or status.full_libc_contract_for(l)
@@ -330,7 +430,7 @@ def run_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
         return CorpusReport(available=False, langs=())
     h = ReexecHarness(status)
     verdicts: List[ItemVerdict] = []
-    for item in CORPUS:
+    for item in items:
         for lang in avail:
             tgt = item.targets.get(lang)
             if tgt is None:
@@ -357,6 +457,10 @@ def run_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
     ).hexdigest()
     return CorpusReport(available=True, langs=avail, verdicts=verdicts,
                         content_hash=chash)
+
+
+def run_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> CorpusReport:
+    return _run_items(CORPUS, langs)
 
 
 @dataclass
@@ -401,10 +505,51 @@ def confirm_idiomatic_corpus(
         content_hash=r1.content_hash, report=r1, detail=detail)
 
 
+def confirm_step161_expansion(
+        langs: Tuple[str, ...] = ("rust", "go")) -> CorpusConfirmation:
+    """Confirm the coreutils/sudo-rs/zlib-rs idiomatic-port expansion."""
+    status = toolchain_available()
+    if not any(status.full_for(l) for l in langs):
+        return CorpusConfirmation(
+            available=False, ok=True, n_items=0, n_divergent=0, n_equivalent=0,
+            n_langs=0, hash_stable=True, content_hash="", report=None,
+            detail="toolchain unavailable: Step-161 consistency-only pass")
+    items = step161_items()
+    r1 = _run_items(items, langs)
+    r2 = _run_items(items, langs)
+    stable = (r1.content_hash == r2.content_hash and bool(r1.content_hash))
+    expected_cells = {
+        (it.item_id, lang)
+        for it in items
+        for lang in r1.langs
+        if lang in it.targets
+    }
+    seen_cells = {(v.item_id, v.lang) for v in r1.verdicts}
+    seen_ids = {v.item_id for v in r1.verdicts}
+    labels = {v.declared_label for v in r1.verdicts}
+    ok = (
+        r1.all_correct
+        and stable
+        and seen_ids == set(STEP161_FAMILY_IDS)
+        and seen_cells == expected_cells
+        and labels == {"divergent", "equivalent"}
+    )
+    detail = (f"step161_items={sorted(seen_ids)} cells={len(seen_cells)} "
+              f"langs={list(r1.langs)} all_correct={r1.all_correct} "
+              f"hash_stable={stable}")
+    return CorpusConfirmation(
+        available=True, ok=ok, n_items=r1.n_items, n_divergent=r1.n_divergent,
+        n_equivalent=r1.n_equivalent, n_langs=len(r1.langs), hash_stable=stable,
+        content_hash=r1.content_hash, report=r1, detail=detail)
+
+
 IDIOMATIC_CORPUS_SPI = {
     "CORPUS": CORPUS,
+    "STEP161_FAMILY_IDS": STEP161_FAMILY_IDS,
+    "step161_items": step161_items,
     "run_corpus": run_corpus,
     "confirm_idiomatic_corpus": confirm_idiomatic_corpus,
+    "confirm_step161_expansion": confirm_step161_expansion,
 }
 
 

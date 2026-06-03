@@ -4,22 +4,22 @@
 
 A machine-readable, indexed catalogue of the cross-language divergence patterns this tool catches, **indexed by class and language pair**. Every divergent exhibit carries a concrete **witnessing input** and is **re-confirmed live** by `confirm_zoo()` (the oracle must still flag the divergence on the witness and stay silent on the safe input).
 
-*content hash: `29a67003bcb5a9c3` — 18 divergent exhibits across 5 classes.*
+*content hash: `2eaea983dfa45403` — 22 divergent exhibits across 5 classes.*
 
 ## Index — class × pair
 
 | divergence class | language pair | exhibits |
 |------------------|---------------|----------|
-| `div_by_zero` | `c->go` | `idio:rate-divide:go`, `multi:rate:go` |
-| `div_by_zero` | `c->rust` | `idio:rate-divide:rust`, `multi:rate:rust` |
+| `div_by_zero` | `c->go` | `idio:rate-divide:go`, `idio:sudo-rs-timeout-slice:go`, `multi:rate:go` |
+| `div_by_zero` | `c->rust` | `idio:rate-divide:rust`, `idio:sudo-rs-timeout-slice:rust`, `multi:rate:rust` |
 | `div_by_zero` | `c->swift` | `multi:rate:swift` |
 | `memcpy_overlap` | `c->go` | `idio:memcpy-overlap:go` |
 | `memcpy_overlap` | `c->rust` | `idio:memcpy-overlap:rust` |
 | `oversized_shift` | `c->go` | `multi:bitfield:go` |
 | `oversized_shift` | `c->rust` | `idio:bitfield-shift:rust`, `multi:bitfield:rust` |
 | `oversized_shift` | `c->swift` | `multi:bitfield:swift` |
-| `signed_overflow` | `c->go` | `idio:midpoint-overflow:go`, `multi:midpoint:go` |
-| `signed_overflow` | `c->rust` | `idio:midpoint-overflow:rust`, `multi:midpoint:rust` |
+| `signed_overflow` | `c->go` | `idio:coreutils-block-rounding:go`, `idio:midpoint-overflow:go`, `multi:midpoint:go` |
+| `signed_overflow` | `c->rust` | `idio:coreutils-block-rounding:rust`, `idio:midpoint-overflow:rust`, `multi:midpoint:rust` |
 | `signed_overflow` | `c->swift` | `multi:midpoint:swift` |
 | `uninit_padding` | `c->go` | `idio:uninit-padding:go` |
 | `uninit_padding` | `c->rust` | `idio:uninit-padding:rust` |
@@ -43,6 +43,45 @@ fn main(){
   let v: i32 = std::env::args().nth(1).unwrap().parse().unwrap();
   let w: u32 = std::env::args().nth(2).unwrap().parse().unwrap();
   println!("{}", field(v,w));
+}
+```
+
+### `idio:coreutils-block-rounding:go` — signed_overflow (c->go)
+
+*Mirrors:* uutils/coreutils-class block-count rounding: C `bytes+511` has a latent signed-overflow precondition, while the idiomatic Rust/Go ports make the overflow policy explicit with checked arithmetic and saturation.. *Witness:* `['2147483400']` (safe: `['1024']`).
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+static int blocks_from_bytes(int bytes){return (bytes+511)/512;}
+int main(int argc,char**argv){int b=atoi(argv[1]);printf("%d\n",blocks_from_bytes(b));return 0;}
+```
+
+```go
+package main
+import ("fmt";"os";"strconv")
+func blocksFromBytes(bytes int64)int64{if bytes>2147483136{return 2147483647};return (bytes+511)/512}
+func main(){b,_:=strconv.ParseInt(os.Args[1],10,32);fmt.Println(blocksFromBytes(b))}
+```
+
+### `idio:coreutils-block-rounding:rust` — signed_overflow (c->rust)
+
+*Mirrors:* uutils/coreutils-class block-count rounding: C `bytes+511` has a latent signed-overflow precondition, while the idiomatic Rust/Go ports make the overflow policy explicit with checked arithmetic and saturation.. *Witness:* `['2147483400']` (safe: `['1024']`).
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+static int blocks_from_bytes(int bytes){return (bytes+511)/512;}
+int main(int argc,char**argv){int b=atoi(argv[1]);printf("%d\n",blocks_from_bytes(b));return 0;}
+```
+
+```rust
+fn blocks_from_bytes(bytes:i32)->i32{
+  bytes.checked_add(511).map(|rounded| rounded / 512).unwrap_or(i32::MAX)
+}
+fn main(){
+  let b: i32 = std::env::args().nth(1).unwrap().parse().unwrap();
+  println!("{}", blocks_from_bytes(b));
 }
 ```
 
@@ -171,6 +210,46 @@ fn main(){
   let t: i32 = std::env::args().nth(1).unwrap().parse().unwrap();
   let c: i32 = std::env::args().nth(2).unwrap().parse().unwrap();
   println!("{}", rate(t,c));
+}
+```
+
+### `idio:sudo-rs-timeout-slice:go` — div_by_zero (c->go)
+
+*Mirrors:* sudo-rs-class timeout/backoff calculation: a zero attempt count is C division UB, while the idiomatic ports route the precondition through `checked_div` / an explicit zero guard.. *Witness:* `['30', '0']` (safe: `['30', '3']`).
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+static int timeout_slice(int remaining,int attempts){return remaining/attempts;}
+int main(int argc,char**argv){int r=atoi(argv[1]);int a=atoi(argv[2]);printf("%d\n",timeout_slice(r,a));return 0;}
+```
+
+```go
+package main
+import ("fmt";"os";"strconv")
+func timeoutSlice(remaining,attempts int64)int64{if attempts==0{return remaining};return remaining/attempts}
+func main(){r,_:=strconv.ParseInt(os.Args[1],10,32);a,_:=strconv.ParseInt(os.Args[2],10,32);fmt.Println(timeoutSlice(r,a))}
+```
+
+### `idio:sudo-rs-timeout-slice:rust` — div_by_zero (c->rust)
+
+*Mirrors:* sudo-rs-class timeout/backoff calculation: a zero attempt count is C division UB, while the idiomatic ports route the precondition through `checked_div` / an explicit zero guard.. *Witness:* `['30', '0']` (safe: `['30', '3']`).
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+static int timeout_slice(int remaining,int attempts){return remaining/attempts;}
+int main(int argc,char**argv){int r=atoi(argv[1]);int a=atoi(argv[2]);printf("%d\n",timeout_slice(r,a));return 0;}
+```
+
+```rust
+fn timeout_slice(remaining:i32,attempts:i32)->i32{
+  remaining.checked_div(attempts).unwrap_or(remaining)
+}
+fn main(){
+  let r: i32 = std::env::args().nth(1).unwrap().parse().unwrap();
+  let a: i32 = std::env::args().nth(2).unwrap().parse().unwrap();
+  println!("{}", timeout_slice(r,a));
 }
 ```
 
