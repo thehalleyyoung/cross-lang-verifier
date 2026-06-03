@@ -148,7 +148,13 @@ the UB-invisible classes. A Tier-1 c2rust-output corpus separately runs the real
 \texttt{c2rust 0.22.1} translator on 12 real-library extraction units,
 byte-compares the regenerated machine output with the checked-in Rust, compiles
 the source and generated artifacts with \texttt{clang}/\texttt{rustc}, and checks
-the generated Rust artifacts against the verifier; a GitHub-mined C$\to$Rust port
+the generated Rust artifacts against the verifier.  A same-corpus existing-tools
+study wraps those actual c2rust-generated Rust functions and compares SemRec
+against c2rust-style safe-input regression tests, Rust-only Miri applicability,
+and equal-budget UBSan differential fuzzing: SemRec confirms all 8 candidate
+divergences, the regression/Miri baselines report no cross-language finding, and
+the fuzzer catches only the two dense shift-amount cases while missing six sparse
+boundary witnesses. A GitHub-mined C$\to$Rust port
 sample ranks public port/rewrite repositories and byte-checks verifier-backed
 extraction units from three project families; the new responsible-finding lane
 then takes the \texttt{uutils/coreutils}-family extraction, wraps the checked-in
@@ -952,7 +958,7 @@ failure, not a release-note convention.
 \section{Evaluation}\label{sec:eval}
 %% ======================================================================
 
-We evaluate \textsc{SemRec} around twelve research questions.
+We evaluate \textsc{SemRec} around thirteen research questions.
 All experiments run on a laptop
 (Apple M-series, 16\,GB RAM) using Python~3 and Z3.
 
@@ -982,6 +988,9 @@ All experiments run on a laptop
     rather than hand-written c2rust-style translations, and can it connect that
     pipeline to public GitHub C$\to$Rust port families without overclaiming
     upstream defects?
+  \item[\textbf{RQ13}] On the same c2rust corpus, what do c2rust-style
+    regression tests, Rust-only Miri, and equal-budget fuzzing miss that SemRec
+    catches?
 \end{enumerate}
 
 \subsection{UB-Invisible Benchmark (RQ1)}\label{sec:eval-ub}
@@ -1159,6 +1168,35 @@ extraction units rather than whole build systems, so whole-project c2rust
 ingestion remains an engineering frontier. The important credibility property is
 that every reported row is tied to exact generated Rust bytes and a verifier
 record in \texttt{experiments/c2rust\_corpus/results.json}.
+
+\paragraph{Same-corpus existing-tools comparison (RQ13).}
+\texttt{make existing-tools-check} turns the same 12 c2rust units into runnable
+program pairs by appending wrappers to the checked-in generated Rust functions.
+It then asks four executable questions: do c2rust-style compile/safe-input
+regression tests pass; does Miri, a Rust-only checker, find target-side undefined
+behaviour; does an equal-budget UBSan differential fuzzer hit the witness; and
+does SemRec confirm the source-UB-vs-target-deterministic split?  This is an
+applicability-aware comparison, not a claim that c2rust or Miri are designed to
+solve cross-language equivalence.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Same-corpus Step-162 baseline on the 12 real c2rust extraction units
+(8 candidate divergences, 4 safe-range controls).  The fuzzer's two hits are the
+dense shift-amount cases; six sparse boundary witnesses are found only by SemRec.}
+\label{tab:existing-tools}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Method & Candidate divergences found & Safe controls flagged & Scope \\
+\midrule
+c2rust-style regression tests & 0/8 & 0/4 & compile + safe-input agreement \\
+Miri (Rust-only, when available) & 0/8 & 0/4 & target-side UB only \\
+UBSan differential fuzzer (128 trials) & 2/8 & 0/4 & sampled executions \\
+\textsc{SemRec} on same generated code & \textbf{8/8} & \textbf{0/4} & semantic witness + real replay \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{GitHub-mined C$\to$Rust port sample.}
 To keep the real-world funnel live beyond the fixed c2rust corpus, the artifact

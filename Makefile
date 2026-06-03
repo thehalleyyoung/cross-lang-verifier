@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check llm-scale-check idiomatic-port-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check llm-scale-check idiomatic-port-check existing-tools-check package-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -39,6 +39,7 @@ help:
 	@echo "  real-bug-check assert responsible divergence findings reproduce"
 	@echo "  llm-scale-check assert frozen 200+ LLM-transpiler study reproduces"
 	@echo "  idiomatic-port-check assert coreutils/sudo-rs/zlib-rs idiomatic ports reproduce"
+	@echo "  existing-tools-check assert c2rust/Miri/fuzzer same-corpus baseline"
 	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
 	@echo "  demo-video        regenerate the README-linked c2rust CWE-class demo video"
 	@echo "  guard             run the credibility guard (no simulated results)"
@@ -145,6 +146,9 @@ llm-scale-check:
 
 idiomatic-port-check:
 	$(PYTHON) -m pytest tests/test_idiomatic_port_expansion.py -q
+
+existing-tools-check:
+	$(PYTHON) -m pytest tests/test_existing_tools_study.py -q
 
 package-check:
 	bash scripts/verify_packaging.sh

@@ -161,6 +161,12 @@ python3 -m src.cli.main discover \
   real-library extraction units are translated by the actual `c2rust 0.22.1`
   binary, the generated Rust artifacts are checked in, and the verifier-backed
   verdict layer is byte-reproducible
+- a **same-corpus existing-tools head-to-head** (`make existing-tools-check`) that
+  wraps the actual c2rust-generated Rust functions and compares SemRec against
+  c2rust-style safe-input regression tests, Rust-only Miri applicability, and
+  equal-budget UBSan differential fuzzing: SemRec confirms every candidate
+  divergence while the baselines pass or miss the sparse boundary witnesses they
+  are not designed to relate
 - a **GitHub-mined C→Rust port sample** (`make github-port-mining-check`) that
   ranks public port/rewrite repos, verifies extraction units from three mined
   project families, byte-checks the symbolic verdict layer, and now feeds a
