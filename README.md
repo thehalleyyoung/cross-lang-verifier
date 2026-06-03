@@ -137,6 +137,9 @@ python3 -m src.cli.main discover \
   fingerprints and their replay checks fail fast on any toolchain drift
 - a deterministic parallel ground-truth harness whose merged, content-hashed
   verdict layer is independent of worker scheduling
+- a supervised peak-RSS cap (`--max-rss-mb`, `make memory-bound-check`) that bounds
+  real compiler/program subprocesses and proves the capped verdict layer matches
+  the unbounded run
 - a self-contained, offline migration-risk HTML dashboard (`--dashboard`)
 - a performance/scalability study (`make perf`) that times the *real* symbolic
   searches across every class and language pair and characterises the SMT

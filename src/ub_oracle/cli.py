@@ -34,7 +34,7 @@ import sys
 from typing import Dict, List, Optional, Sequence
 
 from .report import aggregate_reports, pair_of, to_sarif
-from .reexec import toolchain_available
+from .reexec import ReexecHarness, toolchain_available
 from .cache import VerificationCache, verify_incremental
 from .dashboard import render_dashboard
 from .suppress import (
@@ -128,6 +128,7 @@ def create_parser() -> argparse.ArgumentParser:
             "  cross-lang-verify --units units.json --triage\n"
             "  cross-lang-verify --units units.json --sarif out.sarif\n"
             "  cross-lang-verify --units units.json --format json --no-confirm\n"
+            "  cross-lang-verify --units units.json --max-rss-mb 4096\n"
             "  cross-lang-verify --units units.json --write-baseline baseline.json\n"
             "  cross-lang-verify --units units.json --suppress baseline.json\n"
             "  cross-lang-verify --units units.json --fail-on divergent "
@@ -163,6 +164,11 @@ def create_parser() -> argparse.ArgumentParser:
                         "units (keyed by unit content + toolchain version); only "
                         "changed/new units are re-verified, and the cache is "
                         "updated in place")
+    p.add_argument("--max-rss-mb", type=int, metavar="MB",
+                   help="run compiler/program confirmation subprocesses under a "
+                        "supervised process-tree peak-RSS cap; if the cap is hit, "
+                        "verification exits 2 rather than treating the kill as a "
+                        "semantic verdict")
     p.add_argument("--dashboard", metavar="OUT.html",
                    help="write a self-contained, offline migration-risk HTML "
                         "dashboard summarizing risk per divergence class")
@@ -314,21 +320,36 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         return 2
 
     status = toolchain_available()
+    harness = None
+    if args.max_rss_mb is not None:
+        try:
+            harness = ReexecHarness(status, max_rss_mb=args.max_rss_mb)
+        except (RuntimeError, ValueError) as exc:
+            sys.stderr.write(f"error: bad --max-rss-mb: {exc}\n")
+            return 2
     cache = None
     inc = None
     if args.cache:
         cache = VerificationCache.load(args.cache)
         inc = verify_incremental(units, cache, confirm=not args.no_confirm,
-                                 status=status)
+                                 status=status, harness=harness)
         reports: List[VerifyReport] = inc.reports
         cache.prune_to(units)
         cache.save(args.cache)
     else:
         reports = [
-            verify_unit(u, confirm=not args.no_confirm, status=status)
+            verify_unit(u, harness=harness, confirm=not args.no_confirm, status=status)
             for u in units
         ]
     summary = aggregate_reports(reports)
+    memory_bound_summary = None
+    if harness is not None:
+        memory_bound_summary = {
+            "max_rss_mb": args.max_rss_mb,
+            "observed_peak_rss_kb": harness.peak_rss_kb,
+            "resource_exhausted": harness.resource_exhausted,
+            "resource_exhaustions": list(harness.resource_exhaustions),
+        }
 
     verified_summary = None
     if args.verified_check:
@@ -399,6 +420,7 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             "suppressed": len(suppressed),
             "cache": inc.to_dict() if inc is not None else None,
             "verified_check": verified_summary,
+            "memory_bound": memory_bound_summary,
             "units": [
                 {"label": _unit_label(u, i), "verdict": r.verdict.value,
                  "pair": pair_of(r), "detail": r.detail,
@@ -426,6 +448,15 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
                 "\n  " + color("2", f"cache: {inc.hits} hit(s), {inc.misses} "
                                     f"re-verified, {inc.stored} stored "
                                     f"({inc.hit_rate:.0%} reuse)") + "\n")
+        if memory_bound_summary is not None:
+            sys.stdout.write(
+                "\n  " + color(
+                    "2",
+                    "memory-bound: "
+                    f"cap={memory_bound_summary['max_rss_mb']} MiB "
+                    f"observed_peak={memory_bound_summary['observed_peak_rss_kb']} KiB "
+                    f"resource_exhausted={memory_bound_summary['resource_exhausted']}",
+                ) + "\n")
         if suppressed:
             sys.stdout.write(
                 "\n  " + color("2", f"{len(suppressed)} finding(s) suppressed by "
@@ -434,6 +465,10 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             sys.stdout.write("\n" + render_triage(
                 triage_reports(reports), color=color,
                 max_per_tier=args.triage_top) + "\n")
+
+    if harness is not None and harness.resource_exhausted:
+        sys.stderr.write("error: memory-bound verification exhausted the RSS cap\n")
+        return 2
 
     # Baseline-aware fail gate: a suppressed finding never blocks.
     return 1 if any(r.verdict in fail_verdicts and id(r) not in suppressed

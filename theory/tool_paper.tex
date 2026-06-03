@@ -171,7 +171,9 @@ real-compiler runs, with an incremental cache whose warm hits are proved
 verdict-layer identical to cold compiler runs, compiler-backed artifacts that pin
 the exact \texttt{clang}/\texttt{rustc}/\texttt{go} version fingerprint and reject
 replay under a drifted toolchain, and a deterministic process-pool harness whose
-merged hash is independent of worker scheduling.  This includes a
+merged hash is independent of worker scheduling, plus a supervised peak-RSS cap
+whose proof rejects resource exhaustion and requires the bounded verdict-layer
+hash to match the unbounded run.  This includes a
 migration-scale corpus of \textbf{60{,}000}
 all-distinct C$\to$\{Rust,Go\} programs totaling \textbf{1{,}044{,}000 LOC}:
 the census proves every program hash unique and the labels balanced within
@@ -788,6 +790,15 @@ fingerprint, and the semantics version; the executable
 \texttt{prove\_cache\_equivalence} check cold-runs a fresh cache, warm-runs the
 same units, and requires the normalized verdict/counterexample signature hashes
 to match exactly.
+Step~146 adds the analogous operational guard for memory: \texttt{ReexecHarness}
+can run compiler and program subprocess trees under a supervised
+\texttt{--max-rss-mb} peak-RSS cap. The supervisor samples the whole process tree
+instead of using address-space rlimits (which break sanitizer shadow-memory
+reservation), and a cap hit is recorded as resource exhaustion, never as UBSan or
+target-language semantic evidence. The executable
+\texttt{prove\_memory\_bounded\_equivalence} check runs the same real units
+unbounded and capped, then rejects the proof unless the verdict-layer signatures
+match and no subprocess exhausts the RSS budget.
 The same version binding now extends beyond cache keys: every
 environment-dependent result artifact
 (\texttt{confirmations.json}, \texttt{minimized.json}, \texttt{attack.json}, and
@@ -1053,6 +1064,11 @@ missing.  The same ground-truth labeler can now run through
 merged output is restored to the input sequence and the paper hash is computed
 only over the deterministic verdict layer.  The proof harness replays the same
 real items at multiple worker counts and requires byte-identical verdict layers.
+The memory-bounded proof uses the same discipline for resource control: the
+README demo's divergent signed-overflow witness and safe control replay under a
+4096\,MiB supervised RSS cap with the same verdict-layer hash as the unbounded
+run, while deliberately too-small caps are operational failures rather than
+semantic verdicts.
 On the current full toolchain, \texttt{make large-scale} confirms
 7 divergent and 5 equivalent sampled items with 12/12 observed labels matching
 the declared ground truth.

@@ -130,6 +130,10 @@ from .parallel_harness import (
     run_parallel,
     confirm_parallel_determinism,
 )
+from .memory_bound import (
+    MemoryBoundProof,
+    prove_memory_bounded_equivalence,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -218,4 +222,6 @@ __all__ = [
     "ParallelRunReport",
     "run_parallel",
     "confirm_parallel_determinism",
+    "MemoryBoundProof",
+    "prove_memory_bounded_equivalence",
 ]

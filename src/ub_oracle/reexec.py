@@ -31,9 +31,11 @@ from __future__ import annotations
 
 import os
 import re
+import signal
 import shutil
 import subprocess
 import tempfile
+import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -295,10 +297,14 @@ class RunOutcome:
     stdout: str
     stderr: str
     timed_out: bool = False
+    resource_exhausted: bool = False
+    peak_rss_kb: int = 0
 
     @property
     def ub_trapped(self) -> bool:
         """A UBSan-instrumented run that aborted on UB."""
+        if self.resource_exhausted:
+            return False
         if "runtime error:" in self.stderr and "UndefinedBehaviorSanitizer" in self.stderr:
             return True
         # SIGABRT from -fno-sanitize-recover shows up as 134 (128+6) or -6.
@@ -307,6 +313,8 @@ class RunOutcome:
     @property
     def asan_trapped(self) -> bool:
         """An AddressSanitizer-instrumented run that aborted on a memory fault."""
+        if self.resource_exhausted:
+            return False
         if "AddressSanitizer:" in self.stderr:
             return True
         # Some libc interceptors print only the diagnostic kind on compact builds.
@@ -317,6 +325,8 @@ class RunOutcome:
     @property
     def msan_trapped(self) -> bool:
         """A MemorySanitizer run that aborted on an uninitialized-value use."""
+        if self.resource_exhausted:
+            return False
         return (
             "MemorySanitizer:" in self.stderr
             and "use-of-uninitialized-value" in self.stderr
@@ -329,6 +339,8 @@ class RunOutcome:
 
     def contract_trapped(self, token: str = "clv-contract:") -> bool:
         """A checked-contract run aborted on a modeled source-language precondition."""
+        if self.resource_exhausted:
+            return False
         return "runtime error:" in self.stderr and token in self.stderr
 
     @property
@@ -376,7 +388,7 @@ class RunOutcome:
 
         Anything else (timeout, unexpected signal) is treated as non-defined.
         Unknown target names raise loudly rather than defaulting to value-only."""
-        if self.timed_out:
+        if self.timed_out or self.resource_exhausted:
             return False
         if target_lang == "c":
             # C is normally the *source* (UB) side, but the impl-defined classes
@@ -420,16 +432,181 @@ class ReexecResult:
 class ReexecHarness:
     """Compiles & runs real C and Rust to confirm a counterexample."""
 
-    def __init__(self, status: Optional[ToolchainStatus] = None, timeout: int = 60):
+    def __init__(
+        self,
+        status: Optional[ToolchainStatus] = None,
+        timeout: int = 60,
+        max_rss_mb: Optional[int] = None,
+        rss_poll_interval: float = 0.02,
+    ):
+        if max_rss_mb is not None:
+            if max_rss_mb <= 0:
+                raise ValueError("max_rss_mb must be positive")
+            if shutil.which("ps") is None:
+                raise RuntimeError("memory-bounded mode requires the POSIX 'ps' tool")
+        if rss_poll_interval <= 0:
+            raise ValueError("rss_poll_interval must be positive")
         self.status = status or toolchain_available()
         self.timeout = timeout
+        self.max_rss_mb = max_rss_mb
+        self.max_rss_kb = max_rss_mb * 1024 if max_rss_mb is not None else None
+        self.rss_poll_interval = rss_poll_interval
+        self.peak_rss_kb = 0
+        self.resource_exhausted = False
+        self.resource_exhaustions: List[str] = []
 
     # ── low-level runners ────────────────────────────────────────────────
+    @staticmethod
+    def _process_snapshot() -> Tuple[Dict[int, List[int]], Dict[int, int]]:
+        try:
+            r = subprocess.run(
+                ["ps", "-eo", "pid=,ppid=,rss="],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return {}, {}
+        if r.returncode != 0:
+            return {}, {}
+        children: Dict[int, List[int]] = {}
+        rss: Dict[int, int] = {}
+        for line in r.stdout.splitlines():
+            parts = line.split()
+            if len(parts) < 3:
+                continue
+            try:
+                pid = int(parts[0])
+                ppid = int(parts[1])
+                rss_kb = int(parts[2])
+            except ValueError:
+                continue
+            rss[pid] = max(rss_kb, 0)
+            children.setdefault(ppid, []).append(pid)
+        return children, rss
+
+    @classmethod
+    def _process_tree_pids(cls, root_pid: int) -> List[int]:
+        children, _rss = cls._process_snapshot()
+        out: List[int] = []
+        stack = [root_pid]
+        seen = set()
+        while stack:
+            pid = stack.pop()
+            if pid in seen:
+                continue
+            seen.add(pid)
+            out.append(pid)
+            stack.extend(children.get(pid, ()))
+        return out
+
+    @classmethod
+    def _process_tree_rss_kb(cls, root_pid: int) -> int:
+        children, rss = cls._process_snapshot()
+        total = 0
+        stack = [root_pid]
+        seen = set()
+        while stack:
+            pid = stack.pop()
+            if pid in seen:
+                continue
+            seen.add(pid)
+            total += rss.get(pid, 0)
+            stack.extend(children.get(pid, ()))
+        return total
+
+    @classmethod
+    def _kill_process_tree(cls, root_pid: int) -> None:
+        for pid in reversed(cls._process_tree_pids(root_pid)):
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+    def _subprocess_run(
+        self,
+        argv: List[str],
+        *,
+        capture_output: bool,
+        timeout: int,
+        text: bool,
+        env: Optional[Dict[str, str]] = None,
+    ) -> subprocess.CompletedProcess:
+        if self.max_rss_kb is None:
+            r = subprocess.run(
+                argv,
+                capture_output=capture_output,
+                timeout=timeout,
+                text=text,
+                env=env,
+            )
+            setattr(r, "resource_exhausted", False)
+            setattr(r, "peak_rss_kb", 0)
+            return r
+        if not capture_output or not text:
+            raise ValueError("RSS-bounded runner requires capture_output=True and text=True")
+
+        proc = subprocess.Popen(
+            argv,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env,
+        )
+        start = time.monotonic()
+        peak = self._process_tree_rss_kb(proc.pid)
+        exhausted = False
+        stdout = ""
+        stderr = ""
+        while True:
+            peak = max(peak, self._process_tree_rss_kb(proc.pid))
+            if self.max_rss_kb is not None and peak > self.max_rss_kb:
+                exhausted = True
+                self._kill_process_tree(proc.pid)
+                stdout, stderr = proc.communicate()
+                break
+            remaining = timeout - (time.monotonic() - start)
+            if remaining <= 0:
+                self._kill_process_tree(proc.pid)
+                stdout, stderr = proc.communicate()
+                self.peak_rss_kb = max(self.peak_rss_kb, peak)
+                raise subprocess.TimeoutExpired(
+                    argv, timeout, output=stdout, stderr=stderr)
+            try:
+                stdout, stderr = proc.communicate(
+                    timeout=min(self.rss_poll_interval, remaining))
+                peak = max(peak, self._process_tree_rss_kb(proc.pid))
+                break
+            except subprocess.TimeoutExpired:
+                continue
+
+        self.peak_rss_kb = max(self.peak_rss_kb, peak)
+        returncode = proc.returncode
+        if exhausted:
+            self.resource_exhausted = True
+            msg = (
+                "resource limit exceeded: observed process-tree RSS "
+                f"{peak} KiB > cap {self.max_rss_kb} KiB")
+            self.resource_exhaustions.append(f"{argv[0]}: {msg}")
+            stderr = ((stderr.rstrip() + "\n") if stderr else "") + msg
+            returncode = -signal.SIGKILL
+
+        r = subprocess.CompletedProcess(argv, returncode, stdout or "", stderr or "")
+        setattr(r, "resource_exhausted", exhausted)
+        setattr(r, "peak_rss_kb", peak)
+        return r
+
     def _run(self, argv: List[str], env: Optional[Dict[str, str]] = None) -> RunOutcome:
         try:
-            r = subprocess.run(argv, capture_output=True, timeout=self.timeout,
-                               text=True, env=env)
-            return RunOutcome(r.returncode, r.stdout.strip(), r.stderr.strip())
+            r = self._subprocess_run(
+                argv, capture_output=True, timeout=self.timeout, text=True, env=env)
+            return RunOutcome(
+                r.returncode,
+                r.stdout.strip(),
+                r.stderr.strip(),
+                resource_exhausted=bool(getattr(r, "resource_exhausted", False)),
+                peak_rss_kb=int(getattr(r, "peak_rss_kb", 0)),
+            )
         except subprocess.TimeoutExpired:
             return RunOutcome(-1, "", "timeout", timed_out=True)
         except OSError as e:  # pragma: no cover - environment dependent
@@ -440,8 +617,12 @@ class ReexecHarness:
         opath = os.path.join(workdir, f"{name}.out")
         with open(cpath, "w") as f:
             f.write(src)
-        r = subprocess.run([self.status.cc, *args, "-o", opath, cpath],
-                           capture_output=True, text=True, timeout=self.timeout)
+        r = self._subprocess_run(
+            [self.status.cc, *args, "-o", opath, cpath],
+            capture_output=True,
+            text=True,
+            timeout=self.timeout,
+        )
         if r.returncode != 0:
             return None
         return opath
@@ -478,9 +659,13 @@ class ReexecHarness:
             f.write(src)
         env = dict(os.environ)
         env.update(pack.compile_env(workdir))
-        r = subprocess.run(pack.compile_argv(compiler, spath, opath),
-                           capture_output=True, text=True, timeout=self.timeout,
-                           env=env)
+        r = self._subprocess_run(
+            pack.compile_argv(compiler, spath, opath),
+            capture_output=True,
+            text=True,
+            timeout=self.timeout,
+            env=env,
+        )
         if r.returncode != 0:
             return None
         return opath
