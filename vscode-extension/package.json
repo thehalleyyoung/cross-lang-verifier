@@ -1,7 +1,7 @@
 {
   "name": "cross-lang-verifier",
   "displayName": "cross-lang-verifier",
-  "description": "Surface C→{Rust,Go,Swift} cross-language semantic divergences in-editor, backed by the real oracle CLI.",
+  "description": "Surface C→{Rust,Go,Swift,Zig,Wasm} semantic divergences in-editor through the real cross-lang-verifier LSP.",
   "version": "0.1.0",
   "publisher": "halley-labs",
   "license": "MIT",
@@ -13,12 +13,28 @@
     "Other"
   ],
   "main": "./out/extension.js",
-  "activationEvents": [],
+  "activationEvents": [
+    "workspaceContains:units_manifest.json",
+    "workspaceContains:cross-lang-verify.json",
+    "workspaceContains:.cross-lang-verify.json",
+    "onLanguage:c",
+    "onLanguage:cpp",
+    "onLanguage:rust",
+    "onLanguage:go",
+    "onLanguage:swift",
+    "onLanguage:zig",
+    "onCommand:crossLangVerifier.verify",
+    "onCommand:crossLangVerifier.restartLanguageServer"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "crossLangVerifier.verify",
-        "title": "Cross-Lang Verifier: Verify divergences for a units manifest"
+        "title": "Cross-Lang Verifier: Reverify Open Documents"
+      },
+      {
+        "command": "crossLangVerifier.restartLanguageServer",
+        "title": "Cross-Lang Verifier: Restart Language Server"
       }
     ],
     "configuration": {
@@ -27,28 +43,39 @@
         "crossLangVerifier.pythonPath": {
           "type": "string",
           "default": "python",
-          "description": "Python interpreter used to run the cross-lang-verify CLI."
+          "description": "Python interpreter used to run the cross-lang-verifier LSP server."
+        },
+        "crossLangVerifier.lspModule": {
+          "type": "string",
+          "default": "ub_oracle.lsp",
+          "description": "Python module implementing the cross-lang-verifier stdio LSP server."
         },
         "crossLangVerifier.unitsManifest": {
           "type": "string",
-          "default": "units.json",
-          "description": "Path (relative to the workspace) of the translation-unit manifest to verify."
+          "default": "units_manifest.json",
+          "description": "Path (relative to the workspace) of the translation-unit manifest used by the LSP server."
         },
         "crossLangVerifier.confirm": {
           "type": "boolean",
-          "default": true,
-          "description": "Run the live re-execution confirmation step (compile & run) when toolchains are available."
+          "default": false,
+          "description": "Run live compiler re-execution confirmation from the LSP server when toolchains are available."
         }
       }
     }
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --allow-missing-repository --out cross-lang-verifier-0.1.0.vsix",
+    "smoke": "npm run compile && npm run package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^2.15.0",
     "typescript": "^5.4.0"
   }
 }

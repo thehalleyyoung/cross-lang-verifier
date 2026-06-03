@@ -507,10 +507,10 @@ python3 -m src.cli.main discover \
   drift from the real catalogue; the strict build (any broken nav/missing page
   fails) is itself a machine-checked claim
 - a **thin VS Code extension** (`vscode-extension/`, checked by
-  `vscode_ext.py`): surfaces divergences in-editor as `vscode.Diagnostic`s by
-  shelling out to the proven `cross-lang-verify` CLI (no second implementation
-  to drift). Its TypeScript compiles cleanly with the real `tsc` against the real
-  `@types/vscode` typings — a machine-checked claim
+  `vscode_ext.py`): starts the real `cross-lang-verify-lsp` stdio server and
+  surfaces its diagnostics in-editor — no second verifier implementation to
+  drift. The checked smoke path compiles TypeScript against the real VS Code API
+  typings and packages a runnable `.vsix`
 - **robust, real source frontends** behind a documented **frontend SPI**
   (`frontends.py`, `docs/FRONTENDS.md`): a `Frontend` protocol with three
   registered frontends — `treesitter-c` (a **tree-sitter** grammar parser, the

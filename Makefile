@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check bug-intake-check real-bugs-table-check negative-corpus-check adversarial-corpus-check corpus-datasheet-check continuous-corpus-ci continuous-corpus-ci-check leaderboard-check llm-scale-check idiomatic-port-check existing-tools-check large-scale large-scale-check package-check github-action-check precommit-check lsp-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check real-bug-check bug-regression-check bug-intake-check real-bugs-table-check negative-corpus-check adversarial-corpus-check corpus-datasheet-check continuous-corpus-ci continuous-corpus-ci-check leaderboard-check llm-scale-check idiomatic-port-check existing-tools-check large-scale large-scale-check package-check github-action-check precommit-check lsp-check vscode-extension-check coverage coverage-check verified-check soundness-check pre-review-check launch-check ecosystem-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -53,6 +53,7 @@ help:
 	@echo "  github-action-check assert the published Action runs on the sample repo and emits SARIF"
 	@echo "  precommit-check assert the pre-commit hook runs on a fixture repo"
 	@echo "  lsp-check        assert the Language Server Protocol diagnostics session works"
+	@echo "  vscode-extension-check assert the VS Code LSP wrapper compiles and packages"
 	@echo "  demo-video        regenerate the README-linked c2rust CWE-class demo video"
 	@echo "  guard             run the credibility guard (no simulated results)"
 	@echo "  cold-start-ci     full non-compiler suite + one real compiled sample (<5 min)"
@@ -203,6 +204,9 @@ precommit-check:
 
 lsp-check:
 	$(PYTHON) -m pytest tests/test_lsp.py -q
+
+vscode-extension-check:
+	$(PYTHON) -m pytest tests/test_vscode_extension.py tests/test_ub_oracle.py -k vscode -q
 
 demo-video:
 	$(PYTHON) scripts/build_demo_video.py

@@ -1,139 +1,176 @@
 // Thin VS Code extension for cross-lang-verifier.
 //
-// It does not re-implement any analysis: it shells out to the real
-// `cross-lang-verify` CLI (the same oracle the test-suite proves), parses its
-// JSON, and surfaces each divergent translation unit as an in-editor
-// Diagnostic. The whole point is to be a faithful, thin surface over the proven
-// oracle — never a second, drifting implementation.
+// The extension is intentionally only an editor surface: all analysis runs in
+// the repository's real Language Server Protocol adapter (`ub_oracle.lsp`).
 
-import * as cp from "child_process";
 import * as path from "path";
 import * as vscode from "vscode";
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+} from "vscode-languageclient/node";
 
-interface UnitReport {
-  label: string;
-  verdict: string;
-  pair: string;
-  detail: string;
-  suppressed: boolean;
+const CLIENT_ID = "cross-lang-verifier";
+const CLIENT_NAME = "cross-lang-verifier";
+const LSP_REVERIFY_COMMAND = "cross-lang-verifier.reverify";
+
+let client: LanguageClient | undefined;
+
+interface ReverifyResult {
+  reverified?: number;
+  reason?: string;
 }
 
-interface CliResult {
-  summary: Record<string, number>;
-  units: UnitReport[];
+function primaryWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
+  const folders = vscode.workspace.workspaceFolders;
+  return folders && folders.length > 0 ? folders[0] : undefined;
 }
 
-const SEVERITY: Record<string, vscode.DiagnosticSeverity> = {
-  divergent: vscode.DiagnosticSeverity.Error,
-  spec_gap: vscode.DiagnosticSeverity.Warning,
-  abstain: vscode.DiagnosticSeverity.Information,
-  equivalent: vscode.DiagnosticSeverity.Hint,
-};
-
-function runCli(
-  python: string,
-  manifest: string,
-  confirm: boolean,
-  cwd: string
-): Promise<CliResult> {
-  return new Promise((resolve, reject) => {
-    const args = ["-m", "ub_oracle.cli", "--units", manifest, "--format", "json"];
-    if (!confirm) {
-      args.push("--no-confirm");
-    }
-    cp.execFile(
-      python,
-      args,
-      { cwd, maxBuffer: 16 * 1024 * 1024 },
-      (err, stdout, stderr) => {
-        // The CLI exits non-zero when it finds a blocking divergence; that is a
-        // successful run for our purposes, so parse stdout regardless and only
-        // reject when there is no parseable payload.
-        const text = stdout.trim();
-        if (!text) {
-          reject(new Error(stderr || (err ? err.message : "no output")));
-          return;
-        }
-        try {
-          resolve(JSON.parse(text) as CliResult);
-        } catch (e) {
-          reject(new Error(`could not parse CLI output: ${String(e)}`));
-        }
-      }
-    );
-  });
+function extensionConfig(): vscode.WorkspaceConfiguration {
+  return vscode.workspace.getConfiguration("crossLangVerifier");
 }
 
-function publish(
-  result: CliResult,
-  manifestUri: vscode.Uri,
-  collection: vscode.DiagnosticCollection
-): number {
-  const diags: vscode.Diagnostic[] = [];
-  for (const u of result.units) {
-    if (u.verdict === "equivalent" || u.suppressed) {
-      continue;
-    }
-    const sev = SEVERITY[u.verdict] ?? vscode.DiagnosticSeverity.Warning;
-    const d = new vscode.Diagnostic(
-      new vscode.Range(0, 0, 0, 0),
-      `[${u.pair}] ${u.label}: ${u.verdict} — ${u.detail}`,
-      sev
-    );
-    d.source = "cross-lang-verifier";
-    diags.push(d);
+function configuredManifest(folder: vscode.WorkspaceFolder): string {
+  const cfg = extensionConfig();
+  const manifest = cfg.get<string>("unitsManifest", "units_manifest.json");
+  return path.isAbsolute(manifest)
+    ? manifest
+    : path.join(folder.uri.fsPath, manifest);
+}
+
+function serverOptions(folder: vscode.WorkspaceFolder): ServerOptions {
+  const cfg = extensionConfig();
+  const python = cfg.get<string>("pythonPath", "python");
+  const moduleName = cfg.get<string>("lspModule", "ub_oracle.lsp");
+  const manifest = configuredManifest(folder);
+  const confirm = cfg.get<boolean>("confirm", false);
+  const args = ["-m", moduleName, "--stdio", "--manifest", manifest];
+  if (confirm) {
+    args.push("--confirm");
   }
-  collection.set(manifestUri, diags);
-  return diags.length;
+  return {
+    command: python,
+    args,
+    options: { cwd: folder.uri.fsPath },
+  };
+}
+
+function clientOptions(
+  folder: vscode.WorkspaceFolder,
+  outputChannel: vscode.OutputChannel
+): LanguageClientOptions {
+  const manifest = configuredManifest(folder);
+  const confirm = extensionConfig().get<boolean>("confirm", false);
+  return {
+    documentSelector: [
+      { scheme: "file", language: "c" },
+      { scheme: "file", language: "cpp" },
+      { scheme: "file", language: "rust" },
+      { scheme: "file", language: "go" },
+      { scheme: "file", language: "swift" },
+      { scheme: "file", language: "zig" },
+      { scheme: "file", pattern: "**/*.{c,h,cc,cpp,cxx,hpp,rs,go,swift,zig,wat,json}" },
+    ],
+    initializationOptions: {
+      manifest,
+      confirm,
+    },
+    outputChannel,
+    workspaceFolder: folder,
+  };
+}
+
+async function stopClient(): Promise<void> {
+  const current = client;
+  client = undefined;
+  if (current) {
+    await current.stop();
+  }
+}
+
+async function startClient(
+  outputChannel: vscode.OutputChannel
+): Promise<LanguageClient | undefined> {
+  const folder = primaryWorkspaceFolder();
+  if (!folder) {
+    outputChannel.appendLine("cross-lang-verifier: no workspace folder open.");
+    return undefined;
+  }
+  const next = new LanguageClient(
+    CLIENT_ID,
+    CLIENT_NAME,
+    serverOptions(folder),
+    clientOptions(folder, outputChannel)
+  );
+  client = next;
+  await next.start();
+  outputChannel.appendLine(
+    `cross-lang-verifier: LSP started with manifest ${configuredManifest(folder)}`
+  );
+  return next;
+}
+
+async function restartClient(outputChannel: vscode.OutputChannel): Promise<void> {
+  await stopClient();
+  await startClient(outputChannel);
+}
+
+async function reverifyOpenDocuments(
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  if (!client) {
+    await startClient(outputChannel);
+  }
+  if (!client) {
+    void vscode.window.showErrorMessage(
+      "cross-lang-verifier: open a workspace folder first."
+    );
+    return;
+  }
+
+  const result = await client.sendRequest<ReverifyResult>(
+    "workspace/executeCommand",
+    { command: LSP_REVERIFY_COMMAND, arguments: [] }
+  );
+  if (typeof result.reason === "string") {
+    void vscode.window.showWarningMessage(
+      `cross-lang-verifier: ${result.reason}`
+    );
+    return;
+  }
+  const count = typeof result.reverified === "number" ? result.reverified : 0;
+  void vscode.window.showInformationMessage(
+    `cross-lang-verifier: reverified ${count} open document(s).`
+  );
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  const collection = vscode.languages.createDiagnosticCollection(
-    "cross-lang-verifier"
-  );
-  context.subscriptions.push(collection);
+  const outputChannel =
+    vscode.window.createOutputChannel("cross-lang-verifier");
+  context.subscriptions.push(outputChannel);
 
-  const cmd = vscode.commands.registerCommand(
-    "crossLangVerifier.verify",
-    async () => {
-      const folders = vscode.workspace.workspaceFolders;
-      if (!folders || folders.length === 0) {
-        void vscode.window.showErrorMessage(
-          "cross-lang-verifier: open a workspace folder first."
-        );
-        return;
-      }
-      const cfg = vscode.workspace.getConfiguration("crossLangVerifier");
-      const python = cfg.get<string>("pythonPath", "python");
-      const manifest = cfg.get<string>("unitsManifest", "units.json");
-      const confirm = cfg.get<boolean>("confirm", true);
-      const cwd = folders[0].uri.fsPath;
-      const manifestUri = vscode.Uri.file(path.join(cwd, manifest));
-
-      try {
-        const result = await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Window,
-            title: "cross-lang-verifier: verifying divergences…",
-          },
-          () => runCli(python, manifest, confirm, cwd)
-        );
-        const n = publish(result, manifestUri, collection);
-        void vscode.window.showInformationMessage(
-          n === 0
-            ? "cross-lang-verifier: no divergences found."
-            : `cross-lang-verifier: surfaced ${n} divergence(s).`
-        );
-      } catch (e) {
-        void vscode.window.showErrorMessage(
-          `cross-lang-verifier failed: ${String(e)}`
-        );
-      }
-    }
+  context.subscriptions.push(
+    vscode.commands.registerCommand("crossLangVerifier.verify", () =>
+      reverifyOpenDocuments(outputChannel)
+    )
   );
-  context.subscriptions.push(cmd);
+  context.subscriptions.push(
+    vscode.commands.registerCommand("crossLangVerifier.restartLanguageServer", () =>
+      restartClient(outputChannel)
+    )
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("crossLangVerifier")) {
+        void restartClient(outputChannel);
+      }
+    })
+  );
+
+  void startClient(outputChannel);
 }
 
-export function deactivate(): void {
-  // nothing to clean up; the DiagnosticCollection is disposed via subscriptions.
+export async function deactivate(): Promise<void> {
+  await stopClient();
 }

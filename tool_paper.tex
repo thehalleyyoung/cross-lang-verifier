@@ -777,6 +777,17 @@ editor state, and files without manifest locations receive none, preserving the
 exercises both the diagnostic conversion and a real Content-Length-framed
 JSON-RPC session (\texttt{initialize}, \texttt{didOpen}, \texttt{shutdown},
 \texttt{exit}) against a subprocess server.
+The checked VS Code artifact is now a thin wrapper over that same server rather
+than a second adapter: \texttt{vscode-extension/} uses
+\texttt{vscode-languageclient} to launch \texttt{python -m ub\_oracle.lsp
+--stdio}, passes the manifest and confirmation policy through initialization
+options, and maps the command palette's reverify action to the server's
+\texttt{cross-lang-verifier.reverify} command.  \texttt{make
+vscode-extension-check} compiles the TypeScript against the real VS Code API
+typings, statically checks that the generated entry point references the LSP
+client/server contract, and packages an ignored but runnable \texttt{.vsix}; the
+editor surface is therefore a packaged view of the proven LSP, not a drifting
+implementation.
 
 \paragraph{Parser frontends.}
 Each language has two parsing backends: tree-sitter-c~0.24 and

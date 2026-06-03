@@ -753,12 +753,11 @@ def _thm_docs_site() -> bool:
 
 
 def _thm_vscode_extension() -> bool:
-    # The in-editor surface is a REAL VS Code extension that compiles: its
-    # TypeScript builds cleanly with the real `tsc` against the real
-    # `@types/vscode` typings, producing the JS entry point, and its
-    # package.json contributes the verify command. It is thin (shells out to the
-    # proven CLI), so it cannot drift from the oracle. Consistency-only when
-    # Node/npm is absent.
+    # The in-editor surface is a REAL VS Code extension that compiles and
+    # packages: its TypeScript builds cleanly with the real `tsc` against the real
+    # `@types/vscode` typings, producing an LSP-client-backed JS entry point and
+    # a `.vsix`. It is thin (starts the proven LSP), so it cannot drift from the
+    # oracle. Consistency-only when Node/npm is absent.
     from . import vscode_ext as vx
     rep = vx.confirm_vscode_extension()
     return bool(rep.ok)
@@ -1931,15 +1930,16 @@ CLAIMS: List[Claim] = [
         "An in-editor surface ships as a **real VS Code extension** "
         "(`vscode-extension/`, checked by `ub_oracle.vscode_ext`) that surfaces "
         "C→{Rust,Go,Swift} divergences as `vscode.Diagnostic`s. It is "
-        "deliberately **thin** — it shells out to the proven `cross-lang-verify` "
-        "CLI and parses its JSON rather than re-implementing any analysis, so it "
-        "cannot drift from the oracle. The machine-checked claim compiles the "
+        "deliberately **thin** — it starts the proven `cross-lang-verify-lsp` "
+        "stdio server rather than re-implementing any analysis, so it cannot "
+        "drift from the oracle. The machine-checked claim compiles the "
         "extension's TypeScript with the **real `tsc`** against the **real "
         "`@types/vscode`** API typings (`strict`, `noUnusedLocals`), requires a "
-        "clean build producing `out/extension.js`, and validates that "
-        "`package.json` declares the `engines.vscode` constraint and the "
-        "`crossLangVerifier.verify` command. Consistency-only when Node/npm is "
-        "absent (never fabricated).",
+        "clean LSP-backed build producing `out/extension.js`, packages a real "
+        "`.vsix`, and validates that `package.json` declares the "
+        "`engines.vscode` constraint, LSP configuration, runtime language-client "
+        "dependency, and `crossLangVerifier.verify` command. Consistency-only "
+        "when Node/npm is absent (never fabricated).",
         "ub_oracle.vscode_ext",
         ("confirm_vscode_extension",),
         theorem=_thm_vscode_extension,
