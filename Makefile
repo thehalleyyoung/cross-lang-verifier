@@ -21,7 +21,7 @@ help:
 	@echo "  cex-quality       minimize every anchor witness against real compilers (study)"
 	@echo "  cex-quality-check assert the cex-quality baseline regenerates byte-identically"
 	@echo "  perf              measure the symbolic-search scalability curves (study)"
-	@echo "  perf-check        assert the perf scalability grid regenerates byte-identically"
+	@echo "  perf-check        assert the perf grid reproduces and latency budgets hold"
 	@echo "  redteam           run the internal red-team against real compilers (study)"
 	@echo "  redteam-check     assert the red-team adversarial grid regenerates byte-identically"
 	@echo "  c2rust-corpus     regenerate the Tier-1 c2rust-output corpus artifacts"
@@ -73,7 +73,7 @@ perf:
 	$(PYTHON) -m experiments.perf_curves.run --table
 
 perf-check:
-	$(PYTHON) -m experiments.perf_curves.run --check
+	$(PYTHON) -m experiments.perf_curves.run --check --budget-check
 
 redteam:
 	$(PYTHON) -m experiments.redteam.run --attack --table

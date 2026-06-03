@@ -40,6 +40,7 @@ experiments/cross_pair_matrix/confirmations.json
 experiments/cex_quality/minimized.json
 # Environment-dependent perf timings (wall-clock; only the grid is committed)
 experiments/perf_curves/timings.json
+experiments/perf_curves/budget.json
 # Environment-dependent red-team attack verdicts (only the grid is committed)
 experiments/redteam/attack.json
 

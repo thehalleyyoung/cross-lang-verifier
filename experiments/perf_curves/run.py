@@ -11,7 +11,8 @@ stays satisfiable as the bit width grows to 512.
 
 With ``--measure`` it additionally times the *real* Z3 searches and the SMT
 scaling curve and writes the environment-dependent ``timings.json`` (gitignored).
-``--table`` prints the human-readable curves.
+``--table`` prints the human-readable curves. ``--budget-check`` times the real
+CI-sized searches and fails if any row exceeds its p50/p95 latency budget.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ from src.ub_oracle.cache import (
 
 GRID_PATH = os.path.join(_HERE, "grid.json")
 TIMINGS_PATH = os.path.join(_HERE, "timings.json")
+BUDGET_PATH = os.path.join(_HERE, "budget.json")
 
 
 def _write_json(path: str, obj) -> None:
@@ -63,6 +65,26 @@ def _render_table(timings: dict) -> str:
     return "\n".join(lines)
 
 
+def _render_budget_summary(report: dict) -> str:
+    sections = (
+        ("class/pair", report["class_pair_profile"]),
+        ("width", report["width_scaling"]),
+        ("smt", report["smt_scaling"]),
+    )
+    lines = ["== perf latency budget (p50/p95 seconds) =="]
+    for name, rows in sections:
+        bad = [r for r in rows if not r["ok"]]
+        p95s = [r["p95_seconds"] for r in rows]
+        max_p95 = max(p95s) if p95s else 0.0
+        lines.append(f"  {name:<10} rows={len(rows):>3} "
+                     f"max_p95={max_p95:.6f} failures={len(bad)}")
+    if report["failures"]:
+        lines.append("  failures:")
+        for failure in report["failures"][:20]:
+            lines.append(f"    - {failure}")
+    return "\n".join(lines)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--measure", action="store_true",
@@ -73,6 +95,12 @@ def main(argv=None) -> int:
                     help="print the human-readable curves (implies --measure)")
     ap.add_argument("--repeats", type=int, default=5,
                     help="timing repeats (median); default 5")
+    ap.add_argument("--budget-check", action="store_true",
+                    help="time real searches and enforce p50/p95 latency budgets")
+    ap.add_argument("--budget-repeats", type=int, default=3,
+                    help="budget-check timing repeats; default 3")
+    ap.add_argument("--write-budget-report", action="store_true",
+                    help="write environment-dependent budget.json")
     args = ap.parse_args(argv)
 
     if args.check and (args.measure or args.table):
@@ -101,6 +129,14 @@ def main(argv=None) -> int:
                   file=sys.stderr)
             return 1
         print("OK: perf scalability grid reproduces byte-identically")
+        if args.budget_check:
+            report = perf.latency_budget_report(repeats=args.budget_repeats)
+            print(_render_budget_summary(report))
+            if args.write_budget_report:
+                _write_json(BUDGET_PATH, report)
+                print(f"wrote {BUDGET_PATH} (environment-dependent, gitignored)")
+            if not report["ok"]:
+                return 1
         return 0
 
     _write_json(GRID_PATH, grid)
@@ -126,6 +162,15 @@ def main(argv=None) -> int:
         if args.table:
             print()
             print(_render_table(timings))
+    if args.budget_check:
+        report = perf.latency_budget_report(repeats=args.budget_repeats)
+        if args.write_budget_report:
+            _write_json(BUDGET_PATH, report)
+            print(f"wrote {BUDGET_PATH} (environment-dependent, gitignored)")
+        print()
+        print(_render_budget_summary(report))
+        if not report["ok"]:
+            return 1
     return 0
 
 

@@ -142,7 +142,8 @@ python3 -m src.cli.main discover \
   searches across every class and language pair and characterises the SMT
   backbone's growth out to 512-bit widths — the deterministic grid
   (`experiments/perf_curves/grid.json`) is checked for byte-identical
-  regeneration in CI (`make perf-check`)
+  regeneration in CI, and `make perf-check` now also enforces per-row p50/p95
+  latency budgets so slow-path regressions fail fast
 - a Tier-1 **c2rust-output** corpus (`make c2rust-corpus-check`): 12
   real-library extraction units are translated by the actual `c2rust 0.22.1`
   binary, the generated Rust artifacts are checked in, and the verifier-backed

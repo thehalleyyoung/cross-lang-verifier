@@ -1207,6 +1207,18 @@ Median verification time is 3.8\,ms per pair, with mean 308.1\,ms
 (skewed by a few complex pairs) and P95 at 53.4\,ms.
 Formula complexity---not
 source size---dominates verification time.
+The dedicated scalability grid is more revealing because it times the real
+oracle searches behind every registered class/pair cell: on the checked-in
+timing artifact the class/pair rows have P50 1.39\,ms and P95 9.26\,ms, with a
+single intentional outlier, the IEEE-754 FP-contraction row, at 9.84\,s.  Step
+145 turns this from a paper-only observation into an executable regression gate:
+\texttt{make perf-check} regenerates the deterministic grid and then measures
+each class/pair row, each supported integer-width row, and the SMT backbone
+probes under per-row nearest-rank P50/P95 latency budgets.  The ordinary
+bit-vector/dataflow rows are budgeted at 0.25\,s/0.50\,s, the known FP-theory
+slow path at 15\,s/20\,s, width-scaling rows at 0.25\,s/0.50\,s, and SMT
+overflow probes at 0.05\,s/0.10\,s.  Thus a solver blow-up is a CI failure, not
+an anecdote discovered after the fact.
 
 \subsection{Comparison to Differential Testing (RQ6)}\label{sec:eval-baseline}
 
@@ -2989,13 +3001,17 @@ equivalence guarantees and degrades sharply with fewer samples.
 \begin{table}[h!]
 \centering
 \small
-\caption{Verification time statistics across the 212-pair combined-tier benchmark.}
+\caption{Verification time statistics and enforced latency budgets.}
 \label{tab:perf}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-Metric & P50 & P95 & Mean \\
+Metric & P50 & P95 & Mean / budget \\
 \midrule
 Total time (ms) & 3.8 & 53.4 & 308.1 \\
+Class/pair grid (ms) & 1.39 & 9.26 & one FP row at 9.84\,s \\
+Width rows (ms) & 1.38 & 2.28 & max 2.53 \\
+SMT overflow probes (ms) & 0.90 & 3.20 & growth 1.30$\times$/doubling \\
+CI budget gate & row-local & row-local & P50/P95 enforced by \texttt{make perf-check} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -3003,7 +3019,9 @@ Total time (ms) & 3.8 & 53.4 & 308.1 \\
 Verification time is dominated by Z3 solving for complex pairs and
 by parsing for macro-heavy inputs.  Formula complexity (number of
 divergence points, loop depth) rather than raw code size determines
-performance.
+performance.  The budget gate deliberately uses nearest-rank P95 so a single
+slow sample counts; the budget report is environment-dependent and gitignored,
+while the deterministic grid remains byte-reproducible.
 
 \subsection{$K$-Sensitivity Extended Results}
 
