@@ -3,7 +3,7 @@
 This file is generated from `src/ub_oracle/soundness_compendium.py`, which joins `soundness_gate.SOUNDNESS_STATEMENTS`, `traceability.CLAIMS`, and the Lean theorem contract in `mechanized_soundness.REQUIRED_THEOREMS`. It is intentionally stable: it records declared theorem/claim references and concrete witness units, not host-dependent proof-assistant output.
 
 - Registered oracle statements: **60**
-- Traceability claims: **64**
+- Traceability claims: **66**
 - Required ProductSoundness Lean theorems: **20**
 
 ## Mechanized theorem surface
@@ -162,3 +162,5 @@ This file is generated from `src/ub_oracle/soundness_compendium.py`, which joins
 | `C62-pointer-provenance-divergence` | `ub_oracle.oracles.pointer_provenance` | `PointerProvenanceOracle`, `GoPointerProvenanceOracle` |
 | `C63-soundness-regression-gate` | `ub_oracle.soundness_gate` | `SOUNDNESS_STATEMENTS`, `confirm_soundness_registry`, `audit_soundness_statements`, `SoundnessStatement` |
 | `C64-soundness-compendium` | `ub_oracle.soundness_compendium` | `compendium_rows`, `render_compendium`, `confirm_compendium`, `SOUNDNESS_COMPENDIUM_DOC` |
+| `C65-cross-architecture-replay` | `ub_oracle.arch_replay` | `confirm_cross_architecture_replay`, `normalize_arch`, `synthetic_arch_report`, `CrossArchReport`, `ArchReplayResult` |
+| `C66-scale-paper-section` | `ub_oracle.paper_scale_section` | `render_scale_section`, `render_scale_structural_core`, `confirm_scale_paper_section`, `GENERATED_SECTION` |

@@ -901,6 +901,54 @@ def _thm_large_scale_study() -> bool:
     return True
 
 
+def _thm_cross_architecture_replay() -> bool:
+    # Cross-architecture replay must distinguish empirical evidence from detector
+    # fixtures.  Synthetic fixtures prove that the comparison catches an
+    # architecture-dependent verdict change, while the real confirmation path must
+    # honestly report unavailable non-host architectures instead of inventing
+    # rows.  Keep this theorem toolchain-free; the dedicated test file runs the
+    # native real-compiler sample when the toolchain is present.
+    from . import arch_replay as ar
+    from .reexec import ToolchainStatus
+
+    base = {
+        "item_id": "a",
+        "lang": "rust",
+        "klass": "safe_add",
+        "declared_label": "equivalent",
+        "observed_label": "equivalent",
+        "decided": True,
+        "abstained": False,
+    }
+    same = ar.synthetic_arch_report({"arm64": [base], "x86_64": [base]})
+    if not same.synthetic or same.arch_dependency_detected:
+        return False
+    changed = dict(base, observed_label="divergent")
+    diff = ar.synthetic_arch_report({"arm64": [base], "x86_64": [changed]})
+    if not diff.synthetic or not diff.arch_dependency_detected:
+        return False
+
+    empty_status = ToolchainStatus(cc=None, ubsan=False, targets=())
+    real = ar.confirm_cross_architecture_replay(
+        requested_arches=(ar.normalize_arch(), "x86_64", "arm64"),
+        status=empty_status,
+    )
+    return bool(real.ok and not real.synthetic and not real.available)
+
+
+def _thm_scale_paper_section() -> bool:
+    # The paper's scale subsection is generated from the live census.  The
+    # theorem checks structural freshness without running compilers; a real live
+    # sample can be requested through confirm_scale_paper_section(run_live=True).
+    from . import paper_scale_section as ps
+
+    core = ps.render_scale_structural_core()
+    if "60{,}000" not in core or "1{,}044{,}000" not in core:
+        return False
+    check = ps.confirm_scale_paper_section(run_live=False)
+    return bool(check.ok and check.structural_fresh)
+
+
 def _thm_vla_bound_oracle() -> bool:
     # The VLA-bound oracle is sound on the anchor and the Go pair. For each
     # target, the oracle (a) finds a non-positive VLA bound as its witness, and
@@ -2231,6 +2279,38 @@ CLAIMS: List[Claim] = [
          "SOUNDNESS_COMPENDIUM_DOC"),
         theorem=_thm_soundness_compendium,
         docs=("docs/SOUNDNESS_COMPENDIUM.md", "docs/TRACEABILITY.md"),
+    ),
+    claim(
+        "C65-cross-architecture-replay",
+        "Cross-architecture witness replay (`ub_oracle.arch_replay`) re-runs the "
+        "same ground-truth witness/control set on every **genuinely available** "
+        "CPU architecture, records one deterministic verdict-layer hash per "
+        "architecture, and marks missing arm64/x86_64 runners as unavailable "
+        "instead of fabricating evidence. The detector for architecture-dependent "
+        "semantic verdicts is tested with explicitly `synthetic=true` fixtures "
+        "that cannot be mistaken for empirical replay; the native path uses the "
+        "real `ReexecHarness` and existing clang/UBSan + target compiler labeler "
+        "when a full host toolchain is present.",
+        "ub_oracle.arch_replay",
+        ("confirm_cross_architecture_replay", "normalize_arch",
+         "synthetic_arch_report", "CrossArchReport", "ArchReplayResult"),
+        theorem=_thm_cross_architecture_replay,
+        docs=("README.md", "docs/arch_replay.md"),
+    ),
+    claim(
+        "C66-scale-paper-section",
+        "The paper's **migration-scale subsection** is generated from executable "
+        "corpus evidence rather than hand-entered numbers: "
+        "`ub_oracle.paper_scale_section` renders the 60,000-program / 1,044,000-LOC "
+        "census tables directly from `large_scale_study.corpus_census`, emits an "
+        "optional real-compiler live-sample sentence only by running "
+        "`confirm_large_scale_study`, and checks the committed TeX fragment's "
+        "structural core for freshness without requiring toolchains.",
+        "ub_oracle.paper_scale_section",
+        ("render_scale_section", "render_scale_structural_core",
+         "confirm_scale_paper_section", "GENERATED_SECTION"),
+        theorem=_thm_scale_paper_section,
+        docs=("tool_paper.tex", "docs/generated_scale_section.tex"),
     ),
 ]
 

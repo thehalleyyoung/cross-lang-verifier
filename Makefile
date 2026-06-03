@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check ir-diff-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -27,6 +27,9 @@ help:
 	@echo "  flaky-toolchain-check quarantine unstable compiler/runtime evidence"
 	@echo "  distributed-manifest-check prove distributed shard manifests merge deterministically"
 	@echo "  result-store-check validate result-store v2 migration and reproducibility lemma"
+	@echo "  cross-arch-check prove cross-architecture replay reporting/detection"
+	@echo "  scale-paper-section regenerate the paper's migration-scale TeX section"
+	@echo "  scale-paper-section-check assert generated scale paper section is fresh"
 	@echo "  redteam           run the internal red-team against real compilers (study)"
 	@echo "  redteam-check     assert the red-team adversarial grid regenerates byte-identically"
 	@echo "  c2rust-corpus     regenerate the Tier-1 c2rust-output corpus artifacts"
@@ -98,6 +101,15 @@ result-store-check:
 	$(PYTHON) -m pytest tests/test_result_store.py -q
 
 repro-hardening-check: sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check
+
+cross-arch-check:
+	$(PYTHON) -m pytest tests/test_arch_replay.py -q
+
+scale-paper-section:
+	PYTHONPATH=src $(PYTHON) -c "from ub_oracle.paper_scale_section import write_scale_section; print(write_scale_section())"
+
+scale-paper-section-check:
+	$(PYTHON) -m pytest tests/test_paper_scale_section.py -q
 
 redteam:
 	$(PYTHON) -m experiments.redteam.run --attack --table

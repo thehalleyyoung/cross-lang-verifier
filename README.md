@@ -522,6 +522,10 @@ python3 -m src.cli.main discover \
   programs share source; a seeded random sample is executed through the **real**
   clang/UBSan + rustc/go toolchain and every observed verdict matches its
   declared label (`make large-scale`)
+- **cross-architecture replay + generated paper scale tables**
+  (`arch_replay.py`, `paper_scale_section.py`): the same witnesses are replayed
+  on every genuinely available ISA, missing arm64/x86_64 runners are recorded
+  honestly, and the paper's 1M-LOC tables are rendered from the live corpus census
 - a **frozen shared-IR contract** (`ir.py`, spec in `docs/IR.md`): the single
   language-pair-agnostic translation-unit shape every frontend lowers into and
   every oracle consumes, plus a validator that **rejects ill-formed lowerings**
