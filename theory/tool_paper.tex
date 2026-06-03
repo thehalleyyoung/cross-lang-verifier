@@ -589,6 +589,12 @@ When any condition is violated, \textsc{SemRec} may report
 In practice, condition~\textbf{C3} is the most frequently violated.
 \end{theorem}
 
+In the checked artifact, this boundary is executable rather than aspirational:
+\texttt{src/ub\_oracle/completeness.py} brute-force enumerates the finite
+integer fragments against the concrete C-UB predicates and requires the symbolic
+oracle to agree exactly, while \texttt{formal/CompletenessBoundary.lean} proves
+the published complete-vs.-may-abstain class partition is total and disjoint.
+
 Full proofs of all theorems and their supporting lemmas appear in
 Appendix~\ref{app:proofs}.
 
@@ -694,6 +700,19 @@ but forms an out-of-provenance pointer, UBSan traps on that concrete run, and th
 target keeps a checked index and returns deterministically.  In the
 recorded-observable abstraction, that trap versus defined target outcome is
 exactly the product-program consequence.
+
+Step~131 makes the completeness boundary itself a checked object.  The new
+\texttt{formal/CompletenessBoundary.lean} module imports the product-program
+theorem, classifies the integer classes
+(\texttt{signed\_overflow}, \texttt{shift\_oob}, \texttt{div\_by\_zero},
+\texttt{intmin\_div\_neg1}) as complete on their declared finite ranges, and
+classifies memory-shape/FP rows such as \texttt{array\_oob},
+\texttt{strict\_aliasing}, and \texttt{fp\_contraction} as sound but
+may-abstain.  Lean proves this partition is exhaustive and non-overlapping, and
+the Python driver builds it through Lake so imports and stale proof artifacts
+cannot hide a broken theorem.  The result deliberately does not overclaim:
+finite-range no-false-negative evidence still comes from the independent
+brute-force/Z3 agreement check in \texttt{completeness.py}.
 
 Step~129 turns this mechanization into an executable artifact.  The repository
 pins Lean 4.14, builds \texttt{formal/VerifiedChecker.lean} with

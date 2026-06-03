@@ -56,6 +56,32 @@ SMT searches, so the fast path and the complete path are consistent (see
   not characterized to completeness. They are listed in
   `completeness.OUT_OF_FRAGMENT`.
 
+## Mechanized boundary theorem
+
+Step 131 adds a Lean-checked boundary module,
+`formal/CompletenessBoundary.lean`, that formalizes exactly which published
+classes are complete on the declared fragment and which classes remain
+sound-but-may-abstain:
+
+* `signed_overflow`, `shift_oob`, `div_by_zero`, and `intmin_div_neg1` are the
+  guaranteed-on-fragment classes.
+* `array_oob`, `strict_aliasing`, and `fp_contraction` are outside this
+  completeness fragment and therefore carry no no-false-negative claim here.
+
+The theorem `mechanized_completeness_boundary` proves the classification is
+total and disjoint. `complete_fragment_decides_recorded_observation` ties every
+in-fragment class back to the recorded-observable decision theorem in
+`ProductSoundness.lean`; the concrete finite-range evidence remains the
+executable brute-force-vs-oracle check in `src/ub_oracle/completeness.py`.
+
+```python
+from src.ub_oracle import mechanized_soundness as ms
+
+boundary = ms.confirm_mechanized_completeness_boundary()
+assert boundary.ok
+print(boundary.fully_checked)  # True when Lake/Lean actually checked the module
+```
+
 ## Reproducing the claim
 
 ```python

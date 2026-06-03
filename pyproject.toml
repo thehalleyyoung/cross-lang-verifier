@@ -58,6 +58,7 @@ include = ["ub_oracle*"]
 [tool.setuptools.data-files]
 "formal" = [
     "formal/ProductSoundness.lean",
+    "formal/CompletenessBoundary.lean",
     "formal/CoreSoundness.v",
     "formal/VerifiedChecker.lean",
     "formal/lakefile.lean",

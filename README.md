@@ -366,9 +366,10 @@ python3 -m src.cli.main discover \
 - a **machine-checked soundness proof** (`formal/ProductSoundness.lean`,
   `make verified-check`, `cross-lang-verify --verified-check`): Lean 4 proves
   the product-program guarantees — no false alarms, UB-rooted counterexamples,
-  equivalent pairs never flagged, and witness-preserving packaging — then Lake
-  builds a tiny checker that re-validates each source-UB positive verdict's final
-  inference from the real re-execution facts (see `docs/MECHANIZED_SOUNDNESS.md`)
+  equivalent pairs never flagged, witness-preserving packaging, and the
+  completeness/may-abstain boundary — then Lake builds a tiny checker that
+  re-validates each source-UB positive verdict's final inference from the real
+  re-execution facts (see `docs/MECHANIZED_SOUNDNESS.md`)
 - a **Tier-2 idiomatic anchor corpus** (`idiomatic_corpus.py`): realistic,
   value-carrying ported functions — the binary-search **midpoint `(lo+hi)/2`**
   overflow bug, a packed-struct bit-field shift, a coreutils-style rate divide,
@@ -514,8 +515,9 @@ python3 -m src.cli.main discover \
   not just sound but **complete on a precisely-stated bounded fragment** — an
   executable check enumerates ground truth by brute force and asserts the oracle
   reports a witness *exactly* when one exists (no false negatives), across every
-  registered language pair, with one diverging unit per class confirmed end-to-end
-  against real compilers
+  registered language pair, while a Lean boundary theorem names the classes that
+  remain sound-but-may-abstain; one diverging unit per complete class is confirmed
+  end-to-end against real compilers
 - a **positioning vs adjacent verifiers** ([`docs/POSITIONING.md`](docs/POSITIONING.md)):
   a precise account of the cross-language UB-rooted-divergence gap that BMC for C
   (CBMC/ESBMC), same-language equivalence/translation validators, target-language

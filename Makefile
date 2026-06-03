@@ -32,7 +32,7 @@ help:
 	@echo "  test-ub           run the ub_oracle test suite only"
 	@echo "  coverage          print the core-module branch-coverage table"
 	@echo "  coverage-check    enforce the coverage ratchet floor (slow, ~4 min)"
-	@echo "  verified-check    build and smoke-test the Lean/Lake verified checker"
+	@echo "  verified-check    build the Lean boundary proof and smoke-test the checker"
 	@echo "  ci                guard + reproduce-check + matrix-check + cex-quality-check + perf-check + redteam-check + verified-check + test-ub"
 
 reproduce:
@@ -99,6 +99,7 @@ coverage-check:
 	$(PYTHON) scripts/coverage_gate.py
 
 verified-check:
+	cd formal && lake build CompletenessBoundary
 	cd formal && lake build verified-checker
 	cd formal && .lake/build/bin/verified-checker --verdict divergent --ub true --target-defined true --consequence true
 	cd formal && ! .lake/build/bin/verified-checker --verdict divergent --ub false --target-defined true --consequence true

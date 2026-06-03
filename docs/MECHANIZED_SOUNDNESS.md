@@ -33,6 +33,12 @@ Step 129 adds an extracted checker artifact without moving the proof: Lake build
 `productViolated` definition directly, and has compile-time theorem guards tied to
 `oracle_sound`.
 
+Step 131 adds `formal/CompletenessBoundary.lean`, also built through Lake because
+it imports `ProductSoundness`. It mechanizes the public boundary between classes
+that are complete on their declared finite fragment and classes that remain
+sound-but-may-abstain; it does not replace the executable brute-force completeness
+evidence in `src/ub_oracle/completeness.py`.
+
 ```
 make verified-check
 cross-lang-verify --units examples/readme_demo_units.json --verified-check --fail-on unknown
@@ -74,6 +80,9 @@ with the relational assertion `R = ¬(P ∧ T ∧ C)` and `productViolated = ¬R
 | `pointer_provenance_report_implies_out_of_provenance` | the report carries the generated source shape: valid integer input, out-of-provenance pointer arithmetic. |
 | `pointer_provenance_report_implies_checked_target` | the report carries the safe target shape: checked index, defined result, deterministic run. |
 | `pointer_provenance_report_implies_trap_vs_defined` | the report carries the exact `trap_vs_defined` signal: source UBSan trap plus defined target outcome. |
+| `mechanized_completeness_boundary` | every published completeness-boundary class is classified as exactly one of complete-on-declared-fragment or sound-but-may-abstain. |
+| `completeness_boundary_total` / `completeness_boundary_disjoint` | the completeness-boundary partition is exhaustive and non-overlapping. |
+| `complete_fragment_decides_recorded_observation` | in-fragment classes reuse the recorded-observable decision theorem (`oracle_decides`); concrete finite-range completeness is still checked by `completeness.py`. |
 
 The file also contains fully-evaluated `example`s: the canonical div-by-zero
 witness (C traps, Rust panics with `101`, behaviours differ ⇒ reported and
@@ -119,7 +128,11 @@ and pointer provenance treats the generated out-of-provenance pointer arithmetic
 plus UBSan trap as the source-side confirmation. They are not full formal C11
 aliasing/provenance semantics. Extending the abstraction toward a full
 operational C semantics is future work (step 75's "even partial mechanization is
-a strong differentiator").
+a strong differentiator"). The completeness-boundary module is similarly scoped:
+Lean proves the class partition and its connection to the recorded-observable
+decision theorem, while the finite integer-fragment no-false-negative evidence is
+the executable brute-force/Z3 agreement check documented in
+[`COMPLETENESS.md`](COMPLETENESS.md).
 
 ## Confirmation hook
 
@@ -134,6 +147,11 @@ from ub_oracle.mechanized_soundness import confirm_coq_crosscheck
 coq = confirm_coq_crosscheck()
 assert coq.ok
 print(coq.fully_checked)          # True only when coqc accepted CoreSoundness.v
+
+from ub_oracle.mechanized_soundness import confirm_mechanized_completeness_boundary
+boundary = confirm_mechanized_completeness_boundary()
+assert boundary.ok
+print(boundary.fully_checked)     # True only when Lake/Lean accepted the module
 ```
 
 ```python

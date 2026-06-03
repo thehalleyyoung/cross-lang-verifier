@@ -674,9 +674,12 @@ def _thm_mechanized_soundness() -> bool:
     coq = m.confirm_coq_crosscheck()
     if not coq.ok:
         return False
+    boundary = m.confirm_mechanized_completeness_boundary()
+    if not boundary.ok:
+        return False
     if m._lake_binary() is None:
         return True
-    return bool(m.build_verified_checker().ok)
+    return bool(boundary.fully_checked and m.build_verified_checker().ok)
 
 
 def _thm_idiomatic_corpus() -> bool:
@@ -1713,9 +1716,15 @@ CLAIMS: List[Claim] = [
         "observation derived from raw run facts; plus class-specific theorem "
         "families for strict-aliasing optimizer-exploitation and "
         "pointer-provenance `trap_vs_defined` witnesses. "
+        "`formal/CompletenessBoundary.lean` then formalizes the exact published "
+        "boundary between classes guaranteed complete on their declared finite "
+        "fragment and classes that remain sound-but-may-abstain, proving the "
+        "classification total and disjoint while tying in-fragment classes back "
+        "to the recorded-observable decision theorem. "
         "`ub_oracle.mechanized_soundness` runs the real `lean` binary and "
         "confirms the kernel accepts the required theorem set; Step 129 also "
-        "builds `formal/VerifiedChecker.lean` with Lake, producing a tiny "
+        "builds `formal/VerifiedChecker.lean` with Lake, and Step 131 builds "
+        "`formal/CompletenessBoundary.lean` with Lake, producing a tiny "
         "checker that re-validates each source-UB positive verdict's final "
         "inference from raw re-execution facts via "
         "`productViolated`/`oracle_sound`. With Lean "
@@ -1726,8 +1735,11 @@ CLAIMS: List[Claim] = [
         "source-contract-only status.",
         "ub_oracle.mechanized_soundness",
         ("confirm_mechanized_soundness", "build_verified_checker",
-         "run_verified_checker", "confirm_coq_crosscheck", "REQUIRED_THEOREMS",
-         "REQUIRED_COQ_THEOREMS", "LEAN_SOURCE", "COQ_SOURCE", "CHECKER_SOURCE"),
+         "run_verified_checker", "confirm_coq_crosscheck",
+         "confirm_mechanized_completeness_boundary", "REQUIRED_THEOREMS",
+         "REQUIRED_COMPLETENESS_BOUNDARY_THEOREMS", "REQUIRED_COQ_THEOREMS",
+         "LEAN_SOURCE", "COMPLETENESS_BOUNDARY_SOURCE", "COQ_SOURCE",
+         "CHECKER_SOURCE"),
         theorem=_thm_mechanized_soundness,
         docs=("README.md", "docs/MECHANIZED_SOUNDNESS.md"),
     ),
