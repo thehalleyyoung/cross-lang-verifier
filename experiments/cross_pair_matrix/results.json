@@ -115,7 +115,7 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "fast_math_reassoc",
-      "divergence_witness": "C `(x + y) - x` with x=9147971312549952.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
+      "divergence_witness": "C `(x + y) - x` with x=-9077585262673920.0, y=1.0 is reassociation-sensitive: `-fno-fast-math` rounds IEEE-strict to 0 while `-ffast-math`/`-Ofast` folds it to y=1.0; the safe go port never auto-reassociates and is a single deterministic, defined value.",
       "source_definedness": "unspecified",
       "source_lang": "c",
       "source_sha16": "ec4d585a651e3e19",
@@ -127,7 +127,7 @@
       "target_sha16": "7a91a217459e8a02",
       "verdict": "divergent",
       "witness": {
-        "x": 9147971312549952.0,
+        "x": -9077585262673920.0,
         "y": 1.0
       }
     },
@@ -282,16 +282,16 @@
     {
       "confirmation_mode": "optimizer_exploited",
       "divergence_class": "strict_aliasing",
-      "divergence_witness": "C punning int*/long* over the same storage (A=0, B=1) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 0. The safe go translation is a single defined value.",
+      "divergence_witness": "C punning int*/long* over the same storage (A=1, B=0) is a strict-aliasing violation: -O0 returns the aliased value while -O2 may assume the int is unchanged and return 1. The safe go translation is a single defined value.",
       "source_definedness": "undefined",
       "source_lang": "c",
-      "source_sha16": "041c989f7d8dff4d",
+      "source_sha16": "a55c7125eef1c041",
       "target_defined_returncodes": [
         0,
         2
       ],
       "target_lang": "go",
-      "target_sha16": "7d9787ec14dfa476",
+      "target_sha16": "460d821cc07156b9",
       "verdict": "divergent",
       "witness": {}
     },

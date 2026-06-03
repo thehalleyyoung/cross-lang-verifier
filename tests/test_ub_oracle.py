@@ -1203,7 +1203,11 @@ def test_matrix_is_byte_reproducible_in_a_fresh_process():
     root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
     proc = subprocess.run(
         [_sys.executable, "-m", "experiments.cross_pair_matrix.run", "--check"],
-        cwd=root, capture_output=True, text=True)
+        cwd=root,
+        capture_output=True,
+        text=True,
+        env={k: v for k, v in _os.environ.items() if k != "XLEV_NO_TOOLCHAIN"},
+    )
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
@@ -1230,13 +1234,13 @@ def test_matrix_render_table_is_a_grid_over_pairs_and_classes():
 
 def test_matrix_confirm_marks_unavailable_pairs_skipped_not_dropped():
     # a host with no compilers must still account for *every* cell, as skipped.
-    class _Dead:
-        def full_for(self, _t):
-            return False
-        def can_compile(self, _lang):
-            return False
     class _Harness:
-        status = _Dead()
+        status = ToolchainStatus(
+            cc=None,
+            ubsan=False,
+            targets=tuple((name, None) for name in PACKS),
+            runners=tuple((name, None) for name in PACKS),
+        )
     conf = _matrix.confirm_matrix(_Harness())
     assert conf["n_cells"] == len(_plugin.ALL_ORACLES)
     assert conf["n_attempted"] == 0
@@ -1942,17 +1946,21 @@ def _isolated_registry():
     class, leaving the global registry free of this non-core class so the rest of
     the suite (matrix/metrics over the core oracles) is unaffected.
     """
-    from src.ub_oracle.plugin import register, oracles_for
+    from src.ub_oracle.plugin import register
     from examples.plugins import float_cast_overflow_oracle as ext
 
     cls = ext.FLOAT_CAST_OVERFLOW
-    if not oracles_for("c", "rust", cls):
-        register(ext.FloatCastOverflowOracle())
+    saved_all = list(_ALL_ORACLES)
+    saved_registry = dict(_REGISTRY)
+    _ALL_ORACLES[:] = [o for o in _ALL_ORACLES if o.divergence_class != cls]
+    _REGISTRY.pop(cls, None)
+    register(ext.FloatCastOverflowOracle())
     try:
         yield
     finally:
-        _ALL_ORACLES[:] = [o for o in _ALL_ORACLES if o.divergence_class != cls]
-        _REGISTRY.pop(cls, None)
+        _ALL_ORACLES[:] = saved_all
+        _REGISTRY.clear()
+        _REGISTRY.update(saved_registry)
 
 
 def test_external_plugin_registers_and_is_discoverable(_isolated_registry):
@@ -3533,33 +3541,33 @@ def test_alignment_is_deterministic():
 # Step 35 — foreign-effect / soundness-frontier detector (abstain loudly).
 # ---------------------------------------------------------------------------
 
-from src.ub_oracle import foreign_effects as _fe  # noqa: E402
+from src.ub_oracle import foreign_effects as _foreign_effects  # noqa: E402
 
 _clang_present = pytest.mark.skipif(
-    not _os.path.exists(_fe.CC), reason="clang not available")
+    not _os.path.exists(_foreign_effects.CC), reason="clang not available")
 
 
 def test_frontier_clear_on_pure_fragment():
     pure = "int add(int a,int b){return a+b;}\nint dbl(int*p){return *p+*p;}"
-    v = _fe.decide(pure)
+    v = _foreign_effects.decide(pure)
     assert v.clear and v.status == "CLEAR"
     assert v.reasons == []
 
 
 @pytest.mark.parametrize("src,kind", [
-    ("int f(volatile int*p){return *p;}", _fe.ForeignKind.VOLATILE),
+    ("int f(volatile int*p){return *p;}", _foreign_effects.ForeignKind.VOLATILE),
     ('int f(int x){int y;__asm__("mov %1,%0":"=r"(y):"r"(x));return y;}',
-     _fe.ForeignKind.INLINE_ASM),
+     _foreign_effects.ForeignKind.INLINE_ASM),
     ("extern int g(int);\nint f(int x){return g(x);}",
-     _fe.ForeignKind.FOREIGN_CALL),
+     _foreign_effects.ForeignKind.FOREIGN_CALL),
     ("#include <stdatomic.h>\nint f(_Atomic int*p){return atomic_load(p);}",
-     _fe.ForeignKind.ATOMIC),
+     _foreign_effects.ForeignKind.ATOMIC),
     ("#include <setjmp.h>\njmp_buf b;\nint f(){return setjmp(b);}",
-     _fe.ForeignKind.NONLOCAL_JUMP),
-    ("#include <signal.h>\nvoid f(){signal(2,0);}", _fe.ForeignKind.SIGNAL),
+     _foreign_effects.ForeignKind.NONLOCAL_JUMP),
+    ("#include <signal.h>\nvoid f(){signal(2,0);}", _foreign_effects.ForeignKind.SIGNAL),
 ])
 def test_frontier_abstains_on_each_foreign_construct(src, kind):
-    v = _fe.decide(src)
+    v = _foreign_effects.decide(src)
     assert not v.clear and v.status == "ABSTAIN"
     assert kind in v.kinds
     # abstention must be loud: a human-readable reason naming the construct.
@@ -3570,19 +3578,19 @@ def test_frontier_abstains_on_each_foreign_construct(src, kind):
 def test_frontier_ignores_comments_and_string_literals():
     cmt = "int f(int x){/* volatile asm setjmp */ return x;}\n// volatile longjmp"
     strlit = 'int f(){const char*s="volatile asm atomic_load"; return 0;}'
-    assert _fe.decide(cmt).clear
-    assert _fe.decide(strlit).clear
+    assert _foreign_effects.decide(cmt).clear
+    assert _foreign_effects.decide(strlit).clear
 
 
 def test_frontier_does_not_flag_pure_libc_or_keywords():
     src = ("int f(int*p,int n){int s=0;for(int i=0;i<n;i++){if(p[i])"
            "s+=p[i];}return s+abs(s);}")
-    assert _fe.decide(src).clear
+    assert _foreign_effects.decide(src).clear
 
 
 @_clang_present
 def test_frontier_volatile_opacity_confirmed_by_clang_ir():
-    c = _fe.confirm_volatile_opaque()
+    c = _foreign_effects.confirm_volatile_opaque()
     assert c is not None and c.ok
     # the pure-model fold (one load) is provably unsound: clang keeps >= 4.
     assert "kept=4" in c.detail
@@ -3590,25 +3598,25 @@ def test_frontier_volatile_opacity_confirmed_by_clang_ir():
 
 @_clang_present
 def test_frontier_inline_asm_opacity_confirmed_by_clang_ir():
-    c = _fe.confirm_inline_asm_opaque()
+    c = _foreign_effects.confirm_inline_asm_opaque()
     assert c is not None and c.ok
 
 
 @_clang_present
 def test_frontier_foreign_call_opacity_confirmed_by_clang_ir():
-    c = _fe.confirm_foreign_call_opaque()
+    c = _foreign_effects.confirm_foreign_call_opaque()
     assert c is not None and c.ok
 
 
 @_clang_present
 def test_frontier_atomic_opacity_confirmed_by_clang_ir():
-    c = _fe.confirm_atomic_opaque()
+    c = _foreign_effects.confirm_atomic_opaque()
     assert c is not None and c.ok
 
 
 @_clang_present
 def test_frontier_all_confirmations_pass():
-    cs = _fe.confirm_all()
+    cs = _foreign_effects.confirm_all()
     assert len(cs) == 4 and all(c.ok for c in cs)
 
 
@@ -3694,46 +3702,46 @@ def test_concurrency_synchronized_rust_translations_compile_and_run(name):
 # Step 29 — function-pointer / indirect-call resolution (dispatch tables).
 # ---------------------------------------------------------------------------
 
-from src.ub_oracle import indirect_calls as _ic  # noqa: E402
+from src.ub_oracle import indirect_calls as _indirect_calls  # noqa: E402
 
 _clang_for_ic = pytest.mark.skipif(
-    not _os.path.exists(_ic.CC), reason="clang not available")
+    not _os.path.exists(_indirect_calls.CC), reason="clang not available")
 
 
 def test_indirect_parser_extracts_functions_typedef_and_table():
-    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
+    u = _indirect_calls.parse_unit(_indirect_calls.EXAMPLE_DISPATCH)
     assert set(u.functions) == {"add", "sub", "mul", "log_msg", "main"}
-    assert u.functions["add"].sig == _ic.Signature("int", ("int", "int"))
-    assert u.functions["log_msg"].sig == _ic.Signature("void", ("const char*",))
-    assert u.typedefs["op_t"] == _ic.Signature("int", ("int", "int"))
+    assert u.functions["add"].sig == _indirect_calls.Signature("int", ("int", "int"))
+    assert u.functions["log_msg"].sig == _indirect_calls.Signature("void", ("const char*",))
+    assert u.typedefs["op_t"] == _indirect_calls.Signature("int", ("int", "int"))
     assert u.tables["table"].entries == ("add", "sub", "mul")
 
 
 def test_indirect_precise_points_to_is_the_table_entries():
-    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
-    assert _ic.resolve_table_call(u, "table") == {"add", "sub", "mul"}
+    u = _indirect_calls.parse_unit(_indirect_calls.EXAMPLE_DISPATCH)
+    assert _indirect_calls.resolve_table_call(u, "table") == {"add", "sub", "mul"}
 
 
 def test_indirect_signature_typing_excludes_incompatible_decoy():
-    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
+    u = _indirect_calls.parse_unit(_indirect_calls.EXAMPLE_DISPATCH)
     # the conservative signature-typed set still excludes log_msg (wrong sig),
     # and never main (different sig) — so signature typing is the precision lever.
-    compat = _ic.signature_compatible_targets(u, "op_t")
+    compat = _indirect_calls.signature_compatible_targets(u, "op_t")
     assert compat == {"add", "sub", "mul"}
     assert "log_msg" not in compat and "main" not in compat
 
 
 def test_indirect_table_is_well_typed_precise_refines_conservative():
-    u = _ic.parse_unit(_ic.EXAMPLE_DISPATCH)
-    assert _ic.table_is_well_typed(u, "table")
-    precise = _ic.resolve_table_call(u, "table")
-    conservative = _ic.signature_compatible_targets(u, "op_t")
+    u = _indirect_calls.parse_unit(_indirect_calls.EXAMPLE_DISPATCH)
+    assert _indirect_calls.table_is_well_typed(u, "table")
+    precise = _indirect_calls.resolve_table_call(u, "table")
+    conservative = _indirect_calls.signature_compatible_targets(u, "op_t")
     assert precise.issubset(conservative)
 
 
 @_clang_for_ic
 def test_indirect_resolution_is_exact_against_real_execution():
-    c = _ic.confirm_table_dispatch(_ic.EXAMPLE_DISPATCH, "table")
+    c = _indirect_calls.confirm_table_dispatch(_indirect_calls.EXAMPLE_DISPATCH, "table")
     assert c.available and c.ok
     # the program drives every index, so the observed indirect targets are
     # exactly the predicted points-to set (precision), and never escape it.
@@ -3744,7 +3752,7 @@ def test_indirect_resolution_is_exact_against_real_execution():
 
 @_clang_for_ic
 def test_indirect_decoy_function_is_never_an_observed_target():
-    c = _ic.confirm_table_dispatch(_ic.EXAMPLE_DISPATCH, "table")
+    c = _indirect_calls.confirm_table_dispatch(_indirect_calls.EXAMPLE_DISPATCH, "table")
     assert "log_msg" not in c.observed
     assert "main" not in c.observed
 
@@ -3753,32 +3761,32 @@ def test_indirect_decoy_function_is_never_an_observed_target():
 # Step 26 — real C preprocessing (clang -E): macros, conditionals, includes.
 # ---------------------------------------------------------------------------
 
-from src.ub_oracle import preprocess as _pp  # noqa: E402
+from src.ub_oracle import preprocess as _preprocess  # noqa: E402
 
 _clang_for_pp = pytest.mark.skipif(
-    not _os.path.exists(_pp.CC), reason="clang not available")
+    not _os.path.exists(_preprocess.CC), reason="clang not available")
 
 
 def test_preprocess_detects_unparenthesized_macro_hazard():
-    haz = _pp.detect_unparenthesized_macros("#define MUL(a,b) a*b\n")
+    haz = _preprocess.detect_unparenthesized_macros("#define MUL(a,b) a*b\n")
     assert [h.name for h in haz] == ["MUL"]
     # the fully-parenthesized form is NOT a hazard.
-    assert _pp.detect_unparenthesized_macros("#define MUL(a,b) ((a)*(b))\n") == []
+    assert _preprocess.detect_unparenthesized_macros("#define MUL(a,b) ((a)*(b))\n") == []
     # object-like macros and single-token wrappers are not flagged.
-    assert _pp.detect_unparenthesized_macros("#define N 10\n") == []
-    assert _pp.detect_unparenthesized_macros("#define ID(x) (x)\n") == []
+    assert _preprocess.detect_unparenthesized_macros("#define N 10\n") == []
+    assert _preprocess.detect_unparenthesized_macros("#define ID(x) (x)\n") == []
 
 
 @_clang_for_pp
 def test_preprocess_expands_with_real_clang():
-    out = _pp.preprocess("#define MUL(a,b) a*b\nint v(){return MUL(1+1,2);}\n")
+    out = _preprocess.preprocess("#define MUL(a,b) a*b\nint v(){return MUL(1+1,2);}\n")
     assert out is not None
     assert "1+1*2" in out.replace(" ", "") or "1+1*2" in out
 
 
 @_clang_for_pp
 def test_preprocess_macro_is_semantically_load_bearing():
-    c = _pp.confirm_macro_precedence_hazard()
+    c = _preprocess.confirm_macro_precedence_hazard()
     assert c.available and c.ok
     # the precedence pitfall: unparenthesized macro yields 3, parenthesized 4.
     assert c.hazard_value == 3
@@ -3788,14 +3796,14 @@ def test_preprocess_macro_is_semantically_load_bearing():
 
 @_clang_for_pp
 def test_preprocess_conditional_selects_the_program():
-    c = _pp.confirm_conditional_compilation()
+    c = _preprocess.confirm_conditional_compilation()
     assert c.available and c.ok
     assert c.without == 0 and c.with_feature == 1
 
 
 @_clang_for_pp
 def test_preprocess_include_resolution_works():
-    c = _pp.confirm_include_resolution()
+    c = _preprocess.confirm_include_resolution()
     assert c.available and c.ok
     assert c.symbol_present and c.value == 42
 

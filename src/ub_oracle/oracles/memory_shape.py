@@ -118,7 +118,10 @@ def _find_pun_pair() -> tuple:
     opt.add(a != z3.Extract(31, 0, b))  # A differs from the low 32 bits of B
     opt.add(a >= 0)
     opt.add(b >= 0)
-    opt.minimize(z3.Concat(z3.BitVecVal(0, 32), a) + b)
+    # Lexicographic optimization makes the canonical witness stable.  The
+    # previous summed objective admitted both (A=1, B=0) and (A=0, B=1).
+    opt.minimize(b)
+    opt.minimize(z3.ZeroExt(32, a))
     if opt.check() != z3.sat:  # pragma: no cover - always sat
         return None
     m = opt.model()

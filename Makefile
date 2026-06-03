@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check package-check coverage coverage-check verified-check soundness-check demo-video
 
 help:
 	@echo "Targets:"
@@ -34,12 +34,13 @@ help:
 	@echo "  package-check     build the wheel, install it in a fresh venv, run the CLI"
 	@echo "  demo-video        regenerate the README-linked c2rust CWE-class demo video"
 	@echo "  guard             run the credibility guard (no simulated results)"
+	@echo "  cold-start-ci     full non-compiler suite + one real compiled sample (<5 min)"
 	@echo "  test-ub           run the ub_oracle test suite only"
 	@echo "  coverage          print the core-module branch-coverage table"
 	@echo "  coverage-check    enforce the coverage ratchet floor (slow, ~4 min)"
 	@echo "  verified-check    build the Lean boundary proof and smoke-test the checker"
 	@echo "  soundness-check   enforce one soundness statement per registered oracle"
-	@echo "  ci                guard + reproduce-check + matrix-check + cex-quality-check + perf-check + repro-hardening-check + redteam-check + verified-check + soundness-check + test-ub"
+	@echo "  ci                guard + cold-start-ci + reproduce-check + matrix-check + cex-quality-check + perf-check + repro-hardening-check + redteam-check + verified-check + soundness-check + test-ub"
 
 reproduce:
 	$(PYTHON) -m experiments.ub_divergence.run
@@ -141,8 +142,11 @@ test-ub:
 green-check:
 	$(PYTHON) scripts/test_ratchet.py --fast
 
+cold-start-ci:
+	$(PYTHON) scripts/cold_start_ci.py
+
 large-scale:
 	PYTHONPATH=src $(PYTHON) -m ub_oracle.large_scale_study
 
-ci: guard green-check reproduce-check matrix-check cex-quality-check perf-check repro-hardening-check redteam-check verified-check soundness-check test-ub
+ci: guard cold-start-ci reproduce-check matrix-check cex-quality-check perf-check repro-hardening-check redteam-check verified-check soundness-check test-ub
 	@echo "ci: PASSED"

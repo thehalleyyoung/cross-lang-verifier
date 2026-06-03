@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -9,6 +10,10 @@ import pytest
 
 from src.ub_oracle import c2rust_corpus as corpus
 from src.ub_oracle.ir import assert_valid
+from src.ub_oracle.reexec import NO_TOOLCHAIN_ENV, toolchain_available
+
+
+_TC = toolchain_available()
 
 
 def test_c2rust_corpus_has_a_dozen_distinct_libraries():
@@ -36,15 +41,20 @@ def test_c2rust_corpus_units_are_valid_and_verifier_backed():
 
 
 def test_c2rust_corpus_results_json_is_byte_reproducible():
-    ok, detail = corpus.check_results()
-    assert ok, detail
-    on_disk = json.loads(corpus.RESULTS_PATH.read_text(encoding="utf-8"))
-    assert on_disk["content_hash"] == corpus.results_document()["content_hash"]
+    old_mask = os.environ.pop(NO_TOOLCHAIN_ENV, None)
+    try:
+        ok, detail = corpus.check_results()
+        assert ok, detail
+        on_disk = json.loads(corpus.RESULTS_PATH.read_text(encoding="utf-8"))
+        assert on_disk["content_hash"] == corpus.results_document()["content_hash"]
+    finally:
+        if old_mask is not None:
+            os.environ[NO_TOOLCHAIN_ENV] = old_mask
 
 
 @pytest.mark.skipif(
-    shutil.which("clang") is None or shutil.which("rustc") is None,
-    reason="needs clang and rustc",
+    not (_TC.c_available and _TC.target_available("rust")),
+    reason=f"needs C and rustc ({_TC})",
 )
 def test_c2rust_corpus_sources_and_generated_rust_compile():
     with tempfile.TemporaryDirectory() as tmp:
@@ -52,14 +62,14 @@ def test_c2rust_corpus_sources_and_generated_rust_compile():
             c_obj = f"{tmp}/{item.item_id}.o"
             rust_lib = f"{tmp}/lib_{item.item_id.replace('-', '_')}.rlib"
             c_run = subprocess.run(
-                ["clang", "-c", str(item.c_path), "-o", c_obj],
+                [_TC.cc, "-c", str(item.c_path), "-o", c_obj],
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
             assert c_run.returncode == 0, c_run.stderr
             rs_run = subprocess.run(
-                ["rustc", "--edition=2021", "--crate-type", "lib",
+                [_TC.rustc, "--edition=2021", "--crate-type", "lib",
                  str(item.rust_path), "-o", rust_lib],
                 capture_output=True,
                 text=True,

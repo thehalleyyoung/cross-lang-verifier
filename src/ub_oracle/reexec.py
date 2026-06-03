@@ -41,6 +41,20 @@ from typing import Dict, List, Optional, Tuple
 
 from .target_semantics import PACKS, get_pack
 
+NO_TOOLCHAIN_ENV = "XLEV_NO_TOOLCHAIN"
+_DISABLE_TOOLCHAIN_VALUES = {"1", "true", "yes", "on"}
+
+
+def toolchain_discovery_disabled() -> bool:
+    """Whether tests should pretend no external compiler toolchains exist.
+
+    The cold-start CI gate uses this to run the full toolchain-independent pytest
+    phase deterministically on fresh runners that may or may not already have
+    clang/rustc/go/swift/etc. installed, then unsets it for one real compiled
+    representative sample.
+    """
+    return os.environ.get(NO_TOOLCHAIN_ENV, "").strip().lower() in _DISABLE_TOOLCHAIN_VALUES
+
 
 @dataclass(frozen=True)
 class ToolchainStatus:
@@ -273,6 +287,16 @@ def _resolve_runner(pack) -> Optional[str]:
 
 
 def toolchain_available() -> ToolchainStatus:
+    if toolchain_discovery_disabled():
+        return ToolchainStatus(
+            cc=None,
+            ubsan=False,
+            asan=False,
+            msan=False,
+            auto_var_init=False,
+            targets=tuple((name, None) for name in PACKS),
+            runners=tuple((name, None) for name in PACKS),
+        )
     cc = _find_cc()
     ubsan = _check_ubsan(cc) if cc else False
     asan = _check_asan(cc) if cc else False

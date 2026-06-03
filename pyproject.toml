@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "pytest-cov"]
+dev = ["pytest>=7", "pytest-cov", "pytest-xdist>=3"]
 frontends = ["tree-sitter>=0.24,<0.26", "tree-sitter-c>=0.24,<0.25"]
 docs = ["mkdocs>=1.6"]
 

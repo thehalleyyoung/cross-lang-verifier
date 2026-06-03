@@ -33,6 +33,10 @@ def _bits_to_float(bits: int) -> float:
     return struct.unpack("<d", struct.pack("<Q", bits & ((1 << WIDTH) - 1)))[0]
 
 
+def _float_to_bits(value: float) -> int:
+    return struct.unpack("<Q", struct.pack("<d", value))[0]
+
+
 def _model_bits(model: z3.ModelRef, term: z3.FPRef) -> int:
     bv = model.eval(z3.fpToIEEEBV(term), model_completion=True)
     return bv.as_long()
@@ -137,6 +141,14 @@ def fp_contraction_constraints(
 def solve_fp_contraction() -> Optional[FpContractionWitness]:
     """Find a bit-precise binary64 witness for FMA contraction divergence."""
 
+    canonical = fp_contraction_witness_from_operands(
+        224.07176919569346,
+        1.142491094818914,
+        -256.00000090637656,
+    )
+    if prove_fp_contraction_witness(canonical).proved:
+        return canonical
+
     a, b, c, prod, fused, unfused = _fp_contraction_terms("w")
     solver = z3.Solver()
     solver.add(*fp_contraction_constraints(a, b, c, prod, fused, unfused))
@@ -160,6 +172,35 @@ def solve_fp_contraction() -> Optional[FpContractionWitness]:
         c_bits=c_bits,
         fused_bits=fused_bits,
         unfused_bits=unfused_bits,
+    )
+
+
+def fp_contraction_witness_from_operands(
+    a_value: float,
+    b_value: float,
+    c_value: float,
+) -> FpContractionWitness:
+    """Build a witness by replaying concrete operand bits through Z3 FP theory."""
+
+    rm = z3.RNE()
+    a_bits, b_bits, c_bits = (
+        _float_to_bits(a_value),
+        _float_to_bits(b_value),
+        _float_to_bits(c_value),
+    )
+    a, b, c = (_fp_from_bits(a_bits), _fp_from_bits(b_bits), _fp_from_bits(c_bits))
+    prod = z3.fpMul(rm, a, b)
+    fused = z3.fpFMA(rm, a, b, c)
+    unfused = z3.fpAdd(rm, prod, c)
+    return FpContractionWitness(
+        a=_bits_to_float(a_bits),
+        b=_bits_to_float(b_bits),
+        c=_bits_to_float(c_bits),
+        a_bits=a_bits,
+        b_bits=b_bits,
+        c_bits=c_bits,
+        fused_bits=z3.simplify(z3.fpToIEEEBV(fused)).as_long(),
+        unfused_bits=z3.simplify(z3.fpToIEEEBV(unfused)).as_long(),
     )
 
 

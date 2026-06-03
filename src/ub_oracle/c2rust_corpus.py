@@ -23,6 +23,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 from .ir import assert_valid
 from .verify import VerifyVerdict, verify_unit
 from .cache import toolchain_provenance
+from .reexec import toolchain_discovery_disabled
 
 SCHEMA_VERSION = "c2rust-corpus/v1"
 TRANSLATOR = "c2rust"
@@ -250,6 +251,8 @@ def validate_corpus_shape(items: Iterable[C2RustItem] = CORPUS) -> None:
 
 
 def c2rust_path() -> Optional[str]:
+    if toolchain_discovery_disabled():
+        return None
     return shutil.which("c2rust")
 
 

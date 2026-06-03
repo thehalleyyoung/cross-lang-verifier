@@ -18,7 +18,7 @@ jobs:
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install z3-solver pytest pytest-cov
+          python -m pip install z3-solver pytest pytest-cov pytest-xdist
 
       - name: Ensure Rust toolchain
         run: rustc --version && cargo --version
@@ -34,8 +34,8 @@ jobs:
       - name: Credibility guard (no simulated results)
         run: bash scripts/check_no_simulated_results.sh
 
-      - name: True-green test ratchet (toolchain-independent suite)
-        run: make green-check PYTHON=python
+      - name: Cold-start fast gate (non-compiler suite + one real compiled sample)
+        run: make cold-start-ci PYTHON=python
 
       - name: Reproduce trusted results byte-identically
         run: make reproduce-check PYTHON=python

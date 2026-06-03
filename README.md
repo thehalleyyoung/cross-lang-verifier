@@ -135,6 +135,9 @@ python3 -m src.cli.main discover \
   cached verdicts replay the same certificate-bearing verdict layer
 - compiler-backed experiment artifacts pin exact `clang`/`rustc`/`go` version
   fingerprints and their replay checks fail fast on any toolchain drift
+- a **cold-start CI gate** (`make cold-start-ci`) that masks opportunistic
+  toolchains while running the non-compiler suite, then unmasks them for one real
+  clang/UBSan+rustc witness, keeping the fast path under a five-minute budget
 - deterministic parallel, sharded, and distributed-manifest ground-truth
   harnesses whose content-hashed verdict layer is independent of worker
   scheduling, corpus partitioning, and machine farming; `make

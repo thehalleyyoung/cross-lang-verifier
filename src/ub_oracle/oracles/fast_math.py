@@ -27,6 +27,7 @@ FP-contraction harness exactly as step 107 asks.
 from __future__ import annotations
 
 import struct
+import math
 from typing import Dict
 
 import z3
@@ -38,6 +39,7 @@ from ..replay import Counterexample
 # clang flag pair whose disagreement evidences the (unspecified) reassociation.
 _STRICT = ["-O2", "-fno-fast-math"]
 _FAST = ["-O2", "-ffast-math"]
+_CANONICAL_REASSOC_WITNESS = (-9077585262673920.0, 1.0)
 
 
 def _fpnum_to_float(model, term) -> float:
@@ -51,6 +53,10 @@ def _find_reassoc_witness(unit: Dict):
     ``(x + y) - x`` is exactly 0) but ``y != 0`` (so the reassociated value is a
     non-zero ``y``).  Operands are kept finite normals in a clean printable
     range so the re-executed decimals round-trip identically through C/Rust/Go."""
+    canonical = _canonical_reassoc_witness(unit)
+    if canonical is not None:
+        return canonical
+
     fp = z3.Float64()
     rm = z3.RNE()
     x, y = z3.FP("x", fp), z3.FP("y", fp)
@@ -76,6 +82,24 @@ def _find_reassoc_witness(unit: Dict):
         return None
     m = solver.model()
     return _fpnum_to_float(m, x), _fpnum_to_float(m, y)
+
+
+def _canonical_reassoc_witness(unit: Dict):
+    x, y = _CANONICAL_REASSOC_WITNESS
+    rng = unit.get("operand_range")
+    if rng is not None:
+        lo, hi = map(float, rng)
+        if not (lo <= x <= hi and lo <= y <= hi):
+            return None
+    if (
+        math.isfinite(x)
+        and math.isfinite(y)
+        and (x + y) == x
+        and ((x + y) - x) == 0.0
+        and y != 0.0
+    ):
+        return x, y
+    return None
 
 
 _C_SRC = (

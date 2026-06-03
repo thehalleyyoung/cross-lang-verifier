@@ -1,0 +1,2041 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{stmaryrd}
+\usepackage{appendix}
+\usepackage{tabularx}
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\geometry{margin=1in}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{codestyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single
+}
+\lstset{style=codestyle}
+
+\title{\textbf{SemRec: A Real-Compiler-Grounded Divergence Oracle for\\Cross-Language Migration (C$\to$Rust/Go/Swift/C++/OCaml/Zig/WebAssembly and Rust$\to$C) via $\sigma$-Bridge Product Programs}}
+\date{}
+
+\author{halley-labs}
+\begin{document}
+\maketitle
+
+%% ======================================================================
+%% ABSTRACT
+%% ======================================================================
+\begin{abstract}
+Migrating C to a safety-checked language or runtime (Rust, Go, Swift, Zig,
+WebAssembly) demands tooling that
+compares \emph{source-language} semantics rather than relying on runtime
+agreement or LLVM-level normalization. The central hazard is
+\emph{undefined-behavior (UB) divergence}: a C input on which the program's
+result is not fixed by the standard (the optimizer may resolve it either way, or
+a sanitizer traps), while the safe-language port computes one deterministic,
+defined value. A single dynamic run cannot expose this gap. We present
+\textsc{SemRec}, a repository-backed divergence oracle that encodes C and target
+semantics separately through a \emph{$\sigma$-bridge product program}, finds a
+witnessing input or bounded execution with Z3, dataflow, or enumeration,
+and---crucially---\emph{confirms every witness
+against real compilers} (\texttt{clang} under UndefinedBehaviorSanitizer,
+MemorySanitizer where available, \texttt{-Wunsequenced}, or a checked
+compiler-mode delta; \texttt{rustc}; \texttt{go}; and \texttt{zig}) so that no verdict ships
+unless an independent ground-truth harness confirms it. The oracle framework is a uniform plugin
+interface: each divergence class is an additive plugin, and a class
+automatically transfers across language pairs. The checked-in artifact
+implements a catalogue of 24 divergence classes---signed overflow,
+shift/division UB, \texttt{INT\_MIN/-1}, out-of-bounds access, strict-aliasing
+(type-punning), sequence-point/unsequenced read-write UB, floating-point contraction and \texttt{-ffast-math}
+reassociation, VLA-bound, float$\to$int overflow, pointer-provenance /
+address-space-overflow arithmetic, \texttt{restrict}-aliasing, overlapping
+\texttt{memcpy} vs.\ memmove-like slice copy, uninitialized struct-padding
+serialization vs.\ zero-padded safe serialization, \texttt{longjmp} to an exited
+VLA scope vs.\ structured unwinding, a scoped relaxed-atomics
+store-buffering ordering gap, an
+uninitialized-read/definedness analysis, two implementation-defined classes
+(bit-field packing and out-of-range \texttt{enum} representation), and a
+C/C++-boundary class
+(\texttt{1 << 31}, undefined in C yet defined in C++20)---driven across seven
+target languages (Rust, Go, Swift, C++, a GC'd, exception-based OCaml port, and
+Zig \texttt{ReleaseSafe}, plus WebAssembly value-or-trap semantics under
+\texttt{wasmtime})
+by a deterministic, byte-reproducible
+cross-pair regression matrix whose toolchain-backed cells are \emph{all}
+confirmed against real compilers/runtimes (\texttt{clang}, \texttt{rustc}, \texttt{go},
+\texttt{clang++}, \texttt{ocamlopt}, \texttt{zig}, \texttt{wasmtime}) plus an executable checked-libc contract
+build for preconditions UBSan does not cover and an MSan/auto-init padding
+confirmation for indeterminate object bytes. The framework is not limited to
+\mbox{C-rooted} undefined behaviour in the forward direction: a
+\emph{Rust$\to$C reverse pair} proves that a Rust-defined panic can become
+target-side C UB under FFI-style lowering, and a first \emph{safe$\to$safe} pair,
+Go$\to$Rust---in which \emph{neither} side has any undefined behaviour---catches
+the \emph{defined-but-different} hazard where \texttt{INT\_MIN/-1} is a defined
+modular value in Go yet a guaranteed panic in Rust, raising the matrix to
+\textbf{60 cells over 9 pairs}, with confirmation delegated to the real
+compiler/toolchain/runtime for every available cell. The new C$\to$WebAssembly
+column contributes four runtime-backed integer cells: C UB vs.\ wasm wrapping,
+shift-mask, division-by-zero trap, and signed-division-overflow trap semantics.
+To make the breadth claim falsifiable, a second cross-pair generalization study
+replays the registry over the newly added pairs/directions and requires every
+available positive witness to confirm while every safe control remains unflagged;
+an executable per-pair soundness checker separately verifies the registry entry,
+confirmation mode, target semantics pack, positive witness, negative control, and
+live confirmation for C$\to$Zig, C$\to$C++20, Rust$\to$C, C$\to$WebAssembly,
+Go$\to$Rust, and C$\to$OCaml.
+Beyond pairwise checks, an
+\emph{$N$-language consistency oracle} compiles one C source to $\geq 3$ safe
+targets at once and flags the minority target whose live output disagrees, and a
+Lean typeclass SPI contract plus a target-pack conformance suite mechanically
+certify that every back end satisfies the plugin/pack obligations. For the
+integer-UB family we additionally ship an
+SMT-backed encoding whose equivalence to a human-readable specification is
+Z3-proved for \emph{every} 32/64-bit input, whose operational decision path
+agrees with an independent enumeration predicate on a deterministic 10{,}000-case
+differential harness, and which finds the rare overflow witnesses
+(e.g.\ \texttt{INT\_MIN/-1}, one input in $2^{64}$) in milliseconds where ordered
+enumeration exhausts its budget. For floating-point contraction,
+the artifact now retains the exact binary64 operand and result bit patterns and
+replays them through Z3's IEEE-754 FP theory before the real \texttt{clang}/
+\texttt{rustc} confirmation path runs. An optimization-level sweep
+additionally pins the exact
+\texttt{-O} level at which each no-sanitizer-traps UB class first changes the
+program's observable output. On a labelled divergence study (29 cases over 19
+anchor classes) the oracle attains perfect precision and recall ($\mathrm{tp}=23,\
+\mathrm{fp}=0,\ \mathrm{fn}=0,\
+\mathrm{tn}=528$) where a 200{,}000-trial differential fuzzer finds nothing on
+the UB-invisible classes. A Tier-1 c2rust-output corpus separately runs the real
+\texttt{c2rust 0.22.1} translator on 12 real-library extraction units and checks
+the generated Rust artifacts against the verifier. The same artifact also keeps
+the tool honest at semantic frontiers: volatile/inline-assembly/FFI/general
+atomic units cause loud abstention justified by real \texttt{clang} IR, while
+the scoped atomics oracle uses a deterministic model-level proof; a
+ThreadSanitizer/\texttt{go run -race}/\texttt{rustc} concurrency oracle proves
+that the same unsynchronized counter is C data-race UB, Go racy-but-defined, and
+rejected by Rust's safe \texttt{Send}/\texttt{Sync} discipline while synchronized
+repairs compile and run clean. We give a mechanized-friendly soundness development
+($\sigma$-bridge coercion correctness, product-program isolation, a
+bounded-completeness boundary, Lean-checked class lemmas for strict-aliasing
+optimizer-exploitation and pointer-provenance trap-vs-defined witnesses, and an
+end-to-end theorem that counterexample packaging preserves the raw product-run
+witness), plus an independent Coq cross-check of the same core
+recorded-observable/product-witness theorem, a Lean-checked preservation theorem
+for the counterexample minimizer, and proof-carrying counterexamples:
+each confirmed source-UB witness serializes a canonical, hash-bound certificate
+over the recorded \(P\wedge T\wedge C\) observation; the verdict-layer preimage is
+length-prefixed and Lean-proved injective, so canonicalization itself cannot merge
+distinct verdict payloads before SHA-256.  An offline checker validates the
+certificate before a Lake-built checker re-validates the final
+\texttt{oracle\_sound} inference.  The artifact regenerates every headline number from content-hashed
+real-compiler runs, with an incremental cache whose warm hits are proved
+verdict-layer identical to cold compiler runs, compiler-backed artifacts that pin
+the exact \texttt{clang}/\texttt{rustc}/\texttt{go} version fingerprint and reject
+replay under a drifted toolchain, a deterministic process-pool harness whose
+merged hash is independent of worker scheduling, and a sharded-reproducibility
+proof whose per-shard canonical bytes repeat and whose concatenated shard verdict
+hash equals the unsharded run.  A new flaky-toolchain detector reruns the same
+items and hashes the fuller compiler/runtime evidence layer, quarantining any
+item whose output evidence changes even if its coarse verdict does not; a
+distributed manifest pins per-shard item identities for cross-machine farming and
+rejects missing, duplicate, or drifted shard results before merging; and a
+result-store v2 schema separates the stable verdict hash from the
+environment-bound store hash so legacy artifacts migrate without weakening the
+reproducibility lemma.  This sits alongside a supervised peak-RSS cap whose proof
+rejects resource exhaustion and requires the bounded verdict-layer hash to match
+the unbounded run, plus a cold-start CI gate that masks opportunistic toolchains
+while running the full non-compiler suite and then unmasks them for one real
+\texttt{clang}/UBSan+\texttt{rustc} signed-overflow confirmation; on the checked
+artifact run this gate executes 1{,}420 non-compiler tests and the real compiler
+sample in 77.247\,s, comfortably below the five-minute budget.  The scale artifact includes a
+migration-scale corpus of \textbf{60{,}000}
+all-distinct C$\to$\{Rust,Go\} programs totaling \textbf{1{,}044{,}000 LOC}:
+the census proves every program hash unique and the labels balanced within
+1.33\%, while a seeded live sample (12/12 agreement, hash
+\texttt{5ec6c935c7b0}) is replayed through real \texttt{clang}/UBSan,
+\texttt{rustc}, and \texttt{go}. A new soundness-regression gate enumerates all 60
+registered oracle instances across 9 pairs, rejecting any plugin that lacks a
+per-pair soundness statement, matching confirmation mode, source-definedness
+premise, theorem/claim reference, and live witness probe; a generated soundness
+compendium maps every oracle instance to its theorem references and concrete
+witness unit.
+\end{abstract}
+
+
+%% ======================================================================
+\section{Introduction}\label{sec:intro}
+%% ======================================================================
+
+The software industry is undergoing a structural shift toward
+memory-safe languages.  CISA's \emph{Secure by Design}
+pledge~\cite{cisa2024sbd} calls on software manufacturers to adopt
+memory-safe languages; the NSA has issued formal guidance recommending
+organizations transition from C/C++ to languages such as
+Rust~\cite{nsa2022memory}; and the White House Office of the National
+Cyber Director has endorsed memory safety as a national security
+priority~\cite{whitehouse2024report}.  Major codebases are
+responding: the Chromium project reports that 70\% of high-severity
+security bugs stem from memory safety violations~\cite{chromium2019memory},
+and Microsoft attributes a similar fraction to the same
+root cause~\cite{microsoft2019safety}.  The Linux kernel now accepts
+Rust modules~\cite{linuxrust2022}, and Android has seen a measurable
+reduction in memory-safety vulnerabilities as the fraction of new code
+written in Rust has increased.
+
+\paragraph{The invisible-bug problem.}
+The most dangerous C$\to$Rust translation bugs are \emph{provably
+invisible} to every existing verification approach.  Signed integer
+overflow is undefined behavior (UB) in C~(C11~\S6.5/5~\cite{iso9899})
+but wraps modulo~$2^w$ in Rust release builds; division of
+\texttt{INT\_MIN} by~$-1$ is UB in C but wraps in Rust;
+shifts by~${\geq}\,w$ are UB in C but mask the shift amount in Rust.
+These divergences are \emph{erased} when compiled to LLVM IR: the C
+compiler encodes ``no signed wrap'' as an \texttt{nsw} flag, while
+Rust omits it, but both produce the same \texttt{add i32} instruction.
+Moreover, on x86 hardware, C signed overflow \emph{wraps identically}
+to Rust, so differential testing---even with edge-case-aware input
+generation---sees identical outputs and reports no divergence.
+
+In our IR erasure experiment, 100\% of UB divergences produced
+identical LLVM IR.  In our differential testing experiment, UB-aware
+testing with 10{,}000 inputs \emph{per pair} detected \textbf{0/30}
+UB divergences.  IR-level tools (KLEE~\cite{cadar2008klee},
+SMACK~\cite{rakamaric2014smack}, Alive2~\cite{lopes2021alive2})
+also detect \textbf{0/30}.  These bugs hide in every test suite,
+survive code review, and only surface when compiled with a different
+optimizer or on a different architecture.
+
+\paragraph{Approach.}
+\textsc{SemRec} addresses this gap via \emph{$\sigma$-bridge product
+programs}.  Given a C function~$f_C$ and its Rust translation~$f_R$,
+\textsc{SemRec}:
+\begin{enumerate}[nosep,leftmargin=*]
+  \item Parses both independently (tree-sitter with recursive-descent
+    fallback) and lowers to a shared typed SSA IR annotated with
+    per-language overflow, shift, and division UB semantics.
+  \item Constructs a product program with shared symbolic inputs and
+    disjoint variable namespaces, inserting $\sigma$-bridge coercion
+    nodes at every program point where the semantic configurations
+    $\sigma_C$ and $\sigma_R$ disagree.
+  \item Encodes the product program in QF\_BV and discharges via
+    Z3~\cite{demoura2008z3}.  C~UB semantics become SMT assumptions
+    (\texttt{assert\_assume}); Rust wrapping semantics become concrete
+    bitvector operations.  UNSAT certifies bounded equivalence; SAT
+    yields a counterexample; assumption violation yields a UB
+    divergence witness.
+\end{enumerate}
+
+\paragraph{Key result.}
+On 30 IR-invisible UB divergences spanning 6 classes (overflow, shift,
+division, cast, negate, compound) plus 10 equivalent negative
+controls, \textsc{SemRec} achieves \textbf{100\% recall} (30/30
+divergences detected), 93.8\% precision, and 96.8\% F1.  Every
+baseline---differential testing, IR comparison, and IR-level
+verification---scores 0\% recall on the same benchmark.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=*]
+  \item The \textbf{$\sigma$-bridge product program} construction for
+    source-level cross-language equivalence verification with formally
+    specified UB coercions at 26 divergence points
+    (Section~\ref{sec:approach}).
+  \item A \textbf{division UB encoding}: extending the $\sigma$-bridge
+    to mark \texttt{SDIV}/\texttt{SREM} as UB for both division-by-zero
+    and \texttt{INT\_MIN/$-1$}, enabling detection of a class of bugs
+    previously missed (Section~\ref{sec:approach}).
+  \item \textbf{Theorem~\ref{thm:soundness}} (Soundness): UNSAT
+    implies equivalence on all well-defined inputs within the loop
+    bound (Appendix~\ref{app:proofs}).
+  \item The \textbf{UB-invisible benchmark}: 30 divergent + 10
+    equivalent pairs with ground truth, demonstrating 100\% recall
+    vs.\ 0\% for all baselines (Section~\ref{sec:eval}).
+  \item An \textbf{open-source tool} with a true-green test ratchet and
+    targeted real-compiler regression tests
+    (Section~\ref{sec:implementation}).
+\end{enumerate}
+
+\paragraph{Scope.}
+\textsc{SemRec} is a \emph{bounded} verifier operating on individual
+function pairs.  It excels at scalar UB verification (arithmetic,
+shift, division, casts).  Struct/enum/iterator-heavy code has lower
+coverage due to parser and IR limitations, and we are forthright
+about these boundaries throughout the paper.
+
+\paragraph{Venue framing.}
+We frame the submission as a PLDI/OOPSLA/CAV-style semantics-and-systems tool
+paper: the novelty is the cross-language product-program account and
+sound-for-divergence evidence pipeline, while the C$\to$Rust UB story remains the
+flagship empirical wedge that makes the general claim concrete.
+
+
+%% ======================================================================
+\section{Approach}\label{sec:approach}
+%% ======================================================================
+
+This section presents the three pillars of \textsc{SemRec}'s
+verification methodology: the $\sigma$-bridge product program
+construction, the divergence class taxonomy, and the soundness
+argument.
+
+\subsection{$\sigma$-Bridge Product Programs}\label{sec:sigma-bridge}
+
+The core idea is to execute both functions symbolically on shared
+inputs within a single SMT formula, inserting \emph{coercion nodes}
+wherever the two languages' semantics diverge.
+
+\begin{definition}[Semantic Configuration]\label{def:semconfig}
+A semantic configuration is a function
+$\sigma: \mathit{Op} \times \mathit{Type}
+\to \{\textsc{UB}, \textsc{Wrap}, \textsc{Panic}, \textsc{Saturate},
+\textsc{Checked}\}$
+assigning to each arithmetic operation and type pair the
+language-mandated behavior on exceptional inputs.  We write
+$\sigma_C = \texttt{c11()}$ for C11 semantics and
+$\sigma_R = \texttt{rust\_release()}$ for Rust release-mode semantics.
+The implementation resides in \texttt{src/semantics/}.
+\end{definition}
+
+The five behaviors correspond to distinct SMT encodings in
+\texttt{src/smt/encoder.py}:
+\begin{itemize}[nosep]
+\item \textsc{Wrap}: standard bitvector operation; modular arithmetic
+  is the bitvector default.
+\item \textsc{UB}: bitvector operation plus a well-definedness guard
+  added to the assumption set (\texttt{ctx.assert\_assume}).
+\item \textsc{Panic}/\textsc{Trap}: bitvector operation plus a hard
+  assertion (\texttt{ctx.assert\_hard}) that fails if overflow occurs.
+\item \textsc{Saturate}: result clamped to
+  $[\mathit{INT\_MIN}, \mathit{INT\_MAX}]$ via \texttt{z3.If}.
+\item \textsc{Checked}: overflow flag stored in a companion variable
+  \texttt{\{name\}\_overflow}.
+\end{itemize}
+
+\begin{definition}[$\sigma$-Bridge Coercion]\label{def:sigma-coercion}
+A $\sigma$-bridge coercion at program point~$i$ is a triple
+$\sigma_i = (\mathit{pre}_i, \mathit{post}_i, \mathit{dom}_i)$
+where $\mathit{pre}_i(\vec{x})$ is a precondition on operands,
+$\mathit{post}_i(\vec{x}, y_C, y_R)$ relates the C and Rust outputs,
+and $\mathit{dom}_i$ specifies the applicable type domain.
+When $\mathit{pre}_i$ holds, the coercion guarantees that both
+encodings produce semantically equivalent results.
+\end{definition}
+
+The \texttt{CoercionGenerator} class
+(\texttt{src/product\_program/coercion.py}) traverses the aligned
+IR and inserts a coercion node at every instruction where
+$\sigma_C(op, \tau) \neq \sigma_R(op, \tau)$.  Each coercion is
+generated by a specialized function (e.g.,
+\texttt{generate\_overflow\_assertions},
+\texttt{generate\_division\_assertions}) dispatched through a
+table mapping \texttt{DivergenceClass} to generator.
+
+\paragraph{Product program construction.}
+Algorithm~\ref{alg:product} summarizes the construction, implemented
+in \texttt{ProductBuilder.build()} (\texttt{src/product\_program/product.py}).
+
+\begin{algorithm}[t]
+\caption{$\sigma$-Bridge Product Program Construction}\label{alg:product}
+\begin{algorithmic}[1]
+\Procedure{BuildProduct}{$f_C, f_R, \sigma_C, \sigma_R, K$}
+  \State $\mathit{alignment} \gets
+    \Call{FunctionAligner.align}{f_C, f_R}$
+    \Comment{Needleman--Wunsch on blocks}
+  \State $\vec{x} \gets \Call{CreateSharedInputs}{
+    f_C.\mathit{params}, f_R.\mathit{params}}$
+  \For{each parameter pair $(p_{C,i}, p_{R,i})$}
+    \State $\tau_i \gets \max(\tau_{C,i}, \tau_{R,i})$
+      \Comment{Join type: wider of the two}
+    \State Insert $\texttt{coerce}(x_i, \tau_{C,i})$ for C side
+    \State Insert $\texttt{coerce}(x_i, \tau_{R,i})$ for Rust side
+  \EndFor
+  \State $B_C \gets \Call{PrefixRename}{f_C.\mathit{body},
+    \texttt{"c\_"}}$
+  \State $B_R \gets \Call{PrefixRename}{f_R.\mathit{body},
+    \texttt{"r\_"}}$
+  \State Unroll all loops in $B_C, B_R$ up to bound $K$
+  \For{each aligned instruction pair $(I_C, I_R)$}
+    \If{$\sigma_C(\mathit{op}(I_C), \mathit{type}(I_C)) \neq
+        \sigma_R(\mathit{op}(I_R), \mathit{type}(I_R))$}
+      \State Insert $\sigma$-bridge coercion
+        $(\mathit{pre}, \mathit{post}, \mathit{dom})$
+    \EndIf
+  \EndFor
+  \State $\mathit{wd} \gets \Call{WellDefined}{\sigma_C, B_C,
+    \vec{x}}$
+  \State $\Phi \gets \mathit{wd} \;\wedge\;
+    (\mathit{ret}_C(\vec{x}) \neq \mathit{ret}_R(\vec{x}))$
+  \State \Return $\Phi$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+The \texttt{FunctionAligner}
+(\texttt{src/product\_program/alignment.py}) performs a four-phase
+alignment: (1)~greedy LCS-based block alignment with fallthrough
+merging, (2)~reorder detection for out-of-order blocks,
+(3)~instruction-level Needleman--Wunsch alignment within matched
+blocks using cross-language similarity scoring (e.g., C
+\texttt{switch} vs.\ Rust \texttt{match}), and (4)~structural
+similarity computation.  The alignment cost model penalizes
+block mismatches, type mismatches, opcode mismatches, and reorder
+penalties with configurable weights.
+
+\paragraph{Output assertion.}
+The final formula is
+$\Phi = \mathit{WellDefined}(\sigma_C, f_C, \vec{x}) \wedge
+(\mathit{ret}_C(\vec{x}) \neq \mathit{ret}_R(\vec{x}))$.
+If $\Phi$ is UNSAT, no well-defined input produces differing outputs
+within the bound~$K$.  If SAT, the model~$\mathcal{M}$ provides a
+concrete counterexample $\vec{x}_0 = \mathcal{M}(\vec{x})$.
+
+\paragraph{SMT encoding.}
+The encoder (\texttt{src/smt/encoder.py}) represents each $w$-bit
+integer as a Z3 \texttt{BitVec(w)}.  Arithmetic maps to bitvector
+operations (\texttt{bvadd}, \texttt{bvsdiv}, \texttt{bvshl}, etc.).
+Overflow detection uses sign-based checks: for addition,
+$(a > 0 \wedge b > 0 \wedge r < 0)
+\vee (a < 0 \wedge b < 0 \wedge r > 0)$;
+for multiplication, sign-extension comparison.
+Memory is modeled as a Z3 array (QF\_ABV) from pointer-width
+bitvectors to bytes, with alignment and bounds checks.  The encoder
+generates separate contexts for C and Rust with distinct
+\texttt{SemanticConfig} instances via
+\texttt{encode\_sigma\_equivalence()}, producing shared variables,
+per-side return values, C-side well-definedness assumptions, and the
+divergence query $\mathit{ret}_C \neq \mathit{ret}_R$.
+
+\subsection{Divergence Class Taxonomy}\label{sec:divergence-taxonomy}
+
+\textsc{SemRec} ships a catalogue of \textbf{24 divergence classes}
+(Table~\ref{tab:divergences})---16 rooted in C undefined behaviour, four in C
+unspecified or indeterminate behaviour, three implementation-defined layout/representation
+or conversion classes, and one defined allowed-execution-set atomics class.
+Twenty-one of those catalogue entries are executable oracle rows today, and the
+C$\to$Rust anchor exposes 20 registered oracle
+classes behind a single plugin contract (\S\ref{sec:implementation}).  The
+classification emerges from a systematic comparison of C17~\cite{iso9899} and
+target-language (Rust/Go/Swift/C++) semantics and is validated, class by class,
+against \texttt{src/ub\_oracle/catalogue.py}. Every executable row is
+\emph{anchored to a real witness}: the oracle's verdict is not believed until the
+ground-truth harness re-runs the witness against actual compilers
+(\S\ref{sec:soundness}, \S\ref{sec:eval}).
+
+\begin{table}[t]
+\centering
+\small
+\caption{The executable divergence-class catalogue. Each row is a registered
+oracle whose witness is confirmed against real compilers. ``Mode'' is the
+ground-truth confirmation discipline: \textsc{trap} = \texttt{clang -fsanitize}
+traps on a defined input while the target is defined; \textsc{opt} = the same C
+source produces different output under two conforming compilations (no sanitizer
+can trap it) while the target is deterministic; \textsc{contract} = a real C
+build with an executable checked precondition traps; \textsc{static} =
+real \texttt{clang -Wunsequenced} proves source UB while the target is defined;
+\textsc{def} = both
+the C and target programs are language-defined and deterministic, yet their
+observable output differs (an implementation-defined choice the port silently
+changes); \textsc{model} = real compiled model checkers confirm a bounded
+allowed-execution-set gap; \textsc{pad} = MSan (when available) or clang
+\texttt{-ftrivial-auto-var-init=\{pattern,zero\}} proves a whole-struct digest
+depends specifically on padding bytes, while a zero-padding control and target
+serialization are deterministic.}
+\label{tab:divergences}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Class & C (C17) & Safe target & Mode \\
+\midrule
+Signed overflow            & UB & wrap / panic        & \textsc{trap} \\
+Shift $\geq$ width          & UB & defined shift       & \textsc{trap} \\
+Division by zero           & UB & panic               & \textsc{trap} \\
+\texttt{INT\_MIN / -1}     & UB & panic               & \textsc{trap} \\
+Array out-of-bounds        & UB & bounds-check panic  & \textsc{trap} \\
+Unsequenced read/write     & UB & fixed eval order    & \textsc{static} \\
+Float$\to$int overflow     & UB & saturating / panic  & \textsc{trap} \\
+VLA bound $\leq 0$         & UB & checked-len panic   & \textsc{trap} \\
+Pointer provenance / ovf.  & UB & checked index       & \textsc{trap} \\
+Overlapping \texttt{memcpy} & UB & memmove-like slice copy & \textsc{contract} \\
+Stale \texttt{longjmp}/VLA target & UB & structured unwind cleanup & \textsc{contract} \\
+Uninitialized read         & UB & zero/default-init   & \textsc{opt} \\
+Uninitialized padding bytes & unspec. & zero-padded serialization & \textsc{pad} \\
+Strict aliasing (pun)      & UB & defined value       & \textsc{opt} \\
+\texttt{restrict} violation & UB & unique-borrow / GC  & \textsc{opt} \\
+FP contraction (FMA)       & unspec. & IEEE-strict     & \textsc{opt} \\
+\texttt{-ffast-math} reassoc.& unspec. & IEEE-strict   & \textsc{opt} \\
+Bit-field layout / packing & impl.-def. & unpacked fields & \textsc{def} \\
+Out-of-range \texttt{enum} & impl.-def. & default variant & \textsc{def} \\
+\texttt{1 << 31} (C$\to$C++) & UB & C++20-defined       & \textsc{trap} \\
+Relaxed atomics store-buffering & defined & SeqCst forbids all-zero & \textsc{model} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Cross-pair generality.} Because each class shares one
+\texttt{divergence\_class} key across language pairs, a single solver/dataflow/model witness drives
+the class against \emph{every} target that implements it. The deterministic
+cross-pair regression matrix (\S\ref{sec:eval}) covers \textbf{9 language pairs}
+(C$\to$Rust, C$\to$Go, C$\to$Swift, C$\to$OCaml, C$\to$C++, C$\to$WebAssembly,
+C$\to$Zig, and the \emph{safe$\to$safe} Go$\to$Rust plus the reverse Rust$\to$C
+pair) with 20, 18, 6, 4, 1, 4, 5, 1, and 1 classes
+respectively---\textbf{60 cells in total}---and is
+byte-reproducible per fresh
+process. When the corresponding host toolchain is present, each attempted cell
+must confirm against real
+\texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/\texttt{ocamlopt}/\texttt{zig}/\texttt{wasmtime}
+or the checked C contract build for preconditions UBSan does not cover.
+A second registry-backed generalization study
+(\texttt{generalization.run\_generalization\_v2}) exercises the newer pairs and
+directions directly: one live positive witness and one safe control per available
+pair, including C$\to$C++20, C$\to$OCaml, Rust$\to$C, and Go$\to$Rust on our
+host, must respectively confirm and remain unflagged. This is a breadth/precision
+transfer claim---not a claim that semantically different pairs share one
+identical invariant. The companion checker
+(\texttt{pair\_soundness.confirm\_pair\_soundness}) makes the pair statements
+machine-readable by checking the oracle registry, expected confirmation mode,
+target-pack class resolution, symbolic positive/negative controls, and live
+confirmation whenever the compiler/runtime is installed.
+The Rust$\to$C pair reverses the usual polarity: the source is defined (a Rust
+panic) while the C target is UBSan-confirmed UB. The Go$\to$Rust pair is
+qualitatively new in a different direction: \emph{neither} source nor target has
+any undefined behaviour, so the framework's reach extends past C-UB to both
+reverse-UB and \emph{defined-but-different} regimes (\S\ref{sec:eval-matrix}).
+The C$\to$C++
+pair is qualitatively distinct: its witness, the byte-identical token
+\texttt{1 << 31}, is \emph{undefined} in C (C17~6.5.7p4) yet \emph{defined} in
+C++20 (which mandates two's-complement and a modular shift,
+[expr.shift]/2)---so the divergence surface is the C/C++ language boundary
+itself, not a re-translation. The catalogue additionally records
+classes whose soundness frontier is \emph{honest abstention} rather than a value
+witness (unspecified evaluation order with side effects, use-after-free and
+null-dereference as memory-shape hazards), documented as the boundary of the
+value-level oracle rather than silently asserted equivalent.
+
+\paragraph{Frontiers and concurrency.}
+Not every semantic mismatch should produce a value witness. The implementation
+therefore contains two evidence-backed ``do not guess'' mechanisms. First, a
+foreign-effect detector rejects units containing \texttt{volatile}, inline
+\texttt{asm}, unknown \texttt{extern} calls, general atomics, signals, or non-local jumps;
+each abstention is checked against real \texttt{clang} IR (for example, four
+\texttt{load volatile} operations survive where the pure loop collapses to one).
+The exception is the deliberately scoped \texttt{atomic\_litmus} oracle: it does
+not claim to observe a flaky runtime interleaving, but model-checks the bounded
+store-buffering execution set and compiles real C/Rust/Go atomics snippets that
+confirm C relaxed allows the all-zero outcome while SeqCst targets forbid it.
+Second, the concurrency oracle compiles and runs a small pattern catalogue under
+ThreadSanitizer and Go's race detector, and compiles the corresponding Rust safe
+translation. The unsynchronized counter is called a race only because TSan and
+\texttt{go run -race} fire on real binaries; the Rust version is rejected by real
+\texttt{rustc}, while the \texttt{Mutex}, atomic, and read-only repairs compile,
+run, and stay clean under the available detectors. These paths are deliberately
+separate from the value-level SMT oracles: they prevent false equivalence claims
+at language features whose semantics include external effects or thread
+interleavings.
+
+\subsection{Soundness}\label{sec:soundness}
+
+We state the main soundness theorem, corresponding to
+\texttt{verify\_soundness\_theorem\_1()} in
+\texttt{src/product\_program/soundness.py}.
+
+\begin{theorem}[Soundness]\label{thm:soundness}
+Let $f_C$ be a C function and $f_R$ its Rust translation.  Let
+$K$ be the loop unrolling bound.  If the product program formula
+\[
+\Phi = \mathit{WellDefined}(\sigma_C, f_C, \vec{x}) \;\wedge\;
+\bigl(\llbracket f_C \rrbracket_{\sigma_C}(\vec{x}) \neq
+\llbracket f_R \rrbracket_{\sigma_R}(\vec{x})\bigr)
+\]
+is unsatisfiable, then for all inputs~$\vec{x}$ such that (i)~$f_C$
+has defined behavior under C11 semantics, and (ii)~all execution paths
+through $f_C(\vec{x})$ and $f_R(\vec{x})$ have length~$\leq K$, we
+have
+$\llbracket f_C \rrbracket(\vec{x}) =
+\llbracket f_R \rrbracket(\vec{x})$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Suppose $\Phi$ is UNSAT and, for contradiction, there exists
+$\vec{x}_0$ satisfying both conditions with
+$\llbracket f_C \rrbracket(\vec{x}_0) \neq
+\llbracket f_R \rrbracket(\vec{x}_0)$.
+By bitvector encoding faithfulness (Lemma~\ref{lem:bv-faithful},
+Appendix~\ref{app:proofs}), the Z3 encoding evaluates to the
+same values as the mathematical semantics.
+By well-definedness completeness (Lemma~\ref{lem:wd-complete}),
+the SMT predicate is true iff $f_C$ avoids UB.
+By $\sigma$-bridge correctness (Lemma~\ref{lem:sigma-correct}),
+coercions preserve output relationships at divergence points.
+By variable isolation (Lemma~\ref{lem:var-isolation}), the two sides
+share only the inputs.  Together, $\vec{x}_0$ satisfies~$\Phi$,
+contradicting UNSAT.
+\end{proof}
+
+\begin{theorem}[Counterexample Soundness]\label{thm:cex-sound}
+If $\Phi$ is satisfiable with model $\mathcal{M}$, then
+$\vec{x}_0 = \mathcal{M}(\vec{x})$ is a genuine divergence witness:
+$f_C(\vec{x}_0)$ has defined behavior under C11 and
+$f_C(\vec{x}_0) \neq f_R(\vec{x}_0)$.
+\end{theorem}
+
+\begin{theorem}[Completeness Characterization]\label{thm:completeness}
+The equivalence verdict is \emph{complete} (no false negatives) under
+four conditions:
+\begin{enumerate}[nosep,label=\textbf{C\arabic*}:]
+  \item All execution paths have length $\leq K$.
+  \item All divergence-inducing operations belong to the handled
+    $\sigma$-bridge classes.
+  \item IR lowering succeeds without semantic information loss.
+  \item The QF\_BV encoding introduces no approximations (holds for
+    integers; may fail for IEEE~754 NaN propagation).
+\end{enumerate}
+When any condition is violated, \textsc{SemRec} may report
+\textsc{Equivalent} for a genuinely divergent pair (false negative).
+In practice, condition~\textbf{C3} is the most frequently violated.
+\end{theorem}
+
+In the checked artifact, this boundary is executable rather than aspirational:
+\texttt{src/ub\_oracle/completeness.py} brute-force enumerates the finite
+integer fragments against the concrete C-UB predicates and requires the symbolic
+oracle to agree exactly, while \texttt{formal/CompletenessBoundary.lean} proves
+the published complete-vs.-may-abstain class partition is total and disjoint.
+
+Full proofs of all theorems and their supporting lemmas appear in
+Appendix~\ref{app:proofs}.
+
+
+%% ======================================================================
+\section{Implementation}\label{sec:implementation}
+%% ======================================================================
+
+\textsc{SemRec} is implemented in ${\sim}$116K lines of Python,
+with the core verification pipeline comprising ${\sim}$23K lines
+across the parser frontends, IR lowering, product builder, SMT
+encoder, and solver interface.  The test suite includes targeted
+real-compiler regression tests for every confirmation mode.
+
+\paragraph{Adoption surfaces.}
+The artifact is packaged as both a research harness and a usable guardrail:
+\texttt{cross-lang-verify} ingests pair-aware manifests, emits text/JSON/SARIF,
+supports triage, suppression baselines, caching and local dashboards, and is
+wrapped by a GitHub Action, VS Code diagnostics shim, playground and plugin SDK.
+Even the launch surface is generated from the verifier rather than hand-written:
+\texttt{scripts/build\_readme\_demo.py} runs the real CLI on
+\texttt{examples/readme\_demo\_units.json} and renders the README animation only
+when the C$\to$Rust signed-overflow witness is confirmed by
+\texttt{clang}/UBSan and \texttt{rustc}, while the safe control is discharged by
+the interval pre-pass.  Thus the public demo is a checked artifact, not a
+marketing mock-up.  The longer README-linked video is generated the same way:
+\texttt{scripts/build\_demo\_video.py} first replays the checked-in
+\texttt{c2rust} \texttt{nginx\_rate} extraction unit on a CWE-369-class witness
+with \texttt{clang}/UBSan and \texttt{rustc}, then confirms the C$\to$Go teaser
+case through the same harness; if either replay fails, the MP4 and poster are not
+rendered.
+
+\paragraph{Parser frontends.}
+Each language has two parsing backends: tree-sitter-c~0.24 and
+tree-sitter-rust~0.24~\cite{treesitter2024} as primary, with
+hand-written Pratt-parsing recursive-descent
+parsers~\cite{pratt1973top} as fallback (\texttt{src/c\_parser.py},
+\texttt{src/rust\_parser.py}).  Failures concentrate on macro-heavy code and complex generics.
+
+\paragraph{Shared IR.}
+Both ASTs are lowered to a shared typed SSA IR~\cite{cytron1991ssa}
+(\texttt{src/ir/}) with 36 instruction types organized into
+arithmetic (\texttt{BinaryOp} with 18 opcodes annotated with
+\texttt{OverflowBehavior}), unary (\texttt{UnaryOp}, 4 opcodes),
+comparison (16 predicates including ordered/unordered float),
+cast (12 kinds), memory (\texttt{Load}, \texttt{Store},
+\texttt{Alloca}, \texttt{GEP}), control flow (\texttt{Branch},
+\texttt{Switch}, \texttt{Return}, \texttt{Call}), and SSA
+(\texttt{Phi}, \texttt{Select}, \texttt{ExtractValue}).
+The type system includes \texttt{IntType} (with width and signedness),
+\texttt{FloatType} (F32/F64), \texttt{PointerType} (with provenance
+tags: \textsc{Unique}, \textsc{Shared}, \textsc{Raw}),
+\texttt{StructType}, \texttt{EnumType}, and \texttt{FunctionType}.
+
+\paragraph{Loop handling.}
+Loops are unrolled up to the configurable bound~$K$ (default~32).
+Phi nodes are threaded across iterations via a \texttt{prev\_defs}
+mapping in the encoder.  This is the fundamental limitation of the
+bounded approach: divergences requiring more than $K$ iterations
+are missed.  A $K$-sensitivity analysis
+(Section~\ref{sec:eval-k}) is planned to empirically justify $K{=}32$.
+
+\paragraph{SMT backend.}
+\textsc{SemRec} targets Z3~\cite{demoura2008z3} via the Python
+bindings.  The primary theory is QF\_BV (quantifier-free bitvectors);
+for pointer-manipulating code, the solver extends to QF\_ABV (arrays
+of bitvectors) with byte-addressable memory, and floating-point contraction
+uses Z3's IEEE-754 binary64 FP theory with explicit round-to-nearest-even.  The
+\texttt{to\_smt\_lib()} method on \texttt{ProductProgram} can
+emit SMT-LIB2 scripts for external solver use.
+
+\paragraph{Memory model.}
+For pointer-manipulating code, \textsc{SemRec} incorporates
+Andersen-style flow-insensitive points-to
+analysis~\cite{andersen1994program}
+(\texttt{src/smt/points\_to\_analysis.py}), Rust ownership
+non-aliasing axioms (for each pair of simultaneously live
+\texttt{\&mut T} references $p, q$: $p \neq q$), and type-based
+alias analysis following C11's strict aliasing rule (\S6.5/7).
+Memory operations include alignment checks ($\mathit{addr}
+\;\&\; (\mathit{align} - 1) = 0$), bounds checks against
+known allocations, and use-after-free detection.
+
+\paragraph{Mechanized product and class-specific evidence.}
+The Lean development now covers the product-program witness boundary itself:
+raw product-run facts (payload, UB-reached flag, target return code, and
+consequence flag) are converted to the pack-parametric observation, and any
+emitted counterexample is proved to preserve that payload and observation while
+being a genuine UB-rooted divergence. This keeps the checked theorem at the same
+abstraction boundary as the executable verifier rather than merely testing the
+packaging code.
+
+The strict-aliasing class is confirmed by optimization exploitation rather than
+a sanitizer: the same generated C type-pun source is compiled at \texttt{-O0}
+and \texttt{-O2 -fstrict-aliasing}; if both runs are clean but print different
+observables, the source behavior is under-determined. The Lean development
+mechanizes the class-specific pigeonhole step: two distinct C observables cannot
+both equal one deterministic, defined target observable, so at least one legal C
+build diverges from the target and the generic product-program soundness theorem
+applies.  The same Lean file now also mechanizes the pointer-provenance
+\textsc{trap} confirmation shape: the generated C witness has valid data input
+but forms an out-of-provenance pointer, UBSan traps on that concrete run, and the
+target keeps a checked index and returns deterministically.  In the
+recorded-observable abstraction, that trap versus defined target outcome is
+exactly the product-program consequence.
+
+Step~131 makes the completeness boundary itself a checked object.  The new
+\texttt{formal/CompletenessBoundary.lean} module imports the product-program
+theorem, classifies the integer classes
+(\texttt{signed\_overflow}, \texttt{shift\_oob}, \texttt{div\_by\_zero},
+\texttt{intmin\_div\_neg1}) as complete on their declared finite ranges, and
+classifies memory-shape/FP rows such as \texttt{array\_oob},
+\texttt{strict\_aliasing}, and \texttt{fp\_contraction} as sound but
+may-abstain.  Lean proves this partition is exhaustive and non-overlapping, and
+the Python driver builds it through Lake so imports and stale proof artifacts
+cannot hide a broken theorem.  The result deliberately does not overclaim:
+finite-range no-false-negative evidence still comes from the independent
+brute-force/Z3 agreement check in \texttt{completeness.py}.
+
+Step~136 makes the extension surface a checked object too.
+\texttt{formal/SPIContract.lean} states the target-pack and divergence-oracle
+SPI as Lean typeclasses: a conforming pack must prove that its ProductSoundness
+defined-return predicate agrees with its declared finite data, that
+canonicalization accepts only declared defined outcomes, and that product-level
+positive claims route through the pack-parametric \texttt{pack\_oracle\_sound}
+theorem; a conforming plugin must expose the real Python method surface
+(\texttt{applies\_to}, \texttt{find\_divergence}, \texttt{confirm}) and prove
+that found/confirmed witnesses are product-program violations.  The companion
+Python checker then ties the Lean source to the live registry and executable
+pack-conformance suite, so adding a target pack requires both a Lean instance and
+the concrete harness obligations.
+
+Step~137 closes the corresponding engineering loophole for oracle classes.
+\texttt{ub\_oracle.soundness\_gate} enumerates the live plugin registry after all
+built-in modules have registered themselves and requires a static
+\texttt{SoundnessStatement} for each exact
+\((\mathit{source},\mathit{target},\mathit{class})\) instance.  The statement
+binds the oracle to its expected confirmation mode (for example
+\texttt{trap\_vs\_defined}, \texttt{optimizer\_exploited},
+\texttt{defined\_divergence}, \texttt{model\_level\_divergence}, or
+\texttt{source\_defined\_target\_ub}), the source-definedness premise it claims,
+and a traceability or Lean theorem reference.  The gate then calls the oracle's
+real \texttt{find\_divergence} implementation on a concrete witness unit and
+checks that the emitted counterexample has the declared pair, class,
+source-definedness, non-empty source/target programs, and witness prose.  CI runs
+\texttt{make soundness-check}; the focused negative-control test appends an
+otherwise-valid plugin with no statement and proves the gate rejects it.  Thus a
+new oracle cannot enter the registry as an unreviewed soundness claim, even before
+the heavier real-compiler confirmation jobs run.
+
+Step~129 turns this mechanization into an executable artifact, Step~132
+makes it durable in the counterexample format, and Step~138 closes the
+canonicalization ambiguity in that certificate hash.  The repository pins Lean 4.14,
+builds \texttt{formal/VerifiedChecker.lean} with
+\texttt{lake build verified-checker}, and exposes it through
+\texttt{cross-lang-verify --verified-check}. Every confirmed source-UB witness
+now serializes a \emph{proof certificate}: canonical JSON binds the certificate
+to the source/target snippets, concrete inputs, observed replay transcript, and
+confirmed bit; a typed, length-prefixed verdict-layer preimage binds the recorded
+\(P\wedge T\wedge C\) observation, theorem name, issuer, and counterexample hash;
+and cache hits rehydrate the same certificate rather than a bare verdict.  The
+cache key is content addressed by the canonical unit hash, the real toolchain
+fingerprint, and the semantics version; the executable
+\texttt{prove\_cache\_equivalence} check cold-runs a fresh cache, warm-runs the
+same units, and requires the normalized verdict/counterexample signature hashes
+to match exactly.
+Step~146 adds the analogous operational guard for memory: \texttt{ReexecHarness}
+can run compiler and program subprocess trees under a supervised
+\texttt{--max-rss-mb} peak-RSS cap. The supervisor samples the whole process tree
+instead of using address-space rlimits (which break sanitizer shadow-memory
+reservation), and a cap hit is recorded as resource exhaustion, never as UBSan or
+target-language semantic evidence. The executable
+\texttt{prove\_memory\_bounded\_equivalence} check runs the same real units
+unbounded and capped, then rejects the proof unless the verdict-layer signatures
+match and no subprocess exhausts the RSS budget.
+The same version binding now extends beyond cache keys: every
+environment-dependent result artifact
+(\texttt{confirmations.json}, \texttt{minimized.json}, \texttt{attack.json}, and
+\texttt{timings.json}) records a \texttt{toolchain-provenance/v1} payload with
+compiler/runtime paths for audit and exact first-line version fingerprints for
+\texttt{clang}, \texttt{rustc}, \texttt{go}, and registered target runners.
+Replay-check modes compare only those version fingerprints (not machine-local
+paths) and fail fast on missing provenance, unknown probes, or any version drift.
+\texttt{formal/HashStability.lean} proves this verdict canonicalization
+injective: two distinct verdict payloads cannot produce the same canonical
+preimage, so equality of final certificate hashes is reduced to SHA-256 rather
+than to an ambiguous field-boundary encoding.  The offline certificate checker
+rejects schema drift, rebinding, corruption, or a non-violating observation
+without re-running compilers.  The Lake-built checker then imports
+\texttt{ProductSoundness}, calls the proved
+\texttt{productViolated} predicate directly, and rejects a claimed source-UB
+\textsc{Divergent} verdict unless the certificate-carried facts satisfy
+\(P \wedge T \wedge C\). Its compile-time theorem guards include
+\texttt{oracle\_sound}, \texttt{proof\_carrying\_counterexample\_sound}, and
+\texttt{verdict\_canonicalization\_injective}; removing or renaming those theorem
+guards breaks the build. This does not replace compiler re-execution---the facts still come from
+\texttt{clang}/\texttt{rustc}/runtime runs, and the hash is an integrity binding
+rather than an adversarial signature---and it is deliberately not applied to
+safe$\to$safe defined-divergence reports. It does, however, make the shipped
+witness itself sufficient to re-check the final UB-rooted positive-claim
+inference offline.
+
+Step~139 verifies the minimizer at that same boundary.  The executable minimizer
+still shrinks only by trying simpler input values and accepting a step only after
+the real ground-truth harness re-confirms the reduced witness; for UBSan-backed
+classes it also requires the same normalized diagnostic category, preventing an
+\texttt{INT\_MIN/-1} witness from collapsing into a division-by-zero witness or a
+too-large shift into a negative shift.  The new certificate records the accepted
+reduction chain, the category, and the final local-minimality check.  Lean proves
+\texttt{minimizer\_preserves\_divergence},
+\texttt{minimizer\_reduction\_steps\_preserve\_divergence}, and
+\texttt{minimizer\_certificate\_sound}: any accepted step chain whose final
+observation was harness-confirmed still denotes a UB-rooted divergence.  This is
+a preservation theorem, not a global-optimality theorem; the latter would be the
+wrong claim for a deliberately local delta-debugging ladder.
+
+Finally, Step~140 turns the registry into a reviewable compendium.
+\texttt{ub\_oracle.soundness\_compendium} joins
+\texttt{SOUNDNESS\_STATEMENTS}, \texttt{traceability.CLAIMS}, and the
+\texttt{ProductSoundness} theorem contract to generate
+\texttt{docs/SOUNDNESS\_COMPENDIUM.md}: one row per oracle instance, with its
+confirmation mode, source-definedness premise, theorem/claim references, and the
+concrete witness unit that exercises the real \texttt{find\_divergence} path. A
+freshness check rejects stale prose or dangling theorem references.
+
+Step~130 adds an independent proof-assistant cross-check rather than another
+test.  The Coq development \texttt{formal/CoreSoundness.v} deliberately imports
+neither the Lean file nor any generated artifact: it redefines the
+recorded-observable triple, the product assertion \(R=\neg(P\wedge T\wedge C)\),
+the target-pack observation function, and the product-run-to-counterexample
+constructor, then proves the same central facts (\texttt{oracle\_sound\_coq},
+\texttt{oracle\_decides\_coq}, \texttt{rust\_oracle\_sound\_coq}, and
+\texttt{product\_program\_preserves\_divergence\_witness\_coq}).  The Python
+driver runs \texttt{coqc} when available and otherwise reports an explicit
+source-contract-only status, so the artifact never labels an unrun Coq proof as
+kernel-checked.
+
+
+%% ======================================================================
+\section{Evaluation}\label{sec:eval}
+%% ======================================================================
+
+We evaluate \textsc{SemRec} around twelve research questions.
+All experiments run on a laptop
+(Apple M-series, 16\,GB RAM) using Python~3 and Z3.
+
+\begin{enumerate}[nosep]
+  \item[\textbf{RQ1}] Can \textsc{SemRec} detect UB divergences that
+    are provably invisible to IR analysis and differential testing?
+  \item[\textbf{RQ2}] End-to-end accuracy on a general benchmark.
+  \item[\textbf{RQ3}] Sensitivity to the BMC bound~$K$.
+  \item[\textbf{RQ4}] Counterexample quality.
+  \item[\textbf{RQ5}] Verification performance.
+  \item[\textbf{RQ6}] Comparison to differential testing.
+  \item[\textbf{RQ7}] Real-world CVE-inspired C/Rust divergences.
+  \item[\textbf{RQ8}] Does every divergence class transfer across
+    \emph{multiple} target languages and confirm against \emph{real}
+    compilers (\texttt{clang}/\texttt{rustc}/\texttt{go}/\texttt{clang++}/%
+    \texttt{ocamlopt})?
+  \item[\textbf{RQ9}] At which optimization level does each
+    no-sanitizer-traps UB class first change observable output?
+  \item[\textbf{RQ10}] Given one C source ported to $\geq 3$ safe targets, can
+    the oracle flag the minority target on live output?
+  \item[\textbf{RQ11}] Can SMT encodings of the integer-UB family and
+    FP-contraction class be \emph{proved} against their specifications and
+    beat or complement enumeration at finding rare witnesses, while agreeing
+    with independent enumeration semantics on a large sampled differential
+    check?
+  \item[\textbf{RQ12}] Does the artifact exercise actual c2rust machine output,
+    rather than hand-written c2rust-style translations?
+\end{enumerate}
+
+\subsection{UB-Invisible Benchmark (RQ1)}\label{sec:eval-ub}
+
+\paragraph{Benchmark construction.}
+We construct a benchmark of 30 divergent C/Rust function pairs that are
+\emph{provably invisible} to both IR-level analysis and differential
+testing.  Each pair exposes a specific UB class where C has undefined
+behavior and Rust wraps, masks, or panics.  Crucially, on x86 hardware
+the C undefined behavior manifests as the same wrapping operation that
+Rust specifies---so differential testing (even with edge-case inputs)
+observes identical outputs.  Additionally, LLVM compiles both versions
+to identical IR (both emit plain \texttt{add i32} etc.), so IR-level
+tools cannot distinguish them.  We include 10 equivalent pairs as
+negative controls.
+
+The 30 divergent pairs span 6 UB classes:
+\begin{itemize}[nosep]
+  \item \textbf{Overflow} (9): signed \texttt{add}/\texttt{sub}/\texttt{mul},
+    cascading chains, INT\_MAX~$+$~1
+  \item \textbf{Shift} (5): left/right by ${\geq}32$, variable shift,
+    negative shift, shift-and-mask
+  \item \textbf{Division} (5): $\mathit{INT\_MIN}/(-1)$,
+    $\mathit{INT\_MIN}\,\%\,(-1)$, negative truncation, division by zero,
+    promotion truncation
+  \item \textbf{Cast} (5): sign extension, unsigned-to-signed overflow,
+    implicit narrowing
+  \item \textbf{Compound} (5): add-then-shift, multiply-then-divide,
+    mixed promotion chains
+  \item \textbf{Negate} (1): $-\mathit{INT\_MIN}$
+\end{itemize}
+
+\paragraph{Baselines.}
+We implement three baselines:
+\begin{enumerate}[nosep]
+  \item \textbf{Differential testing (na\"ive, 10K inputs)}: uniform
+    random inputs; compares C output (compiled \texttt{-O0} x86) to
+    Rust output.
+  \item \textbf{Differential testing (UB-aware, edge cases)}: targeted
+    inputs including \texttt{INT\_MIN}, \texttt{INT\_MAX}, $\pm1$, $0$,
+    shift amounts near bit-width.
+  \item \textbf{IR comparison}: compile both to LLVM IR at \texttt{-O0}
+    and compare instruction-by-instruction.
+\end{enumerate}
+All three baselines achieve \textbf{0/30 recall}: they report all 30
+divergent pairs as equivalent.  This confirms that the divergences are
+genuinely invisible at the IR and execution levels.
+
+\paragraph{Results.}
+
+\begin{table}[t]
+\centering
+\small
+\caption{UB-invisible benchmark: 30 divergent pairs + 10 equivalent
+controls.  \textsc{SemRec} achieves 100\% recall; all baselines score
+0\%.}
+\label{tab:ub-invisible}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Method & Recall & Precision & F1 \\
+\midrule
+\textsc{SemRec} & \textbf{30/30} (100\%) & 93.8\% & 96.8\% \\
+Diff testing (na\"ive, 10K) & 0/30 (0\%) & --- & --- \\
+Diff testing (UB-aware) & 0/30 (0\%) & --- & --- \\
+IR comparison & 0/30 (0\%) & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:ub-invisible} summarizes the results.  \textsc{SemRec}
+detects all 30 UB divergences with 100\% recall.  Precision is 93.8\%
+(2 false positives on equivalent pairs where the oracle's UB
+assumptions are not gated by conditional guards---a known limitation).
+F1 is 96.8\%.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Per-UB-class breakdown.  \textsc{SemRec} achieves perfect
+recall across all 6 classes.}
+\label{tab:ub-class}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+UB class & Pairs & Detected & Recall \\
+\midrule
+Overflow    & 9 & 9 & 100\% \\
+Shift       & 5 & 5 & 100\% \\
+Division    & 5 & 5 & 100\% \\
+Cast        & 5 & 5 & 100\% \\
+Compound    & 5 & 5 & 100\% \\
+Negate      & 1 & 1 & 100\% \\
+\midrule
+\textbf{Total} & \textbf{30} & \textbf{30} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:ub-class} shows that \textsc{SemRec} achieves perfect
+recall across all 6 UB classes, including division UB (enabled by
+the \texttt{SDIV}/\texttt{SREM} encoding fix described in
+Section~\ref{sec:approach}).
+
+\paragraph{Why baselines fail.}
+On x86, C signed overflow \emph{wraps} identically to Rust: the
+hardware executes the same \texttt{ADD} instruction regardless of
+language.  Differential testing therefore sees identical outputs for
+every input, including edge cases.  IR comparison fails because LLVM
+erases the signed/unsigned distinction: the C compiler adds an
+\texttt{nsw} metadata flag but produces the same opcode.  Only
+source-level analysis, which encodes the C11 UB semantics as SMT
+assumptions, can detect these divergences.
+
+\subsection{General Benchmark Suite}\label{sec:benchmark}
+
+The general benchmark comprises 511 C/Rust pairs organized into three tiers:
+\begin{itemize}[nosep]
+  \item \textbf{Core} (52 pairs): hand-crafted with verified ground
+    truth, covering canonical divergence patterns.
+  \item \textbf{Combined} (212 pairs): core plus generated and
+    extended cases across 11 categories.
+  \item \textbf{Full} (511 pairs): all pairs, including real-world
+    library functions from musl-libc, zlib, libsodium, SQLite, and
+    the Linux kernel.
+\end{itemize}
+
+\subsection{Migration-Scale Corpus (RQ1b)}\label{sec:eval-large-scale}
+
+Hand-picked witnesses do not establish migration-scale trust.  The artifact
+therefore includes a deterministic generator
+(\texttt{src/ub\_oracle/large\_scale\_study.py}) that enumerates
+\textbf{60{,}000} genuinely distinct C$\to$\{Rust,Go\} programs totaling
+\textbf{1{,}044{,}000} counted source+target LOC.  The generator bakes
+\emph{defined} operands into each source file and reads only the
+UB-triggering operand from \texttt{argv}; consequently the census is a structural
+claim, not a sampling estimate: \texttt{n\_items =
+n\_distinct\_programs = 60000}.  The labels are deliberately balanced
+(29{,}600 divergent vs.\ 30{,}400 equivalent, a 1.33\% delta) and span the same
+integer/memory families used in the oracle matrix: div-by-zero, out-of-bounds
+read, oversized shift, signed overflow, safe add/mul/mod/shift.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Migration-scale corpus census. Every count is produced by
+\texttt{corpus\_census}; a seeded live sample is then re-executed through real
+\texttt{clang}/UBSan + \texttt{rustc}/\texttt{go}.}
+\label{tab:large-scale}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Quantity & Count \\
+\midrule
+Programs / distinct program hashes & 60{,}000 / 60{,}000 \\
+C LOC / target LOC & 499{,}200 / 544{,}800 \\
+Total LOC & 1{,}044{,}000 \\
+C$\to$Rust / C$\to$Go programs & 32{,}000 / 28{,}000 \\
+Divergent / equivalent labels & 29{,}600 / 30{,}400 \\
+Seeded live sample & 12/12 labels agree \\
+Verdict-layer hash prefix & \texttt{5ec6c935c7b0} \\
+Shard proof & concatenated shard hash = whole-run hash \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The live part remains honest about cost: CI executes a deterministic seeded
+sample rather than compiling one million LOC on every run, and records
+\texttt{available=false} instead of inventing evidence when a toolchain is
+missing.  The same ground-truth labeler can now run through
+\texttt{parallel\_harness.run\_parallel}: workers complete in any order, but the
+merged output is restored to the input sequence and the paper hash is computed
+only over the deterministic verdict layer.  The proof harness replays the same
+real items at multiple worker counts and requires byte-identical verdict layers.
+The sharded-reproducibility harness
+(\texttt{src/ub\_oracle/sharded\_repro.py}) then splits the corpus into
+deterministic contiguous shards, hashes each shard's canonical verdict bytes,
+repeats the shards to prove byte stability, and globally re-canonicalizes the
+concatenated shard verdicts; \texttt{make sharded-repro-check} requires that hash
+to equal the unsharded content hash on schedule-adversarial tests and on a real
+C/Rust compiler sample.
+The new cold-start gate (\texttt{make cold-start-ci}) is the complementary
+developer-facing fast path: it sets \texttt{XLEV\_NO\_TOOLCHAIN=1} for the pytest
+phase, so hosts with extra compilers do not accidentally run a different suite,
+executes the full toolchain-independent test population under \texttt{pytest-xdist},
+and then clears the mask for exactly one real C$\to$Rust witness.  The measured
+run used in this paper reports 1{,}420 passed, 240 skipped, and 59 xfailed tests
+in 74.49\,s for the masked phase, followed by a 1.076\,s real
+\texttt{clang}/UBSan+\texttt{rustc} confirmation of the signed-overflow witness
+\texttt{x=2147483647}; total wall clock was 77.247\,s against a 300\,s budget.
+Step~148--154 harden this into a distributed evidence pipeline rather than a
+single-machine proof.  \texttt{flaky\_toolchain.py} reruns the same items and
+compares both the verdict hash and a fuller evidence hash over UB-trap flags,
+C output, target output, and compiler/runtime detail; items whose evidence changes
+are quarantined with per-run hashes.  \texttt{distributed\_manifest.py} emits a
+content-addressed manifest whose shard entries pin item keys, source/target
+content hashes, and input hashes, then validates remote shard result documents
+before merging; tampered identities, duplicate shards, missing shards, or foreign
+manifest hashes fail before a paper number can be computed.  \texttt{result\_store.py}
+defines schema v2: \texttt{hashes.verdict\_hash} remains the timing- and
+metadata-independent reproducibility lemma, while \texttt{hashes.store\_hash}
+also binds the artifact kind, producer, corpus hash, and toolchain fingerprint.
+The fast \texttt{make repro-hardening-check} target covers the sharded proof, the
+flaky-evidence quarantine, distributed merge, and v1$\to$v2 result-store
+migration tests.
+The memory-bounded proof uses the same discipline for resource control: the
+README demo's divergent signed-overflow witness and safe control replay under a
+4096\,MiB supervised RSS cap with the same verdict-layer hash as the unbounded
+run, while deliberately too-small caps are operational failures rather than
+semantic verdicts.
+On the current full toolchain, \texttt{make large-scale} confirms
+7 divergent and 5 equivalent sampled items with 12/12 observed labels matching
+the declared ground truth.
+
+\subsection{Tier-1 c2rust-Output Corpus (RQ12)}\label{sec:eval-c2rust-corpus}
+
+The flagship population for C$\to$Rust migration is not hand-written Rust but
+machine output from \texttt{c2rust}. We therefore added a Tier-1 corpus whose
+source side consists of 12 compact extraction units from distinct real library
+families (musl, zlib, SQLite, libpng, nginx, curl, Lua, OpenSSL, git, Redis,
+bzip2, and XZ Utils). Each C unit is translated by the actual
+\texttt{c2rust 0.22.1} binary, and the generated Rust files---with
+\texttt{\#[no\_mangle]}, \texttt{unsafe extern "C"}, and
+\texttt{::core::ffi} signatures---are checked in under
+\texttt{experiments/c2rust\_corpus/generated}. The artifact records hashes of
+both source and generated Rust, validates the IR unit, runs the verifier with
+ground-truth confirmation disabled (so symbolic witnesses are reported as
+\textsc{Candidate}, never overclaimed as confirmed divergence), and checks that a
+fresh c2rust run byte-for-byte regenerates the checked-in Rust.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Tier-1 c2rust-output corpus. Every Rust artifact is generated by
+\texttt{c2rust 0.22.1}; \texttt{make c2rust-corpus-check} regenerates the Rust
+and byte-checks the verifier-backed verdict layer.}
+\label{tab:c2rust-corpus}
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+Divergence class & Units & Verdicts & Evidence \\
+\midrule
+Signed overflow & 6 & 3 candidate / 3 no-divergence & Z3 witness or interval pre-pass \\
+Shift out of range & 3 & 2 candidate / 1 no-divergence & Z3 witness or safe shift range \\
+Division by zero & 2 & 2 candidate & zero-divisor witness \\
+\texttt{INT\_MIN/-1} & 1 & 1 candidate & unique signed-div overflow witness \\
+\midrule
+\textbf{Total} & \textbf{12} & \textbf{8 candidate / 4 no-divergence} &
+\textbf{12 generated Rust files compile} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This corpus replaces the weak ``c2rust-style'' claim with a reproducible machine
+translation check. It is still intentionally scoped: these are single-function
+extraction units rather than whole build systems, so whole-project c2rust
+ingestion remains an engineering frontier. The important credibility property is
+that every reported row is tied to exact generated Rust bytes and a verifier
+record in \texttt{experiments/c2rust\_corpus/results.json}.
+
+\subsection{General Accuracy (RQ2)}\label{sec:eval-accuracy}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Verification accuracy by category on the full 511-pair
+benchmark.  Accuracy ranges from 0\% (Other) to 100\% (Shift),
+reflecting honest pipeline coverage limitations.}
+\label{tab:accuracy}
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+Category & Pairs & Correct & Accuracy & Dominant failure mode \\
+\midrule
+Shift            & 17  & 17  & 100.0\% & --- \\
+Arithmetic       & 49  & 46  & 93.9\% & --- \\
+Division         & 21  & 19  & 90.5\% & --- \\
+Cast             & 28  & 22  & 78.6\% & Float-to-int edge cases \\
+Real patterns    & 26  & 16  & 61.5\% & Complex expressions \\
+Float            & 15  & 9   & 60.0\% & NaN, rounding \\
+Error handling   & 21  & 4   & 19.0\% & Result/Option mapping \\
+Compound         & 27  & 11  & 40.7\% & Multi-op chains \\
+Bitwise          & 46  & 18  & 39.1\% & Complex bit patterns \\
+Control flow     & 21  & 5   & 23.8\% & Nested branching \\
+Loop             & 8   & 2   & 25.0\% & Accumulator overflow \\
+C2Rust           & 38  & 7   & 18.4\% & Struct/trait lowering \\
+Enum             & 20  & 3   & 15.0\% & Discriminant mapping \\
+Memory/pointer   & 18  & 2   & 11.1\% & Pointer semantics gap \\
+Other            & 156 & 0   & 0.0\%  & IR lowering failure \\
+\midrule
+\textbf{Full (511)} & \textbf{511} & \textbf{181} &
+  \textbf{35.4\%} & \\
+\textbf{Combined (212)} & 212 & 58 & \textbf{27.4\%} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:accuracy} reports accuracy by category.  End-to-end
+accuracy on the full benchmark is 35.4\% (181/511).
+On the 212-pair combined tier, accuracy is 27.4\% (58/212),
+with a 95\% Clopper--Pearson confidence interval of
+$[21.8\%,\; 33.7\%]$.
+The strongest categories are shift (100\%), arithmetic (93.9\%),
+and division (90.5\%); the weakest involve struct, iterator, and
+string handling where IR lowering fails entirely.  The improvement
+over a na\"ive bitvector approach stems from tree-sitter
+integration, improved IR lowering, and the $\sigma$-bridge coercion
+framework.
+
+\paragraph{Honest assessment.}
+These numbers are low compared to mature single-language verifiers,
+and we do not attempt to disguise this.  The primary bottleneck is
+\emph{pipeline coverage}, not verification soundness: IR lowering fails on struct
+manipulation, dynamic dispatch, and macro-generated code.  When
+restricted to pairs where the pipeline completes without error,
+accuracy rises substantially (e.g., 83.3\% on arithmetic in the
+combined tier, 100\% on shifts).  The tool is honest about its
+limitations: pairs that fail parsing or lowering are reported as
+\textsc{Unknown}, not silently classified.
+
+An ablation study on 10 representative pairs confirms the
+$\sigma$-bridge framework's contribution: full pipeline achieves
+80\% accuracy vs.\ 40\% without $\sigma$-bridge coercions (plain
+bitvector semantics), a 2$\times$ improvement from coercion
+insertion alone.
+
+\subsection{$K$-Sensitivity (RQ3)}\label{sec:eval-k}
+
+\begin{table}[t]
+\centering
+\small
+\caption{BMC bound sensitivity on 38 benchmark pairs.}
+\label{tab:k-sensitivity}
+\begin{tabular}{@{}rccl@{}}
+\toprule
+$K$ & Accuracy & $\Delta$ & Observation \\
+\midrule
+8   & 55.3\% & ---       & Baseline \\
+16  & 60.5\% & $+$5.3pp  & Additional loop-depth divergences caught \\
+32  & 63.2\% & $+$2.6pp  & Saturation point \\
+64  & 63.2\% & $+$0.0pp  & No change \\
+128 & 63.2\% & $+$0.0pp  & Confirms saturation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:k-sensitivity} shows that accuracy increases
+monotonically with~$K$ and saturates at $K{=}32$ (63.2\%).
+Beyond $K{=}32$, additional unrolling yields no further accuracy
+gains on this benchmark, confirming the saturation hypothesis.
+
+\subsection{Counterexample Quality (RQ4)}\label{sec:eval-cex}
+
+Of the pairs where \textsc{SemRec} returns a SAT verdict (divergent),
+counterexamples include concrete input values that trigger the
+divergence.  For example, on an \texttt{add} pair, the counterexample
+$a = 2{,}147{,}483{,}647, b = 1$ immediately identifies signed
+overflow; on a division pair, $a = \mathit{INT\_MIN}, b = -1$
+identifies the \texttt{INT\_MIN}/\texttt{-1} case.
+
+\subsection{Performance (RQ5)}\label{sec:eval-perf}
+
+Median verification time is 3.8\,ms per pair, with mean 308.1\,ms
+(skewed by a few complex pairs) and P95 at 53.4\,ms.
+Formula complexity---not
+source size---dominates verification time.
+The dedicated scalability grid is more revealing because it times the real
+oracle searches behind every registered class/pair cell: on the checked-in
+timing artifact the class/pair rows have P50 1.39\,ms and P95 9.26\,ms, with a
+single intentional outlier, the IEEE-754 FP-contraction row, at 9.84\,s.  Step
+145 turns this from a paper-only observation into an executable regression gate:
+\texttt{make perf-check} regenerates the deterministic grid and then measures
+each class/pair row, each supported integer-width row, and the SMT backbone
+probes under per-row nearest-rank P50/P95 latency budgets.  The ordinary
+bit-vector/dataflow rows are budgeted at 0.25\,s/0.50\,s, the known FP-theory
+slow path at 15\,s/20\,s, width-scaling rows at 0.25\,s/0.50\,s, and SMT
+overflow probes at 0.05\,s/0.10\,s.  Thus a solver blow-up is a CI failure, not
+an anecdote discovered after the fact.
+
+\subsection{Comparison to Differential Testing (RQ6)}\label{sec:eval-baseline}
+
+On a controlled subset of 10 pairs, we compare \textsc{SemRec} to
+property-based differential testing (10K random inputs per pair):
+
+\begin{table}[t]
+\centering
+\small
+\caption{SemRec vs.\ differential testing on 10 controlled pairs.}
+\label{tab:baseline}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Method & Accuracy & Unique finds & Median time \\
+\midrule
+Differential testing (10K inputs) & 100\% & 2 & 18.6\,ms \\
+\textsc{SemRec} (bounded, $K{=}32$) & 70\% & 1 & 143.5\,ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Differential testing achieves higher accuracy on this small subset,
+but its advantage is sample-dependent and it provides no equivalence
+guarantee.  \textsc{SemRec}'s unique advantage is formal:
+\textsc{SemRec} found a \texttt{saturating\_add} divergence that
+10K random inputs missed, while differential testing found
+\texttt{rotate\_right} and \texttt{safe\_divide} divergences that
+\textsc{SemRec} missed due to IR lowering failures.  In practice,
+the tools are complementary.
+
+\paragraph{Limitations summary.}
+\begin{itemize}[nosep]
+  \item \textbf{Bounded model checking}: equivalence holds only
+    within loop bound~$K$.
+  \item \textbf{Parser coverage}: macro-heavy code
+    and complex generics fail.
+  \item \textbf{IR lowering}: struct manipulation, dynamic dispatch,
+    and trait objects cause pipeline failures.
+  \item \textbf{Intraprocedural only}: no function summaries or
+    call-chain verification.
+  \item \textbf{Memory model}: value-level oracles cover strict-aliasing
+    (with a Lean-checked optimizer-exploitation lemma), \texttt{restrict}, and
+    pointer-provenance UB (with a Lean-checked \textsc{trap} confirmation
+    lemma); full lifetime/heap-shape divergences (use-after-free,
+    dangling) are reported via dedicated memory-shape detectors rather than a
+    single value witness.
+  \item \textbf{Floating point}: contraction and \texttt{-ffast-math}
+    reassociation are witnessed against real \texttt{clang}; signaling-NaN
+    propagation remains approximated.
+\end{itemize}
+
+\subsection{Real-World CVE-Inspired Benchmarks (RQ7)}\label{sec:eval-cve}
+
+To evaluate \textsc{SemRec} on realistic vulnerability patterns, we
+constructed 10 C/Rust pairs inspired by real CVEs covering the most
+critical categories of undefined behavior encountered during
+cross-language migration.  Each pair isolates a single UB class where
+the C source exhibits undefined behavior that Rust's type system or
+runtime semantics eliminates through wrapping, bounds checking, or
+safe abstractions.  Unlike the synthetic benchmarks, these pairs
+exercise new pipeline capabilities: struct layout analysis, integer
+promotion tracking, and preprocessor macro handling.
+
+\begin{table}[t]
+\centering
+\small
+\caption{CVE-inspired benchmark results.  \textsc{SemRec} achieves
+100\% classification accuracy across all 10 UB categories.
+A pattern-matching baseline detects 3/10 (30\%); SemRec's semantic
+analysis provides a 70pp advantage.}
+\label{tab:cve-benchmark}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Test Case & UB Category & Expected & Detected & Time (ms) \\
+\midrule
+\texttt{integer\_overflow}      & Signed overflow     & Div & Div & 5.1 \\
+\texttt{null\_pointer}          & Null dereference    & Div & Div & 3.3 \\
+\texttt{buffer\_access}         & Buffer OOB          & Div & Div & 2.9 \\
+\texttt{string\_handling}       & String handling     & Div & Div & 4.1 \\
+\texttt{union\_type\_punning}   & Union type punning  & Div & Div & 3.5 \\
+\texttt{bitshift\_overflow}     & Bitshift UB         & Div & Div & 2.8 \\
+\texttt{uninitialized\_memory}  & Uninitialized mem   & Div & Div & 4.2 \\
+\texttt{aliasing\_violation}    & Strict aliasing     & Div & Div & 3.9 \\
+\texttt{floating\_point}        & Float-to-int UB     & Div & Div & 3.2 \\
+\texttt{varargs\_handling}      & Varargs             & Div & Div & 2.2 \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{Aggregate}} & \textbf{10/10} & \textbf{10/10} & 3.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:cve-benchmark} reports per-pair results.
+\textsc{SemRec} achieves 100\% true positive rate (TPR) across all 10 categories, with a mean
+verification time of 3.5\,ms.  A pattern-matching baseline detects
+3 of the 10 divergences (30\%); the remaining 7 divergences are
+invisible to approaches that do not model source-level UB semantics.
+
+\paragraph{Limitation: one-sided benchmark.}
+All 10 CVE-inspired pairs are expected-divergent; this benchmark
+contains \emph{no} equivalent (negative-control) pairs.  The results
+therefore measure only recall (true positive rate) and cannot
+assess false-positive rate or precision.  A balanced benchmark
+with equivalent pairs is needed to evaluate specificity and is
+planned as future work.
+
+\paragraph{Advantage over baseline.}
+The 70pp advantage (100\% vs.\ 30\% on UB-dependent divergences)
+highlights a fundamental limitation of pattern-matching and testing
+approaches: when UB is
+``benign'' on the target platform, sampling-based and syntactic
+approaches miss divergences that require modeling the language
+specification.
+\textsc{SemRec}'s semantic analysis operates on the \emph{language
+specification} rather than compiled behavior, enabling it to flag
+divergences that are invisible to pattern-based or testing-based
+approaches on the deployment platform.
+
+\paragraph{New capabilities exercised.}
+Three of the 10 pairs required pipeline features beyond the original
+benchmark:
+\begin{itemize}[nosep]
+  \item \textbf{Struct layout analysis} (\texttt{union\_type\_punning},
+    \texttt{aliasing\_violation}): \textsc{SemRec} models C's
+    implementation-defined struct padding and union reinterpretation
+    against Rust's guaranteed layouts.
+  \item \textbf{Integer promotion tracking} (\texttt{integer\_overflow},
+    \texttt{bitshift\_overflow}, \texttt{floating\_point}): the pipeline now tracks
+    C's implicit integer promotion rules (e.g., \texttt{char}
+    $\to$ \texttt{int} widening before arithmetic) that have no Rust
+    analogue.
+  \item \textbf{Preprocessor handling} (\texttt{string\_handling},
+    \texttt{varargs\_handling}): macro-expanded C source is normalized
+    before IR lowering, resolving a prior limitation on macro-heavy
+    code.
+\end{itemize}
+
+
+\subsection{Cross-Pair Generality and Real-Compiler Confirmation
+(RQ8)}\label{sec:eval-matrix}
+
+A divergence oracle is only as trustworthy as its weakest unconfirmed verdict.
+\textsc{SemRec} therefore enforces a two-layer contract for \emph{every} class
+and \emph{every} language pair, materialized as the deterministic cross-pair
+regression matrix (\texttt{src/ub\_oracle/regression\_matrix.py}):
+
+\begin{enumerate}[nosep]
+  \item \textbf{Symbolic layer} (toolchain-free, byte-reproducible). One
+    canonical unit per class is driven through each registered oracle; the
+    artifact is regenerated in a fresh interpreter and asserted byte-identical
+    in CI (\texttt{make matrix-check}).
+  \item \textbf{Ground-truth layer.} Each cell's solver/dataflow/model witness is compiled and run
+    against real \texttt{clang} (under \texttt{-fsanitize=undefined},
+    MemorySanitizer/auto-init padding checks, or a checked C
+    contract/model-level build where sanitizer evidence is the wrong
+    proof object), real \texttt{rustc}, real \texttt{go}, real \texttt{clang++},
+    real \texttt{ocamlopt}, and real \texttt{zig}; a cell is \emph{confirmed} only when the
+    appropriate mode's evidence holds: sanitizer/contract trap, optimization
+    disagreement, padding-byte initialization delta, defined-vs-defined output
+    difference, static compiler diagnostic, or bounded allowed-execution-set gap.
+\end{enumerate}
+
+Table~\ref{tab:matrix} reports the matrix. Its C-rooted core spans \textbf{7
+target languages/runtimes} and \textbf{58 cells} (C$\to$Rust: 20 classes;
+C$\to$Go: 18; C$\to$Swift: 6, the argv-driven integer/memory core; C$\to$OCaml:
+4, a GC'd exception-based target; C$\to$C++: 1, the C/C++-boundary shift class;
+C$\to$WebAssembly: 4, \texttt{wasmtime}-executed value-or-trap integer
+semantics; C$\to$Zig: 5, Zig \texttt{ReleaseSafe} wrapping/trap/bounds
+semantics). The Go$\to$Rust and Rust$\to$C pairs add the two non-forward-C cells
+described below and raise the total to \textbf{60 cells over 9 pairs}. On a host
+with the corresponding toolchains/runtimes, every attempted cell must confirm
+against real compilers, checked C contract builds, or a real runtime trap/value
+outcome---no verdict is taken on
+faith. Crucially, the matrix file contains \emph{no per-language branches}: it
+discovers pairs and oracles from the plugin registry, so adding a target
+language or a divergence class makes the corresponding cells appear
+automatically, and the soundness obligation is discharged uniformly.
+
+\paragraph{A reverse pair: defined Rust panic vs.\ target-side C UB (Rust$\to$C).}
+The reverse pair exercises the FFI direction: an idiomatic Rust implementation may
+depend on a \emph{defined panic}, while a C lowering reintroduces undefined
+behaviour. The oracle Z3-finds the same unique signed division/remainder overflow
+input, \texttt{INT\_MIN} op \texttt{-1}. In Rust, both \texttt{/} and \texttt{\%}
+panic deterministically in every build profile; the source therefore has a
+language-defined observable abort. The generated C target performs the operation
+at the exact \texttt{int32\_t}/\texttt{int64\_t} width, where C17 leaves the
+non-representable quotient undefined and UBSan traps. A new confirmation mode,
+\texttt{source\_defined\_target\_ub}, compiles the Rust source through real
+\texttt{rustc}, runs it twice to prove deterministic definedness, then compiles
+the C target with \texttt{clang -fsanitize=undefined -fno-sanitize-recover=all}
+and requires a real sanitizer trap on the same input. This cell proves the
+framework is not merely ``C source bad, safe target good'': it can also detect a
+translation that \emph{loses} a source-language safety guarantee.
+
+\paragraph{A safe$\to$safe pair: defined-but-different (Go$\to$Rust).} Most
+C-rooted cells exploit an asymmetry in which \emph{one} side (C) is undefined.
+The framework, however, is not tied to undefined behaviour at all---its real
+content is \emph{observable divergence between two language semantics}. To
+demonstrate this we add the first pair in which \emph{neither} side has any UB:
+Go$\to$Rust. The oracle's Z3 search rediscovers the \texttt{INT\_MIN/-1} signed
+overflow as the witness, but now \emph{both} languages \emph{define} it---and
+they define it \emph{differently}. Go specifies modular two's-complement
+arithmetic, so \texttt{INT\_MIN/-1} evaluates to \texttt{-2147483648} and the
+program exits $0$; Rust specifies that signed division overflow is a guaranteed
+\emph{panic}, so the faithful port aborts with exit $101$. Both outcomes are
+language-defined; the \emph{observable} behaviour (a value vs.\ a deterministic
+abort) differs---exactly the hazard a Go$\to$Rust transpiler would silently
+introduce. A new confirmation mode, \texttt{defined\_divergence}, captures this:
+it builds both ports, runs each \emph{twice} for determinism, and confirms iff
+\emph{both} return codes lie in their language's defined set \emph{and} the
+observable results differ (the remainder form \texttt{INT\_MIN\%-1} is handled
+distinctly---$0$ in Go, panic in Rust). The cell is gated on \emph{both}
+toolchains (\texttt{go} and \texttt{rustc}) rather than the C path, and confirms
+live on each. This single addition shows the oracle, the product-program
+construction, and the matrix contract all generalize verbatim from
+``C-UB vs.\ defined target'' to ``two defined languages that simply disagree.''
+
+\paragraph{Implementation-defined ports: bit-fields and out-of-range enums.}
+The same \texttt{defined\_divergence} discipline exposes a second, subtler
+hazard class in which the C program is \emph{not} undefined but merely
+\emph{implementation-defined}, so a ``faithful'' hand port silently picks a
+different yet equally legal behaviour. (i)~\textbf{Bit-field packing.} A C
+\texttt{struct \{ unsigned a:3, b:5, c:8; \}} is laid out by the ABI into a
+single packed 4-byte storage unit; the obvious port that gives each field its
+own \texttt{u8}/\texttt{uint8} occupies 3 bytes with a different in-memory
+image. The oracle Z3-selects nonzero field values, then compares the raw object
+images: C reports \texttt{size=4, bytes=ffff0000} against the port's
+\texttt{size=3, bytes=071fff}---a divergence that surfaces the instant the
+struct is \texttt{memcpy}'d, hashed, or sent over the wire. (ii)~\textbf{Out-of-range
+enum.} C permits casting any integer in the enum's underlying-type range to the
+enum, retaining the value verbatim (\texttt{(enum Color)3} prints \texttt{3});
+the idiomatic Rust \texttt{match}/Go \texttt{switch} port collapses unmatched
+values to a default variant (printing \texttt{0}). The oracle minimizes the
+least integer past the last enumerator and confirms \texttt{3}~vs.~\texttt{0}
+live on \texttt{clang}+\texttt{rustc} and \texttt{clang}+\texttt{go}. Both
+classes are implementation-defined rather than UB-rooted, extending the
+catalogue's reach to the ``legal-but-divergent'' band that ordinary
+sanitizers and UB checkers cannot see.
+
+\paragraph{Indeterminate object bytes: uninitialized struct padding.}
+The newest C-rooted row covers a class that is neither a scalar UB trap nor a
+normal value mismatch: whole-struct byte serialization after assigning fields.
+For a compiler-asserted layout such as
+\texttt{struct P \{ uint8\_t tag; uint32\_t value; \}}, the three bytes between
+\texttt{tag} and \texttt{value} are padding.  The C witness assigns both fields,
+copies all \texttt{sizeof(struct P)} bytes into a digest, and lets a runtime
+switch zero padding for the safe control.  On MSan-capable hosts the source side
+is confirmed by a real \texttt{use-of-uninitialized-value} report; on this
+artifact's arm64 Darwin host the same source is confirmed by real \texttt{clang}
+\texttt{-ftrivial-auto-var-init=pattern} vs.\ \texttt{=zero}: the digest changes,
+while the explicit-zeroing control matches the zero build.  The Rust and Go ports
+serialize fields into zero-initialized byte arrays at the compiler-validated C
+offsets, so their padding is deterministic.  The divergence zoo now includes two
+live-confirmed exhibits for this class (C$\to$Rust and C$\to$Go), and the
+content-hashed zoo index is regenerated as
+\texttt{29a67003bcb5a9c3}.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Cross-pair regression matrix coverage. ``D'' = a symbolic divergence
+witness is found and (with toolchain/runtime) confirmed against real compilers;
+``--'' = class not implemented for that pair. The C-rooted matrix now contains
+58 cells, including five C$\to$Zig \texttt{ReleaseSafe} cells and four
+C$\to$WebAssembly value-or-trap cells; one safe$\to$safe Go$\to$Rust cell
+(defined-but-different \texttt{INT\_MIN/-1}: a value in Go, a panic in Rust) and
+one Rust$\to$C reverse cell (defined Rust panic vs. C UBSan-trapped UB) raise the
+total to \textbf{60 cells over 9 pairs}. The
+C$\to$C++ column carries the single C/C++-boundary class whose witness
+(\texttt{1 << 31}) is UB in C but defined in C++20; the C$\to$OCaml column
+carries the integer/memory core, witnessed against real \texttt{ocamlopt}
+(division-by-zero and out-of-bounds raise \texttt{Division\_by\_zero} /
+\texttt{Invalid\_argument}; \texttt{Int32} arithmetic is exactly modular), and
+the C$\to$Zig column is witnessed against real \texttt{zig build-exe -O
+ReleaseSafe}; the C$\to$WebAssembly column is WAT executed by real
+\texttt{wasmtime}, where traps are accepted only when stderr confirms a wasm
+trap.}
+\label{tab:matrix}
+\begin{tabular}{@{}lccccccccc@{}}
+\toprule
+Divergence class & C$\to$Rs & C$\to$Go & C$\to$Sw & C$\to$Ml & C$\to$C++ & C$\to$Wasm & C$\to$Zig & Go$\to$Rs & Rs$\to$C \\
+\midrule
+Signed overflow            & D & D & D & D & -- & D & D & -- & -- \\
+Shift $\geq$ width          & D & D & D & -- & -- & D & D & -- & -- \\
+Division by zero           & D & D & D & D & -- & D & D & -- & -- \\
+\texttt{INT\_MIN / -1}     & D & D & D & D & -- & D & D & D & D \\
+Array out-of-bounds        & D & D & D & D & -- & -- & D & -- & -- \\
+Unsequenced read/write     & D & -- & -- & -- & -- & -- & -- & -- & -- \\
+Uninitialized read         & D & D & D & -- & -- & -- & -- & -- & -- \\
+Uninitialized padding      & D & D & -- & -- & -- & -- & -- & -- & -- \\
+Strict aliasing            & D & D & -- & -- & -- & -- & -- & -- & -- \\
+VLA bound                  & D & D & -- & -- & -- & -- & -- & -- & -- \\
+Float$\to$int overflow     & D & D & -- & -- & -- & -- & -- & -- & -- \\
+\texttt{-ffast-math} reassoc.& D & D & -- & -- & -- & -- & -- & -- & -- \\
+\texttt{restrict} violation & D & D & -- & -- & -- & -- & -- & -- & -- \\
+Pointer provenance         & D & D & -- & -- & -- & -- & -- & -- & -- \\
+Overlapping \texttt{memcpy} & D & D & -- & -- & -- & -- & -- & -- & -- \\
+\texttt{longjmp} to exited VLA & D & D & -- & -- & -- & -- & -- & -- & -- \\
+Bit-field layout           & D & D & -- & -- & -- & -- & -- & -- & -- \\
+Out-of-range \texttt{enum} & D & D & -- & -- & -- & -- & -- & -- & -- \\
+FP contraction             & D & -- & -- & -- & -- & -- & -- & -- & -- \\
+Relaxed atomics ordering   & D & D & -- & -- & -- & -- & -- & -- & -- \\
+\texttt{1 << 31} (C/C++)   & -- & -- & -- & -- & D & -- & -- & -- & -- \\
+\midrule
+\textbf{Matrix cells}      & \textbf{20} & \textbf{18} & \textbf{6} & \textbf{4} & \textbf{1} & \textbf{4} & \textbf{5} & \textbf{1} & \textbf{1} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Generalization v2 and per-pair soundness.}
+The matrix counts registered cells; the V2 generalization study asks whether the
+new pair mechanisms transfer under live execution. It selects one representative
+case for each new direction---C$\to$Zig, C$\to$C++20, Rust$\to$C,
+C$\to$WebAssembly, Go$\to$Rust, and C$\to$OCaml---and runs the pair's own
+registered oracle and confirmation discipline rather than a bespoke benchmark
+path. On hosts with the corresponding tools, the positive witness must confirm
+against real compilers/runtimes and the safe control must not confirm; on hosts
+without Zig or \texttt{wasmtime}, those rows are reported as unavailable rather
+than simulated. The paired soundness checker then verifies that each new pair has
+a registry entry, expected confirmation mode (\textsc{trap},
+\textsc{source-defined-target-UB}, or \textsc{defined-divergence}), target-pack
+resolution where applicable, a symbolic positive witness, and a symbolic negative
+control. Thus the paper's pair-level claims are executable artifacts, not prose
+beside the implementation.
+
+\paragraph{Labelled precision/recall.} Independently of the matrix, a labelled
+divergence study (\texttt{experiments/ub\_divergence}) scores the oracle on
+29 cases spanning 19 anchor classes (23 positive, 6 negative-control families). The
+oracle attains \textbf{precision and recall of $1.0$}
+($\mathrm{tp}=23,\ \mathrm{fp}=0,\ \mathrm{fn}=0,\ \mathrm{tn}=528$ over the
+expanded negative population). On the same UB-invisible classes a differential
+fuzzer run for \textbf{200{,}000 trials per case} finds \emph{nothing}: the gap
+is total, exactly because the C undefined behavior is ``benign'' on the
+deployment platform and only the source-semantics oracle can see it. Every
+number in this subsection is regenerated from content-hashed real-compiler runs
+by the checked-in experiment scripts.
+
+\subsection{Optimization-Level Onset of Latent UB
+(RQ9)}\label{sec:eval-optsweep}
+
+The three \textsc{opt}-mode classes that \emph{no sanitizer can trap}---strict
+aliasing, \texttt{restrict} violation, and \texttt{-ffast-math}
+reassociation---share a subtle property: at \texttt{-O0} the program behaves
+exactly as a naive reader expects, and the hazard only materializes once the
+optimizer begins to \emph{rely} on the undefined or under-specified behaviour.
+The optimization-level sweep (\texttt{src/ub\_oracle/opt\_sweep.py}) makes this
+precise. For each such class it takes the oracle's own Z3-found witness,
+compiles the witnessing C source at \texttt{-O0,-O1,-O2,-O3} (keeping any
+class-specific licence flag, e.g.\ \texttt{-ffast-math}, fixed at every level),
+runs each build on the witness input, and reports the \emph{onset level}: the
+first level whose observable output diverges from the \texttt{-O0} baseline.
+Table~\ref{tab:optsweep} reports the result on real \texttt{clang}\,17: for all
+three classes the UB is latent at \texttt{-O0} and surfaces at \texttt{-O1},
+flipping the program's printed value. This is a reviewer-legible, reproducible
+demonstration that the divergence is a genuine consequence of standard,
+conforming optimization---not an artefact of any single build.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Optimization-level sweep on real \texttt{clang}\,17. Each cell is the
+program's observed stdout at that \texttt{-O} level; ``onset'' is the first level
+that diverges from the \texttt{-O0} baseline. All three no-sanitizer-traps
+classes are latent at \texttt{-O0} and surface at \texttt{-O1}.}
+\label{tab:optsweep}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Class & \texttt{-O0} & \texttt{-O1} & \texttt{-O2} & \texttt{-O3} & Onset \\
+\midrule
+Strict aliasing            & 0 & 1 & 1 & 1 & \texttt{-O1} \\
+\texttt{restrict} violation & 4 & 3 & 3 & 3 & \texttt{-O1} \\
+\texttt{-ffast-math} reassoc.& 0 & 1 & 1 & 1 & \texttt{-O1} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{$N$-Language Consistency: Majority Voting Across Live Ports
+(RQ10)}\label{sec:eval-consistency}
+
+Pairwise oracles answer ``does target $T$ diverge from C?''. A migration shop,
+however, often maintains \emph{several} candidate ports at once and wants a
+sharper question: given one C source compiled to $\geq 3$ safe targets, \emph{is
+any single target the odd one out?} The $N$-language consistency oracle
+(\texttt{src/ub\_oracle/consistency.py}) answers exactly this. It builds the C
+program and each available target (Rust, Go, Swift, OCaml, Zig), runs them all on the
+oracle's witness input, canonicalizes each observable outcome (a printed value,
+or an \texttt{ABORT} bucket for any trap/panic/uncaught exception), and applies
+majority voting: a target is \emph{flagged} when it disagrees with the modal
+outcome. The result is purely live---every label is a real process exit, not a
+model prediction.
+
+Two registered units make the behaviour concrete. On
+\emph{out-of-range shift}, Rust's \texttt{wrapping\_shl} \emph{masks} the shift
+amount modulo the width ($1 \ll 32 \equiv 1 \ll 0 = 1$) whereas Go and Swift
+yield $0$; the oracle flags \textbf{Rust} as the lone outlier among three safe
+languages---a genuine, defined-but-different divergence that no C-vs-one-target
+check would surface as ``majority disagreement''. On \emph{division by zero},
+all three targets abort, so the verdict is \emph{consistent}: a true negative
+that guards against over-flagging. Because the comparison reuses the same build
+harness and content-hashed outcomes as the pairwise path, its verdicts inherit
+the matrix's reproducibility contract.
+
+\subsection{Target-Pack Conformance: a Mechanized Back-End
+SPI}\label{sec:eval-conformance}
+
+Generality in \textsc{SemRec} is \emph{configuration, not code}: a new target
+language or runtime is a \emph{target pack} (compiler/stager candidates, optional
+runner candidates, source/artifact suffixes, a total defined-outcome predicate,
+argv builders, and a class-resolution map) plus a table of per-class source
+emitters---no new harness or oracle logic. To keep that promise sound as packs
+proliferate, the conformance suite
+(\texttt{src/ub\_oracle/pack\_conformance.py}) discharges SPI obligations
+against \emph{every} registered pack (Rust, Go, Swift, C++, OCaml, Zig, Wasm):
+the defined-outcome predicate is total and includes success while rejecting host
+errors; compiler/stager and runner candidates are well-typed; suffixes are
+well-formed; compile and run argv builders are deterministic and mention the
+right artifacts; and the class-resolution map only names known divergence
+classes. A pack that violates any obligation fails CI before it can contribute a
+single unsound cell to the matrix---turning ``add a language or runtime'' into a
+checklist the machine, not the reviewer, enforces.
+
+The formal side now mirrors this executable gate.  \texttt{SPIContract.lean}
+declares \texttt{TargetPackSPI} and \texttt{OraclePluginSPI} typeclasses and
+provides discharged instances for the seven registered target packs
+(Rust/Go/Swift/C++/OCaml/Zig/Wasm).  The bridge checker
+(\texttt{src/ub\_oracle/spi\_contract.py}) verifies that every registered Python
+pack has a Lean instance, every executable obligation key appears in the Lean
+contract, and the formal plugin method list matches the actual
+\texttt{DivergenceOracle} interface; when Lake is available, CI builds
+\texttt{lake build SPIContract} and rejects stale or vacuous formal claims.
+
+\subsection{SMT-Backed Decision Procedures: Proved Encodings and Bit-Precise
+Witnesses (RQ11)}\label{sec:eval-smt}
+
+For the integer-UB family---signed overflow, out-of-range shift, division by
+zero, and the unique \texttt{INT\_MIN/-1} overflow---we promote the
+\emph{encoding itself} to a machine-checked artifact
+(\texttt{src/ub\_oracle/smt\_integer.py}). Each class carries two independent Z3
+bit-vector formulas: an \emph{operational} encoding (the formula the shipped
+oracle solves, e.g.\ \texttt{Not(BVSDivNoOverflow($a$,$b$))} excluding
+$b=0$) and a human-readable \emph{specification} (e.g.\ $a=\texttt{INT\_MIN}
+\wedge b=-1$). The tool then asks Z3 to prove the bi-implication valid over
+\emph{every} input at the real bit widths: the negation
+$\mathit{operational} \not\leftrightarrow \mathit{spec}$ is
+\textbf{unsatisfiable} for all four classes at both 32 and 64 bits (and, as a
+width-parametric sanity check, at 4/6/8 bits where the entire input space is
+also brute-forceable). This is the equisatisfiability obligation discharged not
+on a sample but universally---the SMT path and the specification accept exactly
+the same witnesses.
+
+The encoding is not merely elegant; it is \emph{necessary} for the rare classes.
+Table~\ref{tab:smtbench} contrasts the SMT search with an ordered enumeration
+that scans the input space for a witness. For dense classes (a zero divisor, an
+out-of-range shift) both paths answer instantly. But for the classes whose
+witness is vanishingly rare---signed overflow under an ordered scan, and
+\texttt{INT\_MIN/-1} (a single input pair in $2^{64}$)---enumeration exhausts a
+multi-million-probe budget and finds \emph{nothing}, while Z3 returns the
+witness in under a millisecond: a two-to-three-orders-of-magnitude speed-up that
+is the quantitative case for the symbolic encoding. Two independent agreement
+checks guard the decision procedure: an exhaustive differential cross-check
+confirms the two paths agree on \emph{existence} at every fully enumerable
+width, and the Step~135 harness generates 10{,}000 deterministic concrete
+assignments across every shipped class and 32/64-bit width, then asks Z3 whether
+the operational formula can disagree with the independent enumeration predicate
+on any sampled assignment. Each class$\times$width disagreement disjunction is
+UNSAT, and the SMT witness for \texttt{INT\_MIN/-1} coincides exactly with the
+pair the shipped operational oracle emits.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Witness search, SMT vs.\ ordered enumeration, at 32-bit width (probe
+budget $2^{20}$). For rare-witness classes enumeration spends its full budget
+without success while Z3 answers in sub-millisecond time; both paths are trivial
+on dense classes. Times are representative single-run wall-clock.}
+\label{tab:smtbench}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Class & SMT finds? & Enum finds? & Enum probes & Speed-up \\
+\midrule
+Division by zero        & yes & yes & 1            & --- \\
+Shift $\geq$ width       & yes & yes & 33           & --- \\
+Signed overflow         & yes & \textbf{no} & $2^{20}$ & $\sim$100$\times$ \\
+\texttt{INT\_MIN / -1}  & yes & \textbf{no} & $2^{20}$ & $\sim$800$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The same section of the artifact now includes a bit-precise floating-point
+certificate for the FP-contraction class
+(\texttt{src/ub\_oracle/smt\_float.py}).  The solver asks Z3's IEEE-754 binary64
+theory for operands where
+$\mathit{fma}(a,b,c) \neq \mathit{round}(\mathit{round}(a\cdot b)+c)$ under
+round-to-nearest-even, while preserving the operational oracle's finite-normal,
+bounded-magnitude, and cancellation constraints.  The returned witness is not a
+decimal-only model: the artifact records operand bits
+\texttt{bffe1e223fe2d052}, \texttt{3ff79adacef6bb27},
+\texttt{4006376792d200d8} and result bits \texttt{3d01fe159b5bd2ec}
+(single-rounding) versus \texttt{3d02000000000000} (double-rounding).  A
+certificate replay reconstructs those IEEE bits as Z3 FP constants, recomputes
+the fused and unfused terms, and proves the negation of the bit-level
+contraction fact unsatisfiable.  The shipped oracle then feeds the same
+operands to the existing real-compiler harness, which compiles one C source with
+\texttt{-ffp-contract=off} and \texttt{-ffp-contract=fast} and compares it with
+the deterministic Rust translation.  Thus the FP row is simultaneously
+bit-precise at the solver boundary and grounded in live compiler output.
+
+%% ======================================================================
+\section{Related Work}\label{sec:related}
+%% ======================================================================
+
+\paragraph{Translation validation.}
+Alive2~\cite{lopes2021alive2} validates LLVM IR$\to$IR
+transformations but operates \emph{after IR erasure}: the C11/Rust
+semantic distinction is already lost, so UB divergences are
+invisible.  CompCert~\cite{leroy2009compcert} provides end-to-end
+compilation correctness for C but targets a single language.
+Pnueli et al.~\cite{pnueli1998translation} formalized translation
+validation as a proof obligation; \textsc{SemRec} adapts this to the
+cross-language setting where the ``translation'' is a C$\to$Rust
+migration.
+
+\paragraph{IR-level verification.}
+KLEE~\cite{cadar2008klee} performs symbolic execution on LLVM IR.
+SMACK~\cite{rakamaric2014smack} translates LLVM IR to Boogie.
+SeaHorn~\cite{gurfinkel2015seahorn} uses constrained Horn clauses.
+CBMC~\cite{kroening2014cbmc} performs bounded model checking on C.
+All operate on a single language or post-erasure IR.  As demonstrated
+in Section~\ref{sec:eval-ub}, IR-level analysis achieves 0/30
+recall on UB-invisible divergences: the signed/unsigned distinction
+that distinguishes C UB from Rust wrapping is erased by compilation.
+\textsc{SemRec} is the only tool in this design space that detects
+these divergences.
+
+\paragraph{Cross-language verification.}
+The problem of verifying equivalence across language boundaries has
+received limited attention.  Most existing work targets single-language
+settings or FFI ABI correctness.  \textsc{SemRec} is, to our
+knowledge, the first tool to perform source-level bounded equivalence
+verification for C$\to$Rust migration with formal UB-aware soundness
+guarantees.
+
+\paragraph{C$\to$Rust migration tools.}
+C2Rust~\cite{c2rust2019} transpiles C to syntactically valid but
+heavily \texttt{unsafe} Rust.  Crown~\cite{zhang2023ownership} and
+Laertes~\cite{emre2021translating} refactor C2Rust output toward
+safe idioms.  LLM-based translators produce more idiomatic Rust but
+lack formal correctness guarantees.  None perform source-level
+equivalence verification or detect UB divergences.  Our Tier-1 corpus is
+therefore complementary: it does not replace c2rust, but validates selected
+c2rust-generated artifacts against the source-language UB oracle.
+
+\paragraph{Formal verification for Rust.}
+Kani~\cite{kani2022} performs BMC on Rust (single-language).
+Prusti~\cite{astrauskas2022prusti} verifies Rust against
+specifications.  RustBelt~\cite{jung2017rustbelt} provides semantic
+foundations for Rust's type system.
+RefinedC~\cite{sammler2021refinedc} verifies C with refinement types.
+These verify within a single language; \textsc{SemRec} verifies
+\emph{cross-language} equivalence.
+
+\paragraph{Product programs.}
+Barthe et al.~\cite{barthe2011product} introduced product programs
+for relational verification of two runs of the \emph{same} program.
+\textsc{SemRec} extends this to two \emph{different} programs in
+\emph{different} languages with heterogeneous UB semantics,
+adding $\sigma$-bridge coercion nodes at semantic boundaries---the
+key mechanism enabling detection of IR-invisible divergences.
+
+
+%% ======================================================================
+\section{Conclusion}\label{sec:conclusion}
+%% ======================================================================
+
+We presented \textsc{SemRec}, a bounded source-level equivalence
+verifier for C$\to$Rust migration that detects UB divergences
+\emph{invisible to every existing verification approach}.  On 30
+IR-invisible UB divergences spanning 6 classes, \textsc{SemRec}
+achieves \textbf{100\% recall} while differential testing, IR
+comparison, and IR-level verification tools (KLEE, SMACK, Alive2)
+all score \textbf{0\%}.
+
+The key enabler is the $\sigma$-bridge product program construction,
+which keeps source and target semantic preconditions separate instead of
+normalizing both languages through a shared compiler IR.  This preserves the
+signed/unsigned, division, shift-UB, contract, and scoped memory-ordering
+distinctions that compilation erases or under-specifies.  The soundness theorem
+(Theorem~\ref{thm:soundness})
+guarantees that UNSAT certifies equivalence on all well-defined
+inputs within the loop bound.
+
+General-purpose accuracy (35.4\% on 511 pairs) reflects parser and IR
+coverage limitations, not verification unsoundness.  Where the
+pipeline completes, the formal guarantees hold.  We view
+\textsc{SemRec} as complementary to differential testing: testing
+covers broad program behavior but misses UB divergences by design;
+\textsc{SemRec} catches exactly the bugs that testing cannot.
+
+The tool is open-source, passes the targeted real-compiler regression suite, and is under active
+development.  Future work includes interprocedural verification,
+struct/enum lowering, and integration with C2Rust for automated
+post-migration verification.
+
+
+%% ======================================================================
+%% BIBLIOGRAPHY
+%% ======================================================================
+\bibliographystyle{plain}
+\begin{thebibliography}{35}
+
+\bibitem{cisa2024sbd}
+Cybersecurity and Infrastructure Security Agency.
+\newblock Secure by Design pledge.
+\newblock \url{https://www.cisa.gov/securebydesign/pledge}, 2024.
+
+\bibitem{nsa2022memory}
+National Security Agency.
+\newblock Software memory safety.
+\newblock Cybersecurity Information Sheet, November 2022.
+
+\bibitem{whitehouse2024report}
+Office of the National Cyber Director.
+\newblock Back to the building blocks: A path toward secure and measurable software.
+\newblock White House Technical Report, February 2024.
+
+\bibitem{chromium2019memory}
+Chromium Project.
+\newblock Memory safety.
+\newblock \url{https://www.chromium.org/Home/chromium-security/memory-safety/}, 2019.
+
+\bibitem{microsoft2019safety}
+M.~Miller.
+\newblock Trends, challenges, and strategic shifts in the software vulnerability mitigation landscape.
+\newblock Microsoft Security Response Center, 2019.
+
+\bibitem{linuxrust2022}
+M.~Ojeda et~al.
+\newblock Rust for {Linux}.
+\newblock \url{https://rust-for-linux.com/}, 2022.
+
+\bibitem{c2rust2019}
+P.~Emre, G.~Kondoh, and Z.~Anderson.
+\newblock {C2Rust}: Migrating legacy code to {Rust}.
+\newblock \emph{Proc.\ ICSE-Companion}, pp.\ 258--259, 2019.
+
+\bibitem{zhang2023ownership}
+H.~Zhang, J.~He, B.~Ding, and Y.~Zhang.
+\newblock Ownership guided {C} to {Rust} translation.
+\newblock \emph{Proc.\ OOPSLA}, 2023.
+
+\bibitem{emre2021translating}
+M.~Emre, R.~Schroeder, K.~Dewey, and B.~Hardekopf.
+\newblock Translating {C} to safer {Rust}.
+\newblock \emph{Proc.\ OOPSLA}, 2021.
+
+\bibitem{iso9899}
+{ISO/IEC}.
+\newblock {ISO/IEC 9899:2011} --- {P}rogramming languages --- {C}.
+\newblock International Organization for Standardization, 2011.
+
+\bibitem{cadar2008klee}
+C.~Cadar, D.~Dunbar, and D.~Engler.
+\newblock {KLEE}: Unassisted and automatic generation of high-coverage tests for complex systems programs.
+\newblock \emph{Proc.\ OSDI}, 2008.
+
+\bibitem{rakamaric2014smack}
+Z.~Rakamaric and M.~Emmi.
+\newblock {SMACK}: Decoupling source language details from verifier implementations.
+\newblock \emph{Proc.\ CAV}, 2014.
+
+\bibitem{gurfinkel2015seahorn}
+A.~Gurfinkel, T.~Kahsai, A.~Komuravelli, and J.~Navas.
+\newblock The {SeaHorn} verification framework.
+\newblock \emph{Proc.\ CAV}, 2015.
+
+\bibitem{lopes2021alive2}
+N.~P.~Lopes, J.~Lee, C.-K.~Hur, Z.~Liu, and J.~Regehr.
+\newblock Alive2: Bounded translation validation for {LLVM}.
+\newblock \emph{Proc.\ PLDI}, 2021.
+
+\bibitem{pnueli1998translation}
+A.~Pnueli, M.~Siegel, and E.~Singerman.
+\newblock Translation validation.
+\newblock \emph{Proc.\ TACAS}, pp.\ 151--166, 1998.
+
+\bibitem{leroy2009compcert}
+X.~Leroy.
+\newblock Formal verification of a realistic compiler.
+\newblock \emph{Communications of the ACM}, 52(7):107--115, 2009.
+
+\bibitem{demoura2008z3}
+L.~de~Moura and N.~Bj{\o}rner.
+\newblock {Z3}: An efficient {SMT} solver.
+\newblock \emph{Proc.\ TACAS}, 2008.
+
+\bibitem{kroening2014cbmc}
+D.~Kroening and M.~Tautschnig.
+\newblock {CBMC} -- {C} bounded model checker.
+\newblock \emph{Proc.\ TACAS}, 2014.
+
+\bibitem{kani2022}
+Amazon Web Services.
+\newblock Kani {Rust} verifier.
+\newblock \url{https://model-checking.github.io/kani/}, 2022.
+
+\bibitem{astrauskas2022prusti}
+V.~Astrauskas, A.~Bi\-le, P.~M\"uller, and F.~Poli.
+\newblock Prusti: A practical verification infrastructure for {Rust}.
+\newblock \emph{Proc.\ OOPSLA}, 2022.
+
+\bibitem{jung2017rustbelt}
+R.~Jung, J.-H.~Jourdan, R.~Krebbers, and D.~Dreyer.
+\newblock {RustBelt}: Securing the foundations of the {Rust} programming language.
+\newblock \emph{Proc.\ ACM Program.\ Lang.}, 2(POPL):66:1--66:34, 2018.
+
+\bibitem{sammler2021refinedc}
+M.~Sammler, R.~Lepigre, R.~Krebbers, et~al.
+\newblock {RefinedC}: Automating the foundational verification of {C} code with refined ownership types.
+\newblock \emph{Proc.\ PLDI}, 2021.
+
+\bibitem{barthe2011product}
+G.~Barthe, J.~M.~Crespo, and C.~Kunz.
+\newblock Relational verification using product programs.
+\newblock \emph{Proc.\ FM}, pp.\ 200--214, 2011.
+
+\bibitem{treesitter2024}
+M.~Brunsfeld et~al.
+\newblock Tree-sitter: An incremental parsing system for programming tools.
+\newblock \url{https://tree-sitter.github.io/}, 2024.
+
+\bibitem{pratt1973top}
+V.~Pratt.
+\newblock Top down operator precedence.
+\newblock \emph{Proc.\ POPL}, 1973.
+
+\bibitem{cytron1991ssa}
+R.~Cytron, J.~Ferrante, B.~K.~Rosen, M.~N.~Wegman, and F.~K.~Zadeck.
+\newblock Efficiently computing static single assignment form and the control dependence graph.
+\newblock \emph{ACM Trans.\ Program.\ Lang.\ Syst.}, 13(4):451--490, 1991.
+
+\bibitem{andersen1994program}
+L.~O.~Andersen.
+\newblock Program analysis and specialization for the {C} programming language.
+\newblock PhD thesis, DIKU, University of Copenhagen, 1994.
+
+\bibitem{king1976symbolic}
+J.~C.~King.
+\newblock Symbolic execution and program testing.
+\newblock \emph{Communications of the ACM}, 19(7):385--394, 1976.
+
+\bibitem{reynolds2002separation}
+J.~C.~Reynolds.
+\newblock Separation logic: A logic for shared mutable data structures.
+\newblock \emph{Proc.\ LICS}, pp.\ 55--74, 2002.
+
+\end{thebibliography}
+
+
+%% ======================================================================
+\end{document}
