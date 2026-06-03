@@ -1,0 +1,51 @@
+{
+  "by_divergence_class": {
+    "signed_overflow": 1
+  },
+  "by_target_lang": {
+    "rust": 1
+  },
+  "content_hash": "99ea4ff4cd6bcfc9d1527f49519935c19be255f6282cc4016ac9618ffa17ca7b",
+  "evidence_policy": "Frozen regressions are confirmed extraction-unit divergences derived from the responsible findings lane; they are not upstream CVEs or repository-defect claims without a separate upstream source audit.",
+  "n_regressions": 1,
+  "n_source_families": 1,
+  "regressions": [
+    {
+      "bundle_path": "docs/repro/CLV-DIV-0001.sh",
+      "c_file": "experiments/github_ports/samples/coreutils_size_accumulate.c",
+      "c_sha256": "300fb32daa3d1c8996c2e16ce6bee5ded4719141e16b00100179213698a194fd",
+      "candidate_repo": "uutils/coreutils",
+      "candidate_url": "https://github.com/uutils/coreutils",
+      "divergence_class": "signed_overflow",
+      "evidence_tier": "confirmed extraction-unit finding",
+      "finding_id": "CLV-DIV-0001",
+      "regression_contract": [
+        "finding id appears in divergence_findings.finding_records()",
+        "checked C/Rust extraction-unit source hashes match this frozen manifest",
+        "symbolic witness and safe input remain attached to the finding record",
+        "existing docs/repro reproduction bundle is present and shell-syntax valid",
+        "when clang/UBSan and the target compiler are available, witness traps on C and is defined on the target while the safe control stays silent"
+      ],
+      "regression_id": "BUG-REG-CLV-DIV-0001",
+      "remediation": "Accumulate byte counts in an unsigned or widened type, or guard the maximum representable value before translating to wrapping target arithmetic.",
+      "reproduction_command": [
+        "bash",
+        "docs/repro/CLV-DIV-0001.sh"
+      ],
+      "rust_file": "experiments/github_ports/samples/coreutils_size_accumulate.rs",
+      "rust_sha256": "c6ceb0fa4fa7087b5f90f706aba9a64feb7548ccf5dec1eb3dca1514248d560a",
+      "safe_input": [
+        "0"
+      ],
+      "sample_id": "coreutils-size-accumulate",
+      "source_family": "GNU coreutils size/accounting arithmetic",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "upstream_status": "upstream-instance source audit pending; this record must not be cited as an upstream uutils/coreutils CVE or confirmed repository defect",
+      "witness_input": [
+        "2147479552"
+      ]
+    }
+  ],
+  "schema": "bug-regression-corpus/v1"
+}

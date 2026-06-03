@@ -160,7 +160,13 @@ extraction units from three project families; the new responsible-finding lane
 then takes the \texttt{uutils/coreutils}-family extraction, wraps the checked-in
 C/Rust functions, and confirms a signed-overflow witness against live
 \texttt{clang}/UBSan+\texttt{rustc} while explicitly gating any upstream-defect
-claim on source audit. The idiomatic-port corpus now separately adds explicit
+claim on source audit. Every such responsible finding is now also promoted into a
+frozen bug-regression corpus: the manifest pins the finding id, witness and safe
+inputs, C/Rust source hashes, and the existing reproduction bundle, and
+\texttt{make bug-regression-check} proves the finding is still registered, the
+source bytes have not drifted, the bundle remains valid, and---when toolchains are
+available---the witness still traps under real \texttt{clang}/UBSan while the
+Rust extraction remains defined. The idiomatic-port corpus now separately adds explicit
 \texttt{uutils/coreutils}, \texttt{sudo-rs}, and \texttt{zlib-rs}-class pairs:
 checked block rounding and checked timeout division are real
 \texttt{clang}/UBSan-confirmed C-UB vs defined Rust/Go ports, while the

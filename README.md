@@ -171,7 +171,8 @@ python3 -m src.cli.main discover \
   ranks public port/rewrite repos, verifies extraction units from three mined
   project families, byte-checks the symbolic verdict layer, and now feeds a
   responsible, compiler-confirmed extraction-unit findings lane
-  (`make real-bug-check`) that keeps upstream-defect claims gated on source audit
+  (`make real-bug-check`) plus a frozen bug-regression corpus
+  (`make bug-regression-check`) that keeps upstream-defect claims gated on source audit
 - a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against
