@@ -1,11 +1,11 @@
-# Large-scale migration study (>130k LOC)
+# Large-scale migration study (>1M LOC)
 
 > Claim **C57-large-scale-study** · module `src/ub_oracle/large_scale_study.py`
 
 A divergence oracle is only convincing if it survives *scale*. A handful of
 hand-picked witnesses can be cherry-picked; a six-figure corpus of genuinely
 distinct programs cannot. This study generates a deterministic, all-distinct
-corpus of **7,500 C→{Rust,Go} programs totalling 130,500 lines** and confirms,
+corpus of **60,000 C→{Rust,Go} programs totalling 1,044,000 lines** and confirms,
 against the **real** toolchain, that the oracle's declared labels match what
 clang/UBSan, `rustc`, and `go` actually do.
 
@@ -13,27 +13,28 @@ clang/UBSan, `rustc`, and `go` actually do.
 
 | Quantity | Value |
 | --- | --- |
-| Programs (distinct source) | **7,500** |
-| Distinct-source ratio | **7,500 / 7,500 = 1.0** (no two programs share source) |
-| C lines | 62,400 |
-| Target lines (Rust+Go) | 68,100 |
-| **Total lines** | **130,500** (floor: 100,000) |
-| Language pairs | C→Rust (4,000), C→Go (3,500) |
-| Declared divergent | 3,700 |
-| Declared equivalent | 3,800 |
+| Programs (distinct source) | **60,000** |
+| Distinct-source ratio | **60,000 / 60,000 = 1.0** (no two programs share source) |
+| C lines | 499,200 |
+| Target lines (Rust+Go) | 544,800 |
+| **Total lines** | **1,044,000** (floor: 1,000,000) |
+| Language pairs | C→Rust (32,000), C→Go (28,000) |
+| Declared divergent | 29,600 |
+| Declared equivalent | 30,400 |
+| Label-balance delta | 800 programs (1.33% of corpus) |
 
 Class breakdown:
 
 | Class | Family | Count |
 | --- | --- | --- |
-| `div_by_zero` | UB-rooted divergent | 1,200 |
-| `oob_read` | UB-rooted divergent | 1,200 |
-| `oversized_shift` | UB-rooted divergent | 800 |
-| `signed_overflow` | UB-rooted divergent | 500 |
-| `safe_add` | defined equivalent | 1,200 |
-| `safe_mod` | defined equivalent | 1,200 |
-| `safe_mul` | defined equivalent | 600 |
-| `safe_shift` | defined equivalent | 800 |
+| `div_by_zero` | UB-rooted divergent | 9,600 |
+| `oob_read` | UB-rooted divergent | 9,600 |
+| `oversized_shift` | UB-rooted divergent | 6,400 |
+| `signed_overflow` | UB-rooted divergent | 4,000 |
+| `safe_add` | defined equivalent | 9,600 |
+| `safe_mod` | defined equivalent | 9,600 |
+| `safe_mul` | defined equivalent | 4,800 |
+| `safe_shift` | defined equivalent | 6,400 |
 
 ## Why every program is genuinely distinct
 
@@ -70,15 +71,15 @@ PYTHONPATH=src python -m ub_oracle.large_scale_study
 Example run:
 
 ```
-large-scale study: 7500 items / 7500 distinct programs / 130500 LOC
+large-scale study: 60000 items / 60000 distinct programs / 1044000 LOC
 across ['go', 'rust']; sample=12 seed=12648430 available=True
-confirmed_divergent=7 confirmed_equivalent=5 agree=12/12 hash=d5b00ba52a0f
+confirmed_divergent=7 confirmed_equivalent=5 agree=12/12 hash=5ec6c935c7b0
 ok: True
 ```
 
 ## Soundness of the study itself
 
-The report is `ok` **iff** the corpus meets the 100k-LOC floor **and** (when a
+The report is `ok` **iff** the corpus meets the 1M-LOC floor **and** (when a
 toolchain is present) every sampled item's real verdict agrees with its declared
 label. Two honesty properties:
 
@@ -91,5 +92,6 @@ label. Two honesty properties:
   `(schema, seed, sorted per-item verdicts)` — timings are deliberately excluded
   — so a fixed seed yields a byte-stable hash across runs.
 
-This is validated in `tests/test_ub_oracle.py` (`test_large_scale_*`), including a
-live seeded sample executed against the real Rust and Go toolchains.
+This is validated in `tests/test_large_scale_study.py` and
+`tests/test_ub_oracle.py` (`test_large_scale_*`), including live seeded samples
+executed against the real Rust and Go toolchains.

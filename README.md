@@ -500,8 +500,8 @@ python3 -m src.cli.main discover \
   (the passing count may never drop and the skipped count may never rise), so a
   test can't be quietly deleted or `@skip`-ped to make red disappear
 - a **migration-scale validation corpus** (`large_scale_study.py`, see
-  `docs/large_scale_study.md`): **7,500 genuinely-distinct C→{Rust,Go} programs
-  totalling >130k lines** (UB-rooted divergent families + defined-equivalent
+  `docs/large_scale_study.md`): **60,000 genuinely-distinct C→{Rust,Go} programs
+  totalling >1M lines** (UB-rooted divergent families + defined-equivalent
   families), each baking its defined operands as distinct literals so no two
   programs share source; a seeded random sample is executed through the **real**
   clang/UBSan + rustc/go toolchain and every observed verdict matches its

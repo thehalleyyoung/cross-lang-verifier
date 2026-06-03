@@ -5318,7 +5318,7 @@ def test_ratchet_baseline_file_is_well_formed():
 
 
 # ---------------------------------------------------------------------------
-# Step 85 — large-scale (>=100k LOC) migration study
+# Steps 85/141 — large-scale (>=1M LOC) migration study
 # ---------------------------------------------------------------------------
 from src.ub_oracle import large_scale_study as _ls  # noqa: E402
 
@@ -5333,6 +5333,7 @@ def test_large_scale_census_meets_loc_floor_and_all_distinct():
     by_label = cen["by_label"]
     assert by_label["divergent"] > 1000
     assert by_label["equivalent"] > 1000
+    assert cen["label_balance_delta"] <= 1000
 
 
 def test_large_scale_census_has_pair_and_class_breadth():

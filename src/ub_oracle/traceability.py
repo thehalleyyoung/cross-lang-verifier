@@ -877,7 +877,7 @@ def _thm_true_green_ratchet() -> bool:
 
 
 def _thm_large_scale_study() -> bool:
-    # The large-scale (>=100k LOC) migration study is sound on two axes. (1) The
+    # The large-scale (>=1M LOC) migration study is sound on two axes. (1) The
     # corpus genuinely meets the LOC floor and is all-distinct source -- a pure,
     # toolchain-free structural fact. (2) When real compilers are present, a
     # seeded random sample of the corpus, executed end-to-end through the actual
@@ -890,6 +890,8 @@ def _thm_large_scale_study() -> bool:
     if int(cen["total_loc"]) < ls.MIN_TOTAL_LOC:
         return False
     if cen["n_items"] != cen["n_distinct_programs"]:
+        return False
+    if cen.get("label_balance_delta", cen["n_items"]) > 1000:
         return False
     rep = ls.confirm_large_scale_study(sample_size=6)
     if not rep.ok:
@@ -2074,13 +2076,14 @@ CLAIMS: List[Claim] = [
     claim(
         "C57-large-scale-study",
         "The oracle is validated at **migration scale**: a deterministic, "
-        "all-distinct corpus of **7,500 genuinely-distinct C->{Rust,Go} programs "
-        "totalling >=130k lines** (`ub_oracle.large_scale_study`) mixing "
+        "all-distinct corpus of **60,000 genuinely-distinct C->{Rust,Go} programs "
+        "totalling >1M lines** (`ub_oracle.large_scale_study`) mixing "
         "UB-rooted divergent families (division-by-zero, OOB read, oversized "
         "shift, signed overflow) with defined-equivalent families "
         "(safe add/mul/mod/shift). Each program bakes its *defined* operands as "
         "distinct literals and reads only the UB-triggering operand from argv, so "
-        "no two programs share source. A seeded random sample is executed "
+        "no two programs share source, and the divergent/equivalent labels are "
+        "balanced within 1.33% of the corpus. A seeded random sample is executed "
         "end-to-end through the real labeler (clang/UBSan + rustc/go) and every "
         "sampled item's observed verdict agrees with its declared ground-truth "
         "label; the verdict-layer content hash is reproducible for a fixed seed. "

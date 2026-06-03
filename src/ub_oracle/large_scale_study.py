@@ -1,5 +1,5 @@
 """
-Large-scale migration study (100_STEPS step 85).
+Large-scale migration study (100_STEPS steps 85 and 141).
 
 A best-paper claim needs an empirical result at *scale*: not a handful of toy
 pairs but a large, diverse population of translated programs run through the
@@ -9,11 +9,11 @@ reviewer can reproduce. This module is that study.
 What it is — and what it is honestly *not*
 ------------------------------------------
 The population here is a **mechanically generated, large-scale stress corpus**:
-thousands of *distinct, compilable* C → {Rust, Go} translation pairs obtained by
-instantiating the catalogued divergence families (division-by-zero, OOB read,
-oversized shift, signed overflow, ``INT_MIN / -1``) and their well-defined
-counterparts (safe add/mul/index/shift/mod) across a wide grid of real literal
-operands and across both language pairs. It is **>= 100 000 lines** of code that
+tens of thousands of *distinct, compilable* C → {Rust, Go} translation pairs
+obtained by instantiating the catalogued divergence families (division-by-zero,
+OOB read, oversized shift, signed overflow) and their well-defined counterparts
+(safe add/mul/shift/mod) across a wide grid of real literal operands and across
+both language pairs. It is **>= 1 000 000 lines** of code that
 all really compiles. It is *not* a scrape of third-party repositories — those are
 covered, at smaller scale, by the Tier-1/2/3 corpora (idiomatic ports, LLM
 translations, the CVE set). The value added here is **scale and breadth**: it
@@ -26,10 +26,10 @@ How the study stays trustworthy
   oracle, ``rustc``/``go`` for the target). The observed label is whatever the
   binaries do.
 * **The corpus is fully enumerated and content-hashed.** :func:`corpus_census`
-  reports the exact line count, item count, distinct-program count and the
-  per-family / per-pair breakdown over the entire >= 100k-LOC population — these
-  are counted, never estimated.
-* **The execution is a seeded uniform sample.** Running 100k LOC through three
+  reports the exact line count, item count, distinct-program count, label
+  balance, and the per-family / per-pair breakdown over the entire >= 1M-LOC
+  population — these are counted, never estimated.
+* **The execution is a seeded uniform sample.** Running 1M LOC through three
   compilers on every CI run is impractical, so the study executes a
   **deterministic, seeded random sample** live and reports the observed
   divergence/equivalence rates *with the sample size*. The sampling is
@@ -58,10 +58,10 @@ from typing import Dict, List, Optional, Tuple
 from .ground_truth import GTItem, label_item
 from .reexec import ReexecHarness, toolchain_available
 
-SCHEMA_VERSION = "large-scale-study/v1"
+SCHEMA_VERSION = "large-scale-study/v2"
 
-#: target floor for the generated corpus — the step calls for >= 100k LOC.
-MIN_TOTAL_LOC = 100_000
+#: target floor for the generated corpus — Step 141 calls for >= 1M LOC.
+MIN_TOTAL_LOC = 1_000_000
 
 
 # --------------------------------------------------------------------------- #
@@ -213,32 +213,33 @@ def _scaled_divergent(lang: str) -> List[GTItem]:
     items: List[GTItem] = []
 
     # division by zero: distinct (defined) surrounding operands; z=0 from argv.
-    for k1 in range(1, 31):
-        for k2 in range(1, 21):                                   # 30*20 = 600
+    for k1 in range(1, 121):
+        for k2 in range(1, 41):                                  # 120*40 = 4800
             c, t = _t_div0(lang, k1, k2)
             items.append(GTItem(f"{lang}-ls-div0-{k1}-{k2}", lang,
                                 "div_by_zero", "CWE-369", "divergent",
                                 c, t, ("0",)))
 
     # out-of-bounds read: distinct array contents; index 7 from argv.
-    for s in range(0, 600):                                       # 600 distinct
+    for s in range(0, 4800):                                      # 4800 distinct
         vals = (s, s + 1, s + 2, s + 3)
         c, t = _t_oob(lang, vals)
         items.append(GTItem(f"{lang}-ls-oob-{s}", lang, "oob_read",
                             "CWE-125", "divergent", c, t, ("7",)))
 
     # oversized shift: distinct shifted value; shift 40 (>= 32) from argv.
-    for k1 in range(1, 401):                                      # 400 distinct
+    for k1 in range(1, 3201):                                     # 3200 distinct
         c, t = _t_shift(lang, k1)
         items.append(GTItem(f"{lang}-ls-shift-{k1}", lang, "oversized_shift",
                             "CWE-758", "divergent", c, t, ("40",)))
 
     if lang == "rust":
-        # signed overflow (32-bit only): distinct large literal a; b=1 from argv.
-        for k1 in range(2147483147, 2147483647):                  # 500 distinct
+        # signed overflow (32-bit only): a is always within i32, but a+4096
+        # exceeds INT_MAX for every item, so every declared witness is real UB.
+        for k1 in range(2147479648, 2147483648):                  # 4000 distinct
             c, t = _t_overflow(lang, k1)
             items.append(GTItem(f"{lang}-ls-ovf-{k1}", lang, "signed_overflow",
-                                "CWE-190", "divergent", c, t, ("1",)))
+                                "CWE-190", "divergent", c, t, ("4096",)))
     return items
 
 
@@ -246,29 +247,29 @@ def _scaled_equivalent(lang: str) -> List[GTItem]:
     items: List[GTItem] = []
 
     # safe addition over a wide in-range grid (no overflow → identical output).
-    for a in range(1, 31):
-        for b in range(1, 21):                                    # 30*20 = 600
+    for a in range(1, 121):
+        for b in range(1, 41):                                  # 120*40 = 4800
             c, t = _t_safe_add(lang, a, b)
             items.append(GTItem(f"{lang}-ls-add-{a}-{b}", lang, "safe_add", "",
                                 "equivalent", c, t, ()))
 
     # safe multiplication (product stays well within i32).
-    for a in range(2, 22):
-        for b in range(2, 17):                                    # 20*15 = 300
+    for a in range(2, 82):
+        for b in range(2, 32):                                    # 80*30 = 2400
             c, t = _t_safe_mul(lang, a, b)
             items.append(GTItem(f"{lang}-ls-mul-{a}-{b}", lang, "safe_mul", "",
                                 "equivalent", c, t, ()))
 
     # safe modulo by a non-zero divisor.
-    for a in range(10, 70):
-        for b in range(2, 12):                                    # 60*10 = 600
+    for a in range(10, 250):
+        for b in range(2, 22):                                   # 240*20 = 4800
             c, t = _t_safe_mod(lang, a, b)
             items.append(GTItem(f"{lang}-ls-mod-{a}-{b}", lang, "safe_mod", "",
                                 "equivalent", c, t, ()))
 
-    # safe shift strictly within range (< 32).
-    for x in range(1, 26):
-        for s in range(0, 16):                                    # 25*16 = 400
+    # safe shift strictly within range and representable as signed int.
+    for x in range(1, 201):
+        for s in range(0, 16):                                   # 200*16 = 3200
             c, t = _t_safe_shift(lang, x, s)
             items.append(GTItem(f"{lang}-ls-sshift-{x}-{s}", lang, "safe_shift",
                                 "", "equivalent", c, t, ()))
@@ -276,7 +277,7 @@ def _scaled_equivalent(lang: str) -> List[GTItem]:
 
 
 def generate_corpus(langs: Tuple[str, ...] = ("rust", "go")) -> List[GTItem]:
-    """The full, deterministically-enumerated large-scale corpus (>= 100k LOC)."""
+    """The full, deterministically-enumerated large-scale corpus (>= 1M LOC)."""
     items: List[GTItem] = []
     for lang in langs:
         items.extend(_scaled_divergent(lang))
@@ -314,6 +315,8 @@ def corpus_census(items: List[GTItem]) -> Dict[str, object]:
         "by_pair": dict(sorted(by_pair.items())),
         "by_class": dict(sorted(by_class.items())),
         "by_label": dict(sorted(by_label.items())),
+        "label_balance_delta": abs(
+            by_label.get("divergent", 0) - by_label.get("equivalent", 0)),
     }
 
 
