@@ -38,6 +38,7 @@ _GO_TYPE = {32: "int32", 64: "int64"}
 _SWIFT_TYPE = {32: "Int32", 64: "Int64"}
 _ZIG_TYPE = {32: "i32", 64: "i64"}
 _ZIG_SHIFT_TYPE = {32: "u5", 64: "u6"}
+_WASM_TYPE = {32: "i32", 64: "i64"}
 
 
 # ── the factory ──────────────────────────────────────────────────────────────
@@ -402,6 +403,93 @@ def _zig_oob(length, var, idx):
     return src, note
 
 
+# ── WebAssembly Text emitters (Step 119) ─────────────────────────────────────
+# These WAT modules bake the Z3-found witness constants into a start function and
+# are executed by wasmtime.  That keeps the confirmation independent of WASI argv
+# plumbing while still grounding the target side in a real wasm runtime.
+
+def _wat_module(instrs):
+    body = "\n".join("      " + line for line in instrs)
+    return (
+        "(module\n"
+        "  (func $main\n"
+        f"{body}\n"
+        "  )\n"
+        "  (start $main)\n"
+        ")\n"
+    )
+
+
+def _wasm_const(typ, value):
+    return f"{typ}.const {int(value)}"
+
+
+def _wasm_signed(op, c, width, var, witness):
+    typ = _WASM_TYPE[width]
+    wasm_op = f"{typ}.add" if op == "add" else f"{typ}.sub"
+    c_op = "+" if op == "add" else "-"
+    src = _wat_module([
+        _wasm_const(typ, witness),
+        _wasm_const(typ, c),
+        wasm_op,
+        "drop",
+    ])
+    note = (f"C signed {op} overflow at {var}={witness} is UB; WebAssembly "
+            f"{typ}.{op if op == 'add' else 'sub'} wraps modulo 2^{width}, so "
+            f"`{var} {c_op} {c}` has a defined target execution under wasmtime.")
+    return src, note
+
+
+def _wasm_shift(width, var, svar, x_val, shift_amt):
+    typ = _WASM_TYPE[width]
+    src = _wat_module([
+        _wasm_const(typ, x_val),
+        "i32.const " + str(int(shift_amt)),
+        f"{typ}.shl",
+        "drop",
+    ])
+    note = (f"C `{var} << {svar}` with {svar}={shift_amt} >= width {width} is UB; "
+            f"WebAssembly {typ}.shl masks the shift count and exits normally "
+            f"with a defined value.")
+    return src, note
+
+
+def _wasm_div(width, op, avar, bvar, a_val, b_val):
+    typ = _WASM_TYPE[width]
+    wasm_op = f"{typ}.div_s" if op == "div" else f"{typ}.rem_s"
+    glyph = "/" if op == "div" else "%"
+    src = _wat_module([
+        _wasm_const(typ, a_val),
+        _wasm_const(typ, b_val),
+        wasm_op,
+        "drop",
+    ])
+    note = (f"C `{avar} {glyph} {bvar}` with {bvar}=0 is UB; WebAssembly "
+            f"{wasm_op} traps deterministically on divide-by-zero, which wasmtime "
+            f"reports as a language-defined target trap.")
+    return src, note
+
+
+def _wasm_intmin(width, op, avar, bvar, a_val, b_val):
+    typ = _WASM_TYPE[width]
+    wasm_op = f"{typ}.div_s" if op == "div" else f"{typ}.rem_s"
+    glyph = "/" if op == "div" else "%"
+    src = _wat_module([
+        _wasm_const(typ, a_val),
+        _wasm_const(typ, b_val),
+        wasm_op,
+        "drop",
+    ])
+    if op == "div":
+        target_note = "traps deterministically on signed-division overflow"
+    else:
+        target_note = "returns the deterministic remainder value 0"
+    note = (f"C `{avar} {glyph} {bvar}` with {avar}={a_val}, {bvar}={b_val} "
+            f"overflows the C signed division relation (UB); WebAssembly "
+            f"{wasm_op} {target_note}, so the target behavior is defined.")
+    return src, note
+
+
 # ── the declarative table: (anchor class, build method, class key) ───────────
 
 _SPECS = [
@@ -444,6 +532,12 @@ _EMITTERS: Dict[str, Dict[str, Callable]] = {
         "div_by_zero": _zig_div,
         "intmin_div_neg1": _zig_intmin,
         "array_oob": _zig_oob,
+    },
+    "wasm": {
+        "signed_overflow": _wasm_signed,
+        "shift_oob": _wasm_shift,
+        "div_by_zero": _wasm_div,
+        "intmin_div_neg1": _wasm_intmin,
     },
 }
 

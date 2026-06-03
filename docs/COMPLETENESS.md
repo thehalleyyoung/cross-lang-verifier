@@ -71,6 +71,8 @@ for pair, results in comp.check_pair_completeness().items():  # every pair
 
 The test suite runs exactly this (`test_oracle_is_complete_on_its_characterized_fragment`,
 `test_completeness_holds_across_every_registered_pair`) and, when a real
-toolchain is present, additionally confirms one diverging unit per class
-end-to-end against clang+UBSan and the target compiler
-(`test_completeness_witnesses_confirm_against_real_compilers`).
+toolchain/runtime is present, additionally confirms one diverging unit per class
+end-to-end against clang+UBSan and the target compiler/runtime
+(`test_completeness_witnesses_confirm_against_real_compilers`). The shared
+integer search transfers to every registered pair that implements these classes,
+including C→Rust/Go/Swift/OCaml/Zig/WebAssembly.

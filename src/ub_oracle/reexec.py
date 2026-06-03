@@ -55,9 +55,16 @@ class ToolchainStatus:
     msan: bool = False
     auto_var_init: bool = False
     targets: Tuple[Tuple[str, Optional[str]], ...] = ()
+    runners: Tuple[Tuple[str, Optional[str]], ...] = ()
 
     def target_path(self, name: str = "rust") -> Optional[str]:
         for n, p in self.targets:
+            if n == name:
+                return p
+        return None
+
+    def target_runner_path(self, name: str = "rust") -> Optional[str]:
+        for n, p in self.runners:
             if n == name:
                 return p
         return None
@@ -69,6 +76,12 @@ class ToolchainStatus:
     def target_available(self, name: str = "rust") -> bool:
         return self.target_path(name) is not None
 
+    def target_runnable(self, name: str = "rust") -> bool:
+        pack = PACKS.get(name)
+        if pack is None or not pack.runner_candidates:
+            return True
+        return self.target_runner_path(name) is not None
+
     def can_compile(self, lang: str) -> bool:
         """Whether a program in ``lang`` can be built on this host. ``"c"`` maps
         to the C compiler; every other language maps to its semantics-pack
@@ -77,7 +90,7 @@ class ToolchainStatus:
         C compiler nor UBSan."""
         if lang == "c":
             return self.c_available
-        return self.target_available(lang)
+        return self.target_available(lang) and self.target_runnable(lang)
 
     # back-compat accessors for the anchor pair.
     @property
@@ -99,15 +112,29 @@ class ToolchainStatus:
     def full_for(self, name: str = "rust") -> bool:
         """Whether the full pipeline (C + UBSan + the requested target) is
         available. ``full`` is preserved as the Rust-anchor shorthand."""
-        return self.c_available and self.ubsan and self.target_available(name)
+        return (
+            self.c_available
+            and self.ubsan
+            and self.target_available(name)
+            and self.target_runnable(name)
+        )
 
     def full_asan_for(self, name: str = "rust") -> bool:
         """Whether the ASan-backed C + target confirmation path is available."""
-        return self.c_available and self.asan and self.target_available(name)
+        return (
+            self.c_available
+            and self.asan
+            and self.target_available(name)
+            and self.target_runnable(name)
+        )
 
     def full_libc_contract_for(self, name: str = "rust") -> bool:
         """Whether the C-libc-contract + target confirmation path is available."""
-        return self.c_available and self.target_available(name)
+        return (
+            self.c_available
+            and self.target_available(name)
+            and self.target_runnable(name)
+        )
 
     def full_uninit_padding_for(self, name: str = "rust") -> bool:
         """Whether uninitialized-padding confirmation can run for ``name``.
@@ -121,6 +148,7 @@ class ToolchainStatus:
         return (
             self.c_available
             and self.target_available(name)
+            and self.target_runnable(name)
             and (self.msan or self.auto_var_init)
         )
 
@@ -232,6 +260,16 @@ def _resolve_compiler(pack) -> Optional[str]:
     return None
 
 
+def _resolve_runner(pack) -> Optional[str]:
+    if not pack.runner_candidates:
+        return None
+    for cand in pack.runner_candidates:
+        path = shutil.which(cand)
+        if path:
+            return path
+    return None
+
+
 def toolchain_available() -> ToolchainStatus:
     cc = _find_cc()
     ubsan = _check_ubsan(cc) if cc else False
@@ -239,6 +277,7 @@ def toolchain_available() -> ToolchainStatus:
     msan = _check_msan(cc) if cc else False
     auto_var_init = _check_auto_var_init(cc) if cc else False
     targets = tuple((name, _resolve_compiler(pack)) for name, pack in PACKS.items())
+    runners = tuple((name, _resolve_runner(pack)) for name, pack in PACKS.items())
     return ToolchainStatus(
         cc=cc,
         ubsan=ubsan,
@@ -246,6 +285,7 @@ def toolchain_available() -> ToolchainStatus:
         msan=msan,
         auto_var_init=auto_var_init,
         targets=targets,
+        runners=runners,
     )
 
 
@@ -345,7 +385,8 @@ class RunOutcome:
             # lets the defined-vs-different harness compare a defined C program
             # against a defined target program without registering a full pack.
             return self.returncode == 0
-        return self.returncode in get_pack(target_lang).defined_returncodes
+        return get_pack(target_lang).is_defined_outcome(
+            self.returncode, self.stdout, self.stderr, self.timed_out)
 
 
 @dataclass
@@ -405,6 +446,21 @@ class ReexecHarness:
             return None
         return opath
 
+    def _run_target(
+        self,
+        artifact: str,
+        target_lang: str,
+        argv_inputs: List[str],
+        env: Optional[Dict[str, str]] = None,
+    ) -> RunOutcome:
+        pack = get_pack(target_lang)
+        runner = self.status.target_runner_path(target_lang)
+        if pack.runner_candidates:
+            if runner is None:
+                return RunOutcome(-1, "", f"runtime unavailable for {target_lang}")
+            return self._run(pack.run_argv(runner, artifact, argv_inputs), env=env)
+        return self._run([artifact, *argv_inputs], env=env)
+
     def _compile_target(self, src: str, target_lang: str,
                         workdir: str, name: str) -> Optional[str]:
         """Compile a single-file target program using its semantics pack.
@@ -416,8 +472,8 @@ class ReexecHarness:
         compiler = self.status.target_path(target_lang)
         if compiler is None:
             return None
-        spath = os.path.join(workdir, f"{name}{pack.source_suffix}")
-        opath = os.path.join(workdir, f"{name}.out")
+        spath = os.path.join(workdir, f"{name}_source{pack.source_suffix}")
+        opath = os.path.join(workdir, f"{name}{pack.artifact_suffix}")
         with open(spath, "w") as f:
             f.write(src)
         env = dict(os.environ)
@@ -441,6 +497,12 @@ class ReexecHarness:
             return self._compile_c(src, ["-O2"], workdir, name)
         return self._compile_target(src, lang, workdir, name)
 
+    def _run_lang(self, artifact: str, lang: str,
+                  argv_inputs: List[str]) -> RunOutcome:
+        if lang == "c":
+            return self._run([artifact, *argv_inputs])
+        return self._run_target(artifact, lang, argv_inputs)
+
     @staticmethod
     def _missing_for(status: "ToolchainStatus", target_lang: str) -> List[str]:
         missing = []
@@ -451,6 +513,9 @@ class ReexecHarness:
         if not status.target_available(target_lang):
             pack = PACKS.get(target_lang)
             missing.append(pack.compiler_candidates[0] if pack else target_lang)
+        if not status.target_runnable(target_lang):
+            pack = PACKS.get(target_lang)
+            missing.append(pack.runner_candidates[0] if pack else f"{target_lang} runtime")
         return missing
 
     @staticmethod
@@ -463,6 +528,9 @@ class ReexecHarness:
         if not status.target_available(target_lang):
             pack = PACKS.get(target_lang)
             missing.append(pack.compiler_candidates[0] if pack else target_lang)
+        if not status.target_runnable(target_lang):
+            pack = PACKS.get(target_lang)
+            missing.append(pack.runner_candidates[0] if pack else f"{target_lang} runtime")
         return missing
 
     @staticmethod
@@ -473,6 +541,9 @@ class ReexecHarness:
         if not status.target_available(target_lang):
             pack = PACKS.get(target_lang)
             missing.append(pack.compiler_candidates[0] if pack else target_lang)
+        if not status.target_runnable(target_lang):
+            pack = PACKS.get(target_lang)
+            missing.append(pack.runner_candidates[0] if pack else f"{target_lang} runtime")
         return missing
 
     @staticmethod
@@ -485,6 +556,9 @@ class ReexecHarness:
         if not status.target_available(target_lang):
             pack = PACKS.get(target_lang)
             missing.append(pack.compiler_candidates[0] if pack else target_lang)
+        if not status.target_runnable(target_lang):
+            pack = PACKS.get(target_lang)
+            missing.append(pack.runner_candidates[0] if pack else f"{target_lang} runtime")
         return missing
 
     # ── the anchor confirmation: signed-overflow style UB divergence ─────
@@ -530,7 +604,7 @@ class ReexecHarness:
             res.c_runs["O0"] = self._run([o0, *argv_inputs])
             res.c_runs["O2"] = self._run([o2, *argv_inputs])
             res.c_runs["san"] = self._run([san, *argv_inputs])
-            res.rust_run = self._run([rs, *argv_inputs])
+            res.rust_run = self._run_target(rs, target_lang, argv_inputs)
 
         san_run = res.c_runs["san"]
         o0_run = res.c_runs["O0"]
@@ -542,7 +616,10 @@ class ReexecHarness:
             o0_run.returncode == 0 and o2_run.returncode == 0
             and o0_run.stdout != o2_run.stdout
         )
-        res.rust_defined = res.rust_run is not None and res.rust_run.returncode == 0
+        res.rust_defined = (
+            res.rust_run is not None
+            and res.rust_run.target_outcome_defined(target_lang)
+        )
         res.confirmed = res.ub_reachable and res.ub_consequential and res.rust_defined
         if res.confirmed:
             res.reason = (
@@ -602,8 +679,8 @@ class ReexecHarness:
             res.c_runs["san"] = self._run([san, *argv_inputs])
             res.c_runs["O0"] = self._run([o0, *argv_inputs])
             # Determinism check: run the target binary twice.
-            rust_a = self._run([rs, *argv_inputs])
-            rust_b = self._run([rs, *argv_inputs])
+            rust_a = self._run_target(rs, target_lang, argv_inputs)
+            rust_b = self._run_target(rs, target_lang, argv_inputs)
             res.rust_run = rust_a
 
         san_run = res.c_runs["san"]
@@ -696,8 +773,8 @@ class ReexecHarness:
                 res.c_runs["asan"] = self._run([asan, *argv_inputs], env=asan_env)
             res.c_runs["contract"] = self._run([contract, *argv_inputs])
             res.c_runs["O0"] = self._run([o0, *argv_inputs])
-            target_a = self._run([rs, *argv_inputs])
-            target_b = self._run([rs, *argv_inputs])
+            target_a = self._run_target(rs, target_lang, argv_inputs)
+            target_b = self._run_target(rs, target_lang, argv_inputs)
             res.rust_run = target_a
 
         asan_run = res.c_runs.get("asan")
@@ -847,8 +924,8 @@ class ReexecHarness:
                         and z.stdout == c.stdout
                     )
 
-            target_a = self._run([tgt, *argv_inputs])
-            target_b = self._run([tgt, *argv_inputs])
+            target_a = self._run_target(tgt, target_lang, argv_inputs)
+            target_b = self._run_target(tgt, target_lang, argv_inputs)
             res.rust_run = target_a
 
         target_deterministic = (
@@ -920,16 +997,18 @@ class ReexecHarness:
         """
         flags_a = c_flags_a if c_flags_a is not None else ["-O0"]
         flags_b = c_flags_b if c_flags_b is not None else ["-O2", "-fstrict-aliasing"]
-        res = ReexecResult(available=(self.status.c_available
-                                      and self.status.target_available(target_lang)),
+        target_ok = (
+            self.status.target_available(target_lang)
+            and self.status.target_runnable(target_lang)
+        )
+        res = ReexecResult(available=(self.status.c_available and target_ok),
                            divergence_class=divergence_class,
                            mode="optimizer_exploited",
                            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
-        if not (self.status.c_available and self.status.target_available(target_lang)):
+        if not (self.status.c_available and target_ok):
             res.available = False
-            pack = PACKS.get(target_lang)
-            res.reason = ("toolchain unavailable: needs a C compiler and "
-                          + (pack.compiler_candidates[0] if pack else target_lang))
+            res.reason = "toolchain unavailable: " + ", ".join(
+                self._missing_for_libc_contract(self.status, target_lang))
             return res
 
         with tempfile.TemporaryDirectory() as d:
@@ -944,8 +1023,8 @@ class ReexecHarness:
 
             res.c_runs["A"] = self._run([o0, *argv_inputs])
             res.c_runs["B"] = self._run([o2, *argv_inputs])
-            rust_a = self._run([rs, *argv_inputs])
-            rust_b = self._run([rs, *argv_inputs])
+            rust_a = self._run_target(rs, target_lang, argv_inputs)
+            rust_b = self._run_target(rs, target_lang, argv_inputs)
             res.rust_run = rust_a
 
         o0_run = res.c_runs["A"]
@@ -1025,10 +1104,10 @@ class ReexecHarness:
                 res.available = False
                 res.reason = "compilation failed (a=%s b=%s)" % (bool(ea), bool(eb))
                 return res
-            a1 = self._run([ea, *argv_inputs])
-            a2 = self._run([ea, *argv_inputs])
-            b1 = self._run([eb, *argv_inputs])
-            b2 = self._run([eb, *argv_inputs])
+            a1 = self._run_lang(ea, lang_a, argv_inputs)
+            a2 = self._run_lang(ea, lang_a, argv_inputs)
+            b1 = self._run_lang(eb, lang_b, argv_inputs)
+            b2 = self._run_lang(eb, lang_b, argv_inputs)
 
         res.c_runs["A"] = a1
         res.c_runs["B"] = b1
@@ -1108,8 +1187,8 @@ class ReexecHarness:
                 res.reason = "compilation failed (source=%s target_san=%s)" % (
                     bool(source_exe), bool(target_san))
                 return res
-            source_a = self._run([source_exe, *argv_inputs])
-            source_b = self._run([source_exe, *argv_inputs])
+            source_a = self._run_lang(source_exe, source_lang, argv_inputs)
+            source_b = self._run_lang(source_exe, source_lang, argv_inputs)
             target = self._run([target_san, *argv_inputs])
 
         res.c_runs["source"] = source_a
@@ -1164,14 +1243,17 @@ class ReexecHarness:
         ``-Wunsequenced`` diagnostic, then compiles and runs the target twice to
         prove the translation has one deterministic, language-defined outcome.
         """
-        avail = self.status.c_available and self.status.target_available(target_lang)
+        avail = (
+            self.status.c_available
+            and self.status.target_available(target_lang)
+            and self.status.target_runnable(target_lang)
+        )
         res = ReexecResult(available=avail, divergence_class=divergence_class,
                            mode="static_ub_vs_defined",
                            inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)})
         if not avail:
-            pack = PACKS.get(target_lang)
-            res.reason = ("toolchain unavailable: needs a C compiler and "
-                          + (pack.compiler_candidates[0] if pack else target_lang))
+            res.reason = "toolchain unavailable: " + ", ".join(
+                self._missing_for_libc_contract(self.status, target_lang))
             return res
 
         with tempfile.TemporaryDirectory() as d:
@@ -1185,8 +1267,8 @@ class ReexecHarness:
                 res.available = False
                 res.reason = "compilation failed (target=False)"
                 return res
-            target_a = self._run([tgt, *argv_inputs])
-            target_b = self._run([tgt, *argv_inputs])
+            target_a = self._run_target(tgt, target_lang, argv_inputs)
+            target_b = self._run_target(tgt, target_lang, argv_inputs)
             res.c_runs["static"] = static
             res.rust_run = target_a
 
@@ -1249,7 +1331,11 @@ class ReexecHarness:
         not interpret it as a sanitizer trap or a runtime interleaving observed on
         a particular hardware execution.
         """
-        avail = self.status.c_available and self.status.target_available(target_lang)
+        avail = (
+            self.status.c_available
+            and self.status.target_available(target_lang)
+            and self.status.target_runnable(target_lang)
+        )
         res = ReexecResult(
             available=avail,
             divergence_class=divergence_class,
@@ -1257,9 +1343,8 @@ class ReexecHarness:
             inputs={f"arg{i}": v for i, v in enumerate(argv_inputs)},
         )
         if not avail:
-            pack = PACKS.get(target_lang)
-            res.reason = ("toolchain unavailable: needs a C compiler and "
-                          + (pack.compiler_candidates[0] if pack else target_lang))
+            res.reason = "toolchain unavailable: " + ", ".join(
+                self._missing_for_libc_contract(self.status, target_lang))
             return res
 
         with tempfile.TemporaryDirectory() as d:
@@ -1272,8 +1357,8 @@ class ReexecHarness:
                 return res
             c_a = self._run([c_exe, *argv_inputs])
             c_b = self._run([c_exe, *argv_inputs])
-            t_a = self._run([tgt_exe, *argv_inputs])
-            t_b = self._run([tgt_exe, *argv_inputs])
+            t_a = self._run_target(tgt_exe, target_lang, argv_inputs)
+            t_b = self._run_target(tgt_exe, target_lang, argv_inputs)
             res.c_runs["source_model"] = c_a
             res.rust_run = t_a
 
@@ -1318,7 +1403,7 @@ class ReexecHarness:
             exe = self._compile_c(c_src, flags, d, "c_unit")
             if exe is None:
                 return None
-            return self._run([exe, *argv_inputs])
+            return self._run_target(exe, target_lang, argv_inputs)
 
     def build_and_run_target(self, target_src: str, target_lang: str,
                              argv_inputs: List[str]) -> Optional[RunOutcome]:
@@ -1327,7 +1412,7 @@ class ReexecHarness:
 
         Returns the :class:`RunOutcome`, or ``None`` if that target compiler is
         absent or compilation fails."""
-        if not self.status.target_available(target_lang):
+        if not self.status.can_compile(target_lang):
             return None
         with tempfile.TemporaryDirectory() as d:
             exe = self._compile_target(target_src, target_lang, d, "tgt")

@@ -3,8 +3,9 @@ Target-semantics-pack conformance suite (100_STEPS step 124).
 
 A :class:`~src.ub_oracle.target_semantics.TargetPack` is the *only* per-language
 configuration the engine needs to support a new target (compiler invocation,
-source suffix, the set of process return codes that count as a language-*defined*
-outcome, and a data description of how each UB class is resolved).  Because the
+optional runtime invocation, source suffix, process outcomes that count as a
+language-*defined* result, and a data description of how each UB class is
+resolved).  Because the
 whole generality claim rests on that one abstraction, a *new* pack that silently
 violates the SPI contract — e.g. a non-total or value-only "defined" predicate, a
 ``compile_argv`` that forgets to wire the output path, a ``class_resolution`` that
@@ -28,14 +29,17 @@ The obligations (one :class:`Obligation` each):
                                    every probed return code and is ``True`` *iff*
                                    the code is in ``defined_returncodes``.
   * ``run_predicate_consistent`` — :meth:`RunOutcome.target_outcome_defined`
-                                   agrees with the pack's data on every probe, and
-                                   a timed-out run is never defined.
+                                   agrees with the pack's richer outcome
+                                   predicate on every probe, and a timed-out run
+                                   is never defined.
   * ``compile_argv_wires_io``    — ``compile_argv(cc, src, out)`` is a list that
                                    begins with the compiler and mentions both the
                                    source and the output path (so the harness's
                                    binary actually gets built where it looks).
   * ``compile_env_is_a_dict``    — ``compile_env(workdir)`` returns a ``dict`` of
                                    ``str -> str`` (a hermetic environment overlay).
+  * ``runner_argv_wires_artifact`` — non-native packs declare a runtime command
+                                     that mentions the staged artifact.
   * ``resolutions_are_real``     — every ``class_resolution`` key is a real
                                    divergence-class key in the catalogue.
 
@@ -57,6 +61,11 @@ from .target_semantics import PACKS, TargetPack
 #: success, common panic/abort codes, and Python's negative "killed by signal N".
 _PROBE_RETURNCODES: Tuple[int, ...] = (
     0, 1, 2, 3, 5, 42, 101, 134, 139, -2, -4, -5, -6, -9, -11,
+)
+
+_WASM_TRAP = (
+    "Error: failed to run main module\n\nCaused by:\n"
+    "    wasm trap: integer divide by zero"
 )
 
 
@@ -100,15 +109,25 @@ def _check_predicate_is_total(pack: TargetPack) -> Obligation:
 def _check_run_predicate_consistent(pack: TargetPack) -> Obligation:
     for rc in _PROBE_RETURNCODES:
         defined = RunOutcome(rc, "out", "err").target_outcome_defined(pack.name)
-        if defined != (rc in pack.defined_returncodes):
+        expected = pack.is_defined_outcome(rc, "out", "err", False)
+        if defined != expected:
             return Obligation("run_predicate_consistent", False,
                               f"RunOutcome(rc={rc}).target_outcome_defined disagrees")
     # a timed-out run is never a defined outcome, regardless of return code.
     if RunOutcome(0, "", "", timed_out=True).target_outcome_defined(pack.name):
         return Obligation("run_predicate_consistent", False,
                           "a timed-out run was reported as defined")
+    if pack.name == "wasm":
+        trap = RunOutcome(1, "", _WASM_TRAP)
+        host_error = RunOutcome(1, "", "Error: failed to read input file")
+        if not trap.target_outcome_defined("wasm"):
+            return Obligation("run_predicate_consistent", False,
+                              "wasm trap stderr was not classified as defined")
+        if host_error.target_outcome_defined("wasm"):
+            return Obligation("run_predicate_consistent", False,
+                              "generic wasmtime host error was classified as defined")
     return Obligation("run_predicate_consistent", True,
-                      "RunOutcome predicate matches pack data; timeout is non-defined")
+                      "RunOutcome predicate matches pack outcome contract; timeout is non-defined")
 
 
 def _check_compile_argv(pack: TargetPack) -> Obligation:
@@ -142,6 +161,26 @@ def _check_compile_env(pack: TargetPack) -> Obligation:
             return Obligation("compile_env_is_a_dict", False,
                               f"non-str entry {k!r}={v!r}")
     return Obligation("compile_env_is_a_dict", True, f"{len(env)} hermetic var(s)")
+
+
+def _check_runner_argv(pack: TargetPack) -> Obligation:
+    if not pack.runner_candidates:
+        return Obligation("runner_argv_wires_artifact", True, "native executable target")
+    artifact = "artifact" + pack.artifact_suffix
+    try:
+        argv = pack.run_argv("THE_RUNNER", artifact, ["1", "2"])
+    except Exception as e:  # pragma: no cover - defensive
+        return Obligation("runner_argv_wires_artifact", False, f"raised {e!r}")
+    if not isinstance(argv, list) or not argv:
+        return Obligation("runner_argv_wires_artifact", False,
+                          f"not a non-empty list: {argv!r}")
+    if argv[0] != "THE_RUNNER":
+        return Obligation("runner_argv_wires_artifact", False,
+                          f"argv[0]={argv[0]!r} is not the runtime path")
+    if not any(artifact in a for a in argv):
+        return Obligation("runner_argv_wires_artifact", False,
+                          "artifact path never referenced")
+    return Obligation("runner_argv_wires_artifact", True, " ".join(argv))
 
 
 def _check_resolutions_are_real(pack: TargetPack) -> Obligation:
@@ -183,6 +222,7 @@ def check_pack(name: str) -> PackConformance:
     obs.append(_check_run_predicate_consistent(pack))
     obs.append(_check_compile_argv(pack))
     obs.append(_check_compile_env(pack))
+    obs.append(_check_runner_argv(pack))
     obs.append(_check_resolutions_are_real(pack))
 
     return PackConformance(name, tuple(obs))
@@ -198,6 +238,7 @@ OBLIGATION_KEYS: Tuple[str, ...] = (
     "run_predicate_consistent",
     "compile_argv_wires_io",
     "compile_env_is_a_dict",
+    "runner_argv_wires_artifact",
     "resolutions_are_real",
 )
 

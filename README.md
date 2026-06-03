@@ -90,14 +90,14 @@ python3 -m src.cli.main discover \
   VLA scope**, and **`1 << 31`
   (UB in C, *defined* in C++20)** — the last proving the C/C++ boundary is itself a
   divergence surface (each confirmed against real
-  `clang`/`rustc`/`go`/`clang++`/`ocamlopt`/`zig`:
+  `clang`/`rustc`/`go`/`clang++`/`ocamlopt`/`zig`/`wasmtime`:
   the same input is C UB / under-defined — UBSan-trapping, MSan-checkable
   padding leakage, a value that flips across two conforming compilations no
   sanitizer can trap, executable libc-contract UB checks, or a real
   `clang -Wunsequenced` diagnostic, with a sweep pinning the
   exact `-O` level the UB first surfaces —
-  while the safe Rust *and* Go *and* C++ *and* OCaml *and* Zig `ReleaseSafe` ports
-  are defined and deterministic), plus an
+  while the safe Rust, Go, C++, OCaml, Zig `ReleaseSafe`, and WebAssembly ports
+  are defined and deterministic — including wasm's defined traps), plus an
   **uninitialized-read / definedness oracle** (`oracles/uninit_read.py`) built on
   a real three-point definedness-lattice dataflow analysis that flags reads of
   slots never written on all paths and confirms them across C→Rust/Go/Swift
@@ -132,7 +132,7 @@ python3 -m src.cli.main discover \
 - an internal **red-team** (`make redteam`) that, for every oracle on every
   supported language pair, throws a battery of semantics-preserving adversarial
   mutations of a genuinely-divergent unit at the verifier and proves it never
-  falsely returns "no divergence" — **144 adversarial cases**, **zero soundness
+  falsely returns "no divergence" — **190 adversarial cases**, **zero soundness
   breaches**, with the byte-reproducible adversarial grid CI-checked via
   `make redteam-check` and the real-compiler attack available via `make redteam`
 - a **branch-coverage ratchet** over the toolchain-independent brain of the tool
@@ -376,15 +376,16 @@ python3 -m src.cli.main discover \
   pair (it's a property of the source UB, not one target's quirks) and an
   equivalent function on none (15 function×pair verdicts, all correct)
 - **more target pairs and multi-language oracles**: C→**OCaml** (a GC'd,
-  exception-based port, witnessed live on real `ocamlopt`) and C→**Zig**
-  (`ReleaseSafe`, witnessed live on real `zig`) join Rust/Go/Swift/C++ in the
-  byte-reproducible matrix; a **Rust→C reverse pair** proves a defined Rust
+  exception-based port, real `ocamlopt`), C→**Zig** (`ReleaseSafe`, real `zig`),
+  and C→**WebAssembly** (value-or-trap semantics, real `wasmtime`) join
+  Rust/Go/Swift/C++ in the byte-reproducible matrix; a **Rust→C reverse pair** proves a defined Rust
   panic can become target-side C UB under FFI-style lowering; and a first
   **safe→safe pair, Go→Rust** — *neither side has any UB* — catches the
   **defined-but-different** hazard where `INT_MIN/-1` wraps to a value in Go
   yet panics in Rust, confirmed by re-executing both real binaries
-  (**56 registered matrix cells across 8 pairs**, including real C checked-
-  contract `memcpy`-overlap, `longjmp`/VLA, and Zig safety-panic cells).
+  (**60 registered matrix cells across 9 pairs**, including real C checked-
+  contract `memcpy`-overlap, `longjmp`/VLA, Zig safety-panic, and wasm trap
+  cells).
   An **N-language consistency oracle** (`consistency.py`) compiles one C source
   to ≥3 safe targets at once and flags the lone minority on live output (e.g.
   Rust's `wrapping_shl` masking makes it the outlier vs Go/Swift); a
@@ -436,7 +437,7 @@ python3 -m src.cli.main discover \
   `docs/zoo.md`): the canonical machine-readable catalogue indexed by
   `(class, pair)`, exported as `zoo.json`, where every exhibit carries a concrete
   witnessing input and is **re-confirmed live** — the oracle re-run on each
-  witness must still flag the divergence (16 exhibits across rust/go/swift here);
+  witness must still flag the divergence (18 exhibits across rust/go/swift here);
   an unreproducible exhibit is rejected
 - **data-faithful paper figures** (`figures.py`, `docs/figures.md`): the three
   figures a paper is written around — the cross-language divergence catalogue,
@@ -453,7 +454,7 @@ python3 -m src.cli.main discover \
 - a **claims audit** that tightens docs to exactly what's proven
   (`claims_audit.py`): every named `C->target` language must be a registered
   pair with a real oracle, the general framing must clear the **≥2-working-pairs**
-  bar, and every literal count in prose (e.g. "16 exhibits across rust/go/swift")
+  bar, and every literal count in prose (e.g. "18 exhibits across rust/go/swift")
   must equal the live count — so a doc edited to overclaim fails
 - **end-to-end case studies with measured cost/benefit** (`case_studies.py`,
   `docs/case_studies.md`): three real-world-derived migrations (the JDK

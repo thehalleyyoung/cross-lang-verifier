@@ -4,10 +4,13 @@ Pluggable target-semantics packs (100_STEPS step 39).
 A *target-semantics pack* encodes everything the engine needs to know about a
 target language's **defined behaviour**, as data:
 
-  * how to compile a single-file program in that language (``compile_argv`` plus
-    any hermetic ``compile_env``) and the source-file ``source_suffix``;
-  * which process return codes count as a language-*defined* outcome
-    (``defined_returncodes``) — a value *or* a guaranteed, deterministic abort;
+  * how to compile/stage a single-file program in that language (``compile_argv``
+    plus any hermetic ``compile_env``) and the source-file ``source_suffix``;
+  * how to run non-native artifacts when needed (``runner_candidates`` and
+    ``run_argv``; native targets just execute the compiled binary);
+  * which process outcomes count as language-*defined* (``defined_returncodes``
+    for return-code-only targets, and ``defined_outcome`` for runtimes such as
+    WebAssembly whose traps share a generic host exit code with runtime errors);
   * a human/data description of how the target *resolves* each divergence class
     that C leaves undefined (``class_resolution``).
 
@@ -18,7 +21,7 @@ or oracle-engine code.
 
 Return codes are **as observed by Python's** :mod:`subprocess`, which reports a
 process killed by signal *N* as the *negative* code ``-N`` (not the shell's
-``128+N``). The three packs below were each grounded against real compilers:
+``128+N``). The packs below are grounded against real compilers/runtimes:
 
   ===========  ======================  ===========================================
   target       compiler                defined return codes (python subprocess)
@@ -27,6 +30,7 @@ process killed by signal *N* as the *negative* code ``-N`` (not the shell's
   go           ``go build``            0 (value), 2 (runtime panic, os.Exit(2))
   swift        ``swiftc -O``           0 (value), -5 (SIGTRAP runtime trap)
   zig          ``zig build-exe``       0 (value), -6 (ReleaseSafe panic abort)
+  wasm         ``wasmtime run``        0 (value), or a wasmtime-reported wasm trap
   ===========  ======================  ===========================================
 
 This module deliberately imports nothing from the rest of the package, so the
@@ -40,6 +44,10 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
 
+RunArgvBuilder = Callable[[str, str, List[str]], List[str]]
+OutcomePredicate = Callable[[int, str, str, bool], bool]
+
+
 @dataclass(frozen=True)
 class TargetPack:
     """The defined-behaviour contract for one target language, as data."""
@@ -51,20 +59,46 @@ class TargetPack:
     #: extension for the emitted single-file program, e.g. ".rs".
     source_suffix: str
     #: process return codes (as Python's subprocess reports them) that are a
-    #: language-*defined* outcome: a value, or a guaranteed deterministic abort.
+    #: language-*defined* outcome by return code alone: a value, or a guaranteed
+    #: deterministic abort. Runtimes with generic error codes should leave those
+    #: codes out and use ``defined_outcome``.
     defined_returncodes: Tuple[int, ...]
     #: build the compiler argv from (compiler_path, src_path, out_path).
     compile_argv: Callable[[str, str, str], List[str]]
+    #: candidate runtime executables for non-native artifacts. Empty means the
+    #: compiled artifact is itself executable.
+    runner_candidates: Tuple[str, ...] = ()
+    #: extension for the compiled/staged artifact the harness will run.
+    artifact_suffix: str = ".out"
     #: extra environment for the *compile* step, derived from the work dir
     #: (used e.g. to give Go a hermetic, workdir-local build cache).
     compile_env: Callable[[str], Dict[str, str]] = field(
         default=lambda workdir: {})
+    #: build the runtime argv from (runner_path, compiled_artifact, original
+    #: witness args). Native targets use the artifact directly and ignore this.
+    run_argv: RunArgvBuilder = field(
+        default=lambda runner, artifact, args: [artifact, *args])
+    #: richer definedness predicate for target outcomes. This is needed for
+    #: runtimes such as wasmtime, where a language-defined wasm trap and a host
+    #: invocation error can share the same process return code.
+    defined_outcome: Optional[OutcomePredicate] = None
     #: how this target *defines* each UB class C leaves undefined. Pure data,
     #: keyed by catalogue divergence-class key -> short description.
     class_resolution: Dict[str, str] = field(default_factory=dict)
 
     def is_defined_returncode(self, rc: int) -> bool:
         return rc in self.defined_returncodes
+
+    def is_defined_outcome(
+        self,
+        rc: int,
+        stdout: str = "",
+        stderr: str = "",
+        timed_out: bool = False,
+    ) -> bool:
+        if self.defined_outcome is not None:
+            return bool(self.defined_outcome(rc, stdout, stderr, timed_out))
+        return (not timed_out) and self.is_defined_returncode(rc)
 
 
 # ── compiler argv / env builders ─────────────────────────────────────────────
@@ -103,6 +137,33 @@ def _zig_argv(cc: str, src: str, out: str) -> List[str]:
         "--global-cache-dir", os.path.join(workdir, ".zig-global-cache"),
         "-femit-bin=" + out, src,
     ]
+
+
+def _copy_argv(cc: str, src: str, out: str) -> List[str]:
+    return [cc, src, out]
+
+
+def _wasm_run_argv(runner: str, artifact: str, args: List[str]) -> List[str]:
+    # The generated WAT witnesses bake the Z3-found constants into a start
+    # function, so the host argv is intentionally not part of the wasm command.
+    return [runner, "run", artifact]
+
+
+def _wasm_defined_outcome(rc: int, stdout: str, stderr: str, timed_out: bool) -> bool:
+    if timed_out:
+        return False
+    if rc == 0:
+        return True
+    err = stderr.lower()
+    trap_tokens = (
+        "wasm trap",
+        "error while executing",
+        "integer divide by zero",
+        "integer overflow",
+        "out of bounds memory access",
+        "unreachable",
+    )
+    return rc in (1, 134, -6) and any(tok in err for tok in trap_tokens)
 
 
 def _ocaml_env(workdir: str) -> Dict[str, str]:
@@ -232,8 +293,33 @@ _ZIG = TargetPack(
     },
 )
 
+# WebAssembly is the Step-119 target.  The emitted target snippets are WAT core
+# modules with a start function, staged losslessly by ``cp`` and executed by the
+# real ``wasmtime`` runtime.  WebAssembly defines integer overflow and oversized
+# shifts as deterministic values, and defines division-by-zero / signed-division
+# overflow / out-of-bounds memory as traps.  Wasmtime reports traps with generic
+# host return codes, so the pack uses the richer ``defined_outcome`` predicate to
+# accept only stderr-confirmed wasm traps rather than every rc=1 runtime error.
+_WASM = TargetPack(
+    name="wasm",
+    compiler_candidates=("cp",),
+    runner_candidates=("wasmtime",),
+    source_suffix=".wat",
+    artifact_suffix=".wat",
+    defined_returncodes=(0,),
+    compile_argv=_copy_argv,
+    run_argv=_wasm_run_argv,
+    defined_outcome=_wasm_defined_outcome,
+    class_resolution={
+        "signed_overflow": "i32/i64 arithmetic wraps modulo 2^N to a defined value",
+        "shift_oob": "i32/i64 shifts mask the count, yielding a defined value",
+        "div_by_zero": "integer division by zero traps deterministically",
+        "intmin_div_neg1": "signed division overflow traps deterministically",
+    },
+)
+
 PACKS: Dict[str, TargetPack] = {p.name: p for p in
-                                (_RUST, _GO, _SWIFT, _CPP, _OCAML, _ZIG)}
+                                (_RUST, _GO, _SWIFT, _CPP, _OCAML, _ZIG, _WASM)}
 
 
 def get_pack(name: str) -> TargetPack:

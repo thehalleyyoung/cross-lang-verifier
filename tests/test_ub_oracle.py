@@ -9,6 +9,9 @@ and *real* Rust; they skip cleanly if the toolchain is unavailable.
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import tempfile
 
 import pytest
 
@@ -935,6 +938,8 @@ def test_target_packs_encode_defined_returncodes_as_data():
     assert PACKS["swift"].defined_returncodes == (0, -5)
     # Zig ReleaseSafe safety panics abort with SIGABRT, reported as -6.
     assert PACKS["zig"].defined_returncodes == (0, -6)
+    # WebAssembly traps need stderr inspection, so only clean values are rc-only.
+    assert PACKS["wasm"].defined_returncodes == (0,)
     # every pack documents how it resolves each core UB class (data-driven).
     for name in ("rust", "go", "swift", "zig"):
         res = PACKS[name].class_resolution
@@ -1148,7 +1153,7 @@ def test_matrix_covers_every_registered_pair_and_class():
     assert m["n_cells"] == len(_plugin.ALL_ORACLES)
     pairs = {(c["source_lang"], c["target_lang"]) for c in m["cells"]}
     assert pairs == set(_plugin.language_pairs())
-    assert {"c->rust", "c->go", "c->swift", "c->zig"} <= set(m["language_pairs"])
+    assert {"c->rust", "c->go", "c->swift", "c->zig", "c->wasm"} <= set(m["language_pairs"])
 
 
 def test_matrix_every_cell_is_divergent_symbolically():
@@ -1181,6 +1186,9 @@ def test_matrix_pair_coverage_is_honest_about_class_breadth():
     zig_covered = set(cov[("c", "zig")]["classes_covered"])
     assert {"signed_overflow", "shift_oob", "div_by_zero",
             "intmin_div_neg1", "array_oob"} == zig_covered
+    wasm_covered = set(cov[("c", "wasm")]["classes_covered"])
+    assert {"signed_overflow", "shift_oob", "div_by_zero",
+            "intmin_div_neg1"} == wasm_covered
 
 
 def test_matrix_is_byte_reproducible_in_a_fresh_process():
@@ -1208,12 +1216,13 @@ def test_matrix_records_pack_defined_returncodes_per_cell():
     assert by_tgt["go"] == {(0, 2)}
     assert by_tgt["swift"] == {(0, -5)}
     assert by_tgt["zig"] == {(0, -6)}
+    assert by_tgt["wasm"] == {(0,)}
 
 
 def test_matrix_render_table_is_a_grid_over_pairs_and_classes():
     table = _matrix.render_table()
     assert "c->rust" in table and "c->go" in table and "c->swift" in table
-    assert "c->zig" in table
+    assert "c->zig" in table and "c->wasm" in table
     assert "signed_overflow" in table and "fp_contraction" in table
     # a class not implemented for a pair is shown as '-', not a false 'D'.
     assert "-" in table and "D" in table
@@ -1236,14 +1245,14 @@ def test_matrix_confirm_marks_unavailable_pairs_skipped_not_dropped():
 
 _requires_all_matrix_targets = pytest.mark.skipif(
     not (_TC.c_available and _TC.ubsan
-         and all(_TC.target_available(t) for t in PACKS)),
+         and all(_TC.can_compile(t) for t in PACKS)),
     reason=f"needs C+UBSan and every registered target toolchain ({_TC})")
 
 
 @_requires_all_matrix_targets
 def test_matrix_confirm_runs_every_cell_against_real_compilers():
     # the full matrix, end-to-end, against real clang+UBSan plus every registered
-    # target compiler (rustc/go/swiftc/clang++/ocamlopt/zig).
+    # target compiler/runtime (rustc/go/swiftc/clang++/ocamlopt/zig/wasmtime).
     conf = _matrix.confirm_matrix(ReexecHarness(_TC))
     assert conf["n_attempted"] == len(_plugin.ALL_ORACLES)
     assert conf["all_attempted_confirmed"], \
@@ -6097,6 +6106,149 @@ def test_equivalent_zig_translation_is_not_confirmed():
                "}\n")
     rr = harness.confirm_trap_vs_defined(c_src, zig_src, ["2", "3"],
                                          "division_by_zero", target_lang="zig")
+    assert rr.available
+    assert not rr.ub_reachable
+    assert not rr.confirmed
+
+
+# ── Step 119: C->WebAssembly pair (defined traps under real wasmtime) ─────────
+# WebAssembly is a non-native target pack: WAT witnesses are staged losslessly and
+# executed by wasmtime, whose trap stderr distinguishes language-defined wasm
+# traps from generic host/runtime errors sharing the same return code.
+
+_requires_wasm = pytest.mark.skipif(
+    not _TC.full_for("wasm"),
+    reason=f"needs C+UBSan+wasmtime toolchain ({_TC})")
+
+_WASM_UNITS = {
+    "signed_overflow": {"kind": "binop_const", "op": "add", "const": 2147483647,
+                        "width": 32, "var": "x", "signed": True},
+    "shift_oob": {"kind": "shift", "width": 32, "value": 1},
+    "div_by_zero": {"kind": "div", "width": 32, "a": "a", "b": "b"},
+    "intmin_div_neg1": {"kind": "div", "width": 32, "signed": True,
+                        "a": "a", "b": "b"},
+}
+
+
+def _wasm_unit(class_key):
+    u = dict(_WASM_UNITS[class_key])
+    u["source_lang"], u["target_lang"] = "c", "wasm"
+    return u
+
+
+def test_wasm_pack_is_a_registered_runtime_target_pair():
+    pairs = _plugin.language_pairs()
+    assert ("c", "wasm") in pairs
+    pack = PACKS["wasm"]
+    assert pack.defined_returncodes == (0,)
+    assert pack.source_suffix == ".wat"
+    assert pack.artifact_suffix == ".wat"
+    assert pack.compiler_candidates == ("cp",)
+    assert pack.runner_candidates == ("wasmtime",)
+    assert pack.compile_argv("cp", "w.wat", "w.out") == ["cp", "w.wat", "w.out"]
+    assert pack.run_argv("wasmtime", "w.wat", ["1", "2"]) == ["wasmtime", "run", "w.wat"]
+    assert {"signed_overflow", "shift_oob", "div_by_zero",
+            "intmin_div_neg1"} <= set(pack.class_resolution)
+
+
+def test_wasm_pair_registers_defined_trap_integer_classes_only():
+    wasm = _plugin.oracles_for(source_lang="c", target_lang="wasm")
+    classes = {o.divergence_class for o in wasm}
+    assert classes == {"signed_overflow", "shift_oob", "div_by_zero",
+                       "intmin_div_neg1"}
+
+
+def test_wasm_oracles_reuse_anchor_search_not_new_code():
+    assert isinstance(_plugin.get_oracle_for("signed_overflow", "c", "wasm"),
+                      SignedOverflowOracle)
+    assert isinstance(_plugin.get_oracle_for("div_by_zero", "c", "wasm"),
+                      DivisionByZeroOracle)
+
+
+@pytest.mark.parametrize("class_key", list(_WASM_UNITS))
+def test_wasm_oracle_emits_wat_source_symbolically(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "wasm")
+    res = orc.find_divergence(_wasm_unit(class_key))
+    assert res.verdict is OracleVerdict.DIVERGENT
+    ce = res.counterexample
+    assert ce.target_lang == "wasm"
+    assert ce.target_snippet.startswith("(module")
+    assert "(start $main)" in ce.target_snippet
+    if class_key in ("div_by_zero", "intmin_div_neg1"):
+        assert ".div_s" in ce.target_snippet
+    anchor = _plugin.get_oracle_for(class_key, "c", "rust")
+    anchor_ce = anchor.find_divergence(dict(_WASM_UNITS[class_key])).counterexample
+    assert ce.source_snippet == anchor_ce.source_snippet
+
+
+def test_run_outcome_definedness_for_wasm_uses_trap_stderr_not_bare_rc():
+    assert RunOutcome(0, "", "").target_outcome_defined("wasm")
+    assert RunOutcome(1, "", "wasm trap: integer divide by zero").target_outcome_defined("wasm")
+    assert RunOutcome(134, "", "wasm trap: integer overflow").target_outcome_defined("wasm")
+    assert not RunOutcome(1, "", "Error: failed to read input file").target_outcome_defined("wasm")
+    assert not RunOutcome(1, "", "").target_outcome_defined("wasm")
+
+
+def test_toolchain_status_requires_wasm_runner_for_full_pair():
+    st = ToolchainStatus(
+        cc="/usr/bin/clang",
+        ubsan=True,
+        targets=(("wasm", "/bin/cp"),),
+        runners=(("wasm", None),),
+    )
+    assert st.target_available("wasm")
+    assert not st.target_runnable("wasm")
+    assert not st.full_for("wasm")
+    st2 = ToolchainStatus(
+        cc="/usr/bin/clang",
+        ubsan=True,
+        targets=(("wasm", "/bin/cp"),),
+        runners=(("wasm", "/usr/local/bin/wasmtime"),),
+    )
+    assert st2.full_for("wasm")
+
+
+def test_wasm_target_staging_preserves_wat_artifact_suffix():
+    cp = shutil.which("cp")
+    assert cp is not None
+    status = ToolchainStatus(
+        cc=None,
+        ubsan=False,
+        targets=(("wasm", cp),),
+        runners=(("wasm", None),),
+    )
+    harness = ReexecHarness(status)
+    src = "(module (func $main i32.const 0 drop) (start $main))\n"
+    with tempfile.TemporaryDirectory() as d:
+        artifact = harness._compile_target(src, "wasm", d, "witness")
+        assert artifact is not None
+        assert artifact.endswith(".wat")
+        assert os.path.exists(artifact)
+
+
+@_requires_wasm
+@pytest.mark.parametrize("class_key", list(_WASM_UNITS))
+def test_wasm_divergence_confirmed_against_real_clang_and_wasmtime(class_key):
+    orc = _plugin.get_oracle_for(class_key, "c", "wasm")
+    res = orc.confirm(orc.find_divergence(_wasm_unit(class_key)), ReexecHarness(_TC))
+    rr = res.reexec
+    assert rr.available, rr.reason
+    assert rr.ub_reachable, "UBSan must trap on the witness (C is UB)"
+    assert rr.rust_defined, "wasmtime must produce a defined value or wasm trap"
+    assert rr.confirmed, rr.reason
+    assert res.counterexample.confirmed
+
+
+@_requires_wasm
+def test_equivalent_wasm_translation_is_not_confirmed():
+    harness = ReexecHarness(_TC)
+    c_src = ("#include <stdio.h>\n#include <stdlib.h>\n"
+             "int f(int a,int b){ return a + b; }\n"
+             "int main(int c,char**v){ if(c<3)return 2;"
+             " printf(\"%d\\n\", f(atoi(v[1]),atoi(v[2]))); return 0; }\n")
+    wasm_src = "(module (func $main i32.const 0 drop) (start $main))\n"
+    rr = harness.confirm_trap_vs_defined(c_src, wasm_src, ["2", "3"],
+                                         "division_by_zero", target_lang="wasm")
     assert rr.available
     assert not rr.ub_reachable
     assert not rr.confirmed

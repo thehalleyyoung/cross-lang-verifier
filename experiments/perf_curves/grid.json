@@ -113,6 +113,13 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "uninit_padding",
+      "label": "c->go:uninit_padding",
+      "source_lang": "c",
+      "target_lang": "go",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "uninit_read",
       "label": "c->go:uninit_read",
       "source_lang": "c",
@@ -274,6 +281,13 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "uninit_padding",
+      "label": "c->rust:uninit_padding",
+      "source_lang": "c",
+      "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "uninit_read",
       "label": "c->rust:uninit_read",
       "source_lang": "c",
@@ -330,10 +344,80 @@
       "verdict": "divergent"
     },
     {
+      "divergence_class": "div_by_zero",
+      "label": "c->wasm:div_by_zero",
+      "source_lang": "c",
+      "target_lang": "wasm",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->wasm:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "wasm",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "shift_oob",
+      "label": "c->wasm:shift_oob",
+      "source_lang": "c",
+      "target_lang": "wasm",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "label": "c->wasm:signed_overflow",
+      "source_lang": "c",
+      "target_lang": "wasm",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "array_oob",
+      "label": "c->zig:array_oob",
+      "source_lang": "c",
+      "target_lang": "zig",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "div_by_zero",
+      "label": "c->zig:div_by_zero",
+      "source_lang": "c",
+      "target_lang": "zig",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "c->zig:intmin_div_neg1",
+      "source_lang": "c",
+      "target_lang": "zig",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "shift_oob",
+      "label": "c->zig:shift_oob",
+      "source_lang": "c",
+      "target_lang": "zig",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "signed_overflow",
+      "label": "c->zig:signed_overflow",
+      "source_lang": "c",
+      "target_lang": "zig",
+      "verdict": "divergent"
+    },
+    {
       "divergence_class": "intmin_div_neg1",
       "label": "go->rust:intmin_div_neg1",
       "source_lang": "go",
       "target_lang": "rust",
+      "verdict": "divergent"
+    },
+    {
+      "divergence_class": "intmin_div_neg1",
+      "label": "rust->c:intmin_div_neg1",
+      "source_lang": "rust",
+      "target_lang": "c",
       "verdict": "divergent"
     }
   ],

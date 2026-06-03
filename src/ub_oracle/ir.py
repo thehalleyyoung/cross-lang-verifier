@@ -36,6 +36,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
+from .target_semantics import PACKS
+
 #: the frozen set of structural operator families the IR defines. Frontends may
 #: emit other kinds for forward-compatibility (they validate as well-formed but
 #: are reported NOT_COVERED until an oracle claims them); these are the kinds the
@@ -63,7 +65,7 @@ _RANGE_KEYS = ("x_range", "a_range", "b_range", "shift_range")
 #: known source/target language tokens (a *well-formed* pair may still be
 #: unsupported by the registered oracles — that is a coverage matter, not an IR
 #: error — but a non-string or unknown token is a contract violation).
-_KNOWN_LANGS = frozenset({"c", "rust", "go", "swift"})
+_KNOWN_LANGS = frozenset({"c", *PACKS})
 
 
 @dataclass(frozen=True)

@@ -909,6 +909,77 @@
     },
     {
       "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "div_by_zero",
+      "divergence_witness": "C `a / b` with b=0 is UB; WebAssembly i32.div_s traps deterministically on divide-by-zero, which wasmtime reports as a language-defined target trap.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0
+      ],
+      "target_lang": "wasm",
+      "target_sha16": "4e2926709998a046",
+      "verdict": "divergent",
+      "witness": {
+        "a": 7,
+        "b": 0
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "intmin_div_neg1",
+      "divergence_witness": "C `a / b` with a=-2147483648, b=-1 overflows the C signed division relation (UB); WebAssembly i32.div_s traps deterministically on signed-division overflow, so the target behavior is defined.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "12b9b1d9f3d5b788",
+      "target_defined_returncodes": [
+        0
+      ],
+      "target_lang": "wasm",
+      "target_sha16": "78919a7c9a0a2761",
+      "verdict": "divergent",
+      "witness": {
+        "a": -2147483648,
+        "b": -1
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
+      "divergence_class": "shift_oob",
+      "divergence_witness": "C `x << s` with s=32 >= width 32 is UB; WebAssembly i32.shl masks the shift count and exits normally with a defined value.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "684eb86382df63ff",
+      "target_defined_returncodes": [
+        0
+      ],
+      "target_lang": "wasm",
+      "target_sha16": "0e1ad91e674860d2",
+      "verdict": "divergent",
+      "witness": {
+        "s": 32,
+        "x": 1
+      }
+    },
+    {
+      "confirmation_mode": "exploited",
+      "divergence_class": "signed_overflow",
+      "divergence_witness": "C signed add overflow at x=1073741824 is UB; WebAssembly i32.add wraps modulo 2^32, so `x + 2147483647` has a defined target execution under wasmtime.",
+      "source_definedness": "undefined",
+      "source_lang": "c",
+      "source_sha16": "731ca036bd1ff713",
+      "target_defined_returncodes": [
+        0
+      ],
+      "target_lang": "wasm",
+      "target_sha16": "4b02da872ee8377f",
+      "verdict": "divergent",
+      "witness": {
+        "x": 1073741824
+      }
+    },
+    {
+      "confirmation_mode": "trap_vs_defined",
       "divergence_class": "array_oob",
       "divergence_witness": "C `a[i]` with i=4 on a length-4 array is UB; Zig ReleaseSafe bounds-checks and panics deterministically.",
       "source_definedness": "undefined",
@@ -1130,6 +1201,18 @@
     },
     {
       "classes_covered": [
+        "div_by_zero",
+        "intmin_div_neg1",
+        "shift_oob",
+        "signed_overflow"
+      ],
+      "n_classes": 4,
+      "n_divergent": 4,
+      "source_lang": "c",
+      "target_lang": "wasm"
+    },
+    {
+      "classes_covered": [
         "array_oob",
         "div_by_zero",
         "intmin_div_neg1",
@@ -1189,9 +1272,10 @@
     "c->ocaml",
     "c->rust",
     "c->swift",
+    "c->wasm",
     "c->zig",
     "go->rust",
     "rust->c"
   ],
-  "n_cells": 56
+  "n_cells": 60
 }

@@ -94,12 +94,14 @@ def _oracle_available(status, oracle) -> bool:
             return bool(checker(tgt)) if checker is not None else False
         if oracle.confirmation_mode == "static_ub_vs_defined":
             target_available = getattr(status, "target_available", lambda _t: False)
+            target_runnable = getattr(status, "target_runnable", lambda _t: True)
             return bool(getattr(status, "c_available", False)
-                        and target_available(tgt))
+                        and target_available(tgt) and target_runnable(tgt))
         if oracle.confirmation_mode == "model_level_divergence":
             target_available = getattr(status, "target_available", lambda _t: False)
+            target_runnable = getattr(status, "target_runnable", lambda _t: True)
             return bool(getattr(status, "c_available", False)
-                        and target_available(tgt))
+                        and target_available(tgt) and target_runnable(tgt))
         if oracle.confirmation_mode == "uninit_padding":
             checker = getattr(status, "full_uninit_padding_for", None)
             return bool(checker(tgt)) if checker is not None else False
