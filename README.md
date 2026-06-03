@@ -131,8 +131,10 @@ python3 -m src.cli.main discover \
   adopt the checker on a large existing migration and fail CI only on *new*
   divergences
 - an incremental cache (`--cache`) that re-verifies only changed units — keyed by
-  unit content **and** the real toolchain version, so a compiler upgrade
-  invalidates stale verdicts (~25× speedup at full reuse on the sample manifest)
+  unit-content hash **and** real toolchain version, with a cold-vs-hit proof that
+  cached verdicts replay the same certificate-bearing verdict layer
+- a deterministic parallel ground-truth harness whose merged, content-hashed
+  verdict layer is independent of worker scheduling
 - a self-contained, offline migration-risk HTML dashboard (`--dashboard`)
 - a performance/scalability study (`make perf`) that times the *real* symbolic
   searches across every class and language pair and characterises the SMT

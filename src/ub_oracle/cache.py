@@ -1,5 +1,5 @@
 """
-Incremental verification cache (100_STEPS step 66).
+Incremental verification cache (100_STEPS steps 66 and 142).
 
 Confirming a divergence is *expensive*: every unit compiles C three ways (plus
 UBSan), compiles the target, and runs all of them.  On a large migration in CI,
@@ -14,7 +14,7 @@ let a stale verdict outlive a change that could invalidate it:
     2. a **toolchain fingerprint** — the real ``clang``/``rustc``/``go``/``swiftc``
        ``--version`` strings — so a compiler upgrade (which can change what UB
        actually does) invalidates every affected entry automatically, and
-    3. the **canonicalised unit** (JSON with sorted keys).
+   3. the **canonicalised unit content hash** (JSON with sorted keys).
   Change any of these and the key changes, forcing a fresh real-compiler run.
 
 * The cache **value** records the deterministic verdict and, for confirmed
@@ -48,7 +48,7 @@ from .report import pair_of, _class_of
 #: change a verdict for an unchanged unit + unchanged toolchain.
 SEMANTICS_VERSION = "2"
 
-CACHE_FORMAT_VERSION = 2
+CACHE_FORMAT_VERSION = 3
 
 #: only these verdicts are deterministic enough to cache safely.
 _CACHEABLE = {
@@ -92,12 +92,23 @@ def canonical_unit(unit: Dict) -> str:
     return json.dumps(unit, sort_keys=True, default=str)
 
 
+def unit_content_hash(unit: Dict) -> str:
+    """Stable SHA-256 over the canonical unit content.
+
+    Step 142's cache contract is intentionally stated in terms of the source/unit
+    hash rather than process-local object identity.  Two dicts with the same
+    semantic content therefore address the same cache entry even if their key
+    insertion order differs.
+    """
+    return hashlib.sha256(canonical_unit(unit).encode("utf-8")).hexdigest()
+
+
 def cache_key(unit: Dict, fingerprint: Dict[str, str]) -> str:
     """Content-addressed key binding unit + toolchain + semantics version."""
     payload = "\u241f".join([
         SEMANTICS_VERSION,
         json.dumps(fingerprint, sort_keys=True),
-        canonical_unit(unit),
+        unit_content_hash(unit),
     ])
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -256,6 +267,154 @@ class IncrementalResult:
             "stored": self.stored,
             "hit_rate": self.hit_rate,
         }
+
+
+def _stable_json_hash(obj: object) -> str:
+    data = json.dumps(obj, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=True, default=str)
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def _normalised_detail(detail: str) -> str:
+    suffix = "  [cached]"
+    while detail.endswith(suffix):
+        detail = detail[:-len(suffix)]
+    return detail
+
+
+def report_signature(unit: Dict, report: VerifyReport) -> Dict[str, object]:
+    """Verdict-layer signature shared by cold and cache-hit reports.
+
+    The cache deliberately rehydrates only the deterministic verdict layer:
+    verdict, pair, class, and the proof-carrying counterexample.  Runtime fields
+    such as ``toolchain_available`` or pre-pass bookkeeping are not part of the
+    persisted cache value and therefore are not part of this equality proof.
+    """
+    cls = None
+    counterexample_hash = None
+    if report.divergence is not None:
+        cls = report.divergence.divergence_class
+        if report.divergence.counterexample is not None:
+            counterexample_hash = _stable_json_hash(
+                report.divergence.counterexample.to_dict())
+    return {
+        "unit_content_hash": unit_content_hash(unit),
+        "unit_name": str(unit.get("name") or unit.get("id") or ""),
+        "verdict": report.verdict.value,
+        "pair": pair_of(report),
+        "divergence_class": cls,
+        "detail": _normalised_detail(report.detail),
+        "counterexample_hash": counterexample_hash,
+    }
+
+
+def report_signature_hash(units: Sequence[Dict],
+                          reports: Sequence[VerifyReport]) -> str:
+    """Stable hash of a sequence of verdict-layer report signatures."""
+    records = [
+        report_signature(unit, report)
+        for unit, report in zip(units, reports)
+    ]
+    return _stable_json_hash({
+        "n_units": len(units),
+        "n_reports": len(reports),
+        "records": records,
+    })
+
+
+@dataclass
+class CacheEquivalenceProof:
+    """Evidence that cache hits replay the same verdict layer as cold runs."""
+
+    ok: bool
+    total: int
+    cacheable: int
+    cold_hits: int
+    cold_misses: int
+    warm_hits: int
+    warm_misses: int
+    cold_signature_hash: str
+    warm_signature_hash: str
+    fingerprint_hash: str
+    mismatches: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "ok": self.ok,
+            "total": self.total,
+            "cacheable": self.cacheable,
+            "cold_hits": self.cold_hits,
+            "cold_misses": self.cold_misses,
+            "warm_hits": self.warm_hits,
+            "warm_misses": self.warm_misses,
+            "cold_signature_hash": self.cold_signature_hash,
+            "warm_signature_hash": self.warm_signature_hash,
+            "fingerprint_hash": self.fingerprint_hash,
+            "mismatches": list(self.mismatches),
+        }
+
+
+def prove_cache_equivalence(
+    units: Sequence[Dict],
+    *,
+    fingerprint: Optional[Dict[str, str]] = None,
+    harness: Optional[ReexecHarness] = None,
+    confirm: bool = True,
+    status: Optional[ToolchainStatus] = None,
+) -> CacheEquivalenceProof:
+    """Cold-run, warm-run, and hash-check the incremental cache contract.
+
+    A valid proof establishes that:
+
+    * a fresh cache has no hits on the cold pass;
+    * every cacheable cold verdict is served as a warm-pass hit under the same
+      unit-content hash and toolchain fingerprint;
+    * the warm-pass verdict-layer signature is byte-identical to the cold pass.
+
+    Non-cacheable verdicts (``CANDIDATE``/``UNKNOWN``) may legitimately miss on
+    the warm pass; they are counted separately rather than treated as failures.
+    """
+    status = status or toolchain_available()
+    fp = fingerprint if fingerprint is not None else toolchain_fingerprint(status)
+    cache = VerificationCache(fingerprint=fp)
+    cold = verify_incremental(
+        units, cache, harness=harness, confirm=confirm, status=status)
+    warm = verify_incremental(
+        units, cache, harness=harness, confirm=confirm, status=status)
+
+    cold_hash = report_signature_hash(units, cold.reports)
+    warm_hash = report_signature_hash(units, warm.reports)
+    cacheable = sum(1 for r in cold.reports if r.verdict in _CACHEABLE)
+
+    mismatches: List[str] = []
+    if cold.hits != 0:
+        mismatches.append(f"fresh cold run had {cold.hits} cache hit(s)")
+    if cold.misses != len(units):
+        mismatches.append(
+            f"fresh cold run had {cold.misses} miss(es) for {len(units)} unit(s)")
+    if warm.hits != cacheable:
+        mismatches.append(
+            f"warm run had {warm.hits} hit(s), expected {cacheable}")
+    expected_warm_misses = len(units) - cacheable
+    if warm.misses != expected_warm_misses:
+        mismatches.append(
+            f"warm run had {warm.misses} miss(es), expected {expected_warm_misses}")
+    if cold_hash != warm_hash:
+        mismatches.append("cold and warm verdict-layer signatures differ")
+
+    return CacheEquivalenceProof(
+        ok=not mismatches,
+        total=len(units),
+        cacheable=cacheable,
+        cold_hits=cold.hits,
+        cold_misses=cold.misses,
+        warm_hits=warm.hits,
+        warm_misses=warm.misses,
+        cold_signature_hash=cold_hash,
+        warm_signature_hash=warm_hash,
+        fingerprint_hash=_stable_json_hash(fp),
+        mismatches=mismatches,
+    )
 
 
 def verify_incremental(units: Sequence[Dict],

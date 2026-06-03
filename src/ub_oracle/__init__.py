@@ -113,6 +113,18 @@ from .traceability import (
     verify_traceability,
     claim_ids,
 )
+from .cache import (
+    CacheEquivalenceProof,
+    prove_cache_equivalence,
+    report_signature_hash,
+    unit_content_hash,
+)
+from .parallel_harness import (
+    ParallelDeterminismProof,
+    ParallelRunReport,
+    run_parallel,
+    confirm_parallel_determinism,
+)
 
 __all__ = [
     "DivergenceClass",
@@ -188,4 +200,12 @@ __all__ = [
     "CLAIMS",
     "verify_traceability",
     "claim_ids",
+    "CacheEquivalenceProof",
+    "prove_cache_equivalence",
+    "report_signature_hash",
+    "unit_content_hash",
+    "ParallelDeterminismProof",
+    "ParallelRunReport",
+    "run_parallel",
+    "confirm_parallel_determinism",
 ]

@@ -167,7 +167,10 @@ length-prefixed and Lean-proved injective, so canonicalization itself cannot mer
 distinct verdict payloads before SHA-256.  An offline checker validates the
 certificate before a Lake-built checker re-validates the final
 \texttt{oracle\_sound} inference.  The artifact regenerates every headline number from content-hashed
-real-compiler runs, including a migration-scale corpus of \textbf{60{,}000}
+real-compiler runs, with an incremental cache whose warm hits are proved
+verdict-layer identical to cold compiler runs and a deterministic process-pool
+harness whose merged hash is independent of worker scheduling.  This includes a
+migration-scale corpus of \textbf{60{,}000}
 all-distinct C$\to$\{Rust,Go\} programs totaling \textbf{1{,}044{,}000 LOC}:
 the census proves every program hash unique and the labels balanced within
 1.33\%, while a seeded live sample (12/12 agreement, hash
@@ -777,7 +780,12 @@ now serializes a \emph{proof certificate}: canonical JSON binds the certificate
 to the source/target snippets, concrete inputs, observed replay transcript, and
 confirmed bit; a typed, length-prefixed verdict-layer preimage binds the recorded
 \(P\wedge T\wedge C\) observation, theorem name, issuer, and counterexample hash;
-and cache hits rehydrate the same certificate rather than a bare verdict.
+and cache hits rehydrate the same certificate rather than a bare verdict.  The
+cache key is content addressed by the canonical unit hash, the real toolchain
+fingerprint, and the semantics version; the executable
+\texttt{prove\_cache\_equivalence} check cold-runs a fresh cache, warm-runs the
+same units, and requires the normalized verdict/counterexample signature hashes
+to match exactly.
 \texttt{formal/HashStability.lean} proves this verdict canonicalization
 injective: two distinct verdict payloads cannot produce the same canonical
 preimage, so equality of final certificate hashes is reduced to SHA-256 rather
@@ -1030,7 +1038,12 @@ Verdict-layer hash prefix & \texttt{5ec6c935c7b0} \\
 The live part remains honest about cost: CI executes a deterministic seeded
 sample rather than compiling one million LOC on every run, and records
 \texttt{available=false} instead of inventing evidence when a toolchain is
-missing.  On the current full toolchain, \texttt{make large-scale} confirms
+missing.  The same ground-truth labeler can now run through
+\texttt{parallel\_harness.run\_parallel}: workers complete in any order, but the
+merged output is restored to the input sequence and the paper hash is computed
+only over the deterministic verdict layer.  The proof harness replays the same
+real items at multiple worker counts and requires byte-identical verdict layers.
+On the current full toolchain, \texttt{make large-scale} confirms
 7 divergent and 5 equivalent sampled items with 12/12 observed labels matching
 the declared ground truth.
 
