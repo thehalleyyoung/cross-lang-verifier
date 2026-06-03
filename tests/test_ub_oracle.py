@@ -5187,8 +5187,8 @@ def test_ecosystem_v1_api_surface_intact():
         assert name in exported, name
 
 
-def test_ecosystem_generates_cargo_shim_and_snapshot():
-    shim, snap = _eco.generate_artifacts()
+def test_ecosystem_generates_cargo_shim_and_snapshot(tmp_path):
+    shim, snap = _eco.generate_artifacts(tmp_path)
     assert shim.exists() and (shim.stat().st_mode & 0o111)
     assert shim.read_text().startswith("#!/usr/bin/env bash")
     import json as _json
@@ -5197,9 +5197,22 @@ def test_ecosystem_generates_cargo_shim_and_snapshot():
     assert set(data["symbols"]) == set(_eco.PUBLIC_API_V1)
 
 
+def test_ecosystem_api_snapshot_is_fresh():
+    ok, detail = _eco.api_snapshot_fresh()
+    assert ok, detail
+
+
+def test_ecosystem_api_snapshot_freshness_catches_stale_file(tmp_path):
+    stale = tmp_path / "api_surface_v1.json"
+    stale.write_text("{}\n", encoding="utf-8")
+    ok, detail = _eco.api_snapshot_fresh(stale)
+    assert not ok
+    assert "stale" in detail
+
+
 def test_ecosystem_cargo_subcommand_matches_library():
     rep = _eco.confirm_ecosystem()
-    assert rep.api_ok and rep.shim_syntax_ok, rep.checks
+    assert rep.api_ok and rep.api_snapshot_ok and rep.shim_syntax_ok, rep.checks
     assert rep.shim_ran and rep.shim_matches_library, rep.checks
     assert rep.ok
 

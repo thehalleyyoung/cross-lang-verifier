@@ -156,14 +156,32 @@ def _current_surface() -> Dict[str, object]:
     }
 
 
-def generate_artifacts() -> Tuple[Path, Path]:
-    _INTEGRATIONS.mkdir(parents=True, exist_ok=True)
-    _CARGO_SHIM.write_text(_CARGO_SHIM_BODY)
-    os.chmod(_CARGO_SHIM, 0o755)
-    _API_SNAPSHOT.write_text(
-        json.dumps(_current_surface(), indent=2, sort_keys=True) + "\n"
-    )
-    return _CARGO_SHIM, _API_SNAPSHOT
+def _surface_text() -> str:
+    return json.dumps(_current_surface(), indent=2, sort_keys=True) + "\n"
+
+
+def generate_artifacts(integrations_dir: Path = _INTEGRATIONS) -> Tuple[Path, Path]:
+    integrations_dir.mkdir(parents=True, exist_ok=True)
+    cargo_shim = integrations_dir / "cargo-cross-lang-verify"
+    api_snapshot = integrations_dir / "api_surface_v1.json"
+    cargo_shim.write_text(_CARGO_SHIM_BODY, encoding="utf-8")
+    os.chmod(cargo_shim, 0o755)
+    api_snapshot.write_text(_surface_text(), encoding="utf-8")
+    return cargo_shim, api_snapshot
+
+
+def api_snapshot_fresh(path: Path = _API_SNAPSHOT) -> Tuple[bool, str]:
+    """Read-only guard that the committed v1 API snapshot is up to date."""
+    expected = _surface_text()
+    if not path.exists():
+        return False, f"{path} is missing"
+    actual = path.read_text(encoding="utf-8")
+    if actual != expected:
+        return False, (
+            f"{path} is stale; regenerate with "
+            "python -m src.ub_oracle.ecosystem"
+        )
+    return True, "OK"
 
 
 # --------------------------------------------------------------------------
@@ -173,6 +191,7 @@ def generate_artifacts() -> Tuple[Path, Path]:
 class EcosystemReport:
     ok: bool
     api_ok: bool
+    api_snapshot_ok: bool
     missing_symbols: Tuple[str, ...]
     shim_syntax_ok: bool
     shim_ran: bool
@@ -200,11 +219,12 @@ def confirm_ecosystem() -> EcosystemReport:
     * the `cargo cross-lang-verify` shim is valid shell, runs end-to-end against
       a real manifest, and emits JSON identical to the in-process library.
     """
-    generate_artifacts()
     checks: List[str] = []
 
     api_ok, missing = _confirm_api()
     checks.append(f"api: {len(PUBLIC_API_V1)} v1 symbols, missing={missing}")
+    api_snapshot_ok, snapshot_detail = api_snapshot_fresh()
+    checks.append(f"api snapshot: {snapshot_detail}")
 
     # 1. shim is valid bash (static syntax check).
     syntax = subprocess.run(
@@ -243,10 +263,12 @@ def confirm_ecosystem() -> EcosystemReport:
     except Exception as exc:  # pragma: no cover - environment dependent
         checks.append(f"shim error: {exc!r}")
 
-    ok = bool(api_ok and shim_syntax_ok and shim_ran and shim_matches)
+    ok = bool(api_ok and api_snapshot_ok and shim_syntax_ok and shim_ran
+              and shim_matches)
     return EcosystemReport(
         ok=ok,
         api_ok=api_ok,
+        api_snapshot_ok=api_snapshot_ok,
         missing_symbols=tuple(missing),
         shim_syntax_ok=shim_syntax_ok,
         shim_ran=shim_ran,

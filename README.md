@@ -499,8 +499,9 @@ python3 -m src.cli.main discover \
 - a **stable v1 public API + SemVer guard** and a **`cargo` subcommand**
   (`ecosystem.py`, `integrations/`): `PUBLIC_API_V1` is the committed surface;
   `confirm_ecosystem()` mechanically catches any removed/renamed export (a
-  breaking change) and runs the shipped `cargo cross-lang-verify` shim
-  end-to-end, requiring its JSON to be byte-identical to the in-process library
+  breaking change), `make ecosystem-check` rejects stale API snapshots, and the
+  shipped `cargo cross-lang-verify` shim runs end-to-end with JSON byte-identical
+  to the in-process library
 - a **claims audit** that tightens docs to exactly what's proven
   (`claims_audit.py`): every named `C->target` language must be a registered
   pair with a real oracle, the general framing must clear the **≥2-working-pairs**
