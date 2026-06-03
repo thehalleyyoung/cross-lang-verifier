@@ -150,7 +150,11 @@ byte-compares the regenerated machine output with the checked-in Rust, compiles
 the source and generated artifacts with \texttt{clang}/\texttt{rustc}, and checks
 the generated Rust artifacts against the verifier; a GitHub-mined C$\to$Rust port
 sample ranks public port/rewrite repositories and byte-checks verifier-backed
-extraction units from three project families. A frozen current-LLM transpiler
+extraction units from three project families; the new responsible-finding lane
+then takes the \texttt{uutils/coreutils}-family extraction, wraps the checked-in
+C/Rust functions, and confirms a signed-overflow witness against live
+\texttt{clang}/UBSan+\texttt{rustc} while explicitly gating any upstream-defect
+claim on source audit. A frozen current-LLM transpiler
 study adds \textbf{216} GitHub-Copilot-CLI/GPT-5.5 C$\to$Rust translations over
 the same 12 real-library extraction families; its default live sample is labeled
 only by \texttt{clang}/UBSan+\texttt{rustc} and reports precision and recall
@@ -971,7 +975,8 @@ All experiments run on a laptop
     check?
   \item[\textbf{RQ12}] Does the artifact exercise actual c2rust machine output,
     rather than hand-written c2rust-style translations, and can it connect that
-    pipeline to public GitHub C$\to$Rust port families?
+    pipeline to public GitHub C$\to$Rust port families without overclaiming
+    upstream defects?
 \end{enumerate}
 
 \subsection{UB-Invisible Benchmark (RQ1)}\label{sec:eval-ub}
@@ -1167,6 +1172,23 @@ source hashes, verifier verdicts, and pre-pass result in
 \texttt{experiments/github\_ports/results.json}. A separate skip-gated test
 compiles every sample as real C/Rust code and confirms a divergent sample against
 live \texttt{clang}/UBSan+\texttt{rustc} when those toolchains are present.
+
+Step~160 adds a deliberately evidence-tiered finding layer on top of that miner
+(\texttt{src/ub\_oracle/divergence\_findings.py}).  The first record,
+\texttt{CLV-DIV-0001}, uses the actively maintained
+\texttt{uutils/coreutils} family (same-day GitHub push snapshot, non-archived),
+wraps the checked-in \texttt{coreutils\_size\_accumulate} C and Rust extraction
+units with tiny argv drivers, and confirms the witness
+\texttt{bytes=2147479552}: the C side traps under UBSan for signed overflow while
+the Rust side's \texttt{wrapping\_add(4096)} returns one deterministic value; the
+safe control \texttt{bytes=0} stays silent.  \texttt{make real-bug-check}
+re-runs only this focused evidence path, byte-checks
+\texttt{experiments/github\_ports/divergence\_findings.json}, validates the
+maintainer-facing \texttt{docs/divergence\_findings.md}, and executes the
+self-contained reproduction bundle \texttt{docs/repro/CLV-DIV-0001.sh}.  The page
+is intentionally phrased as a \emph{confirmed extraction-unit finding} and a
+coordinated-disclosure draft, not as an upstream CVE: the repository-defect claim
+is gated on auditing the live upstream source for the same pattern.
 
 \paragraph{Frozen current-LLM transpiler study.}
 Because LLM-translated ports are the fastest-growing migration path, the artifact
@@ -1920,10 +1942,12 @@ pipeline completes, the formal guarantees hold.  We view
 covers broad program behavior but misses UB divergences by design;
 \textsc{SemRec} catches exactly the bugs that testing cannot.
 
-The tool is open-source, passes the targeted real-compiler regression suite, and is under active
-development.  Future work includes interprocedural verification,
-struct/enum lowering, and integration with C2Rust for automated
-post-migration verification.
+The tool is open-source, passes the targeted real-compiler regression suite, and
+now includes a responsible finding lane that turns mined-port extraction units
+into live compiler-confirmed, maintainer-ready bundles while preserving the
+boundary between a confirmed semantic pattern and an upstream defect claim.
+Future work includes interprocedural verification, deeper struct/enum lowering,
+and automated upstream-source audits for the findings queue.
 
 
 %% ======================================================================

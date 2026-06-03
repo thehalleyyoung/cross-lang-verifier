@@ -317,6 +317,14 @@ def _evidence_items() -> Tuple[EvidenceItem, ...]:
             "Maintainer-facing disclosure records and reproductions.",
         ),
         EvidenceItem(
+            "divergence-findings",
+            "Evidence-tiered divergence findings",
+            "docs/divergence_findings.md",
+            "security",
+            "python -m src.ub_oracle.divergence_findings",
+            "Compiler-confirmed extraction-unit findings with upstream-claim boundaries.",
+        ),
+        EvidenceItem(
             "zoo",
             "Divergence zoo",
             "docs/zoo.md",

@@ -163,7 +163,9 @@ python3 -m src.cli.main discover \
   verdict layer is byte-reproducible
 - a **GitHub-mined C→Rust port sample** (`make github-port-mining-check`) that
   ranks public port/rewrite repos, verifies extraction units from three mined
-  project families, and byte-checks the symbolic verdict layer
+  project families, byte-checks the symbolic verdict layer, and now feeds a
+  responsible, compiler-confirmed extraction-unit findings lane
+  (`make real-bug-check`) that keeps upstream-defect claims gated on source audit
 - a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against

@@ -1,0 +1,43 @@
+{
+  "content_hash": "05970d6267360a046d1ebb01591bb674fda90798d602b0403074977744b1c31a",
+  "evidence_policy": "Confirmed extraction-unit divergences are maintainer-ready findings, not upstream CVEs or repository-defect claims until source audit confirms the same pattern in the upstream project.",
+  "findings": [
+    {
+      "c_file": "experiments/github_ports/samples/coreutils_size_accumulate.c",
+      "c_sha256": "300fb32daa3d1c8996c2e16ce6bee5ded4719141e16b00100179213698a194fd",
+      "candidate_repo": "uutils/coreutils",
+      "candidate_url": "https://github.com/uutils/coreutils",
+      "disclosure_status": "maintainer-ready coordinated-disclosure draft generated; send only after auditing the upstream source for the same pattern",
+      "divergence_class": "signed_overflow",
+      "evidence_tier": "confirmed extraction-unit finding",
+      "finding_id": "CLV-DIV-0001",
+      "maintenance_snapshot": {
+        "active_evidence": "GitHub reported a same-day push and update when this finding was prepared; the repository was not archived.",
+        "archived": false,
+        "checked_at_utc": "2026-06-03T10:11:01Z",
+        "pushed_at": "2026-06-03T08:05:36Z",
+        "source": "gh repo view snapshot",
+        "source_command": "gh repo view uutils/coreutils --json nameWithOwner,pushedAt,updatedAt,isArchived,stargazerCount,url,description",
+        "stars": 23377,
+        "updated_at": "2026-06-03T09:44:48Z"
+      },
+      "note": "Symbolic signed-overflow witness; real compiler confirmation is optional.",
+      "remediation": "Accumulate byte counts in an unsigned or widened type, or guard the maximum representable value before translating to wrapping target arithmetic.",
+      "rust_file": "experiments/github_ports/samples/coreutils_size_accumulate.rs",
+      "rust_sha256": "c6ceb0fa4fa7087b5f90f706aba9a64feb7548ccf5dec1eb3dca1514248d560a",
+      "safe_input": [
+        "0"
+      ],
+      "sample_id": "coreutils-size-accumulate",
+      "source_family": "GNU coreutils size/accounting arithmetic",
+      "target_lang": "rust",
+      "upstream_status": "upstream-instance source audit pending; this record must not be cited as an upstream uutils/coreutils CVE or confirmed repository defect",
+      "witness_input": [
+        "2147479552"
+      ]
+    }
+  ],
+  "n_confirmed_extraction_unit_findings": 1,
+  "n_findings": 1,
+  "schema": "divergence-findings/v1"
+}
