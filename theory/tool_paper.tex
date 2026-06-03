@@ -152,8 +152,10 @@ repairs compile and run clean. We give a mechanized-friendly soundness developme
 bounded-completeness boundary, Lean-checked class lemmas for strict-aliasing
 optimizer-exploitation and pointer-provenance trap-vs-defined witnesses, and an
 end-to-end theorem that counterexample packaging preserves the raw product-run
-witness) and an artifact in which every headline number is regenerated from
-content-hashed real-compiler runs.
+witness), plus a Lake-built checker that re-validates each source-UB positive
+verdict's final inference from the raw re-execution facts, and an artifact in
+which every headline number is regenerated from content-hashed real-compiler
+runs.
 \end{abstract}
 
 
@@ -680,6 +682,19 @@ but forms an out-of-provenance pointer, UBSan traps on that concrete run, and th
 target keeps a checked index and returns deterministically.  In the
 recorded-observable abstraction, that trap versus defined target outcome is
 exactly the product-program consequence.
+
+Step~129 turns this mechanization into an executable artifact.  The repository
+pins Lean 4.14, builds \texttt{formal/VerifiedChecker.lean} with
+\texttt{lake build verified-checker}, and exposes it through
+\texttt{cross-lang-verify --verified-check}. The checker imports
+\texttt{ProductSoundness}, calls the proved \texttt{productViolated} predicate
+directly, and rejects a claimed source-UB \textsc{Divergent} verdict unless the
+raw re-execution facts satisfy \(P \wedge T \wedge C\). Its compile-time theorem
+guard is exactly \texttt{oracle\_sound}; removing or renaming the theorem breaks
+the Lake build. This does not replace compiler re-execution---the facts still
+come from \texttt{clang}/\texttt{rustc}/runtime runs---and it is deliberately not
+applied to safe$\to$safe defined-divergence reports, but it prevents the final
+UB-rooted positive-claim inference from drifting away from the Lean theorem.
 
 
 %% ======================================================================

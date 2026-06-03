@@ -8,7 +8,8 @@
 #   1. `import ub_oracle` resolves to the INSTALLED top-level package.
 #   2. both console scripts (`cross-lang-verify`, `cross-lang-verifier`) exist.
 #   3. `--no-confirm` is a portable smoke test: exit 0, symbolic CANDIDATEs.
-#   4. the default (ground-truth) run catches real DIVERGENCEs and exits 1 — the
+#   4. the optional Lean/Lake verified-checker can build from installed formal data.
+#   5. the default (ground-truth) run catches real DIVERGENCEs and exits 1 — the
 #      CI gate — *iff* a C+UBSan+Rust toolchain is present (gated, not assumed).
 #
 # Exit 0 == packaging works.
@@ -23,12 +24,12 @@ unset PYTHONPATH
 PYTHON="${PYTHON:-python3}"
 MANIFEST="$REPO/examples/units_manifest.json"
 
-echo "==> [1/5] building wheel"
+echo "==> [1/6] building wheel"
 "$PYTHON" -m pip wheel "$REPO" --no-deps -w "$WORK/dist" >/dev/null
 WHEEL="$(ls "$WORK"/dist/cross_lang_verifier-*.whl)"
 echo "    built $(basename "$WHEEL")"
 
-echo "==> [2/5] creating fresh venv and installing the wheel"
+echo "==> [2/6] creating fresh venv and installing the wheel"
 "$PYTHON" -m venv "$WORK/venv"
 VPY="$WORK/venv/bin/python"
 VBIN="$WORK/venv/bin"
@@ -39,20 +40,33 @@ VBIN="$WORK/venv/bin"
 # resolve to the installed package, never the ./src checkout.
 cd "$WORK"
 
-echo "==> [3/5] importing the INSTALLED top-level package"
+echo "==> [3/6] importing the INSTALLED top-level package"
 "$VPY" -c "import ub_oracle, ub_oracle.cli, ub_oracle.regression_matrix; \
 print('    import ub_oracle OK ->', ub_oracle.__file__)"
 test -x "$VBIN/cross-lang-verify"   || { echo "ERROR: missing cross-lang-verify script" >&2; exit 1; }
 test -x "$VBIN/cross-lang-verifier" || { echo "ERROR: missing cross-lang-verifier script" >&2; exit 1; }
 echo "    both console scripts present"
 
-echo "==> [4/5] portable smoke test (--no-confirm: expect exit 0, CANDIDATE)"
+echo "==> [4/6] portable smoke test (--no-confirm: expect exit 0, CANDIDATE)"
 out="$("$VBIN/cross-lang-verify" --units "$MANIFEST" --no-confirm)"; rc=0
 echo "$out" | grep -q "CANDIDATE" || { echo "ERROR: expected CANDIDATE verdicts" >&2; exit 1; }
 echo "$out" | grep -q "DIVERGENT" && { echo "ERROR: --no-confirm must not report DIVERGENT" >&2; exit 1; }
 echo "    smoke test OK (symbolic CANDIDATEs, no confirmed divergence)"
 
-echo "==> [5/5] ground-truth run against real compilers (gated on toolchain)"
+echo "==> [5/6] installed verified-checker artifact (gated on Lean/Lake)"
+if command -v lake >/dev/null 2>&1 && command -v clang >/dev/null 2>&1 && command -v rustc >/dev/null 2>&1; then
+  out="$("$VBIN/cross-lang-verify" --units "$MANIFEST" --verified-check --fail-on unknown)"
+  echo "$out" | grep -q "verified-check: accepted" || {
+    echo "ERROR: expected installed --verified-check to build and accept" >&2
+    echo "$out" >&2
+    exit 1
+  }
+  echo "    installed verified-check path OK"
+else
+  echo "    SKIPPED: needs lake + clang/rustc (portable packaging checks still passed)"
+fi
+
+echo "==> [6/6] ground-truth run against real compilers (gated on toolchain)"
 have_tools=1
 command -v clang  >/dev/null 2>&1 || have_tools=0
 command -v rustc  >/dev/null 2>&1 || have_tools=0

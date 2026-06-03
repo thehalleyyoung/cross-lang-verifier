@@ -358,14 +358,11 @@ python3 -m src.cli.main discover \
   "we earn the badges" is itself an entry in the traceability matrix (see
   `docs/ARTIFACT.md`)
 - a **machine-checked soundness proof** (`formal/ProductSoundness.lean`,
-  driver `mechanized_soundness.py`): the product-program decision procedure's
-  core guarantees — soundness (no false alarms), relative completeness,
-  counterexamples rooted in source UB, equivalent pairs never flagged, and
-  end-to-end counterexample packaging preserving the raw run witness — are
-  proven in **Lean 4** for a language-pair-parametric calculus instantiated to
-  C→Rust, now including class-specific strict-aliasing and pointer-provenance
-  theorems; the real Lean kernel is invoked to confirm them (see
-  `docs/MECHANIZED_SOUNDNESS.md`)
+  `make verified-check`, `cross-lang-verify --verified-check`): Lean 4 proves
+  the product-program guarantees — no false alarms, UB-rooted counterexamples,
+  equivalent pairs never flagged, and witness-preserving packaging — then Lake
+  builds a tiny checker that re-validates each source-UB positive verdict's final
+  inference from the real re-execution facts (see `docs/MECHANIZED_SOUNDNESS.md`)
 - a **Tier-2 idiomatic anchor corpus** (`idiomatic_corpus.py`): realistic,
   value-carrying ported functions — the binary-search **midpoint `(lo+hi)/2`**
   overflow bug, a packed-struct bit-field shift, a coreutils-style rate divide,

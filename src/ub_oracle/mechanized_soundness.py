@@ -52,11 +52,32 @@ import hashlib
 import os
 import shutil
 import subprocess
-from dataclasses import dataclass, field
+import sys
+from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
-_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+def _find_artifact_root() -> str:
+    source_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    candidates = [
+        source_root,
+        os.getcwd(),
+        sys.prefix,
+        getattr(sys, "base_prefix", sys.prefix),
+    ]
+    for cand in candidates:
+        if os.path.exists(os.path.join(cand, "formal", "ProductSoundness.lean")):
+            return cand
+    return source_root
+
+
+_ROOT = _find_artifact_root()
+FORMAL_DIR = os.path.join(_ROOT, "formal")
 LEAN_SOURCE = os.path.join("formal", "ProductSoundness.lean")
+CHECKER_SOURCE = os.path.join("formal", "VerifiedChecker.lean")
+LAKEFILE = os.path.join("formal", "lakefile.lean")
+VERIFIED_CHECKER_TARGET = "verified-checker"
+VERIFIED_CHECKER_BINARY = os.path.join(
+    FORMAL_DIR, ".lake", "build", "bin", VERIFIED_CHECKER_TARGET)
 
 REQUIRED_THEOREMS: Tuple[str, ...] = (
     "oracle_sound",
@@ -85,6 +106,14 @@ def _lean_binary() -> Optional[str]:
         return found
     # elan default install location.
     cand = os.path.expanduser("~/.elan/bin/lean")
+    return cand if os.path.exists(cand) else None
+
+
+def _lake_binary() -> Optional[str]:
+    found = shutil.which("lake")
+    if found:
+        return found
+    cand = os.path.expanduser("~/.elan/bin/lake")
     return cand if os.path.exists(cand) else None
 
 
@@ -122,12 +151,65 @@ class MechanizedReport:
         return self.ok and self.available and self.kernel_accepted is True
 
 
+@dataclass
+class VerifiedCheckerBuild:
+    available: bool
+    source_present: bool
+    lakefile_present: bool
+    built: bool
+    binary: str
+    source_hash: str
+    exit_code: Optional[int] = None
+    stdout_tail: str = ""
+    stderr_tail: str = ""
+
+    @property
+    def ok(self) -> bool:
+        return (
+            self.available
+            and self.source_present
+            and self.lakefile_present
+            and self.built
+            and os.path.exists(self.binary)
+        )
+
+
+@dataclass
+class VerifiedCheckResult:
+    available: bool
+    accepted: bool
+    verdict: str
+    ub_reached: bool
+    target_defined: bool
+    consequence: bool
+    exit_code: Optional[int] = None
+    stdout: str = ""
+    stderr: str = ""
+    build: Optional[VerifiedCheckerBuild] = None
+
+    @property
+    def ok(self) -> bool:
+        return self.available and self.accepted and self.exit_code == 0
+
+
 def _read_source() -> Optional[str]:
     try:
         with open(os.path.join(_ROOT, LEAN_SOURCE), "r") as f:
             return f.read()
     except OSError:
         return None
+
+
+def _read_checker_source() -> Optional[str]:
+    try:
+        with open(os.path.join(_ROOT, CHECKER_SOURCE), "r") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def _tail(text: str, n: int = 10) -> str:
+    return "\n".join((text or "").strip().splitlines()[-n:])
 
 
 def confirm_mechanized_soundness(timeout: int = 300) -> MechanizedReport:
@@ -164,6 +246,141 @@ def confirm_mechanized_soundness(timeout: int = 300) -> MechanizedReport:
         source_hash=src_hash, stderr_tail="\n".join(tail))
 
 
+def build_verified_checker(timeout: int = 300) -> VerifiedCheckerBuild:
+    """Build the Lean-extracted verdict checker with Lake.
+
+    This is the Step-129 extraction boundary: Lake compiles the checker from
+    ``formal/VerifiedChecker.lean``, which imports the kernel-checked
+    ``ProductSoundness`` definitions and fails to build if ``productViolated`` or
+    ``oracle_sound`` disappears.
+    """
+    checker_src = _read_checker_source()
+    lakefile = os.path.join(_ROOT, LAKEFILE)
+    src_hash = hashlib.sha256(checker_src.encode()).hexdigest() if checker_src else ""
+    source_present = checker_src is not None
+    lakefile_present = os.path.exists(lakefile)
+    lake = _lake_binary()
+    if lake is None or not source_present or not lakefile_present:
+        return VerifiedCheckerBuild(
+            available=lake is not None,
+            source_present=source_present,
+            lakefile_present=lakefile_present,
+            built=False,
+            binary=VERIFIED_CHECKER_BINARY,
+            source_hash=src_hash,
+        )
+
+    try:
+        proc = subprocess.run(
+            [lake, "build", VERIFIED_CHECKER_TARGET],
+            cwd=FORMAL_DIR,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return VerifiedCheckerBuild(
+            available=True,
+            source_present=True,
+            lakefile_present=True,
+            built=proc.returncode == 0 and os.path.exists(VERIFIED_CHECKER_BINARY),
+            binary=VERIFIED_CHECKER_BINARY,
+            source_hash=src_hash,
+            exit_code=proc.returncode,
+            stdout_tail=_tail(proc.stdout),
+            stderr_tail=_tail(proc.stderr),
+        )
+    except (subprocess.TimeoutExpired, OSError) as e:  # pragma: no cover
+        return VerifiedCheckerBuild(
+            available=True,
+            source_present=True,
+            lakefile_present=True,
+            built=False,
+            binary=VERIFIED_CHECKER_BINARY,
+            source_hash=src_hash,
+            stderr_tail=f"lake invocation failed: {e}",
+        )
+
+
+def run_verified_checker(
+    verdict: str,
+    ub_reached: bool,
+    target_defined: bool,
+    consequence: bool,
+    *,
+    build: bool = True,
+    timeout: int = 300,
+) -> VerifiedCheckResult:
+    """Run the extracted checker on the recorded-observable verdict facts.
+
+    The checker verifies only the final source-UB positive-claim inference.  The
+    run facts themselves still come from the real compiler re-execution harness.
+    """
+    build_report: Optional[VerifiedCheckerBuild] = None
+    if build:
+        build_report = build_verified_checker(timeout=timeout)
+        if not build_report.ok:
+            return VerifiedCheckResult(
+                available=False,
+                accepted=False,
+                verdict=verdict,
+                ub_reached=ub_reached,
+                target_defined=target_defined,
+                consequence=consequence,
+                build=build_report,
+                stderr=build_report.stderr_tail,
+            )
+    elif not os.path.exists(VERIFIED_CHECKER_BINARY):
+        return VerifiedCheckResult(
+            available=False,
+            accepted=False,
+            verdict=verdict,
+            ub_reached=ub_reached,
+            target_defined=target_defined,
+            consequence=consequence,
+            stderr=f"missing checker binary: {VERIFIED_CHECKER_BINARY}",
+        )
+
+    argv = [
+        VERIFIED_CHECKER_BINARY,
+        "--verdict", verdict,
+        "--ub", str(bool(ub_reached)).lower(),
+        "--target-defined", str(bool(target_defined)).lower(),
+        "--consequence", str(bool(consequence)).lower(),
+    ]
+    try:
+        proc = subprocess.run(
+            argv,
+            cwd=FORMAL_DIR,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except (subprocess.TimeoutExpired, OSError) as e:  # pragma: no cover
+        return VerifiedCheckResult(
+            available=False,
+            accepted=False,
+            verdict=verdict,
+            ub_reached=ub_reached,
+            target_defined=target_defined,
+            consequence=consequence,
+            build=build_report,
+            stderr=f"verified-checker invocation failed: {e}",
+        )
+
+    return VerifiedCheckResult(
+        available=True,
+        accepted=proc.returncode == 0,
+        verdict=verdict,
+        ub_reached=ub_reached,
+        target_defined=target_defined,
+        consequence=consequence,
+        exit_code=proc.returncode,
+        stdout=proc.stdout.strip(),
+        stderr=proc.stderr.strip(),
+        build=build_report,
+    )
+
+
 def render(rep: MechanizedReport) -> str:
     lines = ["mechanized soundness (Lean 4):"]
     lines.append(f"  source: {LEAN_SOURCE} "
@@ -184,14 +401,37 @@ def render(rep: MechanizedReport) -> str:
     return "\n".join(lines)
 
 
+def render_verified_checker_build(rep: VerifiedCheckerBuild) -> str:
+    lines = ["verified checker (Lean/Lake):"]
+    lines.append(f"  source: {CHECKER_SOURCE} "
+                 f"({'present' if rep.source_present else 'MISSING'}) "
+                 f"hash={rep.source_hash[:16]}")
+    lines.append(f"  lakefile: {LAKEFILE} "
+                 f"({'present' if rep.lakefile_present else 'MISSING'})")
+    lines.append(f"  Lake: {'available' if rep.available else 'not installed'}")
+    if rep.exit_code is not None:
+        lines.append(f"  lake build {VERIFIED_CHECKER_TARGET}: "
+                     f"{'PASSED' if rep.built else 'FAILED'} "
+                     f"(exit={rep.exit_code})")
+    if not rep.built and rep.stderr_tail:
+        lines.append(f"    {rep.stderr_tail}")
+    lines.append(f"  => {'PASSED' if rep.ok else 'FAILED'}")
+    return "\n".join(lines)
+
+
 MECHANIZED_SOUNDNESS_SPI = {
     "confirm_mechanized_soundness": confirm_mechanized_soundness,
     "render": render,
+    "build_verified_checker": build_verified_checker,
+    "run_verified_checker": run_verified_checker,
+    "render_verified_checker_build": render_verified_checker_build,
     "REQUIRED_THEOREMS": REQUIRED_THEOREMS,
     "LEAN_SOURCE": LEAN_SOURCE,
+    "CHECKER_SOURCE": CHECKER_SOURCE,
 }
 
 
 if __name__ == "__main__":  # pragma: no cover
     rep = confirm_mechanized_soundness()
     print(render(rep))
+    print(render_verified_checker_build(build_verified_checker()))

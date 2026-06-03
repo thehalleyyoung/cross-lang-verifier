@@ -15,6 +15,9 @@ target/
 
 # Local strategy roadmap (intentionally untracked)
 100_STEPS.md
+# Lean/Lake build artifacts
+.lake/
+**/.lake/
 # Python cache
 __pycache__/
 *.pyc

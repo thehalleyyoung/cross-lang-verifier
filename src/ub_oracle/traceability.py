@@ -665,9 +665,14 @@ def _thm_mechanized_soundness() -> bool:
     # language-pair-parametric calculus instantiated to C->Rust. When Lean is
     # absent we require only that the source declares every theorem
     # (consistency-only); when present the kernel must accept the development.
+    # When Lake is present, the extracted verdict checker must also build.
     from . import mechanized_soundness as m
     rep = m.confirm_mechanized_soundness()
-    return bool(rep.ok)
+    if not rep.ok:
+        return False
+    if m._lake_binary() is None:
+        return True
+    return bool(m.build_verified_checker().ok)
 
 
 def _thm_idiomatic_corpus() -> bool:
@@ -1704,11 +1709,17 @@ CLAIMS: List[Claim] = [
         "families for strict-aliasing optimizer-exploitation and "
         "pointer-provenance `trap_vs_defined` witnesses. "
         "`ub_oracle.mechanized_soundness` runs the real `lean` binary and "
-        "confirms the kernel accepts the required theorem set; with Lean absent it "
-        "degrades to a consistency-only check that every theorem is still "
-        "declared (never claiming an unrun proof).",
+        "confirms the kernel accepts the required theorem set; Step 129 also "
+        "builds `formal/VerifiedChecker.lean` with Lake, producing a tiny "
+        "checker that re-validates each source-UB positive verdict's final "
+        "inference from raw re-execution facts via "
+        "`productViolated`/`oracle_sound`. With Lean "
+        "or Lake absent it degrades only to consistency checks and never claims an "
+        "unrun proof.",
         "ub_oracle.mechanized_soundness",
-        ("confirm_mechanized_soundness", "REQUIRED_THEOREMS", "LEAN_SOURCE"),
+        ("confirm_mechanized_soundness", "build_verified_checker",
+         "run_verified_checker", "REQUIRED_THEOREMS", "LEAN_SOURCE",
+         "CHECKER_SOURCE"),
         theorem=_thm_mechanized_soundness,
         docs=("README.md", "docs/MECHANIZED_SOUNDNESS.md"),
     ),

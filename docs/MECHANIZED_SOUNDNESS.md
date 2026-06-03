@@ -15,6 +15,22 @@ lean formal/ProductSoundness.lean      # exit 0  ==  kernel accepted
 type-checks every theorem with the kernel. `src/ub_oracle/mechanized_soundness.py`
 runs exactly this and reports whether the kernel accepted the proof.
 
+Step 129 adds an extracted checker artifact without moving the proof: Lake builds
+`formal/VerifiedChecker.lean`, which imports `ProductSoundness`, calls the proven
+`productViolated` definition directly, and has compile-time theorem guards tied to
+`oracle_sound`.
+
+```
+make verified-check
+cross-lang-verify --units examples/readme_demo_units.json --verified-check --fail-on unknown
+```
+
+The checker validates the **final source-UB positive-claim inference** from
+trusted re-execution facts (`ubReached`, `tgtDefined`, `consequence`) to a
+UB-rooted divergence. It does not replace compiler re-execution and it is not
+applied to safe→safe defined-divergence claims; it prevents the last UB-rooted
+verdict step from drifting away from the Lean theorem.
+
 ## What is proven
 
 The proof works over the **recorded-observable abstraction** the oracle actually
@@ -100,4 +116,12 @@ rep = confirm_mechanized_soundness()
 assert rep.ok
 assert rep.fully_checked          # True when the Lean kernel actually ran
 print(rep.theorems_present)       # all required theorems, including class extensions
+```
+
+```python
+from ub_oracle.mechanized_soundness import build_verified_checker, run_verified_checker
+build = build_verified_checker()
+assert build.ok
+assert run_verified_checker("divergent", True, True, True, build=False).ok
+assert not run_verified_checker("divergent", False, True, True, build=False).accepted
 ```

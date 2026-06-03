@@ -26,6 +26,11 @@ jobs:
       - name: Ensure clang + UBSan
         run: clang --version
 
+      - name: Set up Lean/Lake
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:v4.14.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
       - name: Credibility guard (no simulated results)
         run: bash scripts/check_no_simulated_results.sh
 
@@ -49,6 +54,9 @@ jobs:
 
       - name: Packaging — build wheel, install in a fresh venv, run the CLI
         run: make package-check PYTHON=python
+
+      - name: Verified Lean checker extraction
+        run: make verified-check PYTHON=python
 
       - name: ub_oracle test suite (incl. real-compiler confirmation)
         run: python -m pytest tests/test_ub_oracle.py -q

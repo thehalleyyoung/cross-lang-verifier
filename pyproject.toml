@@ -46,10 +46,20 @@ Homepage = "https://github.com/thehalleyyoung/cross-lang-verifier"
 Source = "https://github.com/thehalleyyoung/cross-lang-verifier"
 
 [tool.setuptools]
-# The flagship package is self-contained under src/ and uses only relative
-# imports, so it installs cleanly as the top-level `ub_oracle` package.
+# The flagship Python package is self-contained under src/ and uses only
+# relative imports. The optional Lean verified-checker artifact is installed as
+# data under formal/ so the console script can build it outside a source checkout.
 package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["ub_oracle*"]
+
+[tool.setuptools.data-files]
+"formal" = [
+    "formal/ProductSoundness.lean",
+    "formal/VerifiedChecker.lean",
+    "formal/lakefile.lean",
+    "formal/lean-toolchain",
+    "formal/lake-manifest.json",
+]

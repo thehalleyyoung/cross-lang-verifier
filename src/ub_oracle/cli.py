@@ -169,6 +169,11 @@ def create_parser() -> argparse.ArgumentParser:
                    help="skip the shared-IR contract validation of the manifest "
                         "(by default every unit is validated and ill-formed "
                         "lowerings are rejected before verification)")
+    p.add_argument("--verified-check", action="store_true",
+                   help="for each source-UB-rooted DIVERGENT claim, build and "
+                        "run the Lean/Lake verified checker over the raw "
+                        "re-execution facts; failure is an operational error "
+                        "(exit 2)")
     return p
 
 
@@ -208,6 +213,82 @@ def _print_text(reports: List[VerifyReport], units: List[Dict],
     out.write("\n  " + color("2", summary["disclaimer"]) + "\n")
 
 
+def _verified_observation(rep: VerifyReport) -> Optional[Dict[str, bool]]:
+    """Extract the raw facts consumed by the Lean checker.
+
+    This intentionally reads the three independent re-execution axes rather than
+    the final ``confirmed`` flag, so the checker does not tautologically accept a
+    verdict by being handed the verdict itself.
+    """
+    if rep.verdict is not VerifyVerdict.DIVERGENT:
+        return None
+    if rep.divergence is None or rep.divergence.reexec is None:
+        return None
+    rr = rep.divergence.reexec
+    if not rr.available:
+        return None
+    return {
+        "ub_reached": bool(rr.ub_reachable),
+        "target_defined": bool(rr.rust_defined),
+        "consequence": bool(rr.ub_consequential),
+    }
+
+
+def _run_verified_checks(reports: List[VerifyReport]) -> tuple:
+    from . import mechanized_soundness as ms
+
+    claims = []
+    skipped_non_ub = 0
+    for i, rep in enumerate(reports):
+        if rep.verdict is VerifyVerdict.DIVERGENT:
+            ce = rep.divergence.counterexample if rep.divergence else None
+            if ce is None or ce.source_definedness != "undefined":
+                skipped_non_ub += 1
+                continue
+            obs = _verified_observation(rep)
+            if obs is None:
+                return None, (
+                    f"verified-check failed: divergent report {i} has no "
+                    "available raw re-execution facts")
+            claims.append((i, rep, obs))
+
+    summary = {
+        "enabled": True,
+        "checked": 0,
+        "accepted": 0,
+        "kernel_theorem": "oracle_sound",
+        "scope": "final source-UB positive-claim inference over trusted run facts",
+        "checker_hash": None,
+        "skipped_non_ub_rooted": skipped_non_ub,
+    }
+    if not claims:
+        summary["status"] = "no_positive_claims"
+        return summary, None
+
+    build = ms.build_verified_checker()
+    if not build.ok:
+        return None, "verified-check build failed:\n" + ms.render_verified_checker_build(build)
+    summary["checker_hash"] = build.source_hash
+
+    for i, _rep, obs in claims:
+        chk = ms.run_verified_checker(
+            VerifyVerdict.DIVERGENT.value,
+            obs["ub_reached"],
+            obs["target_defined"],
+            obs["consequence"],
+            build=False,
+        )
+        if not chk.ok:
+            return None, (
+                f"verified-check rejected divergent report {i}: "
+                f"exit={chk.exit_code} stdout={chk.stdout!r} stderr={chk.stderr!r}")
+        summary["checked"] += 1
+        summary["accepted"] += 1
+
+    summary["status"] = "accepted"
+    return summary, None
+
+
 def run(argv: Optional[Sequence[str]] = None) -> int:
     args = create_parser().parse_args(argv)
     color = _Color(_want_color(args.color))
@@ -241,6 +322,13 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             for u in units
         ]
     summary = aggregate_reports(reports)
+
+    verified_summary = None
+    if args.verified_check:
+        verified_summary, err = _run_verified_checks(reports)
+        if err is not None:
+            sys.stderr.write(err + "\n")
+            return 2
 
     # --write-baseline: capture every current finding and exit (adoption path).
     if args.write_baseline:
@@ -303,6 +391,7 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             "summary": summary,
             "suppressed": len(suppressed),
             "cache": inc.to_dict() if inc is not None else None,
+            "verified_check": verified_summary,
             "units": [
                 {"label": _unit_label(u, i), "verdict": r.verdict.value,
                  "pair": pair_of(r), "detail": r.detail,
@@ -313,6 +402,18 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         sys.stdout.write("\n")
     else:
         _print_text(reports, units, summary, color, status.full)
+        if verified_summary is not None:
+            sys.stdout.write(
+                "\n  " + color(
+                    "2",
+                    "verified-check: "
+                    f"{verified_summary['status']} "
+                    f"({verified_summary['accepted']}/"
+                    f"{verified_summary['checked']} source-UB claim(s); "
+                    f"skipped_non_ub="
+                    f"{verified_summary['skipped_non_ub_rooted']}; "
+                    f"theorem={verified_summary['kernel_theorem']})",
+                ) + "\n")
         if inc is not None:
             sys.stdout.write(
                 "\n  " + color("2", f"cache: {inc.hits} hit(s), {inc.misses} "
