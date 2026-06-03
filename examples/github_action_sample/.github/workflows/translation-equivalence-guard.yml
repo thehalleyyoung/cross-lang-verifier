@@ -1,0 +1,45 @@
+name: translation-equivalence-guard-sample
+
+on:
+  pull_request:
+    paths:
+      - "c/**"
+      - "rust/**"
+      - "units_manifest.json"
+  push:
+    paths:
+      - "c/**"
+      - "rust/**"
+      - "units_manifest.json"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Translation Equivalence Guard
+        id: guard
+        continue-on-error: true
+        uses: thehalleyyoung/cross-lang-verifier/.github/actions/translation-equivalence-guard@main
+        with:
+          manifest: units_manifest.json
+          working-directory: examples/github_action_sample
+          sarif: guard.sarif
+          fail-on: candidate
+          no-confirm: true
+          color: never
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.guard.outputs.sarif }}
+
+      - name: Fail when the guard found a blocking verdict
+        if: steps.guard.outputs.exit-code != '0'
+        run: exit 1

@@ -733,11 +733,18 @@ def test_guard_action_is_well_formed():
     # the manifest input is required; sarif/fail-on have sane defaults.
     assert action["inputs"]["manifest"]["required"] is True
     assert action["inputs"]["fail-on"]["default"] == "divergent"
+    assert action["inputs"]["working-directory"]["default"] == "."
     # the action must surface the SARIF path and exit code as outputs.
     assert "sarif" in action["outputs"] and "exit-code" in action["outputs"]
-    # at least one step actually invokes the CLI we ship.
+    # the composite action delegates to the checked runner without interpolating
+    # untrusted inputs into shell syntax.
     cmds = " ".join(str(s.get("run", "")) for s in action["runs"]["steps"])
-    assert "cross-lang-verify --units" in cmds
+    assert "run.sh" in cmds
+    envs = " ".join(
+        " ".join(str(k) for k in s.get("env", {}).keys())
+        for s in action["runs"]["steps"]
+    )
+    assert "CLV_MANIFEST" in envs and "CLV_FAIL_ON" in envs
     assert "--sarif" in cmds and "--fail-on" in cmds
 
 
@@ -748,11 +755,12 @@ def test_guard_example_workflow_uploads_sarif():
     # PyYAML parses the bare `on:` key as boolean True; tolerate both.
     triggers = wf.get("on", wf.get(True))
     assert "pull_request" in triggers
+    assert "paths" in triggers["pull_request"]
     # needs security-events: write to upload to code scanning.
     assert wf["permissions"]["security-events"] == "write"
     steps = wf["jobs"]["guard"]["steps"]
     uses = [s.get("uses", "") for s in steps]
-    assert any(u.endswith("translation-equivalence-guard") for u in uses)
+    assert any("translation-equivalence-guard" in u for u in uses)
     assert any("codeql-action/upload-sarif" in u for u in uses)
 
 

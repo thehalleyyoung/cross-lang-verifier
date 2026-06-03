@@ -5,7 +5,25 @@ name: translation-equivalence-guard
 
 on:
   pull_request:
+    paths:
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.rs"
+      - "**/*.go"
+      - "**/*.zig"
+      - "**/*.wasm"
+      - "**/units*.json"
+      - "**/cross-lang-verifier*.json"
   push:
+    paths:
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.rs"
+      - "**/*.go"
+      - "**/*.zig"
+      - "**/*.wasm"
+      - "**/units*.json"
+      - "**/cross-lang-verifier*.json"
 
 permissions:
   contents: read
@@ -23,7 +41,7 @@ jobs:
       - name: Translation Equivalence Guard
         id: guard
         continue-on-error: true
-        uses: ./.github/actions/translation-equivalence-guard
+        uses: thehalleyyoung/cross-lang-verifier/.github/actions/translation-equivalence-guard@main
         with:
           manifest: examples/units_manifest.json
           sarif: cross-lang-verify.sarif
@@ -33,7 +51,7 @@ jobs:
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: cross-lang-verify.sarif
+          sarif_file: ${{ steps.guard.outputs.sarif }}
 
       - name: Fail the job if a divergence was confirmed
         if: steps.guard.outputs.exit-code != '0'

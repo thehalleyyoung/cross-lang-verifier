@@ -134,6 +134,9 @@ python3 -m src.cli.main discover \
   (`cross-lang-verify --triage` / `--write-baseline` / `--suppress`) so teams can
   adopt the checker on a large existing migration and fail CI only on *new*
   divergences
+- a published **Translation Equivalence Guard** GitHub Action that runs only on
+  translated-code PR paths, emits SARIF for code scanning, and is tested against a
+  sample consumer repo
 - an incremental cache (`--cache`) that re-verifies only changed units — keyed by
   unit-content hash **and** real toolchain version, with a cold-vs-hit proof that
   cached verdicts replay the same certificate-bearing verdict layer

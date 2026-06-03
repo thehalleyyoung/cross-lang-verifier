@@ -1,7 +1,8 @@
 name: "Translation Equivalence Guard"
 description: >-
   Verify a manifest of cross-language translation units for semantic divergence
-  (sound for divergence; C->Rust today) and emit SARIF for GitHub code scanning.
+  (sound for divergence; multi-pair where registered) and emit SARIF for GitHub
+  code scanning.
 author: "cross-lang-verifier"
 branding:
   icon: "git-merge"
@@ -15,6 +16,10 @@ inputs:
     description: "Path to write the SARIF 2.1.0 report."
     required: false
     default: "cross-lang-verify.sarif"
+  working-directory:
+    description: "Directory from which manifest and SARIF paths are resolved."
+    required: false
+    default: "."
   fail-on:
     description: >-
       Space-separated verdicts that fail the job: any of
@@ -27,6 +32,22 @@ inputs:
       reported as CANDIDATE, never DIVERGENT. Default: 'false'.
     required: false
     default: "false"
+  color:
+    description: "CLI color mode: auto, always, or never."
+    required: false
+    default: "always"
+  extra-args:
+    description: "Additional whitespace-separated cross-lang-verify flags."
+    required: false
+    default: ""
+  python-version:
+    description: "Python version used to install and run cross-lang-verifier."
+    required: false
+    default: "3.11"
+  install:
+    description: "Install cross-lang-verifier from GitHub before running."
+    required: false
+    default: "true"
   ref:
     description: "Git ref of cross-lang-verifier to install."
     required: false
@@ -46,25 +67,28 @@ runs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: ${{ inputs.python-version }}
 
     - name: Install cross-lang-verifier
+      if: ${{ inputs.install == 'true' }}
       shell: bash
+      env:
+        CLV_REF: ${{ inputs.ref }}
       run: |
         python -m pip install --upgrade pip
-        python -m pip install "git+https://github.com/thehalleyyoung/cross-lang-verifier.git@${{ inputs.ref }}"
+        python -m pip install "git+https://github.com/thehalleyyoung/cross-lang-verifier.git@${CLV_REF}"
 
     - name: Verify translation units
       id: verify
       shell: bash
+      env:
+        CLV_MANIFEST: ${{ inputs.manifest }}
+        CLV_SARIF: ${{ inputs.sarif }}
+        CLV_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        CLV_FAIL_ON: ${{ inputs.fail-on }}
+        CLV_NO_CONFIRM: ${{ inputs.no-confirm }}
+        CLV_COLOR: ${{ inputs.color }}
+        CLV_EXTRA_ARGS: ${{ inputs.extra-args }}
       run: |
-        set +e
-        FLAGS=""
-        for v in ${{ inputs.fail-on }}; do FLAGS="$FLAGS --fail-on $v"; done
-        if [ "${{ inputs.no-confirm }}" = "true" ]; then FLAGS="$FLAGS --no-confirm"; fi
-        cross-lang-verify --units "${{ inputs.manifest }}" \
-          --sarif "${{ inputs.sarif }}" --color always $FLAGS
-        code=$?
-        echo "sarif=${{ inputs.sarif }}" >> "$GITHUB_OUTPUT"
-        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-        exit $code
+        # run.sh invokes: cross-lang-verify --units "$manifest" --sarif "$sarif" --fail-on "$verdict"
+        bash "${{ github.action_path }}/run.sh"

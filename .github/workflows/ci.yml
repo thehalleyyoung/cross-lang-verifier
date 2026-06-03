@@ -55,6 +55,9 @@ jobs:
       - name: Packaging — build wheel, install in a fresh venv, run the CLI
         run: make package-check PYTHON=python
 
+      - name: Translation Equivalence Guard sample action
+        run: make github-action-check PYTHON=python
+
       - name: Verified Lean checker extraction
         run: make verified-check PYTHON=python
 
