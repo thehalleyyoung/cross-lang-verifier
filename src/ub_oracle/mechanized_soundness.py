@@ -21,7 +21,13 @@ compiles, so the proof cannot be silently gutted):
 * ``equivalence_never_reported`` — observationally-equivalent pairs never flagged;
 * ``report_implies_ub``          — every report is rooted in source UB;
 * ``pack_oracle_sound``          — soundness is language-pair-parametric;
-* ``rust_oracle_sound``          — the concrete C -> Rust instantiation.
+* ``rust_oracle_sound``          — the concrete C -> Rust instantiation;
+* ``strict_aliasing_oracle_sound`` — strict-aliasing optimizer-exploitation
+  witnesses are UB-rooted divergences;
+* ``strict_aliasing_report_implies_type_pun`` — the strict-aliasing report
+  carries the generated type-pun shape;
+* ``strict_aliasing_report_implies_optimizer_exploited`` — the report carries
+  the exact ``optimizer_exploited`` confirmation signal.
 """
 
 from __future__ import annotations
@@ -44,6 +50,9 @@ REQUIRED_THEOREMS: Tuple[str, ...] = (
     "report_implies_ub",
     "pack_oracle_sound",
     "rust_oracle_sound",
+    "strict_aliasing_oracle_sound",
+    "strict_aliasing_report_implies_type_pun",
+    "strict_aliasing_report_implies_optimizer_exploited",
 )
 
 

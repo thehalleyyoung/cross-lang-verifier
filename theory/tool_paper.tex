@@ -148,8 +148,9 @@ ThreadSanitizer/\texttt{go run -race}/\texttt{rustc} concurrency oracle proves
 that the same unsynchronized counter is C data-race UB, Go racy-but-defined, and
 rejected by Rust's safe \texttt{Send}/\texttt{Sync} discipline while synchronized
 repairs compile and run clean. We give a mechanized-friendly soundness development
-($\sigma$-bridge coercion correctness, product-program isolation, and a
-bounded-completeness boundary) and an artifact in which every headline number is
+($\sigma$-bridge coercion correctness, product-program isolation, a
+bounded-completeness boundary, and a Lean-checked strict-aliasing
+optimizer-exploitation lemma) and an artifact in which every headline number is
 regenerated from content-hashed real-compiler runs.
 \end{abstract}
 
@@ -655,6 +656,16 @@ Memory operations include alignment checks ($\mathit{addr}
 \;\&\; (\mathit{align} - 1) = 0$), bounds checks against
 known allocations, and use-after-free detection.
 
+\paragraph{Mechanized strict-aliasing evidence.}
+The strict-aliasing class is confirmed by optimization exploitation rather than
+a sanitizer: the same generated C type-pun source is compiled at \texttt{-O0}
+and \texttt{-O2 -fstrict-aliasing}; if both runs are clean but print different
+observables, the source behavior is under-determined. The Lean development
+mechanizes the class-specific pigeonhole step: two distinct C observables cannot
+both equal one deterministic, defined target observable, so at least one legal C
+build diverges from the target and the generic product-program soundness theorem
+applies.
+
 
 %% ======================================================================
 \section{Evaluation}\label{sec:eval}
@@ -1001,10 +1012,11 @@ the tools are complementary.
     and trait objects cause pipeline failures.
   \item \textbf{Intraprocedural only}: no function summaries or
     call-chain verification.
-  \item \textbf{Memory model}: value-level oracles cover strict-aliasing,
-    \texttt{restrict}, and pointer-provenance UB; full lifetime/heap-shape
-    divergences (use-after-free, dangling) are reported via dedicated
-    memory-shape detectors rather than a single value witness.
+  \item \textbf{Memory model}: value-level oracles cover strict-aliasing
+    (with a Lean-checked optimizer-exploitation lemma), \texttt{restrict}, and
+    pointer-provenance UB; full lifetime/heap-shape divergences (use-after-free,
+    dangling) are reported via dedicated memory-shape detectors rather than a
+    single value witness.
   \item \textbf{Floating point}: contraction and \texttt{-ffast-math}
     reassociation are witnessed against real \texttt{clang}; signaling-NaN
     propagation remains approximated.
@@ -1830,12 +1842,13 @@ in $[0,w)$, and no negation of $-2^{w-1}$ occurs.  Each guard holds,
 so $\mathit{WellDefined}$ is true.
 
 \emph{Scope limitation.}
-The predicate covers the five UB classes in~$\mathcal{U}$.  Other
-C11 UB sources---strict aliasing violations (\S6.5/7),
-sequence-point violations (\S6.5/2), uninitialized reads
-(\S6.3.2.1/2), null pointer dereference (\S6.5.3.2/4)---are
-outside our current scope and represent a known source of false
-negatives.
+The arithmetic predicate covers the five UB classes in~$\mathcal{U}$.
+Strict aliasing violations (\S6.5/7) are handled by a separate
+optimizer-exploitation oracle and Lean lemma, not by this arithmetic
+well-definedness predicate.  Other C11 UB sources---sequence-point violations
+(\S6.5/2), uninitialized reads (\S6.3.2.1/2), null pointer dereference
+(\S6.5.3.2/4)---are outside this predicate and covered only by their dedicated
+oracles where registered.
 \end{proof}
 
 \subsection{Lemma~\ref{lem:sigma-correct}: $\sigma$-Bridge Coercion

@@ -362,8 +362,9 @@ python3 -m src.cli.main discover \
   core guarantees — soundness (no false alarms), relative completeness,
   "every counterexample is rooted in source UB", and the safety corollary that
   equivalent pairs are never flagged — are proven in **Lean 4** for a
-  language-pair-parametric calculus instantiated to C→Rust, and the real Lean
-  kernel is invoked to confirm it (see `docs/MECHANIZED_SOUNDNESS.md`)
+  language-pair-parametric calculus instantiated to C→Rust, now including a
+  class-specific strict-aliasing theorem for optimizer-exploited witnesses; the
+  real Lean kernel is invoked to confirm it (see `docs/MECHANIZED_SOUNDNESS.md`)
 - a **Tier-2 idiomatic anchor corpus** (`idiomatic_corpus.py`): realistic,
   value-carrying ported functions — the binary-search **midpoint `(lo+hi)/2`**
   overflow bug, a packed-struct bit-field shift, a coreutils-style rate divide,
