@@ -48,4 +48,5 @@ nav:
       - Plugin SDK: SDK.md
   - Reproducibility:
       - Artifact evaluation: ARTIFACT.md
+      - External pre-review packet: PRE_REVIEW.md
       - Positioning: POSITIONING.md

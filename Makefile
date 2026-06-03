@@ -5,7 +5,7 @@
 
 PYTHON ?= $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
 
-.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check package-check coverage coverage-check verified-check soundness-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
+.PHONY: help reproduce reproduce-confirm reproduce-check reproduce-kit docker-build docker-reproduce guard test-ub ci cold-start-ci matrix matrix-confirm matrix-check cex-quality cex-quality-check perf perf-check memory-bound-check sharded-repro-check flaky-toolchain-check distributed-manifest-check result-store-check repro-hardening-check redteam redteam-check c2rust-corpus c2rust-corpus-check historical-cve-check github-port-mining-check package-check coverage coverage-check verified-check soundness-check pre-review-check ir-diff-check cross-arch-check scale-paper-section scale-paper-section-check demo-video
 
 help:
 	@echo "Targets:"
@@ -45,6 +45,7 @@ help:
 	@echo "  coverage-check    enforce the coverage ratchet floor (slow, ~4 min)"
 	@echo "  verified-check    build the Lean boundary proof and smoke-test the checker"
 	@echo "  soundness-check   enforce one soundness statement per registered oracle"
+	@echo "  pre-review-check  validate the external pre-review/artifact-release packet"
 	@echo "  ir-diff-check     prove clang-AST vs rustc-MIR divergence localization"
 	@echo "  ci                guard + cold-start-ci + reproduce-check + matrix-check + cex-quality-check + perf-check + repro-hardening-check + redteam-check + verified-check + soundness-check + test-ub"
 
@@ -153,6 +154,9 @@ verified-check:
 
 soundness-check:
 	PYTHONPATH=src $(PYTHON) -m ub_oracle.soundness_gate --check
+
+pre-review-check:
+	$(PYTHON) -m pytest tests/test_pre_review.py -q
 
 ir-diff-check:
 	$(PYTHON) -m pytest tests/test_ub_oracle.py::test_compiler_ir_diff_localizes_signed_overflow_semantics_on_real_ir tests/test_ub_oracle.py::test_compiler_ir_diff_also_detects_plain_rust_overflow_assert_mir -q

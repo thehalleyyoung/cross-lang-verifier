@@ -898,6 +898,22 @@ driver runs \texttt{coqc} when available and otherwise reports an explicit
 source-contract-only status, so the artifact never labels an unrun Coq proof as
 kernel-checked.
 
+Step~94 makes the submission process itself auditable.  The new
+\texttt{ub\_oracle.pre\_review} gate generates
+\texttt{docs/PRE\_REVIEW.md}, a hash-stable external-review packet with four
+independent reviewer lanes (PL soundness, security/UB, systems artifact, and
+empirical methods), 14 evidence items, and eight open-artifact release checks.
+The validator is deliberately toolchain-independent: it reads only committed
+metadata and fast registries, then verifies that every cited evidence path exists,
+every command resolves to a real repository entry point
+(\texttt{make}, \texttt{python -m}, \texttt{bash}, or \texttt{pdflatex}), every
+reviewer question is tied to evidence, the MIT licence and public
+\texttt{CITATION.cff} are present, the claims audit passes, and all 60 registered
+oracle instances have soundness statements.  The checked packet currently has
+hash \texttt{59e1b040ffaf}; a dangling paper path, stale Make target, missing
+review lane, or unbacked release claim fails \texttt{make pre-review-check}
+before the PDF can be treated as ready for external red-team review.
+
 
 %% ======================================================================
 \section{Evaluation}\label{sec:eval}
