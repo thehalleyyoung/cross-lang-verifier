@@ -194,7 +194,13 @@ compiles a from-scratch weakness-class witness, proves the C/UBSan side traps on
 the CVE-class input, checks a safe negative input, and verifies that the target
 has one language-defined outcome. The corpus is explicitly scoped as
 weakness-class replay rather than vendored third-party vulnerable source. The
-same artifact also keeps
+artifact now includes a generated corpus datasheet:
+\texttt{make corpus-datasheet-check} verifies a 13-record
+\texttt{docs/corpus\_datasheet.md} / JSON manifest that covers every persistent
+corpus or corpus-backed benchmark surface, records provenance, pair/class/label
+balance, validation commands, limitations, and artifact hashes, and explicitly
+marks same-subject benchmark rows so they are not double-counted as independent
+populations. The same artifact also keeps
 the tool honest at semantic frontiers: volatile/inline-assembly/FFI/general
 atomic units cause loud abstention justified by real \texttt{clang} IR, while
 the scoped atomics oracle uses a deterministic model-level proof; a
@@ -1451,6 +1457,47 @@ Soundness breaches & \textbf{0} \\
 Manifest hash prefix & \texttt{e79987d9d9c2} \\
 \bottomrule
 \end{tabular}
+\end{table}
+
+\paragraph{Generated corpus datasheet.}
+Step~166 adds a datasheet layer over the evaluation populations rather than a new
+headline number.  The generator
+(\texttt{src/ub\_oracle/corpus\_datasheet.py}) reads the live corpus APIs and
+emits both a JSON manifest
+(\texttt{experiments/corpus\_datasheet/corpus\_datasheet.json}) and a human page
+(\texttt{docs/corpus\_datasheet.md}).  Each record states provenance,
+construction method, population size and unit, language-pair coverage, class
+coverage, label/balance counts, validation commands, real-toolchain evidence, and
+limitations; the same-subject existing-tools benchmark is marked as a benchmark
+over the c2rust subjects so the corpus total is not inflated.  The focused gate
+\texttt{make corpus-datasheet-check} regenerates both files byte-for-byte and
+checks the live counts against the owning corpus modules.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Generated corpus datasheet summary. The manifest hash prefix is
+\texttt{af60ff7b132e}; \texttt{make corpus-datasheet-check} verifies all rows
+against the live corpus modules and committed artifacts.}
+\label{tab:corpus-datasheet}
+\begin{tabularx}{\linewidth}{@{}lrlX@{}}
+\toprule
+Corpus surface & Population & Unit & Role \\
+\midrule
+\texttt{large-scale-generated} & 60{,}000 & pairs & 1M-LOC stress population \\
+\texttt{negative-true-equivalence} & 1{,}000 & ports & false-positive bound \\
+\texttt{llm-translations} & 216 & translations & frozen current-LLM study \\
+\texttt{historical-cve-replays} & 60 & CVEs & weakness-class replay \\
+\texttt{divergence-zoo} & 36 & exhibits & indexed class/pair gallery \\
+\texttt{idiomatic-ports} & 21 & function$\times$target & human-port evidence \\
+\texttt{multi-pair-translations} & 15 & function$\times$target & cross-pair invariance \\
+\texttt{c2rust-output} & 12 & units & machine-translated Tier 1 \\
+\texttt{existing-tools-head-to-head} & 12 & reused c2rust subjects & baseline comparison, not double-counted \\
+\texttt{adversarial-near-misses} & 23 & cases & routing/range/abstention boundary tests \\
+\texttt{github-mined-ports} & 3 & samples & public-port extraction evidence \\
+\texttt{responsible-findings} / \texttt{bug-regressions} & 1 / 1 & finding / regression & disclosure and frozen replay lane \\
+\bottomrule
+\end{tabularx}
 \end{table}
 
 \subsection{$K$-Sensitivity (RQ3)}\label{sec:eval-k}

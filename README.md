@@ -173,6 +173,9 @@ python3 -m src.cli.main discover \
   responsible, compiler-confirmed extraction-unit findings lane
   (`make real-bug-check`) plus a frozen bug-regression corpus
   (`make bug-regression-check`) that keeps upstream-defect claims gated on source audit
+- a generated **corpus datasheet** (`docs/corpus_datasheet.md`, `make
+  corpus-datasheet-check`) covering 13 corpus and benchmark surfaces with
+  provenance, balance, limitations, artifact hashes, and validation commands
 - a documented plugin **SDK** ([`docs/SDK.md`](docs/SDK.md)) with a worked
   *external* oracle ([`examples/plugins/float_cast_overflow_oracle.py`](examples/plugins/float_cast_overflow_oracle.py))
   proving a third party can add a brand-new divergence class — confirmed against
