@@ -144,7 +144,13 @@ program's observable output. On a labelled divergence study (29 cases over 19
 anchor classes) the oracle attains perfect precision and recall ($\mathrm{tp}=23,\
 \mathrm{fp}=0,\ \mathrm{fn}=0,\
 \mathrm{tn}=528$) where a 200{,}000-trial differential fuzzer finds nothing on
-the UB-invisible classes. A Tier-1 c2rust-output corpus separately runs the real
+the UB-invisible classes. A new all-negative true-equivalence corpus strengthens
+the false-positive bound: \textbf{1{,}000} distinct C$\to$\{Rust,Go\} safe
+integer ports are all covered by registered oracles, all discharged by the
+range-aware pre-pass, and produce \textbf{0} \textsc{Divergent}/\textsc{Candidate}
+flags; \texttt{make negative-corpus-check} also checks 3{,}000 bounded proof
+inputs and live-labels a seeded sample with real \texttt{clang}/UBSan,
+\texttt{rustc}, and \texttt{go}. A Tier-1 c2rust-output corpus separately runs the real
 \texttt{c2rust 0.22.1} translator on 12 real-library extraction units,
 byte-compares the regenerated machine output with the checked-in Rust, compiles
 the source and generated artifacts with \texttt{clang}/\texttt{rustc}, and checks
@@ -971,7 +977,8 @@ All experiments run on a laptop
 \begin{enumerate}[nosep]
   \item[\textbf{RQ1}] Can \textsc{SemRec} detect UB divergences that
     are provably invisible to IR analysis and differential testing?
-  \item[\textbf{RQ2}] End-to-end accuracy on a general benchmark.
+  \item[\textbf{RQ2}] End-to-end accuracy on a general benchmark, including a
+    large true-equivalence corpus that bounds false-positive divergence flags.
   \item[\textbf{RQ3}] Sensitivity to the BMC bound~$K$.
   \item[\textbf{RQ4}] Counterexample quality.
   \item[\textbf{RQ5}] Verification performance.
@@ -1349,6 +1356,58 @@ $\sigma$-bridge framework's contribution: full pipeline achieves
 80\% accuracy vs.\ 40\% without $\sigma$-bridge coercions (plain
 bitvector semantics), a 2$\times$ improvement from coercion
 insertion alone.
+
+\paragraph{Large true-equivalence negative corpus.}
+The early UB-invisible benchmark above contains only 10 negative controls and is
+designed primarily to demonstrate missed positive divergences.  To separately
+bound spurious positive reports on programs that should stay silent, the artifact
+now includes \texttt{src/ub\_oracle/negative\_corpus.py}: a deterministic
+all-negative corpus of \textbf{1{,}000} distinct C$\to$\{Rust,Go\} ports.  The
+families are intentionally mundane but migration-relevant---bounded signed
+add/sub helpers, non-zero division/remainder, and in-range shifts---so every item
+has a registered oracle that \emph{could} fire if its declared precondition were
+wrong.  The false-positive check is non-vacuous: each item must be covered by at
+least one oracle, zero items may be \textsc{Not-Covered}, and every applicable
+class must be discharged by the range-aware pre-pass before solver search.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Step-164 negative true-equivalence corpus.  A positive flag is either a
+\textsc{Divergent} verdict or an unconfirmed symbolic \textsc{Candidate}; both
+must be zero on this corpus.  The focused gate is
+\texttt{make negative-corpus-check}.}
+\label{tab:negative-corpus}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Property & Value \\
+\midrule
+Distinct C$\to$\{Rust,Go\} ports & 1{,}000 \\
+Target split & 500 Rust / 500 Go \\
+Safe integer families & 5 (200 ports each) \\
+Distinct content hashes & 1{,}000 \\
+Oracle-covered items & 1{,}000 / 1{,}000 \\
+\textsc{Not-Covered} items & 0 \\
+Range-pruned applicable classes & 1{,}000 / 1{,}000 \\
+\textsc{Divergent} or \textsc{Candidate} flags & \textbf{0} \\
+Bounded proof inputs checked & 3{,}000 \\
+Live compiler sample & 10 / 10 labelled equivalent \\
+Manifest hash prefix & \texttt{218b7f573e16} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:negative-corpus} reports the resulting bound.  The repository
+stores a byte-stable manifest
+(\texttt{experiments/negative\_corpus/negative\_corpus.json}) recording each
+source hash, target hash, proof input, unit precondition, and coverage/flag
+summary.  The live sample is labelled by the independent ground-truth harness:
+C is compiled under real \texttt{clang}/UBSan, the target under real
+\texttt{rustc} or \texttt{go}, and the item is accepted only when the C run is
+defined and its observable output matches the target.  This is deliberately still
+a false-positive \emph{divergence} bound, not an arbitrary equivalence theorem;
+it complements the sound-for-divergence contract by showing that the registered
+oracles stay silent on a large known-equivalent population.
 
 \subsection{$K$-Sensitivity (RQ3)}\label{sec:eval-k}
 
@@ -2008,7 +2067,11 @@ covers broad program behavior but misses UB divergences by design;
 The tool is open-source, passes the targeted real-compiler regression suite, and
 now includes a responsible finding lane that turns mined-port extraction units
 into live compiler-confirmed, maintainer-ready bundles while preserving the
-boundary between a confirmed semantic pattern and an upstream defect claim.
+boundary between a confirmed semantic pattern and an upstream defect claim.  It
+also ships a 1{,}000-port negative true-equivalence corpus with zero
+\textsc{Divergent}/\textsc{Candidate} flags, zero \textsc{Not-Covered} cases, and
+real-compiler equivalence labels on a seeded sample, making the empirical
+false-positive story as reproducible as the bug-finding story.
 Future work includes interprocedural verification, deeper struct/enum lowering,
 and automated upstream-source audits for the findings queue.
 

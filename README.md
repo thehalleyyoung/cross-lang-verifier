@@ -355,6 +355,11 @@ python3 -m src.cli.main discover \
   substrate that makes a precision/recall claim defensible. On a full toolchain
   the sanitizer-established label agrees with the constructed label on every
   sampled item, across both languages and both labels
+- a **negative true-equivalence corpus** (`negative_corpus.py`, `make
+  negative-corpus-check`): **1,000** distinct C→{Rust,Go} ports, all covered by
+  registered oracles, all range-pruned, and yielding **zero** `DIVERGENT` or
+  `CANDIDATE` flags; a seeded sample is labeled equivalent by real
+  clang/UBSan+rustc/go
 - a **scale-measurement harness** (`scale_measure.py`): drives the labeled corpus
   through the real decision procedure recording **time/memory/verdict/abstention
   per item** and emits a **canonical results JSON** whose *verdict layer* is
